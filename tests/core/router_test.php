@@ -1,0 +1,110 @@
+<?php declare(strict_types=1);
+
+use skim\core\router;
+
+describe('router — static routes', function(): void {
+
+    test('matches an exact GET route', function(): void {
+        $r = new router();
+        $r->add('GET', '/', fn() => 'home');
+
+        $result = $r->dispatch('GET', '/');
+
+        expect($result)->toBeArray()
+            ->toHaveKey('handler')
+            ->toHaveKey('params');
+    });
+
+    test('returns null for unregistered path (404)', function(): void {
+        $r = new router();
+        $result = $r->dispatch('GET', '/not-found');
+        expect($result)->toBeNull();
+    });
+
+    test('returns false when method not allowed (405)', function(): void {
+        $r = new router();
+        $r->add('GET', '/items', fn() => []);
+
+        $result = $r->dispatch('POST', '/items');
+        expect($result)->toBeFalse();
+    });
+
+});
+
+describe('router — dynamic @param tokens', function(): void {
+
+    test('matches @id and extracts numeric segment', function(): void {
+        $r = new router();
+        $r->add('GET', '/users/@id', fn() => null);
+
+        $result = $r->dispatch('GET', '/users/42');
+
+        expect($result)->toBeArray();
+        expect($result['params']['id'])->toBe('42');
+    });
+
+    test('@id:int only matches digits', function(): void {
+        $r = new router();
+        $r->add('GET', '/users/@id:int', fn() => null);
+
+        expect($r->dispatch('GET', '/users/42'))->toBeArray();
+        expect($r->dispatch('GET', '/users/abc'))->toBeNull();
+    });
+
+    test('@slug:str matches alphanumeric-dash segments', function(): void {
+        $r = new router();
+        $r->add('GET', '/posts/@slug:str', fn() => null);
+
+        expect($r->dispatch('GET', '/posts/hello-world'))->toBeArray();
+        expect($r->dispatch('GET', '/posts/hello world'))->toBeNull();
+    });
+
+});
+
+describe('router — named routes', function(): void {
+
+    test('build_url generates correct path from named route', function(): void {
+        $r = new router();
+        $r->add('GET', '/users/@id:int', fn() => null)->name('user.show');
+
+        $url = $r->build_url('user.show', ['id' => 5]);
+        expect($url)->toBe('/users/5');
+    });
+
+    test('build_url throws when name not registered', function(): void {
+        $r = new router();
+        expect(fn() => $r->build_url('nonexistent'))->toThrow(\InvalidArgumentException::class);
+    });
+
+    test('build_url throws when required param missing', function(): void {
+        $r = new router();
+        $r->add('GET', '/users/@id', fn() => null)->name('user.show');
+
+        expect(fn() => $r->build_url('user.show', []))->toThrow(\InvalidArgumentException::class);
+    });
+
+});
+
+describe('router — groups', function(): void {
+
+    test('group prefix is prepended to all routes inside', function(): void {
+        $r = new router();
+        $r->group('/api', function(router $r): void {
+            $r->add('GET', '/users', fn() => []);
+        });
+
+        expect($r->dispatch('GET', '/api/users'))->toBeArray();
+        expect($r->dispatch('GET', '/users'))->toBeNull();
+    });
+
+    test('group middleware is attached to all routes inside', function(): void {
+        $r = new router();
+        $r->group('/admin', function(router $r): void {
+            $r->add('GET', '/dashboard', fn() => null);
+        }, middleware: ['SomeMiddleware']);
+
+        $result = $r->dispatch('GET', '/admin/dashboard');
+        expect($result['middleware'])->toContain('SomeMiddleware');
+    });
+
+});

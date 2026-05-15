@@ -1,0 +1,36 @@
+{
+    "name": "skim/skim",
+    "description": "SKIM — modern PHP 8.5+ micro-framework",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.5",
+        "nikic/fast-route": "^1.3"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "skim\\": "src/",
+            "app\\": "app/"
+        },
+        "files": [
+            "src/core/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "pest"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable"
+}
