@@ -208,6 +208,66 @@ abstract class model {
         return static::$connection;
     }
 
+    /**
+     * @ai-contract returns array of column definitions from DB, cached via cache facade
+     * @ai-contract supports mysql (DESCRIBE), pgsql (information_schema), sqlite (PRAGMA table_info)
+     * @ai-contract cache key: schema:{table}:{connection} — flush with cache::flush('schema:')
+     */
+    public static function schema(): array {
+        $cache_key = 'schema:' . static::$table . ':' . static::$connection;
+
+        $cached = \skim\cache\cache::get($cache_key);
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $pdo    = db::pdo(static::$connection);
+        $driver = $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+
+        $cols = match ($driver) {
+            'mysql'  => static::fetch_mysql_schema($pdo),
+            'pgsql'  => static::fetch_pgsql_schema($pdo),
+            'sqlite' => static::fetch_sqlite_schema($pdo),
+            default  => [],
+        };
+
+        \skim\cache\cache::set($cache_key, $cols, 3600);
+        return $cols;
+    }
+
+    private static function fetch_mysql_schema(\PDO $pdo): array {
+        $stmt = $pdo->query('DESCRIBE `' . static::$table . '`');
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    private static function fetch_pgsql_schema(\PDO $pdo): array {
+        $stmt = $pdo->prepare(
+            'SELECT column_name AS "Field", data_type AS "Type", is_nullable AS "Null"
+             FROM information_schema.columns
+             WHERE table_name = ? AND table_schema = \'public\'
+             ORDER BY ordinal_position'
+        );
+        $stmt->execute([static::$table]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    private static function fetch_sqlite_schema(\PDO $pdo): array {
+        $stmt = $pdo->query('PRAGMA table_info(`' . static::$table . '`)');
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return array_map(fn($r) => [
+            'Field' => $r['name'],
+            'Type'  => $r['type'],
+            'Null'  => $r['notnull'] ? 'NO' : 'YES',
+        ], $rows);
+    }
+
+    /**
+     * @ai-contract returns flat array of column names from cached schema
+     */
+    public static function column_names(): array {
+        return array_column(static::schema(), 'Field');
+    }
+
     // --- attribute access ---
 
     public function __get(string $name): mixed {

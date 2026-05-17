@@ -11,7 +11,7 @@ class route_entry {
     public function __construct(
         public readonly string       $method,
         public readonly string       $pattern,
-        public readonly array|callable $handler,
+        public readonly mixed $handler,
         private readonly router      $router,
     ) {}
 
@@ -19,7 +19,6 @@ class route_entry {
      * @ai-contract assigns a name for reverse URL generation via route()
      * @ai-contract name must be unique — overwrites previous entry with same name
      */
-    #[\NoDiscard]
     public function name(string $name): static {
         $this->name = $name;
         $this->router->register_name($name, $this->pattern);
@@ -30,7 +29,6 @@ class route_entry {
      * @ai-contract appends middleware classes to this route's execution stack
      * @ai-contract route middleware runs AFTER group middleware
      */
-    #[\NoDiscard]
     public function middleware(string ...$classes): static {
         $this->middleware = array_merge($this->middleware, $classes);
         return $this;

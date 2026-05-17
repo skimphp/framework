@@ -45,12 +45,15 @@ class request {
         array  $cookies    = [],
         array  $files      = [],
     ): static {
+        $no_prefix = ['content-type' => 'CONTENT_TYPE', 'content-length' => 'CONTENT_LENGTH'];
+        $server_headers = [];
+        foreach ($headers as $k => $v) {
+            $lower  = strtolower($k);
+            $server_headers[$no_prefix[$lower] ?? ('HTTP_' . strtoupper(str_replace('-', '_', $k)))] = $v;
+        }
         $server = array_merge(
             ['REQUEST_METHOD' => strtoupper($method), 'REQUEST_URI' => $path],
-            array_combine(
-                array_map(fn($k) => 'HTTP_' . strtoupper(str_replace('-', '_', $k)), array_keys($headers)),
-                array_values($headers),
-            ),
+            $server_headers,
         );
         return new static(query: $query, post: $post, server: $server, cookies: $cookies, files: $files, raw_body: $raw_body);
     }

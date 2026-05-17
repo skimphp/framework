@@ -31,6 +31,7 @@ final class toolbar {
 
         $db_rows  = array_filter($events, fn($e) => $e['type'] === 'db');
         $db_html  = self::build_db_panel($db_rows);
+        $db_warn  = $db_count > 20 ? ' warn' : '';
 
         return <<<HTML
         <style>
@@ -45,7 +46,7 @@ final class toolbar {
             <div class="bar">
                 <span style="color:#89b4fa;font-weight:bold">SKIM</span>
                 <span class="badge">{$method} {$path}</span>
-                <span class="badge{$db_warn = $db_count > 20 ? ' warn' : ''}"
+                <span class="badge{$db_warn}"
                       onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">
                     🗄 {$db_count} queries ({$db_ms}ms)
                 </span>

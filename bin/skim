@@ -52,6 +52,7 @@ $command_map = [
     'cache:flush'   => \skim\cli\commands\cache_command::class,
     'serve'         => \skim\cli\commands\serve_command::class,
     'ide:generate'  => \skim\cli\commands\ide_command::class,
+    'install'       => \skim\cli\commands\install_command::class,
 ];
 
 // Sub-commands inject their name as first arg:

@@ -34,14 +34,19 @@ class db {
                 $cfg['port'] ?? 5432,
                 $cfg['database'],
             ),
+            'sqlite' => 'sqlite:' . $cfg['database'],
             default => throw new \InvalidArgumentException("Unknown DB driver: {$cfg['driver']}"),
         };
 
-        return new \PDO($dsn, $cfg['user'], $cfg['password'], [
+        return new \PDO($dsn, $cfg['user'] ?? null, $cfg['password'] ?? null, [
             \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
             \PDO::ATTR_EMULATE_PREPARES   => false,
         ]);
+    }
+
+    public static function reset(): void {
+        self::$pool = [];
     }
 
     public static function pdo(string $connection = 'default'): \PDO {

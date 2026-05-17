@@ -62,7 +62,7 @@ final class filter {
      * @ai-contract accepts '1','true','yes','on',true → true; '0','false','no','off',false → false
      * @ai-contract returns false for anything else
      */
-    public static function bool(mixed $value): bool|false {
+    public static function bool(mixed $value): bool {
         if (is_bool($value)) {
             return $value;
         }

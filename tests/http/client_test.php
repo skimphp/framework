@@ -51,12 +51,14 @@ describe('fake_client — record and assert', function(): void {
         $http = client::fake();
         $http->get('https://api.example.com/users');
         $http->assert_sent('GET', 'users');
+        expect($http->recorded())->toHaveCount(1);
     });
 
     test('records POST requests', function(): void {
         $http = client::fake();
         $http->post('https://api.example.com/items', ['name' => 'widget']);
         $http->assert_sent('POST', 'items');
+        expect($http->recorded())->toHaveCount(1);
     });
 
     test('returns stubbed response by method+url key', function(): void {

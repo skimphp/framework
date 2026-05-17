@@ -226,6 +226,22 @@ config('db.connections.default.host');  // reads config/db.php → connections �
 // Own env() implementation — avoids vlucas/phpdotenv dependency.
 // Reads .env on first call, then caches in memory for the request.
 env('DB_HOST', default: 'localhost');
+
+// --- Env priority ---
+// Intended: OS environment variables (Docker / CI / K8s) take priority over .env file.
+// .env is the fallback for plain local dev without Docker; production injects via OS env.
+//
+// Known limitation (see cross-check.md §7.1):
+// env::load() currently writes .env values unconditionally into $_ENV and putenv(),
+// which OVERWRITES variables already set by Docker/OS. Priority is inverted until fixed.
+//
+// Planned fix — skip keys already present in the OS environment:
+//   if (getenv($key) !== false || isset($_ENV[$key])) {
+//       self::$cache[$key] = getenv($key) ?: $_ENV[$key];
+//       continue;
+//   }
+//
+// Until then: keep .env and docker-compose.yml environment: block in sync.
 ```
 
 ### Router

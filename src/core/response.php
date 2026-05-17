@@ -40,6 +40,17 @@ class response {
     }
 
     /**
+     * @ai-contract sets body to raw HTML string, Content-Type: text/html
+     * @ai-contract static variant for use without injected $res
+     */
+    public static function html(string $content): static {
+        $res = new static();
+        $res->headers['Content-Type'] = 'text/html; charset=utf-8';
+        $res->body                    = $content;
+        return $res;
+    }
+
+    /**
      * @ai-contract renders a PHP template via view::render(), sets Content-Type: text/html
      * @ai-contract throws view_exception if template file not found
      */
@@ -139,6 +150,11 @@ class response {
 
     public function with_header(string $name, string $value): static {
         $this->headers[$name] = $value;
+        return $this;
+    }
+
+    public function set_body(string $body): static {
+        $this->body = $body;
         return $this;
     }
 

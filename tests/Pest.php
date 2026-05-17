@@ -12,4 +12,5 @@ uses()->beforeEach(function(): void {
     \skim\log\log::reset();
     \skim\i18n\i18n::reset();
     \skim\events\event::off();
+    \skim\db\db::reset();
 })->in(__DIR__);

@@ -120,6 +120,34 @@ describe('model::delete()', function(): void {
 
 });
 
+describe('model::schema() — schema fetch', function(): void {
+
+    beforeEach(function(): void {
+        setup_test_db();
+    });
+
+    test('column_names() returns all column names from the table', function(): void {
+        $cols = test_user::column_names();
+        expect($cols)->toContain('id')
+                     ->toContain('name')
+                     ->toContain('email')
+                     ->toContain('status');
+    });
+
+    test('schema() returns structured column definitions with Field key', function(): void {
+        $schema = test_user::schema();
+        expect($schema)->toBeArray()->not->toBeEmpty();
+        expect($schema[0])->toHaveKey('Field');
+    });
+
+    test('schema() result is cached — second call returns same array', function(): void {
+        $first  = test_user::schema();
+        $second = test_user::schema();
+        expect($first)->toBe($second);
+    });
+
+});
+
 describe('model::where() query scope', function(): void {
 
     beforeEach(function(): void {

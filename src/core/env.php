@@ -44,6 +44,16 @@ final class env {
                 $val = substr($val, 1, -1);
             }
 
+            // OS environment variables (set by Docker, CI, or the shell) take priority
+            // over .env file values. .env is a local-dev convenience fallback — it should
+            // never override what the deployment environment explicitly injected.
+            // Without this check, docker-compose `environment:` values would be silently
+            // overwritten every time the .env file exists on disk.
+            if (getenv($key) !== false || isset($_ENV[$key])) {
+                self::$cache[$key] = getenv($key) !== false ? getenv($key) : $_ENV[$key];
+                continue;
+            }
+
             self::$cache[$key] = $val;
             $_ENV[$key]        = $val;
             putenv("{$key}={$val}");

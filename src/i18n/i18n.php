@@ -14,7 +14,7 @@ final class i18n {
     private static string  $fallback    = 'en';
     private static string  $lang_path   = '';
     private static array   $loaded      = [];    // [locale][file] => translations
-    private static ?callable $loader    = null;  // optional custom loader
+    private static mixed $loader         = null;  // optional custom loader
 
     /**
      * @ai-contract sets active locale — affects all subsequent t() calls

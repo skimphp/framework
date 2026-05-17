@@ -42,7 +42,10 @@ class pipeline {
         return $chain;
     }
 
-    private function resolve(string|array $entry): middleware {
+    private function resolve(string|array|middleware $entry): middleware {
+        if ($entry instanceof middleware) {
+            return $entry;
+        }
         if (is_string($entry)) {
             return new $entry();
         }

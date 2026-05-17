@@ -36,10 +36,8 @@ class toolbar_middleware implements middleware {
         if (str_contains($html, '</body>')) {
             $bar  = toolbar::render($req);
             $html = str_replace('</body>', $bar . '</body>', $html);
+            $result->set_body($html)->with_header('X-Debug', 'toolbar-injected');
         }
-
-        // Rebuild response body
-        $result->with_header('X-Debug', 'toolbar-injected');
 
         return $result;
     }
