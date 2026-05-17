@@ -35,6 +35,16 @@ describe('filter::int()', function(): void {
         expect(filter::int_natural('-1'))->toBeFalse();
     });
 
+    test('returns false for float string', function(): void {
+        expect(filter::int('1.5'))->toBeFalse();
+        expect(filter::int('1.0'))->toBeFalse();
+        expect(filter::int('0.9'))->toBeFalse();
+    });
+
+    test('accepts string with leading plus sign', function(): void {
+        expect(filter::int('+5'))->toBe(5);
+    });
+
 });
 
 describe('filter::float()', function(): void {

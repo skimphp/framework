@@ -103,6 +103,14 @@ class query_scope {
         return new pagination(items: $items, total: $total, per_page: $per_page, current: $page);
     }
 
+    /**
+     * @ai-contract returns params array in query_builder::build() format for external use
+     * @ai-contract used by model::delete_where() to build scoped DELETE queries
+     */
+    public function to_builder_params(): array {
+        return array_merge(['where' => $this->conditions], $this->pdo_params);
+    }
+
     // --- internals ---
 
     private function execute(): array {

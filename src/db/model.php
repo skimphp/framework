@@ -63,6 +63,9 @@ abstract class model {
      * @ai-contract returns first row matching col=val, or null
      */
     public static function find_by(string $col, mixed $val): ?static {
+        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $col)) {
+            throw new \InvalidArgumentException("Invalid column name '{$col}'.");
+        }
         $row = db::row(
             'SELECT * FROM ' . static::$table . ' WHERE ' . $col . ' = :val LIMIT 1',
             [':val' => $val],
@@ -366,7 +369,6 @@ abstract class model {
 
     // query_scope needs to read internal params — helper for delete_where
     private static function scope_to_params(query_scope $scope): array {
-        // query_scope doesn't expose internals; build manually for delete
-        return [];
+        return $scope->to_builder_params();
     }
 }

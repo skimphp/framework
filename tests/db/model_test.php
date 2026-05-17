@@ -148,6 +148,53 @@ describe('model::schema() — schema fetch', function(): void {
 
 });
 
+describe('model::delete_where()', function(): void {
+
+    beforeEach(function(): void {
+        setup_test_db();
+        db::query('INSERT INTO users %values%', ['values' => ['name' => 'A', 'email' => 'a@a.com', 'status' => 'active']]);
+        db::query('INSERT INTO users %values%', ['values' => ['name' => 'B', 'email' => 'b@b.com', 'status' => 'inactive']]);
+        db::query('INSERT INTO users %values%', ['values' => ['name' => 'C', 'email' => 'c@c.com', 'status' => 'active']]);
+    });
+
+    test('deletes only rows matching conditions', function(): void {
+        $affected = test_user::delete_where(['status' => 'inactive']);
+        expect($affected)->toBe(1);
+        expect(test_user::where([])->count())->toBe(2);
+    });
+
+    test('does not delete unmatched rows', function(): void {
+        test_user::delete_where(['status' => 'inactive']);
+        $remaining = test_user::where(['status' => 'active'])->all();
+        expect(count($remaining))->toBe(2);
+    });
+
+});
+
+describe('model::find_by()', function(): void {
+
+    beforeEach(function(): void {
+        setup_test_db();
+        db::query('INSERT INTO users %values%', ['values' => ['name' => 'Alice', 'email' => 'alice@example.com', 'status' => 'active']]);
+    });
+
+    test('returns model when column matches', function(): void {
+        $user = test_user::find_by('email', 'alice@example.com');
+        expect($user)->toBeInstanceOf(test_user::class);
+        expect($user->name)->toBe('Alice');
+    });
+
+    test('returns null when no match', function(): void {
+        expect(test_user::find_by('email', 'nobody@example.com'))->toBeNull();
+    });
+
+    test('throws on invalid column name', function(): void {
+        expect(fn() => test_user::find_by('bad-col!', 'val'))
+            ->toThrow(\InvalidArgumentException::class);
+    });
+
+});
+
 describe('model::where() query scope', function(): void {
 
     beforeEach(function(): void {

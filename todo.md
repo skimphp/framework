@@ -14,9 +14,9 @@
 - [x] `docker/php.ini` — E_ALL, opcache (validate_timestamps dev mode), pcov → /app/src
 - [x] `Makefile` — `up/down/build/shell/test/pest/migrate/migrate-fresh/mysql-cli/pgsql-cli/redis-cli`
 - [x] `.dockerignore`
-- [ ] `.env.example` — все переменные с docker defaults (DB_HOST=mysql, REDIS_HOST=redis)
-- [ ] Verify: `make build && make up && make shell` → bash в контейнере
-- [ ] Verify: `make test` → Pest запускается (0 tests, no errors)
+- [x] `.env.example` — все переменные с docker defaults (DB_HOST=mysql, REDIS_HOST=redis)
+- [x] Verify: `make build && make up && make shell` → bash в контейнере
+- [x] Verify: `make test` → Pest запускается (0 tests, no errors)
 
 ---
 
@@ -79,7 +79,7 @@
 
 ### 2.2 Active record model
 - [x] `src/db/model.php` — base class, `find/find_or_fail/where/all/count/raw/paginate/save/delete`
-- [ ] `src/db/model.php` — schema fetch (DESCRIBE/information_schema → cache)
+- [x] `src/db/model.php` — schema fetch (DESCRIBE/information_schema → cache)
 - [x] `src/db/model.php` — dirty tracking via attribute __set()
 - [x] `src/db/model.php` — `save()` uses dirty tracking → UPDATE only changed columns
 - [x] `src/db/model.php` — `$guarded` excludes fields from mass assignment
@@ -89,18 +89,18 @@
 - [x] `src/db/migration.php` — abstract base: `up(): string`, `down(): string`
 - [x] `src/db/migrator.php` — tracks batches in `_migrations` table, run/rollback/fresh/status
 - [x] `migrations/` — empty dir with `.gitkeep`
-- [ ] `tests/db/migrator_test.php` — SQLite :memory:, run/down/idempotent
+- [x] `tests/db/migrator_test.php` — SQLite :memory:, run/down/idempotent
 
 ---
 
 ## Phase 2.5 — Dev module (skim/dev)
 
 - [x] `src/dev/profiler.php` — static collector: `db/cache/view/log/summary/events/reset`, no-op when APP_DEBUG=false
-- [ ] `src/dev/toolbar.php` — HTML debug bar renderer, tabs: DB/Cache/Session/Cookies/Files/Templates/Logs/Request
+- [x] `src/dev/toolbar.php` — HTML debug bar renderer, tabs: DB/Cache/Session/Cookies/Files/Templates/Logs/Request
 - [x] `src/dev/error_page.php` — Throwable handler: exception + code context + stack trace + request dump
 - [x] Wire profiler hooks into `src/db/db.php` (already done), `src/cache/cache.php`, `src/view/view.php`
-- [ ] Toolbar middleware — appends HTML before `</body>` for text/html responses only
-- [ ] `tests/dev/profiler_test.php` — no-op in prod, records correctly in debug, reset() clears buffer
+- [x] Toolbar middleware — appends HTML before `</body>` for text/html responses only
+- [x] `tests/dev/profiler_test.php` — no-op in prod, records correctly in debug, reset() clears buffer
 
 ---
 
@@ -137,14 +137,14 @@
 
 ## Phase 4 — Events, Session, Realtime, Queue
 
-- [ ] `src/events/event.php` — on/emit/once, priority, typed event classes
-- [ ] `src/session/session.php` — Redis + File drivers, `get/set/has/delete/flush/flash/regenerate`
+- [x] `src/events/event.php` — on/emit/once, priority, typed event classes
+- [x] `src/session/session.php` — Redis + File drivers, `get/set/has/delete/flush/flash/regenerate`
 - [x] `src/realtime/sse.php` — send/ping/close, Content-Type: text/event-stream, ob_end_clean
-- [ ] `src/realtime/datastar.php` — `merge/remove/signal/script` SSE helpers
-- [ ] `src/queue/job.php` — interface: `handle(): void`, `failed(\Throwable): void`
-- [ ] `src/queue/queue.php` — Redis LPUSH/BRPOP, `push(job, delay, tries)`
-- [ ] `src/queue/worker.php` — `work()` loop, retry logic, calls `failed()` after exhausted
-- [ ] `src/events/event.php` — `emit_async()` integration with queue (optional, requires queue)
+- [x] `src/realtime/datastar.php` — `merge/remove/signal/script` SSE helpers
+- [x] `src/queue/job.php` — interface: `handle(): void`, `failed(\Throwable): void`
+- [x] `src/queue/queue.php` — Redis LPUSH/BRPOP, `push(job, delay, tries)`
+- [x] `src/queue/worker.php` — `work()` loop, retry logic, calls `failed()` after exhausted
+- [x] `src/events/event.php` — `emit_async()` integration with queue (optional, requires queue)
 
 ---
 
@@ -184,4 +184,4 @@
 - [x] `tests/AGENT.md` — testing conventions
 - [x] `generated/` — empty dir with `.gitkeep`
 - [x] `.github/workflows/ci.yml` — PHP 8.4/8.5 matrix, Redis service, coverage gate 80%
-- [ ] Interactive installer — `composer create-project`, module wizard, config generation
+- [x] Interactive installer — `composer create-project`, module wizard, config generation

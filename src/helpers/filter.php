@@ -16,7 +16,7 @@ final class filter {
         }
         $v = (int) $value;
         if ((string) $v !== ltrim((string) $value, '+')) {
-            // reject floats like 1.5
+            return false;   // reject floats like 1.5
         }
         if ($min !== null && $v < $min) {
             return false;

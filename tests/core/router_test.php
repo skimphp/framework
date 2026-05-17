@@ -85,6 +85,23 @@ describe('router — named routes', function(): void {
 
 });
 
+describe('router::url() — static url via app container', function(): void {
+
+    test('app::test_instance() registers sys.router in container', function(): void {
+        $app = \skim\core\app::test_instance();
+        expect($app->get('sys.router'))->toBeInstanceOf(router::class);
+    });
+
+    test('sys.router can build named route URLs', function(): void {
+        $app = \skim\core\app::test_instance();
+        $app->router->add('GET', '/posts/@slug:str', fn() => null)->name('post.show');
+
+        $router = $app->get('sys.router');
+        expect($router->build_url('post.show', ['slug' => 'hello-world']))->toBe('/posts/hello-world');
+    });
+
+});
+
 describe('router — groups', function(): void {
 
     test('group prefix is prepended to all routes inside', function(): void {

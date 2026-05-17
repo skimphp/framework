@@ -50,6 +50,7 @@ class app {
         }
         $inst->router   = new router();
         $inst->pipeline = new pipeline();
+        $inst->set('sys.router', $inst->router);
         return $inst;
     }
 
@@ -61,6 +62,7 @@ class app {
 
         $this->router   = new router();
         $this->pipeline = new pipeline();
+        $this->set('sys.router', $this->router);
     }
 
     // --- scoped key/value store ---
