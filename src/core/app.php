@@ -20,7 +20,7 @@ class app {
     private array $app_data = [];    // APP scope (config values)
     private array $user     = [];    // USER scope
 
-    private router     $router;
+    public private(set) router $router;
     private pipeline   $pipeline;
     private array      $global_middleware = [];
 
@@ -150,40 +150,6 @@ class app {
         throw new \RuntimeException("No binding registered for '{$abstract}'");
     }
 
-    // --- routing shortcuts ---
-
-    public function get(string $pattern, array|callable $handler): route_entry {
-        return $this->router->add('GET', $pattern, $handler);
-    }
-
-    public function post(string $pattern, array|callable $handler): route_entry {
-        return $this->router->add('POST', $pattern, $handler);
-    }
-
-    public function put(string $pattern, array|callable $handler): route_entry {
-        return $this->router->add('PUT', $pattern, $handler);
-    }
-
-    public function patch(string $pattern, array|callable $handler): route_entry {
-        return $this->router->add('PATCH', $pattern, $handler);
-    }
-
-    public function delete(string $pattern, array|callable $handler): route_entry {
-        return $this->router->add('DELETE', $pattern, $handler);
-    }
-
-    public function any(string $pattern, array|callable $handler): route_entry {
-        return $this->router->add(['GET','POST','PUT','PATCH','DELETE'], $pattern, $handler);
-    }
-
-    public function group(string $prefix, callable $callback, array $middleware = []): void {
-        $this->router->group($prefix, $callback, $middleware);
-    }
-
-    public function command(string $name, array|callable $handler): void {
-        $this->router->command($name, $handler);
-    }
-
     // --- middleware ---
 
     /**
@@ -262,22 +228,27 @@ class app {
 
         $ref    = new \ReflectionMethod($controller, $method);
         $args   = [];
-        foreach ($ref->getParameters() as $param) {
+
+		foreach ($ref->getParameters() as $param) {
             $type = $param->getType();
             $name = $param->getName();
-            if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+
+			if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
                 $typeName = $type->getName();
                 $args[] = match ($typeName) {
                     request::class  => $req,
                     response::class => $res,
                     default         => $this->make($typeName),
                 };
+
             } elseif (array_key_exists($name, $params)) {
                 // Route param matching by name
                 $args[] = $params[$name];
-            } elseif ($param->isDefaultValueAvailable()) {
+            }
+			elseif ($param->isDefaultValueAvailable()) {
                 $args[] = $param->getDefaultValue();
-            } else {
+            }
+			else {
                 $args[] = null;
             }
         }

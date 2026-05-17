@@ -104,6 +104,35 @@ foreach ($items as $item) {
     // ...
 }
 
+// elseif — closing brace and elseif on separate lines, never on same line
+// WRONG:
+} elseif ($b) {
+// RIGHT:
+}
+elseif ($b) {
+
+// Blank line before top-level control flow blocks (if / foreach / for / while)
+// to improve visual separation from preceding statements.
+// Only at the top level of a block — do NOT add blank lines inside nested blocks.
+//
+// RIGHT — blank line before each top-level block:
+if (!isset($result[$key1])) {
+    $result[$key1] = [];
+}
+
+if (!isset($result[$key1][$key2])) {
+    $result[$key1][$key2] = [];
+}
+
+$result[$key1][$key2][] = $item;
+
+// WRONG — no blank line before inner block inside another block:
+foreach ($items as $item) {
+    if ($item->active) {   // no blank line here
+        // ...
+    }
+}
+
 // Types — always declared
 public function get(string $key, mixed $default = null): mixed {}
 public function find(int $id): ?static {}
@@ -207,20 +236,20 @@ Backward-compatible with F3 `@param` token syntax where possible.
 ```php
 // Routes registered in public/index.php or a dedicated routes.php file.
 // All routes compile into a single regex on first run — no per-route matching loop.
-$app->get('/', [home_controller::class, 'index']);
-$app->post('/users', [user_controller::class, 'store']);
-$app->put('/users/@id', [user_controller::class, 'update']);
-$app->delete('/users/@id', [user_controller::class, 'destroy']);
+$app->router->get('/', [home_controller::class, 'index']);
+$app->router->post('/users', [user_controller::class, 'store']);
+$app->router->put('/users/@id', [user_controller::class, 'update']);
+$app->router->delete('/users/@id', [user_controller::class, 'destroy']);
 
 // Groups apply middleware to all enclosed routes before individual route middleware.
 // Middleware order: global → group → route (applied as a pipeline, not nested calls).
-$app->group('/api', function(router $r) {
+$app->router->group('/api', function(router $r) {
     $r->get('/users', [api\user_controller::class, 'index']);
     $r->post('/users', [api\user_controller::class, 'store']);
 }, middleware: [auth_middleware::class, json_middleware::class]);
 
 // Named routes allow reverse-generation — safe refactoring without string hunting.
-$app->get('/users/@id', [user_controller::class, 'show'])->name('user.show');
+$app->router->get('/users/@id', [user_controller::class, 'show'])->name('user.show');
 route('user.show', ['id' => 5]); // → /users/5
 
 // Type tokens prevent invalid segments from reaching controllers.
@@ -230,8 +259,8 @@ route('user.show', ['id' => 5]); // → /users/5
 // @slug:str → letters, digits, dashes
 
 // CLI routes share the same controller/DI pattern as HTTP routes.
-$app->command('migrate', [migrate_command::class, 'run']);
-$app->command('queue:work', [queue_command::class, 'work']);
+$app->router->command('migrate', [migrate_command::class, 'run']);
+$app->router->command('queue:work', [queue_command::class, 'work']);
 ```
 
 ### Request
@@ -942,7 +971,7 @@ event::once('app.booted', function(): void { /* ... */ });
 // SSE is a long-running HTTP connection — $res->stream() disables output buffering
 // and keeps the connection open. PHP-FPM must have execution time limits adjusted.
 // nginx: set proxy_read_timeout 3600; to prevent upstream timeout on long streams.
-$app->get('/stream', function(request $req, response $res) {
+$app->router->get('/stream', function(request $req, response $res) {
     return $res->stream(function(skim\http\sse $sse): void {
 
         $sse->send('hello');                           // plain text event
@@ -966,7 +995,7 @@ use skim\realtime\datastar;
 // Datastar SSE replaces the full request cycle for UI updates.
 // The client connects once; the server pushes HTML/signal patches as they're ready.
 // This is how SKIM avoids JSON APIs for frontend state — push HTML fragments directly.
-$app->get('/ds-stream', function(response $res) {
+$app->router->get('/ds-stream', function(response $res) {
     return $res->stream(function(skim\http\sse $sse): void {
 
         // merge() patches the DOM in-place. The selector must match an existing element.
@@ -2380,7 +2409,7 @@ $admin = array_find($users, fn($u) => $u->role === 'admin');
 
 **#[\Deprecated] attribute** — mark F3 compat layer:
 ```php
-#[\Deprecated('Use $app->get() instead', since: '1.0')]
+#[\Deprecated('Use $app->router->get() instead', since: '1.0')]
 public function route(string $pattern, callable $handler): void {}
 ```
 

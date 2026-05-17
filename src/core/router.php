@@ -41,6 +41,30 @@ class router {
         );
     }
 
+    public function get(string $pattern, array|callable $handler): route_entry {
+        return $this->add('GET', $pattern, $handler);
+    }
+
+    public function post(string $pattern, array|callable $handler): route_entry {
+        return $this->add('POST', $pattern, $handler);
+    }
+
+    public function put(string $pattern, array|callable $handler): route_entry {
+        return $this->add('PUT', $pattern, $handler);
+    }
+
+    public function patch(string $pattern, array|callable $handler): route_entry {
+        return $this->add('PATCH', $pattern, $handler);
+    }
+
+    public function delete(string $pattern, array|callable $handler): route_entry {
+        return $this->add('DELETE', $pattern, $handler);
+    }
+
+    public function any(string $pattern, array|callable $handler): route_entry {
+        return $this->add(['GET','POST','PUT','PATCH','DELETE'], $pattern, $handler);
+    }
+
     /**
      * @ai-contract registers a route for one or more HTTP methods
      * @ai-contract invalidates compiled dispatcher — next dispatch() recompiles
