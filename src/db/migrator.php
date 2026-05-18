@@ -152,14 +152,40 @@ final class migrator {
     // --- internals ---
 
     private function ensure_table(): void {
+        $driver = config('db.' . $this->connection . '.driver', 'mysql');
+
+		$id_col = match ($driver) {
+            'pgsql'  => 'id SERIAL PRIMARY KEY',
+            'sqlite' => 'id INTEGER PRIMARY KEY AUTOINCREMENT',
+            default  => 'id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY',
+        };
+
+        $text = match ($driver) {
+            'pgsql', 'sqlite' => 'TEXT',
+            default           => 'VARCHAR(500)',
+        };
+
+        $unique  = match ($driver) {
+            'pgsql', 'sqlite' => "CREATE UNIQUE INDEX IF NOT EXISTS uq_{$this->table}_filename ON {$this->table} (filename)",
+            default           => '',
+        };
+
+        $suffix  = match ($driver) {
+            'mysql'  => ', UNIQUE KEY uq_filename (filename)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
+            default  => ')',
+        };
+
         db::query(
-            'CREATE TABLE IF NOT EXISTS ' . $this->table . ' (
-                id       INTEGER PRIMARY KEY AUTOINCREMENT,
-                filename TEXT NOT NULL UNIQUE,
-                batch    INTEGER NOT NULL
-            )',
+            "CREATE TABLE IF NOT EXISTS {$this->table} (
+                {$id_col},
+                filename {$text} NOT NULL,
+                batch    INT NOT NULL
+                {$suffix}",
             connection: $this->connection,
         );
+        if ($unique !== '') {
+            db::query($unique, connection: $this->connection);
+        }
     }
 
     private function applied_filenames(): array {

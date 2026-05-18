@@ -15,7 +15,7 @@ class template {
     private array   $slots        = [];   // name → captured HTML
     private ?string $active_slot  = null;
 
-    public function __construct(string $views_path, array $data = []) {
+    public function __construct(string $views_path, array $data = [], private readonly ?string $default_layout = null) {
         $this->views_path = rtrim($views_path, '/');
         $this->data       = $data;
     }
@@ -25,7 +25,7 @@ class template {
      * @ai-contract $template is relative to views path, no extension needed
      */
     public function include(string $template, array $extra = []): string {
-        return (new self($this->views_path, array_merge($this->data, $extra)))->render_file($template);
+        return (new self($this->views_path, array_merge($this->data, $extra), null))->render_file($template);
     }
 
     /**
@@ -67,7 +67,8 @@ class template {
 
     // Called by view::render() to execute the template file
     public function render_file(string $template): string {
-        $file = $this->views_path . '/' . ltrim($template, '/') . '.php';
+        $base = $this->views_path . '/' . ltrim($template, '/');
+        $file = is_file($base . '.html') ? $base . '.html' : $base . '.php';
 
         if (!is_file($file)) {
             throw new exceptions\view_exception("View template not found: {$template}");
@@ -80,13 +81,17 @@ class template {
         include $file;
         $content = (string) ob_get_clean();
 
+        if ($this->layout_name === null && $this->default_layout !== null) {
+            $this->layout_name = $this->default_layout;
+        }
+
         // If a layout was declared, wrap content and render layout
         if ($this->layout_name !== null) {
             // Capture any non-slot output as 'content' slot if not already set
             if (!isset($this->slots['content'])) {
                 $this->slots['content'] = $content;
             }
-            $layout = new self($this->views_path, $this->data);
+            $layout = new self($this->views_path, $this->data, null);
             $layout->slots = $this->slots;
             return $layout->render_file($this->layout_name);
         }

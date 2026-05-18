@@ -65,15 +65,17 @@ final class profiler {
     public static function summary(): array {
         $db_events    = array_filter(self::$events, fn($e) => $e['type'] === 'db');
         $cache_events = array_filter(self::$events, fn($e) => $e['type'] === 'cache');
+        $view_events  = array_filter(self::$events, fn($e) => $e['type'] === 'view');
 
         return [
-            'db'    => ['count' => count($db_events),    'ms' => round(array_sum(array_column($db_events, 'ms')), 2)],
-            'cache' => [
+            'db'      => ['count' => count($db_events), 'ms' => round(array_sum(array_column($db_events, 'ms')), 2)],
+            'cache'   => [
                 'hits'   => count(array_filter($cache_events, fn($e) => $e['hit'])),
                 'misses' => count(array_filter($cache_events, fn($e) => !$e['hit'])),
             ],
-            'views' => count(array_filter(self::$events, fn($e) => $e['type'] === 'view')),
-            'logs'  => count(array_filter(self::$events, fn($e) => $e['type'] === 'log')),
+            'views'   => count($view_events),
+            'view_ms' => round(array_sum(array_column(array_values($view_events), 'ms')), 2),
+            'logs'    => count(array_filter(self::$events, fn($e) => $e['type'] === 'log')),
         ];
     }
 

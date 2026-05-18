@@ -24,7 +24,8 @@ final class redis_session_driver implements session_driver {
         $this->id = $_COOKIE['PHPSESSID'] ?? $this->generate_id();
 
         $raw = $this->redis()->get($this->prefix . $this->id);
-        if ($raw !== false) {
+
+		if ($raw !== false) {
             $this->data = (array) json_decode($raw, true);
         }
 
@@ -33,10 +34,12 @@ final class redis_session_driver implements session_driver {
 
         // Send cookie header if not yet set
         if (!isset($_COOKIE['PHPSESSID'])) {
+            $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                   || (($_SERVER['SERVER_PORT'] ?? 80) == 443);
             setcookie('PHPSESSID', $this->id, [
                 'expires'  => time() + $this->lifetime,
                 'path'     => '/',
-                'secure'   => true,
+                'secure'   => $secure,
                 'httponly' => true,
                 'samesite' => 'Lax',
             ]);
@@ -64,10 +67,12 @@ final class redis_session_driver implements session_driver {
     public function regenerate(): void {
         $this->redis()->del($this->prefix . $this->id);
         $this->id = $this->generate_id();
+        $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+               || (($_SERVER['SERVER_PORT'] ?? 80) == 443);
         setcookie('PHPSESSID', $this->id, [
             'expires'  => time() + $this->lifetime,
             'path'     => '/',
-            'secure'   => true,
+            'secure'   => $secure,
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
@@ -104,7 +109,7 @@ final class redis_session_driver implements session_driver {
         }
         $r = new \Redis();
         $r->connect($this->host, $this->port, 1.0);
-        if ($this->password !== null) {
+        if ($this->password !== null && $this->password !== '') {
             $r->auth($this->password);
         }
         return $this->redis = $r;

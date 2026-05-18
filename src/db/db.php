@@ -157,10 +157,15 @@ class db {
         $pdo->beginTransaction();
         try {
             $result = $fn();
-            $pdo->commit();
+            if ($pdo->inTransaction()) {
+                $pdo->commit();
+            }
             return $result;
-        } catch (\Throwable $e) {
-            $pdo->rollBack();
+
+		} catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             throw $e;
         }
     }

@@ -74,14 +74,18 @@ final class redis_driver implements driver {
         if ($this->redis !== null) {
             return $this->redis;
         }
-        $r = new \Redis();
+
+		$r = new \Redis();
         $r->connect($this->host, $this->port, 1.0);
-        if ($this->password !== null) {
+
+		if ($this->password !== null && $this->password !== '') {
             $r->auth($this->password);
         }
-        if ($this->database !== 0) {
+
+		if ($this->database !== 0) {
             $r->select($this->database);
         }
-        return $this->redis = $r;
+
+		return $this->redis = $r;
     }
 }

@@ -12,8 +12,9 @@ use skim\dev\profiler;
 // Why not Twig/Blade: stack traces point to real PHP files, opcache handles compilation,
 // PHP templates are ~3x faster than template engines with opcache enabled.
 final class view {
-    private static string $views_path  = '';
-    private static array  $shared_data = [];
+    private static string  $views_path     = '';
+    private static array   $shared_data    = [];
+    private static ?string $default_layout = null;
 
     /**
      * @ai-contract renders full template with $data merged into shared data
@@ -25,7 +26,7 @@ final class view {
     public static function render(string $template, array $data = [], ?string $fragment = null): string {
         $t    = microtime(true);
         $path = self::views_path();
-        $ctx  = new template($path, array_merge(self::$shared_data, $data));
+        $ctx  = new template($path, array_merge(self::$shared_data, $data), self::$default_layout);
 
         $html = $ctx->render_file($template);
 
@@ -64,9 +65,18 @@ final class view {
     /**
      * @ai-contract for tests — reset shared data and path
      */
+    /**
+     * @ai-contract sets a fallback layout applied to every root render that doesn't call $this->layout()
+     * @ai-contract pass null to disable the default layout
+     */
+    public static function set_default_layout(?string $name): void {
+        self::$default_layout = $name;
+    }
+
     public static function reset(): void {
-        self::$shared_data = [];
-        self::$views_path  = '';
+        self::$shared_data    = [];
+        self::$views_path     = '';
+        self::$default_layout = null;
     }
 
     // --- internals ---

@@ -60,6 +60,14 @@ class app {
         env::load($this->root . '/.env');
         config::load($this->root . '/config');
 
+        if (config::get('app.debug', false)) {
+            profiler::enable();
+        }
+
+        if ($layout = config::get('app.view.default_layout')) {
+            \skim\view\view::set_default_layout((string) $layout);
+        }
+
         $this->router   = new router();
         $this->pipeline = new pipeline();
         $this->set('sys.router', $this->router);

@@ -22,10 +22,14 @@ final class file_session_driver implements session_driver {
             mkdir($this->path, 0700, true);
         }
         session_save_path($this->path);
-        session_set_cookie_params([
+
+        $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+               || (($_SERVER['SERVER_PORT'] ?? 80) == 443);
+
+		session_set_cookie_params([
             'lifetime' => $this->lifetime,
             'path'     => '/',
-            'secure'   => true,
+            'secure'   => $secure,
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
