@@ -1,0 +1,29 @@
+{
+  "name": "@skim/mcp",
+  "version": "0.1.0",
+  "description": "MCP server for the SKIM PHP micro-framework — exposes llm.json via stdio transport",
+  "license": "MIT",
+  "bin": {
+    "skim-mcp": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "skim",
+    "php",
+    "framework",
+    "llm",
+    "claude",
+    "cursor"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/skim-framework/skim"
+  }
+}

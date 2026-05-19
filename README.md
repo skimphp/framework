@@ -265,6 +265,20 @@ php skim cache:clear        # flush cache by prefix
 php skim ide:generate       # generate .ide-helper.php from DB schema
 ```
 
+### Docs commands (dev only — disabled in `production`)
+
+```bash
+php skim docs               # full build: extract → llm.md → MDX site
+php skim docs --watch       # rebuild on file change
+php skim docs:extract       # scan @ai.* annotations → llm.json
+php skim docs:llm           # llm.json → llm.md (paste to any LLM)
+php skim docs:site          # llm.json → MDX files for Starlight docs site
+php skim docs:validate      # report unannotated public methods; exit 1 if below threshold
+php skim mcp:serve          # start stdio MCP server (requires llm.json)
+```
+
+`llm.md` is committed to the repo root — paste it into any LLM when no tooling is available.
+
 ### Write your own command
 
 ```php
@@ -322,6 +336,75 @@ docker compose exec app bash  # shell inside container
 docker compose exec app php skim migrate
 make shell                    # alias for exec app bash
 make test                     # alias for pest
+```
+
+---
+
+## MCP server
+
+SKIM ships a stdio MCP server so tool-capable LLMs (Claude Code, Cursor) can query the framework's `@ai.*` annotations directly.
+
+### Wire into Claude Code
+
+```json
+// .claude/mcp_settings.json
+{
+  "mcpServers": {
+    "skim": {
+      "command": "php",
+      "args": ["skim", "mcp:serve"],
+      "cwd": "/path/to/project"
+    }
+  }
+}
+```
+
+### Wire into Cursor
+
+```json
+// .cursor/mcp.json
+{
+  "mcpServers": {
+    "skim": {
+      "command": "php",
+      "args": ["skim", "mcp:serve"],
+      "cwd": "/path/to/project"
+    }
+  }
+}
+```
+
+Or install the npm wrapper for registry-based clients:
+
+```bash
+npm install -g @skim/mcp
+# then use "command": "skim-mcp" with "env": { "SKIM_ROOT": "/path/to/project" }
+```
+
+### Available MCP tools
+
+| Tool | Description |
+|------|-------------|
+| `skim_class(name)` | Summary, lifecycle, owner, file path |
+| `skim_method(class, method)` | Signature, contracts, invariants, non_goals, side_effects, perf, throws |
+| `skim_search(query)` | Fuzzy search across class names, methods, and contract text |
+| `skim_lifecycle()` | Boot order and request lifecycle |
+| `skim_non_goals()` | All `@ai.non_goal` entries grouped by class |
+
+---
+
+## Pre-commit hook (recommended)
+
+Catch annotation regressions before they reach CI:
+
+```bash
+# .git/hooks/pre-push
+#!/bin/sh
+php skim docs:validate
+```
+
+```bash
+chmod +x .git/hooks/pre-push
 ```
 
 ---

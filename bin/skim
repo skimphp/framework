@@ -40,19 +40,25 @@ foreach ($argv_input as $token) {
 
 // Command map — extend via config/app.php 'commands' key
 $command_map = [
-    'migrate'       => \skim\cli\commands\migrate_command::class,
-    'migrate:down'  => \skim\cli\commands\migrate_command::class,
-    'migrate:fresh' => \skim\cli\commands\migrate_command::class,
-    'migrate:status'=> \skim\cli\commands\migrate_command::class,
-    'queue:work'    => \skim\cli\commands\queue_command::class,
-    'queue:status'  => \skim\cli\commands\queue_command::class,
-    'queue:flush'   => \skim\cli\commands\queue_command::class,
-    'queue:restart' => \skim\cli\commands\queue_command::class,
-    'cache:clear'   => \skim\cli\commands\cache_command::class,
-    'cache:flush'   => \skim\cli\commands\cache_command::class,
-    'serve'         => \skim\cli\commands\serve_command::class,
-    'ide:generate'  => \skim\cli\commands\ide_command::class,
-    'install'       => \skim\cli\commands\install_command::class,
+    'migrate'        => \skim\cli\commands\migrate_command::class,
+    'migrate:down'   => \skim\cli\commands\migrate_command::class,
+    'migrate:fresh'  => \skim\cli\commands\migrate_command::class,
+    'migrate:status' => \skim\cli\commands\migrate_command::class,
+    'queue:work'     => \skim\cli\commands\queue_command::class,
+    'queue:status'   => \skim\cli\commands\queue_command::class,
+    'queue:flush'    => \skim\cli\commands\queue_command::class,
+    'queue:restart'  => \skim\cli\commands\queue_command::class,
+    'cache:clear'    => \skim\cli\commands\cache_command::class,
+    'cache:flush'    => \skim\cli\commands\cache_command::class,
+    'serve'          => \skim\cli\commands\serve_command::class,
+    'ide:generate'   => \skim\cli\commands\ide_command::class,
+    'install'        => \skim\cli\commands\install_command::class,
+    'docs'           => \skim\dev\docs\commands\docs_command::class,
+    'docs:extract'   => \skim\dev\docs\commands\docs_extract_command::class,
+    'docs:llm'       => \skim\dev\docs\commands\docs_llm_command::class,
+    'docs:site'      => \skim\dev\docs\commands\docs_site_command::class,
+    'docs:validate'  => \skim\dev\docs\commands\docs_validate_command::class,
+    'mcp:serve'      => \skim\dev\docs\commands\mcp_serve_command::class,
 ];
 
 // Sub-commands inject their name as first arg:
