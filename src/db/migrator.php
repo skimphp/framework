@@ -152,7 +152,7 @@ final class migrator {
     // --- internals ---
 
     private function ensure_table(): void {
-        $driver = config('db.' . $this->connection . '.driver', 'mysql');
+        $driver = db::pdo($this->connection)->getAttribute(\PDO::ATTR_DRIVER_NAME);
 
 		$id_col = match ($driver) {
             'pgsql'  => 'id SERIAL PRIMARY KEY',

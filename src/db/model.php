@@ -121,8 +121,7 @@ abstract class model {
      * @ai-contract deletes all rows matching conditions
      */
     public static function delete_where(array $conditions): int {
-        $scope = new query_scope(static::class);
-        $scope->where($conditions);
+        $scope = (new query_scope(static::class))->where($conditions);
         // Build directly since query_scope doesn't expose delete
         [$built, $pdoParams] = query_builder::build(
             'DELETE FROM ' . static::$table . ' %where%',
