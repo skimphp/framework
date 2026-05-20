@@ -81,8 +81,7 @@ describe('mdx_emitter', function(): void {
         (new mdx_emitter())->emit(sample_mdx_data(), $dir);
         $content = file_get_contents($dir . '/request.mdx');
 
-        expect($content)->toContain('### `get`');
-        expect($content)->toContain('public function get(string $key, mixed $default): mixed');
+        expect($content)->toContain('| `get(string $key, mixed $default)` |');
 
         array_map('unlink', glob($dir . '/*.mdx'));
         rmdir($dir);
@@ -93,8 +92,8 @@ describe('mdx_emitter', function(): void {
         (new mdx_emitter())->emit(sample_mdx_data(), $dir);
         $content = file_get_contents($dir . '/request.mdx');
 
-        expect($content)->toContain('returns query param by key');
-        expect($content)->toContain('does not validate types');
+        expect($content)->toContain('Returns query param by key.');
+        expect($content)->toContain('Does not validate types.');
 
         array_map('unlink', glob($dir . '/*.mdx'));
         rmdir($dir);
@@ -112,6 +111,46 @@ describe('mdx_emitter', function(): void {
         $dir   = sys_get_temp_dir() . '/skim_mdx_empty_' . uniqid();
         $count = (new mdx_emitter())->emit(['generated_at' => 'now', 'classes' => []], $dir);
         expect($count)->toBe(0);
+        rmdir($dir);
+    });
+
+    test('MDX file escapes HTML-like tags and braces outside backticks', function(): void {
+        $dir = sys_get_temp_dir() . '/skim_mdx_escape_' . uniqid();
+        $data = [
+            'generated_at' => '2026-01-01T00:00:00+00:00',
+            'classes'      => [
+                [
+                    'class_name' => 'escaper',
+                    'namespace'  => 'skim\\core',
+                    'file'       => '/src/core/escaper.php',
+                    'summary'    => 'Handles <tags> and {braces} properly, but `keeps <tag> inside backticks`.',
+                    'lifecycle'  => '',
+                    'owner'      => '',
+                    'methods'    => [
+                        [
+                            'name'         => 'run',
+                            'signature'    => 'public function run(): void',
+                            'owner'        => 'skim\\core\\escaper',
+                            'contracts'    => ['processes <input> and {values} in description, but `ignores <tag>`'],
+                            'invariants'   => [],
+                            'non_goals'    => [],
+                            'side_effects' => [],
+                            'lifecycle'    => '',
+                            'perf'         => '',
+                            'throws'       => [],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        (new mdx_emitter())->emit($data, $dir);
+        $content = file_get_contents($dir . '/escaper.mdx');
+
+        expect($content)->toContain('Handles &lt;tags&gt; and &#123;braces&#125; properly, but `keeps <tag> inside backticks`.');
+        expect($content)->toContain('Processes &lt;input&gt; and &#123;values&#125; in description, but `ignores <tag>`.');
+
+        array_map('unlink', glob($dir . '/*.mdx'));
         rmdir($dir);
     });
 

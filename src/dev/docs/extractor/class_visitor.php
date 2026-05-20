@@ -15,11 +15,38 @@ use skim\dev\docs\value\extracted_method;
 class class_visitor extends NodeVisitorAbstract {
     public ?extracted_class $result = null;
     private string $current_namespace = '';
+    private ?array $file_lines = null;
 
     public function __construct(
         private readonly annotation_parser $annotations,
         private readonly string $file,
     ) {}
+
+    private function get_file_lines(): array {
+        if ($this->file_lines === null) {
+            $content = file_exists($this->file) ? file_get_contents($this->file) : '';
+            $this->file_lines = array_merge([''], explode("\n", $content));
+        }
+        return $this->file_lines;
+    }
+
+    private function get_preceding_inline_comments(Node $node): string {
+        $lines = $this->get_file_lines();
+        $start_line = $node->getStartLine();
+        
+        $comment_lines = [];
+        for ($i = $start_line - 1; $i >= 1; $i--) {
+            $line = $lines[$i] ?? '';
+            if (preg_match('/^\s*\/\//', $line)) {
+                $comment_lines[] = $line;
+            } else {
+                break;
+            }
+        }
+        
+        $comment_lines = array_reverse($comment_lines);
+        return implode("\n", $comment_lines);
+    }
 
     public function enterNode(Node $node): null {
         if ($node instanceof Node\Stmt\Namespace_) {
@@ -32,16 +59,47 @@ class class_visitor extends NodeVisitorAbstract {
         }
 
         $class_doc = (string) ($node->getDocComment()?->getText() ?? '');
-        $tags      = $this->annotations->parse($class_doc);
-        $summary   = $this->annotations->extract_summary($class_doc);
-        $owner     = $this->current_namespace . '\\' . (string) $node->name;
+        if ($class_doc !== '') {
+            $tags    = $this->annotations->parse($class_doc);
+            $summary = $this->annotations->extract_summary($class_doc);
+        } else {
+            $inline  = $this->get_preceding_inline_comments($node);
+            $tags    = $this->annotations->parse_inline($inline);
+            $summary = $tags['summary'] ?? '';
+            unset($tags['summary']);
+        }
+
+        $owner = $this->current_namespace . '\\' . (string) $node->name;
 
         $methods = [];
         foreach ($node->getMethods() as $method) {
-            if (!$method->isPublic()) {
-                continue;
+            $doc = (string) ($method->getDocComment()?->getText() ?? '');
+            if ($doc !== '') {
+                $tags_m = $this->annotations->parse($doc);
+                $summary_m = $this->annotations->extract_summary($doc);
+            } else {
+                $inline_m = $this->get_preceding_inline_comments($method);
+                $tags_m = $this->annotations->parse_inline($inline_m);
+                $summary_m = $tags_m['summary'] ?? '';
+                unset($tags_m['summary']);
             }
-            $methods[] = $this->extract_method($method, $owner);
+
+            if (!$method->isPublic()) {
+                $has_owner = !empty($tags_m['owner']);
+                $has_lifecycle = !empty($tags_m['lifecycle']);
+                if (!$has_owner && !$has_lifecycle) {
+                    continue;
+                }
+            }
+
+            if ($summary_m !== '') {
+                if (!isset($tags_m['contract'])) {
+                    $tags_m['contract'] = [];
+                }
+                array_unshift($tags_m['contract'], $summary_m);
+            }
+
+            $methods[] = $this->extract_method($method, $owner, $tags_m);
         }
 
         $this->result = new extracted_class(
@@ -56,10 +114,7 @@ class class_visitor extends NodeVisitorAbstract {
         return null;
     }
 
-    private function extract_method(ClassMethod $method, string $owner): extracted_method {
-        $doc  = (string) ($method->getDocComment()?->getText() ?? '');
-        $tags = $this->annotations->parse($doc);
-
+    private function extract_method(ClassMethod $method, string $owner, array $tags): extracted_method {
         $params = [];
         foreach ($method->params as $param) {
             $type     = $param->type !== null ? $this->type_to_string($param->type) : '';
@@ -70,7 +125,13 @@ class class_visitor extends NodeVisitorAbstract {
         $return_type = $method->returnType !== null
             ? ': ' . $this->type_to_string($method->returnType)
             : '';
-        $visibility = $method->isStatic() ? 'public static' : 'public';
+            
+        $vis_name = match(true) {
+            $method->isPrivate() => 'private',
+            $method->isProtected() => 'protected',
+            default => 'public',
+        };
+        $visibility = $method->isStatic() ? $vis_name . ' static' : $vis_name;
         $signature  = "{$visibility} function {$method->name}("
             . implode(', ', $params) . "){$return_type}";
 
@@ -87,7 +148,6 @@ class class_visitor extends NodeVisitorAbstract {
             throws:       $tags['throws']       ?? [],
         );
     }
-
     private function type_to_string(Node $type): string {
         return match (true) {
             $type instanceof Node\Identifier       => $type->name,
