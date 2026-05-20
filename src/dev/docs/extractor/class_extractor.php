@@ -25,6 +25,10 @@ class class_extractor {
      * @ai-contract delegates docblock parsing to annotation_parser via class_visitor
      */
     public function extract(string $file): extracted_class|null {
+        if (!is_file($file) || !is_readable($file)) {
+            return null;
+        }
+
         $source = @file_get_contents($file);
         if ($source === false) {
             return null;

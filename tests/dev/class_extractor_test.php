@@ -108,7 +108,7 @@ describe('class_extractor', function(): void {
         expect(file_exists($path))->toBeFalse();
         $result = (new class_extractor())->extract($path);
         expect($result)->toBeNull();
-    })->skip('file_get_contents emits E_WARNING for missing files; tested implicitly via null return');
+    });
 
     test('skips anonymous classes', function(): void {
         $file = write_php_fixture(<<<'PHP'
