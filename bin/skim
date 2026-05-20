@@ -1,5 +1,7 @@
 #!/usr/bin/env php
 <?php declare(strict_types=1);
+// Modified: Integrated interactive menu TUI, new CLI layout helpers, exception boxes, and suggestions.
+
 
 // SKIM CLI entry point.
 // Usage: php skim <command> [args...] [--flag=value]
@@ -33,9 +35,26 @@ foreach ($argv_input as $token) {
         } else {
             $flags[$token] = true;
         }
+    } elseif (str_starts_with($token, '-')) {
+        $token = substr($token, 1);
+        $flags[$token] = true;
     } else {
         $args[] = $token;
     }
+}
+
+// Global flags
+$quiet = isset($flags['quiet']) || isset($flags['q']);
+$no_ansi = isset($flags['no-ansi']);
+$version_flag = isset($flags['version']) || isset($flags['V']);
+
+if ($version_flag) {
+    echo "SKIM Framework CLI v1.0.0\n";
+    exit(0);
+}
+
+if ($no_ansi) {
+    \skim\cli\cli::force_plain(true);
 }
 
 // Command map — extend via config/app.php 'commands' key
@@ -61,48 +80,142 @@ $command_map = [
     'mcp:serve'      => \skim\dev\docs\commands\mcp_serve_command::class,
 ];
 
-// Sub-commands inject their name as first arg:
-// 'migrate:down' → class migrate_command, arg[0] = 'down'
-$colon = strpos($command_name, ':');
-if ($colon !== false) {
-    $sub  = substr($command_name, $colon + 1);
-    array_unshift($args, $sub);
-    $base = substr($command_name, 0, $colon);
-    $class = $command_map[$command_name] ?? ($command_map[$base] ?? null);
-} else {
-    $class = $command_map[$command_name] ?? null;
-}
-
-// User-defined commands from config
-$user_commands = \skim\core\config::get('app.commands', []);
-$class         ??= $user_commands[$command_name] ?? null;
-
-if ($class === null) {
-    if ($command_name === 'help' || $command_name === 'list') {
-        \skim\cli\cli::bold('SKIM Framework CLI');
-        \skim\cli\cli::line();
-        \skim\cli\cli::info('Available commands:');
-        foreach (array_keys($command_map) as $name) {
-            \skim\cli\cli::line('  ' . $name);
+// Loop for re-dispatching interactive selection
+while (true) {
+    $colon = strpos($command_name, ':');
+    if ($colon !== false) {
+        $sub  = substr($command_name, $colon + 1);
+        if (empty($args) || $args[0] !== $sub) {
+            array_unshift($args, $sub);
         }
-        exit(0);
+        $base = substr($command_name, 0, $colon);
+        $class = $command_map[$command_name] ?? ($command_map[$base] ?? null);
+    } else {
+        $class = $command_map[$command_name] ?? null;
     }
 
-    \skim\cli\cli::error("Unknown command: {$command_name}");
-    exit(1);
+    // User-defined commands from config
+    $user_commands = \skim\core\config::get('app.commands', []);
+    $class         ??= $user_commands[$command_name] ?? null;
+
+    if ($class === null) {
+        if ($command_name === 'help' || $command_name === 'list') {
+            $group_names = [
+                'database'    => 'Database',
+                'queue'       => 'Queue',
+                'cache'       => 'Cache',
+                'server'      => 'Server',
+                'development' => 'Development',
+                'general'     => 'General',
+            ];
+            $grouped_commands = [];
+            foreach ($command_map as $name => $c_class) {
+                if (!class_exists($c_class)) {
+                    continue;
+                }
+                /** @var \skim\cli\command $cmd */
+                $cmd = new $c_class();
+                $cmd->configure_for_name($name);
+                
+                $group_key = $cmd->get_group();
+                $group_label = $group_names[$group_key] ?? ucfirst($group_key);
+                
+                $grouped_commands[$group_label][] = [
+                    'name'        => $name,
+                    'usage'       => $cmd->get_usage(),
+                    'description' => $cmd->get_description(),
+                ];
+            }
+
+            $groups = [];
+            $ordered_labels = ['Database', 'Queue', 'Cache', 'Server', 'Development', 'General'];
+            foreach ($ordered_labels as $label) {
+                if (isset($grouped_commands[$label])) {
+                    $groups[] = [
+                        'label'    => $label,
+                        'commands' => $grouped_commands[$label],
+                    ];
+                    unset($grouped_commands[$label]);
+                }
+            }
+            foreach ($grouped_commands as $label => $commands) {
+                $groups[] = [
+                    'label'    => $label,
+                    'commands' => $commands,
+                ];
+            }
+
+            $is_interactive = \skim\cli\cli::is_tty() && !$no_ansi && !$quiet;
+            if ($is_interactive) {
+                $menu = new \skim\cli\interactive_menu($groups);
+                try {
+                    $selected = $menu->run();
+                    if ($selected === null) {
+                        exit(0);
+                    }
+                } catch (\Throwable $e) {
+                    if (str_starts_with($e->getMessage(), '__run_cmd__:')) {
+                        $selected = substr($e->getMessage(), 12);
+                    } else {
+                        throw $e;
+                    }
+                }
+                
+                $command_name = $selected;
+                continue;
+            } else {
+                $version = '1.0.0';
+                $php = PHP_VERSION;
+                $env = \skim\core\env::get('APP_ENV', 'development');
+                $os = PHP_OS . ' ' . php_uname('m');
+                \skim\cli\cli::header($version, $php, $env, $os);
+                \skim\cli\cli::section('Available commands:');
+                foreach ($groups as $g) {
+                    \skim\cli\cli::line('  ' . strtoupper($g['label']));
+                    foreach ($g['commands'] as $c) {
+                        $usage = $c['usage'] !== '' ? ' ' . $c['usage'] : '';
+                        \skim\cli\cli::line('    ' . str_pad($c['name'] . $usage, 30) . $c['description']);
+                    }
+                    \skim\cli\cli::line();
+                }
+                exit(0);
+            }
+        }
+
+        \skim\cli\cli::error_box('Error', "Unknown command: {$command_name}");
+        \skim\cli\cli::did_you_mean($command_name, array_keys($command_map));
+        exit(1);
+    }
+    
+    break;
 }
 
 /** @var \skim\cli\command $cmd */
 $cmd = new $class();
 $cmd->set_input($args, $flags);
 
+if (!$quiet && \skim\cli\cli::is_tty()) {
+    $version = '1.0.0';
+    $php = PHP_VERSION;
+    $env = \skim\core\env::get('APP_ENV', 'development');
+    $os = PHP_OS . ' ' . php_uname('m');
+    \skim\cli\cli::header($version, $php, $env, $os);
+}
+
+$start_time = microtime(true);
+
 try {
     $code = $cmd->handle();
+    if (\skim\cli\cli::is_tty() && !$quiet) {
+        \skim\cli\cli::newline();
+        \skim\cli\cli::duration($start_time);
+    }
     exit((int) $code);
 } catch (\Throwable $e) {
-    \skim\cli\cli::error($e->getMessage());
+    \skim\cli\cli::error_box("Error", $e->getMessage());
     if (\skim\core\config::get('app.debug')) {
         \skim\cli\cli::muted($e->getTraceAsString());
     }
     exit(1);
 }
+

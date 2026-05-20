@@ -28,10 +28,13 @@ docker compose up -d --build
 docker compose exec app composer install
 
 # 5. Run migrations
-docker compose exec app php skim migrate
+docker compose exec app php bin/skim migrate
 
 # 6. Open in browser
 open http://localhost:8080
+
+## Development & testing 
+docker compose exec app composer test
 ```
 
 ---
