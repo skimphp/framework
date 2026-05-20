@@ -141,6 +141,18 @@ class llm_md_emitter {
         $content = implode("\n", $lines) . "\n";
 
         $dir = dirname($output_path);
+        $ancestor = $dir;
+        while ($ancestor !== '/' && $ancestor !== '.' && !file_exists($ancestor)) {
+            $parent = dirname($ancestor);
+            if ($parent === $ancestor) {
+                break;
+            }
+            $ancestor = $parent;
+        }
+        if (file_exists($ancestor) && !is_dir($ancestor)) {
+            throw new \RuntimeException("llm_md_emitter: cannot create directory {$dir} because {$ancestor} is a file");
+        }
+
         if (!is_dir($dir) && !@mkdir($dir, 0755, recursive: true)) {
             throw new \RuntimeException("llm_md_emitter: cannot create directory {$dir}");
         }
