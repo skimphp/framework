@@ -52,8 +52,7 @@ class ide_command extends command {
         foreach ($classes as $class) {
             try {
                 $ref   = new \ReflectionClass($class);
-                $table = $class::get_table();
-                $cols  = $this->get_columns($table);
+                $cols  = $this->get_columns($class);
                 $out  .= $this->stub($class, $ref->getShortName(), $cols);
             } catch (\Throwable) {
                 // Skip models that fail reflection
@@ -63,9 +62,9 @@ class ide_command extends command {
         return $out;
     }
 
-    private function get_columns(string $table): array {
+    private function get_columns(string $class): array {
         try {
-            $rows = \skim\db\db::all("DESCRIBE {$table}");
+            $rows = $class::schema();
             return array_map(fn($r) => [
                 'name' => $r['Field'],
                 'type' => $this->map_type($r['Type'] ?? 'text'),

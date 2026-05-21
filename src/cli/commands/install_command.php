@@ -101,8 +101,14 @@ class install_command extends command {
         cli::line();
         cli::success('.env written to ' . $env_path);
 
+        // Reload env and config so migrations run with the newly written configuration
+        \skim\core\env::reset();
+        \skim\core\env::load($env_path);
+        \skim\core\config::reset();
+        \skim\core\config::load(base_path('config'));
+
         // --- Migrations ---
-        if (!$this->flag('no-migrate', false) && $db_driver !== 'sqlite') {
+        if (!$this->flag('no-migrate', false)) {
             cli::line();
             $run_mig = cli::confirm('Run migrations now?', true);
             if ($run_mig) {
