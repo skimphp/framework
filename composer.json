@@ -26,7 +26,8 @@
         }
     },
     "scripts": {
-        "test": "pest"
+        "test": "pest",
+        "docker-test": "docker compose exec -T app composer test"
     },
     "config": {
         "allow-plugins": {

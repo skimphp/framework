@@ -8,12 +8,16 @@ RUN apk add --no-cache \
     libpq-dev postgresql-dev \
     mysql-client postgresql-client \
     nodejs npm \
+    sqlite-dev \
     $PHPIZE_DEPS
 
 RUN docker-php-ext-configure pdo_pgsql --with-pdo-pgsql=/usr \
+    && docker-php-ext-configure pdo_sqlite --with-pdo-sqlite=/usr \
     && docker-php-ext-install -j$(nproc) \
         pdo_mysql \
+        pdo_mysql \
         pdo_pgsql \
+        pdo_sqlite \
         mbstring \
         intl \
         zip \
@@ -21,7 +25,6 @@ RUN docker-php-ext-configure pdo_pgsql --with-pdo-pgsql=/usr \
         pcntl \
         posix \
         sockets
-
 
 # Redis and pcov
 RUN pecl install redis && docker-php-ext-enable redis

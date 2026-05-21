@@ -45,7 +45,7 @@ class llm_md_emitter {
 
         $lines[] = '## Architecture';
         $lines[] = '';
-        $lines[] = 'SKIM is a PHP 8.5+ micro-framework. Zero external dependencies except `nikic/fast-route` (routing) and `pestphp/pest` (testing). Docker-ready with MySQL, PostgreSQL, Redis. Snake_case everywhere, no template engine, no YAML, no APCu. Static facades (`db::`, `cache::`, `session::`) are testable via `set_driver()` / `reset()`.';
+        $lines[] = 'SKIM is a PHP 8.5+ micro-framework. Zero external dependencies except `nikic/fast-route` (routing) and `pestphp/pest` (testing). Docker-ready with MySQL, PostgreSQL, SQLite, Redis. Snake_case everywhere, no template engine, no YAML, no APCu. Static facades (`db::`, `cache::`, `session::`) are testable via `set_driver()` / `reset()`.';
         $lines[] = '';
         $lines[] = 'Request lifecycle: `app::run()` → `request::from_globals()` → `router::dispatch()` → middleware pipeline → controller → `response::send()`';
         $lines[] = '';

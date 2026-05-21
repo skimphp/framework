@@ -20,6 +20,13 @@ class db {
     }
 
     private static function make_pdo(array $cfg): \PDO {
+        if ($cfg['driver'] === 'sqlite' && ($cfg['database'] ?? '') !== ':memory:') {
+            $dir = dirname($cfg['database']);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+        }
+
         $dsn = match ($cfg['driver']) {
             'mysql' => sprintf(
                 'mysql:host=%s;port=%d;dbname=%s;charset=%s',

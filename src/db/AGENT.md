@@ -2,7 +2,7 @@
 
 ## What this module does
 PDO wrapper, query_gen, active record (model), merry ORM (merry_model).
-Supports MySQL and PostgreSQL. Schema cached on first connect.
+Supports MySQL, PostgreSQL, and SQLite. Schema cached on first connect.
 
 ## query_gen — critical behaviours LLM must know
 - %where% with empty array or all-null conditions → removed silently, query runs
@@ -17,7 +17,7 @@ Supports MySQL and PostgreSQL. Schema cached on first connect.
 ## active record — critical behaviours
 - find($id) returns null if not found — never throws
 - find_or_fail($id) throws not_found_exception — use in controllers
-- schema is fetched once via DESCRIBE, stored in cache driver
+- schema is fetched once via driver-specific queries (DESCRIBE / information_schema / PRAGMA table_info), stored in cache driver
 - invalidate schema cache after migrations: cache::flush('schema:')
 - $guarded columns are never mass-assigned even if present in input array
 - save() runs INSERT if no primary key, UPDATE if primary key set
