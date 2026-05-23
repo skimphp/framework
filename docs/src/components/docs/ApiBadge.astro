@@ -1,0 +1,20 @@
+---
+interface Props {
+  type: string;
+}
+
+const { type } = Astro.props;
+
+const variants: Record<string, { label: string; class: string }> = {
+  'singleton': { label: 'singleton', class: 'singleton' },
+  'container': { label: 'container', class: 'container' },
+  'http-kernel': { label: 'http-kernel', class: 'http-kernel' },
+  'immutable': { label: 'immutable', class: 'immutable' },
+  'mutable': { label: 'mutable', class: 'mutable' },
+  'internal': { label: 'internal', class: 'internal' },
+  'experimental': { label: 'experimental', class: 'experimental' },
+};
+
+const resolved = variants[type] || { label: type, class: 'default' };
+---
+<span class={`api-badge ${resolved.class} not-content`}>{resolved.label}</span>

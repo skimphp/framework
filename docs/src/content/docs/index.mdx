@@ -1,0 +1,38 @@
+---
+title: SKIM Framework
+description: PHP 8.5+ micro-framework — zero magic, full control.
+template: splash
+hero:
+  tagline: PHP 8.5+ micro-framework. Zero magic. Snake_case everything. Auto-generated LLM context.
+  actions:
+    - text: API Reference
+      link: /api/
+      icon: right-arrow
+      variant: primary
+    - text: GitHub
+      link: https://github.com/skim-framework/skim
+      icon: external
+---
+
+## Quick start
+
+```bash
+composer create-project skim/framework my-app
+cd my-app
+cp .env.example .env
+docker compose up -d
+php skim migrate
+```
+
+## Generate docs
+
+```bash
+php skim docs:extract   # scan @ai.* annotations → llm.json
+php skim docs:llm       # llm.json → llm.md (paste into any LLM)
+php skim docs:site      # llm.json → this site (MDX files)
+```
+
+## API Reference
+
+The API reference is auto-generated from `@ai.*` PHPDoc annotations in the source.
+Run `php skim docs:site` to regenerate it after making changes.

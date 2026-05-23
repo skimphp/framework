@@ -1,0 +1,24 @@
+---
+interface Props {
+  name: string;
+  mutable?: boolean;
+  immutable?: boolean;
+}
+
+const { name, mutable = false, immutable = false } = Astro.props;
+---
+<div class="api-scope-box not-content">
+  <div class="api-scope-header">
+    <div class="api-scope-title-group">
+      <span class="api-scope-icon" aria-hidden="true">🌐</span>
+      <span class="api-scope-name">{name}</span>
+    </div>
+    <div class="api-scope-badges">
+      {immutable && <span class="api-badge immutable">immutable</span>}
+      {mutable && <span class="api-badge mutable">mutable</span>}
+    </div>
+  </div>
+  <div class="api-scope-body">
+    <slot />
+  </div>
+</div>

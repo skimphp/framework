@@ -1,0 +1,23 @@
+---
+interface Props {
+  name: string;
+  type: string;
+  required?: boolean;
+}
+
+const { name, type, required = false } = Astro.props;
+---
+<div class="api-param not-content">
+  <div class="api-param-header">
+    <span class="api-param-name">{name}</span>
+    <span class="api-param-badge api-param-type">{type}</span>
+    {required ? (
+      <span class="api-param-badge api-param-req required">required</span>
+    ) : (
+      <span class="api-param-badge api-param-req optional">optional</span>
+    )}
+  </div>
+  <div class="api-param-body">
+    <slot />
+  </div>
+</div>

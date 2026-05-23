@@ -1,0 +1,490 @@
+/* Custom API Documentation Components Styles for Starlight */
+
+/* Global variable extensions for API Docs */
+:root {
+  --api-border-radius: 8px;
+  --api-spacing-sm: 0.5rem;
+  --api-spacing-md: 1rem;
+  --api-spacing-lg: 1.5rem;
+}
+
+/* 1. ApiSignature */
+.api-signature {
+  background-color: var(--sl-color-gray-6);
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: var(--api-border-radius);
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  font-family: var(--__sl-font-mono);
+  font-size: var(--sl-text-code);
+  box-shadow: var(--sl-shadow-sm);
+  margin-bottom: var(--api-spacing-lg);
+  position: relative;
+}
+
+/* Strip down default code block styles injected by markdown processors within ApiSignature */
+.api-signature :global(pre) {
+  margin: 0 !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.api-signature :global(code) {
+  background-color: transparent !important;
+  padding: 0 !important;
+  font-size: inherit !important;
+  color: var(--sl-color-white) !important;
+  white-space: pre !important;
+}
+
+/* 2. ApiParam */
+.api-param {
+  background-color: var(--sl-color-gray-6);
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: var(--api-border-radius);
+  padding: var(--api-spacing-md);
+  margin-bottom: var(--api-spacing-md);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.api-param:hover {
+  border-color: var(--sl-color-gray-4);
+  box-shadow: var(--sl-shadow-sm);
+}
+
+.api-param-header {
+  display: flex;
+  align-items: center;
+  gap: var(--api-spacing-sm);
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.api-param-name {
+  font-family: var(--__sl-font-mono);
+  font-weight: 600;
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-white);
+}
+
+.api-param-badge {
+  font-family: var(--__sl-font-mono);
+  font-size: var(--sl-text-2xs);
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  text-transform: lowercase;
+  font-weight: 500;
+}
+
+.api-param-type {
+  background-color: var(--sl-color-accent-low);
+  color: var(--sl-color-text-accent);
+  border: 1px solid var(--sl-color-accent);
+}
+
+.api-param-req.required {
+  background-color: var(--sl-color-red-low);
+  color: var(--sl-color-red);
+  border: 1px solid var(--sl-color-red-high);
+}
+
+.api-param-req.optional {
+  background-color: var(--sl-color-gray-5);
+  color: var(--sl-color-gray-2);
+  border: 1px solid var(--sl-color-gray-4);
+}
+
+.api-param-body {
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-text);
+  line-height: 1.6;
+}
+
+.api-param-body > :global(*:last-child) {
+  margin-bottom: 0;
+}
+
+/* 3. ApiThrows */
+.api-throws {
+  border-left: 4px solid var(--sl-color-red);
+  background-color: var(--sl-color-red-low);
+  padding: 0.75rem 1rem;
+  border-radius: 0 var(--api-border-radius) var(--api-border-radius) 0;
+  margin-bottom: var(--api-spacing-md);
+}
+
+.api-throws-header {
+  display: flex;
+  align-items: center;
+  gap: var(--api-spacing-sm);
+  margin-bottom: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.api-throws-label {
+  font-size: var(--sl-text-2xs);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--sl-color-red);
+}
+
+.api-throws-type {
+  font-family: var(--__sl-font-mono);
+  font-size: var(--sl-text-xs);
+  color: var(--sl-color-white);
+  background-color: var(--sl-color-bg-inline-code);
+  border: 1px solid var(--sl-color-hairline);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.api-throws-body {
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-text);
+}
+
+.api-throws-body > :global(*:last-child) {
+  margin-bottom: 0;
+}
+
+/* 4. ApiProperty */
+.api-property {
+  background-color: var(--sl-color-gray-6);
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: var(--api-border-radius);
+  padding: var(--api-spacing-md);
+  margin-bottom: var(--api-spacing-lg);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.api-property:hover {
+  border-color: var(--sl-color-gray-4);
+  box-shadow: var(--sl-shadow-sm);
+}
+
+.api-property-header {
+  display: flex;
+  align-items: center;
+  gap: var(--api-spacing-sm);
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.api-property-name {
+  font-family: var(--__sl-font-mono);
+  font-weight: 600;
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-white);
+}
+
+.api-property-badge {
+  font-family: var(--__sl-font-mono);
+  font-size: var(--sl-text-2xs);
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.api-property-type {
+  background-color: var(--sl-color-accent-low);
+  color: var(--sl-color-text-accent);
+  border: 1px solid var(--sl-color-accent);
+}
+
+.api-property-visibility.public {
+  background-color: var(--sl-color-green-low);
+  color: var(--sl-color-green);
+  border: 1px solid var(--sl-color-green-high);
+}
+
+.api-property-visibility.protected {
+  background-color: var(--sl-color-orange-low);
+  color: var(--sl-color-orange);
+  border: 1px solid var(--sl-color-orange-high);
+}
+
+.api-property-visibility.private {
+  background-color: var(--sl-color-red-low);
+  color: var(--sl-color-red);
+  border: 1px solid var(--sl-color-red-high);
+}
+
+.api-property-readonly {
+  background-color: var(--sl-color-purple-low);
+  color: var(--sl-color-purple);
+  border: 1px solid var(--sl-color-purple-high);
+}
+
+.api-property-body {
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-text);
+  line-height: 1.6;
+}
+
+.api-property-body > :global(*:last-child) {
+  margin-bottom: 0;
+}
+
+/* 5. ApiMethod */
+.api-method {
+  position: relative;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--sl-color-hairline-light);
+}
+
+.api-method:first-of-type {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 1.5rem;
+}
+
+.api-method-heading {
+  margin-bottom: var(--api-spacing-md);
+}
+
+.api-method-name {
+  font-family: var(--__sl-font-mono);
+  font-size: var(--sl-text-xl);
+  font-weight: 600;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.api-method-link {
+  color: var(--sl-color-white) !important;
+  text-decoration: none !important;
+  transition: color 0.2s ease;
+}
+
+.api-method-link:hover {
+  color: var(--sl-color-text-accent) !important;
+}
+
+.api-method-anchor-icon {
+  opacity: 0;
+  color: var(--sl-color-accent);
+  transition: opacity 0.2s ease;
+  font-size: 0.85em;
+  user-select: none;
+}
+
+.api-method:hover .api-method-anchor-icon {
+  opacity: 0.8;
+}
+
+.api-method-body {
+  margin-top: 0.75rem;
+}
+
+/* 6. ApiBadge */
+.api-badge {
+  display: inline-block;
+  font-family: var(--__sl-font-mono);
+  font-size: var(--sl-text-2xs);
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 100px;
+  line-height: 1.2;
+  text-transform: lowercase;
+  margin-right: 0.35rem;
+  border: 1px solid transparent;
+  vertical-align: middle;
+}
+
+.api-badge.singleton {
+  background-color: var(--sl-color-purple-low);
+  color: var(--sl-color-purple);
+  border-color: var(--sl-color-purple-high);
+}
+
+.api-badge.container {
+  background-color: var(--sl-color-blue-low);
+  color: var(--sl-color-blue);
+  border-color: var(--sl-color-blue-high);
+}
+
+.api-badge.http-kernel {
+  background-color: var(--sl-color-orange-low);
+  color: var(--sl-color-orange);
+  border-color: var(--sl-color-orange-high);
+}
+
+.api-badge.immutable {
+  background-color: var(--sl-color-red-low);
+  color: var(--sl-color-red);
+  border-color: var(--sl-color-red-high);
+}
+
+.api-badge.mutable {
+  background-color: var(--sl-color-green-low);
+  color: var(--sl-color-green);
+  border-color: var(--sl-color-green-high);
+}
+
+.api-badge.internal {
+  background-color: var(--sl-color-gray-5);
+  color: var(--sl-color-gray-2);
+  border-color: var(--sl-color-gray-4);
+}
+
+.api-badge.experimental {
+  background-color: hsl(45, 60%, 15%);
+  color: hsl(45, 100%, 70%);
+  border-color: hsl(45, 60%, 30%);
+}
+
+.api-badge.default {
+  background-color: var(--sl-color-gray-6);
+  color: var(--sl-color-gray-3);
+  border-color: var(--sl-color-gray-5);
+}
+
+/* Light mode overrides for specific badges */
+:root[data-theme='light'] .api-badge.experimental {
+  background-color: hsl(45, 95%, 92%);
+  color: hsl(45, 95%, 20%);
+  border-color: hsl(45, 95%, 70%);
+}
+
+/* 7. ScopeBox */
+.api-scope-box {
+  background-color: var(--sl-color-gray-6);
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: var(--api-border-radius);
+  padding: var(--api-spacing-md);
+  margin-bottom: var(--api-spacing-lg);
+}
+
+.api-scope-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--sl-color-hairline);
+  padding-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: var(--api-spacing-sm);
+}
+
+.api-scope-title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--api-spacing-sm);
+}
+
+.api-scope-icon {
+  font-size: 1.1rem;
+}
+
+.api-scope-name {
+  font-family: var(--__sl-font-mono);
+  font-weight: 600;
+  color: var(--sl-color-white);
+  font-size: var(--sl-text-sm);
+}
+
+.api-scope-badges {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.api-scope-body {
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-text);
+  line-height: 1.6;
+}
+
+.api-scope-body > :global(*:last-child) {
+  margin-bottom: 0;
+}
+
+/* 8. Callout Box (NoteBox & WarningBox) */
+.api-callout {
+  padding: 0.75rem 1rem;
+  border-radius: var(--api-border-radius);
+  margin-bottom: var(--api-spacing-lg);
+  border-left: 4px solid;
+}
+
+.api-callout-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.api-callout-icon {
+  font-size: 1rem;
+}
+
+.api-callout-title {
+  font-size: var(--sl-text-2xs);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.api-callout-content {
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-text);
+  line-height: 1.6;
+}
+
+.api-callout-content > :global(*:last-child) {
+  margin-bottom: 0;
+}
+
+/* Note Callout */
+.api-callout-note {
+  border-left-color: var(--sl-color-accent);
+  background-color: var(--sl-color-accent-low);
+}
+.api-callout-note .api-callout-title {
+  color: var(--sl-color-text-accent);
+}
+
+/* Warning Callout */
+.api-callout-warning {
+  border-left-color: var(--sl-color-orange);
+  background-color: var(--sl-color-orange-low);
+}
+.api-callout-warning .api-callout-title {
+  color: var(--sl-color-orange);
+}
+
+/* 9. LifecycleFlow */
+.api-lifecycle-flow {
+  background-color: var(--sl-color-gray-6);
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: var(--api-border-radius);
+  padding: var(--api-spacing-md);
+  margin-bottom: var(--api-spacing-lg);
+  font-family: var(--__sl-font-mono);
+  font-size: var(--sl-text-sm);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: var(--sl-color-white);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.api-lifecycle-flow :global(pre) {
+  margin: 0 !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  white-space: pre-wrap !important;
+}
+
+.api-lifecycle-flow :global(code) {
+  background-color: transparent !important;
+  padding: 0 !important;
+  font-size: inherit !important;
+  color: inherit !important;
+}

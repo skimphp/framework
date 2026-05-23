@@ -1,0 +1,16 @@
+---
+interface Props {
+  type: string;
+}
+
+const { type } = Astro.props;
+---
+<div class="api-throws not-content">
+  <div class="api-throws-header">
+    <span class="api-throws-label">throws</span>
+    <span class="api-throws-type">{type}</span>
+  </div>
+  <div class="api-throws-body">
+    <slot />
+  </div>
+</div>

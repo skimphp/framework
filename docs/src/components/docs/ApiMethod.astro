@@ -1,0 +1,20 @@
+---
+interface Props {
+  name: string;
+}
+
+const { name } = Astro.props;
+---
+<section class="api-method not-content" id={name}>
+  <div class="api-method-heading">
+    <h3 class="api-method-name">
+      <a href={`#${name}`} class="api-method-link">
+        {name}()
+      </a>
+      <span class="api-method-anchor-icon" aria-hidden="true">#</span>
+    </h3>
+  </div>
+  <div class="api-method-body">
+    <slot />
+  </div>
+</section>
