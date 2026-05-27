@@ -15,7 +15,7 @@ class cache_command extends command {
         $prefix = $this->arg(1, '');
 
         if (in_array($sub, ['clear', 'flush'], true)) {
-            cache::flush($prefix);
+            $prefix !== '' ? cache::flush($prefix) : cache::flush_all();
             $msg = $prefix !== '' ? "Cache prefix '{$prefix}' cleared." : 'Cache cleared.';
             $this->success($msg);
             return 0;
