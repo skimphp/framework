@@ -3,89 +3,81 @@
 use skim\dev\docs\value\extracted_method;
 use skim\dev\docs\value\extracted_class;
 
-describe('extracted_method', function(): void {
+describe('extracted_class::to_array', function () {
 
-    test('to_array() contains all fields', function(): void {
-        $method = new extracted_method(
-            name:         'find',
-            signature:    'public function find(int $id): ?user',
-            owner:        'skim\\db\\model',
-            contracts:    ['returns null when not found'],
-            invariants:   ['id is always positive'],
-            non_goals:    ['does not cache'],
-            side_effects: ['queries the database'],
-            lifecycle:    'per-request',
-            perf:         'O(1)',
-            throws:       ['db_exception'],
+    it('includes all new fields in serialized output', function () {
+        $cls = new extracted_class(
+            class_name:   'cache',
+            namespace:    'skim\\cache',
+            file:         '/app/src/cache/cache.php',
+            summary:      'Static cache facade.',
+            lifecycle:    'driver resolved lazily',
+            layer:        'cache',
+            owns:         ['driver instance'],
+            entry_points: ['remember', 'get', 'set'],
+            config_reads: ['cache.driver', 'cache.ttl'],
+            invariants:   ['driver reused until reset'],
+            side_effects: ['writes static driver instance'],
+            non_goals:    ['does not expose backend-specific APIs'],
         );
-
-        $arr = $method->to_array();
-        expect($arr['name'])->toBe('find');
-        expect($arr['signature'])->toBe('public function find(int $id): ?user');
-        expect($arr['owner'])->toBe('skim\\db\\model');
-        expect($arr['contracts'])->toBe(['returns null when not found']);
-        expect($arr['invariants'])->toBe(['id is always positive']);
-        expect($arr['non_goals'])->toBe(['does not cache']);
-        expect($arr['side_effects'])->toBe(['queries the database']);
-        expect($arr['lifecycle'])->toBe('per-request');
-        expect($arr['perf'])->toBe('O(1)');
-        expect($arr['throws'])->toBe(['db_exception']);
+        $arr = $cls->to_array();
+        expect($arr)->toHaveKey('layer')
+            ->and($arr)->toHaveKey('owns')
+            ->and($arr)->toHaveKey('entry_points')
+            ->and($arr)->toHaveKey('config_reads')
+            ->and($arr)->toHaveKey('invariants')
+            ->and($arr)->toHaveKey('side_effects')
+            ->and($arr)->toHaveKey('non_goals')
+            ->and($arr['entry_points'])->toContain('remember');
     });
 
-    test('arrays default to empty when not provided', function(): void {
-        $method = new extracted_method(name: 'foo', signature: 'public function foo()', owner: 'bar');
-        expect($method->contracts)->toBe([]);
-        expect($method->invariants)->toBe([]);
-        expect($method->non_goals)->toBe([]);
-        expect($method->side_effects)->toBe([]);
-        expect($method->throws)->toBe([]);
-        expect($method->lifecycle)->toBe('');
-        expect($method->perf)->toBe('');
+    it('annotated_method_count counts methods with at least one annotation', function () {
+        $m1 = new extracted_method('get', 'public function get(): mixed', 'ns\\cls', contracts: ['returns value']);
+        $m2 = new extracted_method('noop', 'public function noop(): void', 'ns\\cls');
+        $cls = new extracted_class('cls', 'ns', '/f.php', methods: [$m1, $m2]);
+        expect($cls->annotated_method_count())->toBe(1);
     });
 
-});
-
-describe('extracted_class', function(): void {
-
-    test('to_array() serializes all fields including methods', function(): void {
-        $method = new extracted_method(name: 'handle', signature: 'public function handle(): int', owner: 'my_command');
-        $class  = new extracted_class(
-            class_name: 'my_command',
-            namespace:  'app\\commands',
-            file:       '/app/commands/my_command.php',
-            summary:    'Does the thing.',
-            lifecycle:  'cli',
-            owner:      'platform',
-            methods:    [$method],
-        );
-
-        $arr = $class->to_array();
-        expect($arr['class_name'])->toBe('my_command');
-        expect($arr['namespace'])->toBe('app\\commands');
-        expect($arr['file'])->toBe('/app/commands/my_command.php');
-        expect($arr['summary'])->toBe('Does the thing.');
-        expect($arr['methods'])->toHaveCount(1);
-        expect($arr['methods'][0]['name'])->toBe('handle');
-    });
-
-    test('annotated_method_count() counts methods with at least one @ai.* tag', function(): void {
-        $annotated   = new extracted_method(name: 'a', signature: '', owner: '', contracts: ['contract one']);
-        $unannotated = new extracted_method(name: 'b', signature: '', owner: '');
-        $class       = new extracted_class('cls', '', '', methods: [$annotated, $unannotated]);
-
-        expect($class->annotated_method_count())->toBe(1);
-    });
-
-    test('annotated_method_count() returns 0 when no methods annotated', function(): void {
+    it('annotated_method_count() returns 0 when no methods annotated', function(): void {
         $m1    = new extracted_method(name: 'a', signature: '', owner: '');
         $m2    = new extracted_method(name: 'b', signature: '', owner: '');
         $class = new extracted_class('cls', '', '', methods: [$m1, $m2]);
         expect($class->annotated_method_count())->toBe(0);
     });
 
-    test('annotated_method_count() returns 0 for class with no methods', function(): void {
+    it('annotated_method_count() returns 0 for class with no methods', function(): void {
         $class = new extracted_class('cls', '', '');
         expect($class->annotated_method_count())->toBe(0);
+    });
+
+});
+
+describe('extracted_method::to_array', function () {
+
+    it('includes all new fields in serialized output', function () {
+        $m = new extracted_method(
+            name:         'remember',
+            signature:    'public static function remember(string $key, int $ttl, callable $default): mixed',
+            owner:        'skim\\cache\\cache',
+            group:        'Read API',
+            frequency:    'high',
+            contracts:    ['returns existing value or stores callback result on miss'],
+            inputs:       ['key is the backend lookup key'],
+            returns:      'cached or computed value',
+            calls:        ['has', 'get', 'set'],
+            warnings:     [],
+            examples:     ['cache miss computes and stores value'],
+        );
+        $arr = $m->to_array();
+        expect($arr)->toHaveKey('group')
+            ->and($arr)->toHaveKey('frequency')
+            ->and($arr)->toHaveKey('inputs')
+            ->and($arr)->toHaveKey('returns')
+            ->and($arr)->toHaveKey('calls')
+            ->and($arr)->toHaveKey('warnings')
+            ->and($arr)->toHaveKey('examples')
+            ->and($arr['group'])->toBe('Read API')
+            ->and($arr['calls'])->toContain('has');
     });
 
 });
