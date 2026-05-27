@@ -44,6 +44,7 @@ abstract class command {
                 'migrate' => 'database',
                 'queue'   => 'queue',
                 'cache'   => 'cache',
+                'ext'     => 'extension',
                 'serve'   => 'server',
                 'ide', 'install', 'docs', 'mcp' => 'development',
                 default   => 'general',
@@ -62,6 +63,8 @@ abstract class command {
                 'queue:restart'  => 'restart all queue workers',
                 'cache:clear'    => 'flush the cache',
                 'cache:flush'    => 'flush the cache',
+                'ext:install'    => 'install a SKIM extension',
+                'ext:list'       => 'list installed SKIM extensions',
                 'serve'          => 'start the built-in development server',
                 'ide:generate'   => 'generate helper files for IDEs',
                 'install'        => 'install framework components',
@@ -81,6 +84,7 @@ abstract class command {
                 'queue:work'   => '[queue] [--sleep=3] [--max-jobs=0]',
                 'queue:flush'  => '[queue]',
                 'cache:clear'  => '[prefix]',
+                'ext:install'  => '<name> [--prefix=skim_]',
                 default        => '',
             };
         }
