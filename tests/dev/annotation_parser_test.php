@@ -2,126 +2,261 @@
 
 use skim\dev\docs\extractor\annotation_parser;
 
-describe('annotation_parser — @ai.* tag extraction', function(): void {
+// ---------------------------------------------------------------------------
+// annotation_parser — legacy @ai- / @ai. style
+// ---------------------------------------------------------------------------
 
-    test('extracts a single @ai.contract tag', function(): void {
+describe('annotation_parser::parse — legacy @ai- style', function () {
+
+    it('extracts single @ai-contract tag', function () {
         $parser = new annotation_parser();
-        $doc    = '/** @ai.contract returns null when key is absent */';
-        $result = $parser->parse($doc);
-        expect($result['contract'])->toBe(['returns null when key is absent']);
+        $result = $parser->parse('/** @ai-contract returns cached value or default */');
+        expect($result)->toHaveKey('contract')
+            ->and($result['contract'][0])->toBe('returns cached value or default');
     });
 
-    test('extracts multiple occurrences of the same tag', function(): void {
+    it('extracts single @ai. tag (dot separator)', function () {
         $parser = new annotation_parser();
-        $doc    = <<<'DOC'
+        $result = $parser->parse('/** @ai.invariant driver reused until reset */');
+        expect($result['invariant'][0])->toBe('driver reused until reset');
+    });
+
+    it('collects multiple occurrences of the same tag', function () {
+        $parser = new annotation_parser();
+        $doc = <<<'DOC'
         /**
-         * @ai.contract first contract
-         * @ai.contract second contract
+         * @ai-contract first guarantee
+         * @ai-contract second guarantee
          */
         DOC;
         $result = $parser->parse($doc);
-        expect($result['contract'])->toHaveCount(2);
-        expect($result['contract'][0])->toBe('first contract');
-        expect($result['contract'][1])->toBe('second contract');
+        expect($result['contract'])->toHaveCount(2)
+            ->and($result['contract'][0])->toBe('first guarantee')
+            ->and($result['contract'][1])->toBe('second guarantee');
     });
 
-    test('extracts multiple different tag types', function(): void {
+    it('appends continuation lines to current tag value', function () {
         $parser = new annotation_parser();
-        $doc    = <<<'DOC'
+        $doc = <<<'DOC'
         /**
-         * @ai.contract does the thing
-         * @ai.invariant state is always valid
-         * @ai.non_goal does not validate input
-         * @ai.side_effect writes to Redis
+         * @ai-contract returns existing value
+         *   or stores callback result on miss
          */
         DOC;
         $result = $parser->parse($doc);
-        expect($result)->toHaveKey('contract');
-        expect($result)->toHaveKey('invariant');
-        expect($result)->toHaveKey('non_goal');
-        expect($result)->toHaveKey('side_effect');
+        expect($result['contract'][0])->toContain('stores callback result on miss');
     });
 
-    test('ignores non-@ai.* tags silently', function(): void {
+    it('ignores unknown tags silently', function () {
         $parser = new annotation_parser();
-        $doc    = <<<'DOC'
+        $result = $parser->parse('/** @param string $key @ai-contract stores value */');
+        expect($result)->toHaveKey('contract')
+            ->and($result)->not->toHaveKey('param');
+    });
+
+    it('flushes current tag when a new @tag line starts (not only blank lines)', function () {
+        // regression: old code lost value when next line started with @
+        $parser = new annotation_parser();
+        $doc = <<<'DOC'
         /**
-         * @param string $x
-         * @return void
-         * @ai.contract does the thing
+         * @ai-contract first contract
+         * @ai-throws RuntimeException on missing driver
          */
         DOC;
         $result = $parser->parse($doc);
-        expect($result)->toHaveKey('contract');
-        expect($result)->not->toHaveKey('param');
-        expect($result)->not->toHaveKey('return');
+        expect($result['contract'][0])->toBe('first contract')
+            ->and($result['throws'][0])->toBe('RuntimeException on missing driver');
     });
 
-    test('returns empty array for docblock with no @ai.* tags', function(): void {
+    it('extracts summary before first tag', function () {
         $parser = new annotation_parser();
-        $result = $parser->parse('/** Just a summary. @param int $x */');
-        expect($result)->toBe([]);
-    });
-
-    test('tag values are trimmed', function(): void {
-        $parser = new annotation_parser();
-        $doc    = '/**  @ai.contract   lots of whitespace   */';
-        $result = $parser->parse($doc);
-        expect($result['contract'][0])->toBe('lots of whitespace');
-    });
-
-    test('@ai-contract hyphen tag is parsed into the contract key', function(): void {
-        $parser = new annotation_parser();
-        $doc    = <<<'DOC'
+        $doc = <<<'DOC'
         /**
-         * @ai-contract returns null when not found
-         * @ai-contract never throws on miss
+         * Returns the active driver instance.
+         *
+         * @ai-contract returns cached driver or resolves one
          */
         DOC;
-        $result = $parser->parse($doc);
-        expect($result)->toHaveKey('contract');
-        expect($result['contract'])->toHaveCount(2);
-        expect($result['contract'][0])->toBe('returns null when not found');
-        expect($result['contract'][1])->toBe('never throws on miss');
+        $summary = $parser->extract_summary($doc);
+        expect($summary)->toContain('Returns the active driver instance');
     });
 
-    test('hyphen and dot tags in the same docblock both parse correctly', function(): void {
+    it('returns empty summary when no pre-tag lines exist', function () {
         $parser = new annotation_parser();
-        $doc    = <<<'DOC'
+        $result = $parser->extract_summary('/** @ai-contract only a tag */');
+        expect($result)->toBe('');
+    });
+
+    it('preserves multi-line summary', function () {
+        $parser = new annotation_parser();
+        $doc = <<<'DOC'
         /**
-         * @ai-contract some contract
-         * @ai.invariant some invariant
+         * Static cache facade over the configured backend driver.
+         * Swap the backend in config/cache.php without changing application code.
+         *
+         * @ai-contract stores value
          */
         DOC;
-        $result = $parser->parse($doc);
-        expect($result)->toHaveKey('contract');
-        expect($result)->toHaveKey('invariant');
+        $summary = $parser->extract_summary($doc);
+        expect($summary)->toContain('Static cache facade')
+            ->and($summary)->toContain('Swap the backend');
     });
 
 });
 
-describe('annotation_parser — extract_summary()', function(): void {
+// ---------------------------------------------------------------------------
+// annotation_parser — new #AI style (better-commenting-v3)
+// ---------------------------------------------------------------------------
 
-    test('returns first non-tag non-empty line', function(): void {
+describe('annotation_parser::parse_hash_ai — #AI semicolon style', function () {
+
+    it('parses single-line #AI with multiple key:value pairs', function () {
         $parser = new annotation_parser();
-        $doc    = <<<'DOC'
+        $source = '#AI role:static cache facade; layer:cache; lifecycle:driver resolved lazily;';
+        $result = $parser->parse_hash_ai($source);
+        expect($result['role'])->toBe('static cache facade')
+            ->and($result['layer'])->toBe('cache')
+            ->and($result['lifecycle'])->toBe('driver resolved lazily');
+    });
+
+    it('parses bracket list values without splitting them', function () {
+        $parser = new annotation_parser();
+        $source = '#AI owns:[driver instance]; entry_points:[remember,get,set,has];';
+        $result = $parser->parse_hash_ai($source);
+        expect($result['owns'])->toBe(['driver instance'])
+            ->and($result['entry_points'])->toBe(['remember', 'get', 'set', 'has']);
+    });
+
+    it('parses multi-line #AI block', function () {
+        $parser = new annotation_parser();
+        $block = <<<'BLOCK'
+        #AI role:static cache facade; layer:cache;
+        #AI owns:[driver instance cache]; entry_points:[remember,get,set];
+        #AI invariants:[driver reused until reset,remember computes only on miss];
+        BLOCK;
+        $result = $parser->parse_hash_ai($block);
+        expect($result['role'])->toBe('static cache facade')
+            ->and($result['owns'])->toBe(['driver instance cache'])
+            ->and($result['invariants'])->toBe(['driver reused until reset', 'remember computes only on miss']);
+    });
+
+    it('ignores lines that do not start with #AI', function () {
+        $parser = new annotation_parser();
+        $source = "some prose\n#AI role:facade;\nmore prose";
+        $result = $parser->parse_hash_ai($source);
+        expect($result)->toHaveKey('role')
+            ->and($result)->not->toHaveKey('some prose');
+    });
+
+});
+
+// ---------------------------------------------------------------------------
+// annotation_parser::parse_bracket_list
+// ---------------------------------------------------------------------------
+
+describe('annotation_parser::parse_bracket_list', function () {
+
+    it('splits [a,b,c] into trimmed array', function () {
+        $parser = new annotation_parser();
+        $result = $parser->parse_bracket_list('[remember,get,set,has]');
+        expect($result)->toBe(['remember', 'get', 'set', 'has']);
+    });
+
+    it('trims whitespace inside brackets', function () {
+        $parser = new annotation_parser();
+        $result = $parser->parse_bracket_list('[ driver instance , active backend ]');
+        expect($result)->toBe(['driver instance', 'active backend']);
+    });
+
+    it('returns single-item array for value without brackets', function () {
+        $parser = new annotation_parser();
+        $result = $parser->parse_bracket_list('array_driver');
+        expect($result)->toBe(['array_driver']);
+    });
+
+    it('returns empty array for empty brackets', function () {
+        $parser = new annotation_parser();
+        $result = $parser->parse_bracket_list('[]');
+        expect($result)->toBe([]);
+    });
+
+});
+
+// ---------------------------------------------------------------------------
+// annotation_parser — #AI lines embedded inside /** */ docblock
+// ---------------------------------------------------------------------------
+
+describe('annotation_parser::parse — #AI lines inside /** */ docblock', function () {
+
+    it('extracts #AI contract inside docblock', function () {
+        $parser = new annotation_parser();
+        $doc = <<<'DOC'
         /**
-         * This is the summary.
-         * @ai.contract something
+         * Returns the cached value for a key or computes and stores it.
+         *
+         * #AI contract:returns existing value or stores callback result on miss;
+         * #AI input:key is the backend lookup key;ttl is seconds for stored miss result;
+         * #AI calls:[has,get,set,profiler::cache];
          */
         DOC;
-        expect($parser->extract_summary($doc))->toBe('This is the summary.');
+        $result = $parser->parse($doc);
+        expect($result['contract'][0])->toContain('returns existing value or stores callback result')
+            ->and($result['calls'][0])->toBe(['has', 'get', 'set', 'profiler::cache'])
+            ->and($result['input'])->not->toBeEmpty();
     });
 
-    test('returns empty string when docblock has only tags', function(): void {
+    it('handles mixed @ai- and #AI in same docblock', function () {
         $parser = new annotation_parser();
-        $doc    = '/** @ai.contract only tags here */';
-        expect($parser->extract_summary($doc))->toBe('');
+        $doc = <<<'DOC'
+        /**
+         * @ai-contract legacy contract line
+         * #AI warning:clears entire backend when prefix is empty;
+         */
+        DOC;
+        $result = $parser->parse($doc);
+        expect($result['contract'][0])->toBe('legacy contract line')
+            ->and($result['warning'][0])->toContain('clears entire backend');
     });
 
-    test('returns empty string for empty docblock', function(): void {
+});
+
+// ---------------------------------------------------------------------------
+// annotation_parser::parse_inline — inline // comment style
+// ---------------------------------------------------------------------------
+
+describe('annotation_parser::parse_inline', function () {
+
+    it('extracts summary from lines before @ai tags', function () {
         $parser = new annotation_parser();
-        expect($parser->extract_summary('/**  */'))->toBe('');
+        $source = <<<'SRC'
+        // In-memory array driver — for tests only. No persistence, no Redis required.
+        // Resets between requests naturally (process-scoped array).
+        // @ai-contract stores values in process memory only
+        SRC;
+        $result = $parser->parse_inline($source);
+        expect($result['summary'])->toContain('In-memory array driver')
+            ->and($result['contract'][0])->toBe('stores values in process memory only');
+    });
+
+    it('returns empty summary when no pre-tag lines', function () {
+        $parser = new annotation_parser();
+        $source = '// @ai-contract only a tag';
+        $result = $parser->parse_inline($source);
+        expect($result['summary'])->toBe('');
+    });
+
+    it('stops collecting lines at first non-comment line', function () {
+        $parser = new annotation_parser();
+        $source = "// @ai-contract a tag\nclass foo {}";
+        $result = $parser->parse_inline($source);
+        expect($result['contract'][0])->toBe('a tag');
+    });
+
+    it('parses #AI style inside inline comments', function () {
+        $parser = new annotation_parser();
+        $source = '// #AI role:array driver; layer:cache;';
+        $result = $parser->parse_inline($source);
+        expect($result)->toHaveKey('role');
     });
 
 });
