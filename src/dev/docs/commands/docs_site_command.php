@@ -5,10 +5,11 @@ namespace skim\dev\docs\commands;
 use skim\cli\command;
 use skim\dev\docs\emitter\json_emitter;
 use skim\dev\docs\emitter\mdx_emitter;
+use skim\dev\docs\value\docs_generation_paths;
 
 // Reads llm.json and generates MDX files for the Starlight docs site.
 // Requires docs:extract to have been run first.
-// Usage: php skim docs:site
+// Usage: php skim docs:site [--output=DIR]
 class docs_site_command extends command {
     /**
      * @ai-contract reads llm.json → writes one MDX file per class via mdx_emitter
@@ -16,8 +17,9 @@ class docs_site_command extends command {
      * @ai-contract fails with clear message if llm.json does not exist
      */
     public function handle(): int {
-        $json_path = config('docs.output.json',    base_path('llm.json'));
-        $mdx_dir   = config('docs.output.mdx_dir', base_path('docs/src/content/docs/api'));
+        $paths     = docs_generation_paths::from_flags($this->flags);
+        $json_path = $paths->json_path();
+        $mdx_dir   = $paths->mdx_dir();
 
         try {
             $data = (new json_emitter())->load($json_path);

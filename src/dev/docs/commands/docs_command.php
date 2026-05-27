@@ -3,12 +3,14 @@
 namespace skim\dev\docs\commands;
 
 use skim\cli\command;
+use skim\dev\docs\value\docs_generation_paths;
 
 // Umbrella command: runs docs:extract → docs:llm → docs:site in sequence.
 // Supports --watch flag to rebuild llm.json on file change (inotifywait / fsevents).
 // Usage:
-//   php skim docs            → one-shot full build
-//   php skim docs --watch    → rebuild on .php file change
+//   php skim docs                                      → one-shot full build
+//   php skim docs --watch                              → rebuild on .php file change
+//   php skim docs --source=app --output=build/docs     → build docs for app into build/docs
 class docs_command extends command {
     /**
      * @ai-contract runs extract → llm → site in sequence; stops on first non-zero exit
@@ -42,7 +44,7 @@ class docs_command extends command {
 
     private function watch_mode(): int {
         $this->info('Watch mode — press Ctrl+C to stop.');
-        $scan_paths = config('docs.scan_paths', []);
+        $scan_paths = docs_generation_paths::from_flags($this->flags)->scan_paths();
         $last_hash  = $this->mtime_hash($scan_paths);
 
         $this->build();

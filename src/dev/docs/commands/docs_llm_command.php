@@ -5,10 +5,11 @@ namespace skim\dev\docs\commands;
 use skim\cli\command;
 use skim\dev\docs\emitter\json_emitter;
 use skim\dev\docs\emitter\llm_md_emitter;
+use skim\dev\docs\value\docs_generation_paths;
 
 // Reads llm.json and writes llm.md to the repo root.
 // Requires docs:extract to have been run first.
-// Usage: php skim docs:llm
+// Usage: php skim docs:llm [--output=DIR]
 class docs_llm_command extends command {
     /**
      * @ai-contract reads llm.json → writes llm.md via llm_md_emitter
@@ -16,8 +17,9 @@ class docs_llm_command extends command {
      * @ai-contract fails with clear message if llm.json does not exist
      */
     public function handle(): int {
-        $json_path = config('docs.output.json',   base_path('llm.json'));
-        $md_path   = config('docs.output.llm_md', base_path('llm.md'));
+        $paths     = docs_generation_paths::from_flags($this->flags);
+        $json_path = $paths->json_path();
+        $md_path   = $paths->llm_md_path();
 
         try {
             $data = (new json_emitter())->load($json_path);
