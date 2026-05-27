@@ -2,29 +2,27 @@
 
 namespace skim\dev\docs\emitter;
 
-// Reads decoded llm.json data and generates one MDX file per class
-// under docs/src/content/docs/api/ for the Starlight (Astro) docs site.
-// No framework dependencies — plain PHP only.
+// Generates component-style MDX from llm.json class records.
 class mdx_emitter {
     /**
      * @ai-contract accepts decoded llm.json array and output directory path
-     * @ai-contract creates one MDX file per class: {class_name}.mdx
-     * @ai-contract creates output directory if it does not exist
+     * @ai-contract creates one MDX file per class; duplicate class names include a source-file suffix
      * @ai-contract returns count of files written
      * @ai-contract throws \RuntimeException on write failure
      */
     public function emit(array $data, string $output_dir): int {
         $classes = $data['classes'] ?? [];
-
         if (!is_dir($output_dir)) {
             mkdir($output_dir, 0755, recursive: true);
         }
 
         $count = 0;
+        $duplicates = $this->duplicate_class_names($classes);
+        $filenames = [];
         foreach ($classes as $class) {
-            $content = $this->render_class($class);
-            $path    = $output_dir . '/' . $class['class_name'] . '.mdx';
-            if (file_put_contents($path, $content) === false) {
+            $file = $this->unique_mdx_file_name($this->mdx_file_name($class, $duplicates), $filenames);
+            $path = $output_dir . '/' . $file;
+            if (file_put_contents($path, $this->render_class($class)) === false) {
                 throw new \RuntimeException("mdx_emitter: cannot write {$path}");
             }
             $count++;
@@ -32,228 +30,255 @@ class mdx_emitter {
         return $count;
     }
 
-    /**
-     * @ai-contract renders a single class entry to Starlight-compatible MDX string
-     * @ai-contract includes: title, summary, lifecycle, methods with signature+contracts+invariants,
-     *              non-goals section, side effects section, owner badge
-     */
+    private function duplicate_class_names(array $classes): array {
+        $counts = [];
+        foreach ($classes as $class) {
+            $name = (string) ($class['title'] ?? $class['class_name'] ?? 'class');
+            $counts[$name] = ($counts[$name] ?? 0) + 1;
+        }
+        return array_filter($counts, fn(int $count): bool => $count > 1);
+    }
+
+    private function mdx_file_name(array $class, array $duplicates): string {
+        $class_name = (string) ($class['title'] ?? $class['class_name'] ?? 'class');
+        if (!isset($duplicates[$class_name])) {
+            return $this->slug($class_name) . '.mdx';
+        }
+        $file = basename((string) ($class['source_path'] ?? $class['file'] ?? 'class'));
+        $source = preg_replace('/(?:\.md)?\.php$/', '', $file) ?? $file;
+        return $this->slug($class_name . '-' . $source) . '.mdx';
+    }
+
+    private function unique_mdx_file_name(string $file, array &$filenames): string {
+        if (!isset($filenames[$file])) {
+            $filenames[$file] = 1;
+            return $file;
+        }
+        $filenames[$file]++;
+        return substr($file, 0, -4) . '-' . $filenames[$file] . '.mdx';
+    }
+
+    private function slug(string $value): string {
+        $slug = strtolower(preg_replace('/[^a-zA-Z0-9_-]+/', '-', $value) ?? $value);
+        $slug = trim($slug, '-');
+        return $slug !== '' ? $slug : 'class';
+    }
+
     private function render_class(array $class): string {
-        $name      = $class['class_name'] ?? '';
-        $namespace = $class['namespace']  ?? '';
-        $summary   = $class['summary']    ?? '';
-        $lifecycle = $class['lifecycle']  ?? '';
-        $owner     = $class['owner']      ?? '';
+        $title = (string) ($class['title'] ?? $class['class_name'] ?? 'class');
+        $description = $this->one_line((string) ($class['description'] ?? $class['summary'] ?? "Class {$title}."));
+        $lines = ['---', "title: {$title}", 'description: "' . str_replace('"', '\\"', $description) . '"', '---', ''];
 
-        $desc = '';
-        if ($summary !== '') {
-            $desc = $this->get_first_sentence($summary);
-            $desc = str_replace(["\r", "\n"], ' ', $desc);
-            $desc = preg_replace('/\s+/', ' ', $desc);
-        } else {
-            $parts = [];
-            if ($owner !== '') {
-                $parts[] = "{$owner}";
-            }
-            if ($lifecycle !== '') {
-                $parts[] = "runs in {$lifecycle} lifecycle";
-            }
-            if ($parts !== []) {
-                $desc = ucfirst(implode(' — ', $parts)) . '.';
-            } else {
-                $desc = "Class {$name}.";
-            }
+        foreach ($class['badges'] ?? [] as $badge) {
+            $lines[] = '<ApiBadge type="' . $this->escape_attr((string) $badge) . '" />';
         }
-        $desc_escaped = str_replace('"', '\"', $desc);
-
-        $lines   = [];
-        $lines[] = '---';
-        $lines[] = "title: {$name}";
-        $lines[] = "description: \"{$desc_escaped}\"";
-        $lines[] = '---';
-        $lines[] = '';
-
-        $intro = '';
-        if ($summary !== '') {
-            $intro = $summary;
-        } else {
-            $intro = "`{$name}` is located in `{$namespace}`.";
-            if ($owner !== '') {
-                $intro .= " It is owned by {$owner}.";
-            }
-            if ($lifecycle !== '') {
-                $intro .= " It is active during the {$lifecycle} lifecycle.";
-            }
-        }
-        $lines[] = $this->escape_mdx($intro);
-        $lines[] = '';
-
-        $methods = $class['methods'] ?? [];
-        $lifecycle_methods = [];
-        foreach ($methods as $method) {
-            if (($method['lifecycle'] ?? '') !== '') {
-                if (str_contains($method['name'], 'test')) {
-                    continue;
-                }
-                $lifecycle_methods[] = $method['name'] . '()';
-            }
-        }
-        if (count($lifecycle_methods) >= 2) {
-            $lines[] = '## Lifecycle';
-            $lines[] = '';
-            $lines[] = implode(' → ', $lifecycle_methods);
-            if ($lifecycle !== '') {
-                $lines[] = $lifecycle;
-            }
+        if (($class['badges'] ?? []) !== []) {
             $lines[] = '';
         }
 
-        if ($methods !== []) {
-            $lines[] = '## Methods';
-            $lines[] = '';
-            $lines[] = '| Method | What it does |';
-            $lines[] = '|--------|-------------|';
-            foreach ($methods as $method) {
-                $short_sig = $this->get_short_signature($method['signature'] ?? '');
-                $short_sig = str_replace('|', '\|', $short_sig);
-                $method_desc = $this->build_method_description($method);
-                $lines[] = "| `{$short_sig}` | " . $this->escape_mdx($method_desc) . " |";
-            }
+        $intro = (string) ($class['intro'] ?? $class['summary'] ?? '');
+        if ($intro !== '') {
+            $lines[] = $this->escape_mdx($intro);
             $lines[] = '';
         }
+        $this->append_info_block($lines, $class);
+        $this->append_warning_boxes($lines, $class['warnings'] ?? []);
+        $this->append_architecture($lines, $class);
+        $this->append_scope_boxes($lines, $class['scope_items'] ?? []);
+        $this->append_method_groups($lines, $class);
+        $this->append_ai_context($lines, $class);
 
         return implode("\n", $lines) . "\n";
     }
 
-    private function get_first_sentence(string $text): string {
-        $text = trim($text);
-        if ($text === '') {
-            return '';
+    private function append_info_block(array &$lines, array $class): void {
+        $items = [
+            'Symbol' => $class['symbol'] ?? trim(($class['namespace'] ?? '') . '\\' . ($class['class_name'] ?? ''), '\\'),
+            'Source' => $class['source_path'] ?? $class['file'] ?? '',
+            'Lifecycle' => $class['lifecycle'] ?? '',
+            'Drivers' => implode(', ', $class['drivers'] ?? []),
+            'Fallback' => $class['fallback'] ?? '',
+            'Test seam' => $class['test_seam'] ?? '',
+        ];
+        $lines[] = '```txt';
+        foreach ($items as $label => $value) {
+            if ($value !== '') {
+                $lines[] = "{$label}: {$value}";
+            }
         }
-        $sentences = preg_split('/(?<=[.!?])\s+/', $text, 2);
-        return $sentences[0] ?? $text;
+        $lines[] = '```';
+        $lines[] = '';
     }
 
-    private function get_short_signature(string $signature): string {
-        if (preg_match('/function\s+(\w+)\s*\((.*?)\)/', $signature, $matches)) {
-            $method_name = $matches[1];
-            $params_str = $matches[2];
-            
-            if (trim($params_str) === '') {
-                return $method_name . '()';
-            }
-            
-            $params = explode(',', $params_str);
-            $short_params = [];
-            foreach ($params as $param) {
-                $param = trim($param);
-                if (str_contains($param, '=')) {
-                    $parts = explode('=', $param, 2);
-                    $param = trim($parts[0]);
-                }
-                $short_params[] = $param;
-            }
-            
-            return $method_name . '(' . implode(', ', $short_params) . ')';
+    private function append_warning_boxes(array &$lines, array $warnings): void {
+        foreach ($warnings as $warning) {
+            $lines[] = '<WarningBox>';
+            $lines[] = '';
+            $lines[] = $this->escape_mdx((string) $warning);
+            $lines[] = '';
+            $lines[] = '</WarningBox>';
+            $lines[] = '';
         }
-        return $signature;
     }
 
-    private function build_method_description(array $method): string {
-        $parts = [];
-        
-        $base = '';
-        if (!empty($method['contracts'])) {
-            $base = trim($method['contracts'][0]);
-            $base = $this->format_sentence($base);
+    private function append_architecture(array &$lines, array $class): void {
+        if (($class['lifecycle_steps'] ?? []) !== [] || ($class['architectural_notes'] ?? '') !== '') {
+            $lines[] = '## Architecture';
+            $lines[] = '';
         }
-        
-        if ($base !== '') {
-            $parts[] = $base;
-        }
-        
-        foreach ($method['invariants'] ?? [] as $inv) {
-            $inv_lower = strtolower($inv);
-            if (str_contains($inv_lower, 'never throws')) {
-                if (str_contains($inv_lower, 'missing key')) {
-                    $parts[] = 'Never throws — returns `$default` for missing keys.';
-                } else {
-                    $parts[] = $this->format_sentence($inv);
-                }
-            } else {
-                $parts[] = $this->format_sentence($inv);
+        if (($class['lifecycle_steps'] ?? []) !== []) {
+            $lines[] = '<LifecycleFlow>';
+            $lines[] = '';
+            $lines[] = '```txt';
+            foreach ($class['lifecycle_steps'] as $step) {
+                $lines[] = (string) $step;
             }
+            $lines[] = '```';
+            $lines[] = '';
+            $lines[] = '</LifecycleFlow>';
+            $lines[] = '';
         }
-        
-        foreach ($method['non_goals'] ?? [] as $ng) {
-            $parts[] = $this->format_sentence($ng);
+        if (($class['architectural_notes'] ?? '') !== '') {
+            $lines[] = $this->escape_mdx((string) $class['architectural_notes']);
+            $lines[] = '';
         }
-
-        foreach ($method['throws'] ?? [] as $throw) {
-            $throw_trimmed = trim($throw);
-            if (preg_match('/^(\\\\?\w+)(?:\s+(.+))?$/', $throw_trimmed, $matches)) {
-                $type = $matches[1];
-                if (str_contains($base, $type)) {
-                    continue;
-                }
-                $reason = $matches[2] ?? '';
-                $reason = preg_replace('/^when\s+/', 'if ', $reason) ?? $reason;
-                $parts[] = "Throws `{$type}`" . ($reason !== '' ? " {$reason}" : "") . ".";
-            } else {
-                $parts[] = "Throws " . $this->format_sentence($throw);
-            }
+        foreach ($class['notes'] ?? [] as $note) {
+            $lines[] = '<NoteBox>';
+            $lines[] = '';
+            $lines[] = $this->escape_mdx((string) $note);
+            $lines[] = '';
+            $lines[] = '</NoteBox>';
+            $lines[] = '';
         }
-
-        foreach ($method['side_effects'] ?? [] as $se) {
-            $se_lower = strtolower($se);
-            if (str_contains($se_lower, 'clear') || str_contains($se_lower, 'install') || str_contains($se_lower, 'global')) {
-                $se_formatted = $this->format_sentence($se);
-                $already_covered = false;
-                foreach ($parts as $part) {
-                    if (str_contains(strtolower($part), 'clear') && str_contains($se_lower, 'clear')) {
-                        $already_covered = true;
-                        break;
-                    }
-                }
-                if (!$already_covered) {
-                    $parts[] = $se_formatted;
-                }
-            }
-        }
-
-        $full_desc = implode(' ', $parts);
-        $full_desc = str_replace(["\r", "\n"], ' ', $full_desc);
-        $full_desc = preg_replace('/\s+/', ' ', $full_desc);
-        $full_desc = preg_replace('/\.+/', '.', $full_desc) ?? $full_desc;
-        return str_replace('|', '\|', $full_desc);
     }
 
-    private function format_sentence(string $str): string {
-        $str = trim($str);
-        if ($str === '') {
-            return '';
+    private function append_scope_boxes(array &$lines, array $items): void {
+        if ($items === []) {
+            return;
         }
-        $str = ucfirst($str);
-        $last_char = substr($str, -1);
-        if ($last_char !== '.' && $last_char !== '!' && $last_char !== '?') {
-            $str .= '.';
+        $lines[] = '## Driver Model';
+        $lines[] = '';
+        $lines[] = '<div class="driver-grid">';
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $mutable = ($item['mutable'] ?? false) === true ? ' mutable' : '';
+            $lines[] = '  <ScopeBox name="' . $this->escape_attr((string) ($item['name'] ?? '')) . '"' . $mutable . '>';
+            $lines[] = '    ' . $this->escape_mdx((string) ($item['desc'] ?? ''));
+            $lines[] = '  </ScopeBox>';
         }
-        return $str;
+        $lines[] = '</div>';
+        $lines[] = '';
+    }
+
+    private function append_method_groups(array &$lines, array $class): void {
+        foreach ($this->group_methods($class['methods'] ?? [], $class['section_order'] ?? []) as $group => $methods) {
+            if ($group === 'Architecture') {
+                continue;
+            }
+            $lines[] = '## ' . $group;
+            $lines[] = '';
+            foreach ($methods as $method) {
+                $lines = array_merge($lines, $this->render_method($method));
+            }
+        }
+    }
+
+    private function render_method(array $method): array {
+        $lines = ['<ApiMethod name="' . $this->escape_attr((string) ($method['name'] ?? '')) . '">', '', '<ApiSignature>', '', '```php', (string) ($method['signature'] ?? ''), '```', '', '</ApiSignature>', ''];
+        if (($method['contract'] ?? '') !== '') {
+            $lines[] = $this->escape_mdx((string) $method['contract']);
+            $lines[] = '';
+        } elseif (($method['contracts'] ?? []) !== []) {
+            $lines[] = $this->escape_mdx((string) $method['contracts'][0]);
+            $lines[] = '';
+        }
+        foreach ($method['param_details'] ?? [] as $param) {
+            $required = ($param['required'] ?? false) === true ? ' required' : '';
+            $lines[] = '<ApiParam name="' . $this->escape_attr((string) ($param['name'] ?? '')) . '" type="' . $this->escape_attr((string) ($param['type'] ?? 'mixed')) . '"' . $required . '>';
+            $lines[] = '';
+            $lines[] = $this->escape_mdx((string) ($param['desc'] ?? ''));
+            $lines[] = '';
+            $lines[] = '</ApiParam>';
+            $lines[] = '';
+        }
+        foreach ($method['throws_details'] ?? [] as $throw) {
+            $lines[] = '<ApiThrows type="' . $this->escape_attr((string) ($throw['type'] ?? '')) . '">';
+            $lines[] = '';
+            $lines[] = $this->escape_mdx((string) ($throw['desc'] ?? ''));
+            $lines[] = '';
+            $lines[] = '</ApiThrows>';
+            $lines[] = '';
+        }
+        $this->append_warning_boxes($lines, $method['warnings'] ?? []);
+        foreach ($method['notes'] ?? [] as $note) {
+            $lines[] = '<NoteBox>';
+            $lines[] = '';
+            $lines[] = $this->escape_mdx((string) $note);
+            $lines[] = '';
+            $lines[] = '</NoteBox>';
+            $lines[] = '';
+        }
+        $lines[] = '</ApiMethod>';
+        $lines[] = '';
+        return $lines;
+    }
+
+    private function append_ai_context(array &$lines, array $class): void {
+        $lines[] = '<AiContext>';
+        $lines[] = '```txt';
+        foreach (['symbol', 'role', 'layer', 'lifecycle', 'owns', 'flow'] as $key) {
+            $value = $class[$key] ?? '';
+            if (is_array($value)) {
+                $value = implode(', ', $value);
+            }
+            if ($value !== '') {
+                $lines[] = $key . ': ' . $value;
+            }
+        }
+        foreach (['entry_points', 'config_reads', 'invariants', 'side_effects', 'non_goals'] as $key) {
+            if (($class[$key] ?? []) === []) {
+                continue;
+            }
+            $lines[] = $key . ':';
+            foreach ($class[$key] as $item) {
+                $lines[] = '  - ' . (string) $item;
+            }
+        }
+        $lines[] = '```';
+        $lines[] = '</AiContext>';
+    }
+
+    private function group_methods(array $methods, array $order): array {
+        $groups = [];
+        foreach ($order as $group) {
+            $groups[(string) $group] = [];
+        }
+        foreach ($methods as $method) {
+            $group = (string) ($method['group'] ?? 'Methods');
+            $groups[$group] ??= [];
+            $groups[$group][] = $method;
+        }
+        return array_filter($groups, fn(array $items): bool => $items !== []);
+    }
+
+    private function one_line(string $value): string {
+        return trim(preg_replace('/\s+/', ' ', $value) ?? $value);
+    }
+
+    private function escape_attr(string $value): string {
+        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
     private function escape_mdx(string $text): string {
-        // Split by inline code blocks (anything inside backticks)
         $parts = preg_split('/(`[^`]*`)/', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
         if ($parts === false) {
             return $text;
         }
         foreach ($parts as $i => &$part) {
-            // Even indices are outside of backticks
             if ($i % 2 === 0) {
-                $part = str_replace(
-                    ['<', '>', '{', '}'],
-                    ['&lt;', '&gt;', '&#123;', '&#125;'],
-                    $part
-                );
+                $part = str_replace(['<', '>', '{', '}'], ['&lt;', '&gt;', '&#123;', '&#125;'], $part);
             }
         }
         return implode('', $parts);

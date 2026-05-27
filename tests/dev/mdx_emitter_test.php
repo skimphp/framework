@@ -64,6 +64,38 @@ describe('mdx_emitter', function(): void {
         rmdir($dir);
     });
 
+    test('preserves duplicate class names with source file suffixes', function(): void {
+        $dir = sys_get_temp_dir() . '/skim_mdx_duplicate_' . uniqid();
+        $data = sample_mdx_data();
+        $data['classes'][1]['class_name'] = 'request';
+        $data['classes'][1]['file'] = '/src/core/response.php';
+
+        $count = (new mdx_emitter())->emit($data, $dir);
+
+        expect($count)->toBe(2);
+        expect(file_exists($dir . '/request-request.mdx'))->toBeTrue();
+        expect(file_exists($dir . '/request-response.mdx'))->toBeTrue();
+
+        array_map('unlink', glob($dir . '/*.mdx'));
+        rmdir($dir);
+    });
+
+    test('preserves duplicate class names with duplicate source basenames', function(): void {
+        $dir = sys_get_temp_dir() . '/skim_mdx_duplicate_basename_' . uniqid();
+        $data = sample_mdx_data();
+        $data['classes'][1]['class_name'] = 'request';
+        $data['classes'][1]['file'] = '/other/core/request.php';
+
+        $count = (new mdx_emitter())->emit($data, $dir);
+
+        expect($count)->toBe(2);
+        expect(file_exists($dir . '/request-request.mdx'))->toBeTrue();
+        expect(file_exists($dir . '/request-request-2.mdx'))->toBeTrue();
+
+        array_map('unlink', glob($dir . '/*.mdx'));
+        rmdir($dir);
+    });
+
     test('MDX file contains frontmatter title and description', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_front_' . uniqid();
         (new mdx_emitter())->emit(sample_mdx_data(), $dir);
@@ -81,7 +113,8 @@ describe('mdx_emitter', function(): void {
         (new mdx_emitter())->emit(sample_mdx_data(), $dir);
         $content = file_get_contents($dir . '/request.mdx');
 
-        expect($content)->toContain('| `get(string $key, mixed $default)` |');
+        expect($content)->toContain('<ApiMethod name="get">')
+            ->and($content)->toContain('public function get(string $key, mixed $default): mixed');
 
         array_map('unlink', glob($dir . '/*.mdx'));
         rmdir($dir);
@@ -92,8 +125,7 @@ describe('mdx_emitter', function(): void {
         (new mdx_emitter())->emit(sample_mdx_data(), $dir);
         $content = file_get_contents($dir . '/request.mdx');
 
-        expect($content)->toContain('Returns query param by key.');
-        expect($content)->toContain('Does not validate types.');
+        expect($content)->toContain('returns query param by key');
 
         array_map('unlink', glob($dir . '/*.mdx'));
         rmdir($dir);
@@ -148,7 +180,7 @@ describe('mdx_emitter', function(): void {
         $content = file_get_contents($dir . '/escaper.mdx');
 
         expect($content)->toContain('Handles &lt;tags&gt; and &#123;braces&#125; properly, but `keeps <tag> inside backticks`.');
-        expect($content)->toContain('Processes &lt;input&gt; and &#123;values&#125; in description, but `ignores <tag>`.');
+        expect($content)->toContain('processes &lt;input&gt; and &#123;values&#125; in description, but `ignores <tag>`');
 
         array_map('unlink', glob($dir . '/*.mdx'));
         rmdir($dir);
