@@ -52,6 +52,45 @@ describe('json_emitter — emit()', function(): void {
         unlink($path);
     });
 
+    test('serializes new extracted_class fields into classes array', function (): void {
+        $cls = new extracted_class(
+            class_name:   'cache',
+            namespace:    'skim\\cache',
+            file:         '/src/cache.php',
+            layer:        'cache',
+            entry_points: ['remember', 'get'],
+            invariants:   ['driver reused until reset'],
+        );
+        $path = sys_get_temp_dir() . '/skim_llm_new_fields_' . uniqid() . '.json';
+        (new json_emitter())->emit([$cls], $path);
+        $data = json_decode(file_get_contents($path), true);
+        $row  = $data['classes'][0];
+        expect($row['layer'])->toBe('cache')
+            ->and($row['entry_points'])->toContain('remember')
+            ->and($row['invariants'])->toContain('driver reused until reset');
+        unlink($path);
+    });
+
+    test('serializes new extracted_method fields into methods array', function (): void {
+        $method = new extracted_method(
+            name:      'remember',
+            signature: 'public static function remember(): mixed',
+            owner:     'skim\\cache\\cache',
+            group:     'Read API',
+            calls:     ['has', 'get', 'set'],
+            warnings:  ['may compute expensive callback'],
+        );
+        $cls = new extracted_class('cache', 'skim\\cache', '/src/cache.php', methods: [$method]);
+        $path = sys_get_temp_dir() . '/skim_llm_new_method_fields_' . uniqid() . '.json';
+        (new json_emitter())->emit([$cls], $path);
+        $data = json_decode(file_get_contents($path), true);
+        $m    = $data['classes'][0]['methods'][0];
+        expect($m['group'])->toBe('Read API')
+            ->and($m['calls'])->toContain('has')
+            ->and($m['warnings'][0])->toContain('may compute expensive callback');
+        unlink($path);
+    });
+
 });
 
 describe('json_emitter — load()', function(): void {

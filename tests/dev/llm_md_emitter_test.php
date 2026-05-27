@@ -41,47 +41,43 @@ describe('llm_md_emitter', function(): void {
         unlink($path);
     });
 
-    test('generated file contains class index section', function(): void {
+    test('generated file contains compact class section', function(): void {
         $path = sys_get_temp_dir() . '/skim_llm_md_' . uniqid() . '.md';
         (new llm_md_emitter())->emit(sample_llm_data(), $path);
         $content = file_get_contents($path);
-        expect($content)->toContain('## Class index');
-        expect($content)->toContain('`cache`');
+        expect($content)->toContain('## `skim\\cache\\cache` — cache');
         unlink($path);
     });
 
-    test('generated file contains key invariants section', function(): void {
+    test('generated file contains method invariant text', function(): void {
         $path = sys_get_temp_dir() . '/skim_llm_md_' . uniqid() . '.md';
         (new llm_md_emitter())->emit(sample_llm_data(), $path);
         $content = file_get_contents($path);
-        expect($content)->toContain('## Key invariants');
         expect($content)->toContain('never throws on miss');
         unlink($path);
     });
 
-    test('generated file contains non-goals section', function(): void {
+    test('generated file contains non-goal text', function(): void {
         $path = sys_get_temp_dir() . '/skim_llm_md_' . uniqid() . '.md';
         (new llm_md_emitter())->emit(sample_llm_data(), $path);
         $content = file_get_contents($path);
-        expect($content)->toContain('## Non-goals');
         expect($content)->toContain('does not warm the cache');
         unlink($path);
     });
 
-    test('generated file contains method contracts section', function(): void {
+    test('generated file contains grouped method contracts', function(): void {
         $path = sys_get_temp_dir() . '/skim_llm_md_' . uniqid() . '.md';
         (new llm_md_emitter())->emit(sample_llm_data(), $path);
         $content = file_get_contents($path);
-        expect($content)->toContain('## Method contracts');
+        expect($content)->toContain('### Methods');
         expect($content)->toContain('returns default when key absent');
         unlink($path);
     });
 
-    test('generated file contains lifecycle map section', function(): void {
+    test('generated file contains lifecycle metadata', function(): void {
         $path = sys_get_temp_dir() . '/skim_llm_md_' . uniqid() . '.md';
         (new llm_md_emitter())->emit(sample_llm_data(), $path);
         $content = file_get_contents($path);
-        expect($content)->toContain('## Lifecycle map');
         expect($content)->toContain('boot');
         unlink($path);
     });

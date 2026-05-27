@@ -13,12 +13,22 @@ class json_emitter {
      * @ai-contract creates parent directories if they do not exist
      * @ai-contract throws \RuntimeException if the file cannot be written
      * @ai-contract JSON is pretty-printed for readability and diff-friendliness
+     * @ai-contract $capability_map, when non-empty, is written as top-level "capabilities" section
+     * @ai-contract $installed_extensions, when non-empty, is written under top-level "extensions.installed"
      */
-    public function emit(array $classes, string $output_path): void {
+    public function emit(array $classes, string $output_path, array $capability_map = [], array $installed_extensions = []): void {
         $data = [
             'generated_at' => date('c'),
             'classes'      => array_map(fn(extracted_class $c) => $c->to_array(), $classes),
         ];
+
+        if ($capability_map !== []) {
+            $data['capabilities'] = $capability_map;
+        }
+
+        if ($installed_extensions !== []) {
+            $data['extensions'] = ['installed' => $installed_extensions];
+        }
 
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         if ($json === false) {
