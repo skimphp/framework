@@ -56,6 +56,7 @@ readonly class extracted_class {
         public array $lifecycle_steps = [],
         public array $section_order = [],
         public string $architectural_notes = '',
+        public array $examples = [],
         /** @var extracted_method[] */
         public array  $methods      = [],
     ) {}
@@ -99,6 +100,7 @@ readonly class extracted_class {
             'lifecycle_steps' => $this->lifecycle_steps,
             'section_order' => $this->section_order,
             'architectural_notes' => $this->architectural_notes,
+            'examples'     => $this->examples,
             'methods'      => array_map(fn(extracted_method $m) => $m->to_array(), $this->methods),
             'class_name'   => $this->class_name,
             'namespace'    => $this->namespace,

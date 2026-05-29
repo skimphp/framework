@@ -79,6 +79,7 @@ class class_visitor extends NodeVisitorAbstract {
         }
 
         $class_doc = (string) ($node->getDocComment()?->getText() ?? '');
+        $class_examples = $class_doc !== '' ? $this->annotations->extract_examples($class_doc) : [];
         $tags = [];
         $summary = '';
         if ($class_doc !== '') {
@@ -194,6 +195,7 @@ class class_visitor extends NodeVisitorAbstract {
             lifecycle_steps: $this->list_value($tags, 'lifecycle_steps'),
             section_order: $this->list_value($tags, 'section_order'),
             architectural_notes: $this->scalar_value($tags, 'architectural_notes'),
+            examples:     $class_examples,
             methods:      $methods,
         );
         return null;
@@ -230,6 +232,25 @@ class class_visitor extends NodeVisitorAbstract {
         $contracts = $this->list_value($tags, 'contract');
         $contract = $contracts[0] ?? '';
 
+        $doc = (string) ($method->getDocComment()?->getText() ?? '');
+        $method_examples = $doc !== '' ? $this->annotations->extract_examples($doc) : [];
+        $tag_examples = $this->list_value($tags, 'example');
+        $formatted_examples = [];
+        foreach ($tag_examples as $ex) {
+            if (is_array($ex) && isset($ex['code'])) {
+                $formatted_examples[] = [
+                    'label' => $ex['label'] ?? 'Basic usage',
+                    'code' => $ex['code']
+                ];
+            } else {
+                $formatted_examples[] = [
+                    'label' => 'Basic usage',
+                    'code' => (string) $ex
+                ];
+            }
+        }
+        $examples = array_merge($method_examples, $formatted_examples);
+
         return new extracted_method(
             name:         (string) $method->name,
             signature:    $signature,
@@ -247,7 +268,7 @@ class class_visitor extends NodeVisitorAbstract {
             calls:        $this->list_value($tags, 'calls'),
             throws:       $this->list_value($tags, 'throws'),
             warnings:     array_merge($this->list_value($tags, 'warning'), $this->list_value($tags, 'warnings')),
-            examples:     $this->list_value($tags, 'example'),
+            examples:     $examples,
             lifecycle:    $this->scalar_value($tags, 'lifecycle'),
             perf:         $this->scalar_value($tags, 'perf'),
             contract:     $contract,

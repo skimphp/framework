@@ -129,14 +129,55 @@ class mdx_emitter {
         }
     }
 
+    private function get_coverage_indicator(array $class): string {
+        $total = count($class['methods'] ?? []);
+        if ($total === 0) {
+            return "No methods";
+        }
+        $annotated = 0;
+        foreach ($class['methods'] ?? [] as $m) {
+            $is_annotated = ($m['contract'] ?? '') !== ''
+                || ($m['contracts'] ?? []) !== []
+                || ($m['param_details'] ?? []) !== []
+                || ($m['return_detail'] ?? []) !== []
+                || ($m['throws_details'] ?? []) !== []
+                || ($m['notes'] ?? []) !== []
+                || ($m['invariants'] ?? []) !== []
+                || ($m['non_goals'] ?? []) !== []
+                || ($m['side_effects'] ?? []) !== []
+                || ($m['inputs'] ?? []) !== []
+                || ($m['returns'] ?? '') !== ''
+                || ($m['reads'] ?? []) !== []
+                || ($m['mutates'] ?? []) !== []
+                || ($m['calls'] ?? []) !== []
+                || ($m['throws'] ?? []) !== []
+                || ($m['warnings'] ?? []) !== []
+                || ($m['examples'] ?? []) !== []
+                || ($m['lifecycle'] ?? '') !== ''
+                || ($m['perf'] ?? '') !== ''
+                || ($m['group'] ?? '') !== ''
+                || ($m['frequency'] ?? '') !== '';
+            if ($is_annotated) {
+                $annotated++;
+            }
+        }
+        $pct = (int) round(($annotated / $total) * 100);
+        return "{$annotated}/{$total} ({$pct}%)";
+    }
+
     private function render_index(array $classes): string {
         $groups = [];
+        $duplicates = $this->duplicate_class_names($classes);
+        $filenames = [];
+        
         foreach ($classes as $class) {
             $dir = $this->namespace_to_dir($class['namespace'] ?? '');
             if ($dir === '') {
                 $dir = 'other';
             }
-            $groups[$dir][] = $class['title'] ?? $class['class_name'] ?? 'class';
+            $file = $this->unique_mdx_file_name($this->mdx_file_name($class, $duplicates), $filenames);
+            $class['_mdx_file'] = substr($file, 0, -4);
+            $groups[$dir][] = $class;
         }
         ksort($groups);
 
@@ -148,15 +189,46 @@ class mdx_emitter {
             '',
             '# API Reference',
             '',
-            'Browse the framework by module:',
+            'Welcome to the SKIM Framework API Reference. Browse classes, facades, and helpers below grouped by module.',
             '',
         ];
-        foreach ($groups as $dir => $items) {
+        
+        foreach ($groups as $dir => $group_classes) {
             $label = ucfirst($dir);
-            $count = count($items);
-            $lines[] = "- [**{$label}**](./{$dir}/) — {$count} classes";
+            $lines[] = "## {$label} Module";
+            $lines[] = '';
+            $lines[] = '| Class / Facade | Description | Coverage | Quick Links |';
+            $lines[] = '| :--- | :--- | :--- | :--- |';
+            
+            foreach ($group_classes as $class) {
+                $slug_class = $class['_mdx_file'];
+                $class_title = $class['title'] ?? $class['class_name'] ?? 'class';
+                $class_link = "[`{$class_title}`](./{$dir}/{$slug_class})";
+                
+                $desc = $this->one_line((string) ($class['description'] ?? $class['summary'] ?? ''));
+                if ($desc === '') {
+                    $desc = 'No description available.';
+                } else {
+                    $desc = $this->escape_mdx($desc);
+                }
+                
+                $coverage = $this->get_coverage_indicator($class);
+                
+                $section_links = [];
+                foreach ($class['section_order'] ?? [] as $section) {
+                    if ($section === 'Architecture' || $section === 'Driver Model') {
+                        continue;
+                    }
+                    $sec_slug = $this->slug($section);
+                    $section_links[] = "[{$section}](./{$dir}/{$slug_class}#{$sec_slug})";
+                }
+                $quick_links = count($section_links) > 0 ? implode(' • ', $section_links) : '—';
+                
+                $lines[] = "| {$class_link} | {$desc} | `{$coverage}` | {$quick_links} |";
+            }
+            $lines[] = '';
         }
-        $lines[] = '';
+        
         return implode("\n", $lines) . "\n";
     }
 
@@ -178,6 +250,7 @@ class mdx_emitter {
             $lines[] = '';
         }
         $this->append_info_block($lines, $class);
+        $this->append_class_examples($lines, $class['examples'] ?? []);
         $this->append_warning_boxes($lines, $class['warnings'] ?? []);
         $this->append_architecture($lines, $class);
         $this->append_scope_boxes($lines, $class['scope_items'] ?? []);
@@ -204,6 +277,23 @@ class mdx_emitter {
         }
         $lines[] = '```';
         $lines[] = '';
+    }
+
+    private function append_class_examples(array &$lines, array $examples): void {
+        foreach ($examples as $ex) {
+            $label = (string) ($ex['label'] ?? 'Basic usage');
+            $code = (string) ($ex['code'] ?? '');
+            if ($code === '') {
+                continue;
+            }
+            $collapsed = count(explode("\n", $code)) > 10 ? ' collapsed' : '';
+            $lines[] = '<CodeExample label="' . $this->escape_attr($label) . '" source="llm-generated"' . $collapsed . '>';
+            $lines[] = '```php';
+            $lines[] = $code;
+            $lines[] = '```';
+            $lines[] = '</CodeExample>';
+            $lines[] = '';
+        }
     }
 
     private function append_warning_boxes(array &$lines, array $warnings): void {
@@ -297,6 +387,20 @@ class mdx_emitter {
             $lines[] = $this->escape_mdx((string) ($param['desc'] ?? ''));
             $lines[] = '';
             $lines[] = '</ApiParam>';
+            $lines[] = '';
+        }
+        foreach ($method['examples'] ?? [] as $ex) {
+            $label = (string) ($ex['label'] ?? 'Basic usage');
+            $code = (string) ($ex['code'] ?? '');
+            if ($code === '') {
+                continue;
+            }
+            $collapsed = count(explode("\n", $code)) > 10 ? ' collapsed' : '';
+            $lines[] = '<CodeExample label="' . $this->escape_attr($label) . '" source="llm-generated"' . $collapsed . '>';
+            $lines[] = '```php';
+            $lines[] = $code;
+            $lines[] = '```';
+            $lines[] = '</CodeExample>';
             $lines[] = '';
         }
         foreach ($method['throws_details'] ?? [] as $throw) {

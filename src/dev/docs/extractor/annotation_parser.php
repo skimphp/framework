@@ -383,6 +383,101 @@ class annotation_parser {
     }
 
     /**
+     * Extracts Example: blocks from a raw docblock. #AI:extract_examples
+     *
+     * @param string $docblock Raw docblock string.
+     * @return array<array{label: string, code: string}> Array of parsed examples.
+     */
+    public function extract_examples(string $docblock): array {
+        $lines = explode("\n", $docblock);
+        $examples = [];
+        $current_example = null;
+        $indent_to_strip = null;
+
+        foreach ($lines as $line) {
+            $clean_line = $line;
+            // Remove leading /** or */
+            $clean_line = preg_replace('#^\s*/\*\*|^\s*\*/#', '', $clean_line);
+            // Remove leading asterisk and up to one space if present
+            $clean_line = preg_replace('#^\s*\*\s?#', '', $clean_line);
+
+            // Check for an Example header: "Example:" or "Example: Some label"
+            if (preg_match('/^\s*Example:\s*(.*)$/i', $clean_line, $matches)) {
+                if ($current_example !== null) {
+                    $examples[] = $current_example;
+                }
+                $label = trim($matches[1]);
+                $current_example = [
+                    'label' => $label !== '' ? $label : 'Basic usage',
+                    'lines' => []
+                ];
+                $indent_to_strip = null;
+                continue;
+            }
+
+            if ($current_example !== null) {
+                $trimmed = trim($clean_line);
+                // Check if we hit a docblock tag or #AI
+                if (str_starts_with($trimmed, '@') || str_starts_with($trimmed, '#AI') || str_starts_with($trimmed, '#ai')) {
+                    $examples[] = $current_example;
+                    $current_example = null;
+                    continue;
+                }
+
+                if ($trimmed !== '') {
+                    // If it starts with non-space, it marks the end of the example block
+                    if (preg_match('/^\S/', $clean_line)) {
+                        $examples[] = $current_example;
+                        $current_example = null;
+                        continue;
+                    }
+
+                    // Determine indentation to strip based on the first non-empty line
+                    if ($indent_to_strip === null) {
+                        preg_match('/^(\s*)/', $clean_line, $spaces);
+                        $indent_to_strip = strlen($spaces[1] ?? '');
+                    }
+
+                    // Strip the base indentation
+                    if ($indent_to_strip > 0) {
+                        if (str_starts_with($clean_line, str_repeat(' ', $indent_to_strip))) {
+                            $clean_line = substr($clean_line, $indent_to_strip);
+                        } else {
+                            $clean_line = ltrim($clean_line);
+                        }
+                    }
+                    $current_example['lines'][] = $clean_line;
+                } else {
+                    $current_example['lines'][] = '';
+                }
+            }
+        }
+
+        if ($current_example !== null) {
+            $examples[] = $current_example;
+        }
+
+        $processed = [];
+        foreach ($examples as $ex) {
+            $code_lines = $ex['lines'];
+            while (count($code_lines) > 0 && trim(end($code_lines)) === '') {
+                array_pop($code_lines);
+            }
+            while (count($code_lines) > 0 && trim(reset($code_lines)) === '') {
+                array_shift($code_lines);
+            }
+            if (count($code_lines) > 0) {
+                $processed[] = [
+                    'label' => $ex['label'],
+                    'code' => implode("\n", $code_lines)
+                ];
+            }
+        }
+
+        return $processed;
+    }
+
+    /**
      * Strips docblock delimiters and leading * characters from each line. #AI:strip_lines
      *
      * @param string $docblock Raw docblock string.
