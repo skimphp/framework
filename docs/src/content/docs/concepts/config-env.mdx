@@ -1,0 +1,43 @@
+---
+title: Config & Env
+description: Managing application settings and environment variables in SKIM.
+---
+
+Application configuration in SKIM resides inside the `config/` directory as plain, static PHP files returning arrays. This structure ensures zero parsing overhead, IDE autocompletion, and compatibility with opcache.
+
+### Accessing Config
+
+You can read configuration values using dot-notation via the helper `config()`:
+
+```php
+// Reads 'default' key from config/db.php
+$dbHost = config('db.default.host');
+```
+
+### Environment Variables
+
+Environment variables are loaded from your `.env` file at the root of the project during bootstrapping.
+
+```env
+DB_HOST=127.0.0.1
+DB_PORT=3306
+```
+
+Inside configuration files, read environment values using the `env()` helper:
+
+```php
+// config/db.php
+return [
+    'default' => [
+        'host' => env('DB_HOST', '127.0.0.1'),
+        'port' => env('DB_PORT', 3306),
+    ],
+];
+```
+
+### Environment Loading Priority
+
+To ensure seamless containerization and CI/CD security:
+
+1.  **OS Environment Variables**: Pre-existing environment variables on the system/Docker/Kubernetes level take highest precedence.
+2.  **`.env` File**: Values in `.env` act as local development fallbacks and are loaded only if not already set.
