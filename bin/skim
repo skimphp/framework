@@ -2,13 +2,14 @@
 <?php declare(strict_types=1);
 
 // SKIM CLI entry point.
-// Usage: php skim <command> [args...] [--flag=value]
+// Usage: php skim <command> [args...] [--flag=value] [--agent]
 // Examples:
 //   php skim migrate
 //   php skim migrate:down --steps=1
 //   php skim queue:work default --sleep=5
 //   php skim cache:clear user:
 //   php skim serve --port=8080
+//   php skim list --agent
 
 define('SKIM_ROOT', dirname(__DIR__));
 

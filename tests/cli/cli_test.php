@@ -3,6 +3,8 @@
 use skim\cli\cli;
 use skim\cli\progress_bar;
 use skim\cli\command;
+use skim\cli\argv_parser;
+use skim\cli\kernel;
 
 describe('CLI utility formatting and headers', function(): void {
     beforeEach(function(): void {
@@ -61,6 +63,20 @@ describe('command base class configuration', function(): void {
         expect($cmd->get_group())->toBe('database');
         expect($cmd->get_description())->toBe('rollback last batch');
         expect($cmd->get_usage())->toBe('[--steps=N]');
+    });
+});
+
+describe('kernel agent mode', function(): void {
+    test('list output is compact and machine-readable', function(): void {
+        ob_start();
+        $code = (new kernel())->run(argv_parser::parse(['skim', 'list', '--agent']));
+        $out = ob_get_clean();
+
+        expect($code)->toBe(0);
+        expect(str_starts_with($out, "command\tusage\tdescription\n"))->toBeTrue();
+        expect($out)->toContain("migrate\t\trun pending migrations");
+        expect($out)->not->toContain('SKIM Framework CLI');
+        expect($out)->not->toContain('Available commands');
     });
 });
 

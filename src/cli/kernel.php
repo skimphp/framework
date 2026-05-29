@@ -58,11 +58,12 @@ final class kernel {
 
     private bool $quiet;
     private bool $no_ansi;
+    private bool $agent;
 
     /**
      * Runs the CLI: resolves command, prints header, dispatches handle(). #AI:run
      *
-     * Handles --version, --quiet, --no-ansi flags. For unknown commands, shows
+     * Handles --version, --quiet, --no-ansi, --agent flags. For unknown commands, shows
      * error box with Levenshtein "did you mean" suggestion. For help/list,
      * shows interactive TUI (TTY) or static listing (piped).
      *
@@ -70,8 +71,9 @@ final class kernel {
      * @return int POSIX exit code.
      */
     public function run(argv_parser $input): int {
-        $this->quiet   = $input->has_flag('quiet', 'q');
-        $this->no_ansi = $input->has_flag('no-ansi');
+        $this->agent   = $input->has_flag('agent');
+        $this->quiet   = $this->agent || $input->has_flag('quiet', 'q');
+        $this->no_ansi = $this->agent || $input->has_flag('no-ansi');
 
         if ($input->has_flag('version', 'V')) {
             echo "SKIM Framework CLI v" . self::VERSION . "\n";
@@ -98,6 +100,15 @@ final class kernel {
                 }
                 $command_name = $selected;
                 continue;
+            }
+
+            if ($this->agent) {
+                fwrite(STDERR, "error\tunknown_command\t{$command_name}\n");
+                $suggestion = $this->closest_command($command_name, array_keys($this->all_commands()));
+                if ($suggestion !== null) {
+                    fwrite(STDERR, "suggestion\t{$suggestion}\n");
+                }
+                return 1;
             }
 
             cli::error_box('Error', "Unknown command: {$command_name}");
@@ -165,6 +176,12 @@ final class kernel {
             }
             return (int) $code;
         } catch (\Throwable $e) {
+            if ($this->agent) {
+                $message = str_replace(["\t", "\r", "\n"], ' ', $e->getMessage());
+                fwrite(STDERR, "error\tcommand_failed\t{$message}\n");
+                return 1;
+            }
+
             cli::error_box('Error', $e->getMessage());
             if (\skim\core\config::get('app.debug')) {
                 cli::muted($e->getTraceAsString());
@@ -181,6 +198,11 @@ final class kernel {
     private function show_help(): ?string {
         $groups = $this->build_groups();
 
+        if ($this->agent) {
+            $this->print_agent_help($groups);
+            return null;
+        }
+
         $is_interactive = cli::is_tty() && !$this->no_ansi && !$this->quiet;
 
         if ($is_interactive) {
@@ -189,7 +211,10 @@ final class kernel {
             return $menu->run();
         }
 
-        $this->print_header();
+        if (!$this->quiet) {
+            $this->print_header();
+        }
+
         cli::section('Available commands:');
         foreach ($groups as $g) {
             cli::line('  ' . strtoupper($g['label']));
@@ -200,6 +225,34 @@ final class kernel {
             cli::line();
         }
         return null;
+    }
+
+    /**
+     * Prints compact tab-separated help for automation and LLM agents.
+     */
+    private function print_agent_help(array $groups): void {
+        cli::line("command\tusage\tdescription");
+        foreach ($groups as $group) {
+            foreach ($group['commands'] as $command) {
+                cli::line($command['name'] . "\t" . $command['usage'] . "\t" . $command['description']);
+            }
+        }
+    }
+
+    /**
+     * Returns the closest command suggestion, or null when no close match exists.
+     */
+    private function closest_command(string $input, array $candidates): ?string {
+        $best = null;
+        $best_dist = 4;
+        foreach ($candidates as $candidate) {
+            $dist = levenshtein($input, $candidate);
+            if ($dist < $best_dist) {
+                $best_dist = $dist;
+                $best = $candidate;
+            }
+        }
+        return $best;
     }
 
     /**
@@ -272,9 +325,9 @@ final class kernel {
 #AI lifecycle: instantiated once per CLI invocation in bin/skim, run() called with parsed argv
 #AI fallback: unknown commands show error box with Levenshtein suggestion; help/list shows command listing
 #AI test_seam: instantiate directly, pass argv_parser with known input; user commands come from config
-#AI invariants: [built-in COMMANDS map is immutable; user commands from config/app.php are merged at runtime; --quiet suppresses header and duration; --no-ansi forces plain output]
-#AI core_behaviors: [Resolves command names with colon-prefix fallback; Merges built-in and user commands; Prints header banner unless --quiet; Catches exceptions and renders error boxes; Shows duration on TTY; Interactive TUI help on TTY, static listing otherwise]
-#AI owns: command registry, group ordering, quiet/no_ansi flags
+#AI invariants: [built-in COMMANDS map is immutable; user commands from config/app.php are merged at runtime; --quiet suppresses header and duration; --no-ansi forces plain output; --agent implies --quiet and --no-ansi]
+#AI core_behaviors: [Resolves command names with colon-prefix fallback; Merges built-in and user commands; Prints header banner unless --quiet; Catches exceptions and renders error boxes; Shows duration on TTY; Interactive TUI help on TTY, static listing otherwise; Agent mode prints compact tab-separated help and errors]
+#AI owns: command registry, group ordering, quiet/no_ansi/agent flags
 #AI entry_points: [run]
 #AI config_reads: [app.commands; app.debug; APP_ENV]
 #AI non_goals: [Does not parse argv (see argv_parser); Does not implement command logic (see command subclasses); Does not manage process signals]
@@ -288,7 +341,7 @@ final class kernel {
 #AI group: Dispatch
 #AI frequency: high
 #AI signature: public function run(argv_parser $input): int
-#AI contract: Runs the CLI. Handles --version/--quiet/--no-ansi flags, resolves the command, dispatches it, or shows help for unknown/help/list commands.
+#AI contract: Runs the CLI. Handles --version/--quiet/--no-ansi/--agent flags, resolves the command, dispatches it, or shows help for unknown/help/list commands.
 #AI param_details: [{name: $input | type: argv_parser | required: true | desc: Parsed CLI input from argv_parser::parse().}]
 #AI return_detail: {type: int | desc: POSIX exit code from the dispatched command.}
 
