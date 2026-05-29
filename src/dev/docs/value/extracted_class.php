@@ -2,13 +2,28 @@
 
 namespace skim\dev\docs\value;
 
-// Readonly value object representing a single extracted class.
-// No framework dependencies — plain PHP only.
-// Populated by class_extractor from file path + @ai.* docblock tags.
+/**
+ * Readonly value object representing a single extracted class with all its annotation metadata. #AI:class
+ *
+ * Use as the data carrier between the extraction pipeline and emitters.
+ * Created once by class_extractor, never mutated. No framework dependencies.
+ *
+ * Example:
+ *   $class = $extractor->extract('/path/to/file.php');
+ *   $array = $class->to_array();  // for json_encode
+ *
+ * Testing: Instantiate directly with test data.
+ *
+ * #AI:class
+ */
 readonly class extracted_class {
     /**
-     * @ai-contract immutable value object, created once by class_extractor, never mutated
-     * @ai-invariant methods is an array of extracted_method; empty when class has no public methods
+     * Immutable value object — created once by class_extractor, never mutated. #AI:__construct
+     *
+     * @param string             $class_name          Short class name.
+     * @param string             $namespace            Full namespace.
+     * @param string             $file                 Absolute file path.
+     * @param extracted_method[] $methods              Public methods with annotations.
      */
     public function __construct(
         public string $class_name,
@@ -46,7 +61,10 @@ readonly class extracted_class {
     ) {}
 
     /**
-     * @ai-contract serializes to plain associative array suitable for json_encode
+     * Serializes to a plain associative array suitable for json_encode. #AI:to_array
+     *
+     * Falls back to namespace\class_name for symbol, class_name for title,
+     * and derives source_path from the file path when explicit values are empty.
      */
     public function to_array(): array {
         $symbol = $this->symbol !== '' ? $this->symbol : trim($this->namespace . '\\' . $this->class_name, '\\');
@@ -108,7 +126,7 @@ readonly class extracted_class {
     }
 
     /**
-     * @ai-contract returns count of public methods that have at least one @ai.* tag
+     * Returns count of public methods that have at least one @ai.* tag. #AI:annotated_method_count
      */
     public function annotated_method_count(): int {
         return count(array_filter(
@@ -137,3 +155,47 @@ readonly class extracted_class {
         ));
     }
 }
+
+#AI:class
+#AI symbol: skim\dev\docs\value\extracted_class
+#AI source_path: src/dev/docs/value/extracted_class.php
+#AI title: extracted_class
+#AI description: Readonly value object representing a single extracted class with all annotation metadata from @ai.* tags.
+#AI role: data carrier
+#AI layer: dev
+#AI badges: [value; readonly; docs; no-framework-deps]
+#AI intro: `extracted_class` is the immutable data carrier between the AST extraction pipeline and all downstream emitters. It holds every annotation field extracted from a single PHP class file.
+#AI lifecycle: created once by class_extractor, never mutated, serialized by emitters
+#AI fallback: to_array() falls back to namespace\class_name for symbol, class_name for title
+#AI test_seam: instantiate directly with test data
+#AI invariants: [readonly — never mutated after construction; methods array contains extracted_method instances; to_array() is JSON-safe]
+#AI core_behaviors: [Holds all annotation fields from class-level and method-level tags; Serializes to JSON-safe array via to_array(); Derives source_path from file path when not explicitly set]
+#AI owns: methods (extracted_method[])
+#AI entry_points: [to_array; annotated_method_count]
+#AI config_reads: []
+#AI non_goals: [Does not extract itself; Does not validate annotations; Does not write output]
+#AI side_effects: []
+#AI flow: class_extractor -> new extracted_class(...) -> to_array() -> json_emitter
+#AI lifecycle_steps: [constructed by class_extractor; -> held by project_scanner; -> serialized by json_emitter.to_array()]
+#AI section_order: [Construction; Serialization; Architecture]
+#AI architectural_notes: No framework dependencies — plain PHP only.
+
+#AI:__construct
+#AI group: Construction
+#AI frequency: high
+#AI signature: public function __construct(string $class_name, string $namespace, string $file, ...)
+#AI contract: Creates an immutable value object with all extracted annotation fields. All fields except class_name, namespace, and file default to empty strings or empty arrays.
+
+#AI:to_array
+#AI group: Serialization
+#AI frequency: high
+#AI signature: public function to_array(): array
+#AI contract: Serializes to a plain associative array suitable for json_encode. Falls back to derived values for symbol, title, description, intro, and source_path when explicit values are empty.
+#AI return_detail: {type: array | desc: JSON-safe associative array with all class and method data.}
+
+#AI:annotated_method_count
+#AI group: Serialization
+#AI frequency: low
+#AI signature: public function annotated_method_count(): int
+#AI contract: Returns the count of public methods that have at least one @ai.* tag across any annotation field.
+#AI return_detail: {type: int | desc: Number of annotated methods.}

@@ -2,35 +2,45 @@
 
 namespace skim\db;
 
-// Merry ORM — extends model with eager/lazy relation loading.
-// Relations declared as static arrays — not annotations.
-// Why static arrays: IDE-navigable, no reflection magic, explicit contracts.
-//
-// Eager loading with() uses IN queries — avoids N+1 automatically.
-// Example: post::with('author', 'tags') → 3 queries max regardless of post count.
-//
-// PHP 8.5 pipe operator recommended for relation chains:
-//   post::where(['status' => 'published'])->all()
-//     |> fn($posts) => merry_model::with_loaded('tags', $posts)
+/**
+ * ORM layer extending model with eager/lazy relation loading. #AI:class
+ *
+ * Use when models need has_many, has_one, belongs_to, or many_to_many relations.
+ * Relations are declared as static arrays (not annotations) for IDE navigation
+ * and explicit contracts. Eager loading via with() uses IN queries to prevent N+1.
+ *
+ * Example:
+ *   class post extends merry_model {
+ *       protected static string $table = 'posts';
+ *       protected static array $belongs_to = ['author' => ['class' => user::class, 'fk' => 'user_id']];
+ *       protected static array $many_to_many = ['tags' => ['class' => tag::class, 'pivot' => 'post_tag', 'fk' => 'post_id', 'rfk' => 'tag_id']];
+ *   }
+ *   $posts = post::with(post::where(['status' => 'published'])->all(), 'author', 'tags');
+ *
+ * Testing: Use test_db() SQLite :memory: with real relation tables.
+ *
+ * #AI:class
+ */
 abstract class merry_model extends model {
-    // Subclass declares:
-    // protected static array $has_many    = ['posts' => ['class' => post::class, 'fk' => 'user_id']];
-    // protected static array $has_one     = ['profile' => ['class' => profile::class, 'fk' => 'user_id']];
-    // protected static array $belongs_to  = ['author' => ['class' => user::class, 'fk' => 'user_id', 'pk' => 'id']];
-    // protected static array $many_to_many = ['tags' => ['class' => tag::class, 'pivot' => 'post_tag', 'fk' => 'post_id', 'rfk' => 'tag_id']];
-
     protected static array $has_many     = [];
     protected static array $has_one      = [];
     protected static array $belongs_to   = [];
     protected static array $many_to_many = [];
 
-    // Loaded relations cache — avoids re-fetching on repeat access
     private array $relations = [];
 
     /**
-     * @ai-contract eager-loads named relations onto a collection of models — prevents N+1
-     * @ai-contract $relations: 'posts', 'posts.comments' (dot = nested eager load)
-     * @ai-contract returns the same $models array with relations populated
+     * Eager-loads named relations onto a collection of models — prevents N+1. #AI:with
+     *
+     * Supports dot-notation for nested eager loading (e.g. 'posts.comments').
+     * Returns the same $models array with relations populated.
+     *
+     * Example:
+     *   $users = merry_model::with(user::all(), 'posts', 'posts.comments');
+     *   // 3 queries max regardless of user/post count
+     *
+     * @param array  $models    Collection of model instances to load relations onto.
+     * @param string ...$relations Relation names, supports dot-notation for nesting.
      */
     public static function with(array $models, string ...$relations): array {
         foreach ($relations as $relation) {
@@ -41,7 +51,6 @@ abstract class merry_model extends model {
             $models = static::eager_load($models, $name);
 
             if ($nested !== null) {
-                // Gather all loaded related objects and eager-load the nested relation on them
                 $related_all = [];
                 foreach ($models as $model) {
                     $related = $model->relations[$name] ?? [];
@@ -60,8 +69,12 @@ abstract class merry_model extends model {
     }
 
     /**
-     * @ai-contract accesses a relation — lazy-loads on first access, cached thereafter
-     * @ai-contract for eager-loaded relations: returns cached value immediately
+     * Accesses a relation — lazy-loads on first access, cached thereafter. #AI:load
+     *
+     * For eager-loaded relations, returns the cached value immediately without
+     * an additional query.
+     *
+     * @param string $name Relation name as declared in the static arrays.
      */
     public function load(string $name): mixed {
         if (array_key_exists($name, $this->relations)) {
@@ -73,7 +86,11 @@ abstract class merry_model extends model {
     // --- pivot operations (many-to-many) ---
 
     /**
-     * @ai-contract attaches related IDs via pivot table — INSERT IGNORE duplicates
+     * Attaches related IDs via pivot table — INSERT IGNORE skips duplicates. #AI:attach
+     *
+     * @param string $relation many_to_many relation name.
+     * @param array  $ids      Related model IDs to attach.
+     * @throws \InvalidArgumentException If relation is not many_to_many.
      */
     public function attach(string $relation, array $ids): void {
         $def = static::$many_to_many[$relation]
@@ -89,7 +106,15 @@ abstract class merry_model extends model {
     }
 
     /**
-     * @ai-contract detaches related IDs from pivot table — DELETE WHERE
+     * Detaches related IDs from pivot table. #AI:detach
+     *
+     * When $ids is empty, detaches ALL related records for this model.
+     *
+     * WARNING: Empty $ids removes all pivot rows for this model's foreign key.
+     *
+     * @param string $relation many_to_many relation name.
+     * @param array  $ids      Specific IDs to detach. Empty = detach all.
+     * @throws \InvalidArgumentException If relation is not many_to_many.
      */
     public function detach(string $relation, array $ids = []): void {
         $def = static::$many_to_many[$relation]
@@ -112,7 +137,12 @@ abstract class merry_model extends model {
     }
 
     /**
-     * @ai-contract syncs pivot table to exactly $ids — detaches removed, attaches new
+     * Syncs pivot table to exactly $ids — detaches removed, attaches new. #AI:sync
+     *
+     * WARNING: Detaches ALL existing pivot rows before re-attaching the given IDs.
+     *
+     * @param string $relation many_to_many relation name.
+     * @param array  $ids      Exact set of related IDs to maintain.
      */
     public function sync(string $relation, array $ids): void {
         $this->detach($relation);
@@ -128,7 +158,6 @@ abstract class merry_model extends model {
             return $models;
         }
 
-        // Determine relation type
         if (isset(static::$has_many[$name])) {
             return static::eager_has_many($models, $name, static::$has_many[$name]);
         }
@@ -255,3 +284,76 @@ abstract class merry_model extends model {
         return $class::hydrate_many($rows);
     }
 }
+
+#AI:class
+#AI symbol: skim\db\merry_model
+#AI source_path: src/db/merry_model.php
+#AI title: merry_model
+#AI description: ORM layer extending model with eager/lazy relation loading and many-to-many pivot operations.
+#AI role: relational ORM
+#AI layer: db
+#AI badges: [orm; relations; eager-loading; pivot; n+1-safe]
+#AI intro: `merry_model` extends `model` with relation declarations (has_many, has_one, belongs_to, many_to_many) and eager/lazy loading. Relations are declared as static arrays for IDE navigation and explicit contracts. Eager loading via `with()` uses IN queries to prevent N+1 automatically.
+#AI lifecycle: extends model lifecycle — relations cached per instance after first load
+#AI fallback: none
+#AI test_seam: use test_db() SQLite :memory: with real relation tables
+#AI invariants: [relations declared as static arrays, not annotations; eager loading uses IN queries — max N+1 queries where N = relation depth; lazy loading fires on first load() call and caches; pivot operations use INSERT IGNORE for idempotent attach]
+#AI core_behaviors: [with() eager-loads using IN queries to prevent N+1; load() lazy-loads on first access and caches; attach/detach/sync manage many_to_many pivot tables; dot-notation supports nested eager loading]
+#AI warnings: [detach() with empty $ids removes ALL pivot rows for this model; sync() detaches everything before re-attaching]
+#AI notes: PHP 8.5 pipe operator recommended for relation chains.
+#AI scope_items: []
+#AI owns: relations cache per instance
+#AI entry_points: [with; load; attach; detach; sync]
+#AI config_reads: []
+#AI non_goals: [Does not support polymorphic relations; Does not support through-relations; Does not auto-delete related records on parent delete]
+#AI side_effects: [attach/detach/sync modify pivot tables; load() and with() execute SELECT queries]
+#AI flow: model::with(collection, 'relation') -> eager_load() -> IN query -> map results to models
+#AI lifecycle_steps: [model::with(models, ...relations); -> for each relation: eager_load(); -> determine relation type; -> IN query with all PKs; -> map results by FK; -> assign to model.relations; -> nested: recurse on loaded related models]
+#AI section_order: [Eager Loading; Lazy Access; Pivot Operations]
+#AI architectural_notes: Static array declarations keep relations IDE-navigable and avoid reflection magic. Eager loading uses a single IN query per relation regardless of collection size.
+
+#AI:with
+#AI group: Eager Loading
+#AI frequency: high
+#AI signature: public static function with(array $models, string ...$relations): array
+#AI contract: Eager-loads named relations onto a collection of models using IN queries. Supports dot-notation for nested eager loading. Returns the same array with relations populated.
+#AI param_details: [{name: $models | type: array | required: true | desc: Collection of model instances.}; {name: $relations | type: string | required: true | desc: Relation names. Use dot-notation for nesting (e.g. 'posts.comments').}]
+#AI return_detail: {type: array | desc: Same models array with relations loaded.}
+#AI side_effects: Executes one SELECT query per relation level.
+
+#AI:load
+#AI group: Lazy Access
+#AI frequency: high
+#AI signature: public function load(string $name): mixed
+#AI contract: Returns a relation's value — lazy-loads on first access, returns cached value on subsequent calls. For eager-loaded relations, returns immediately.
+#AI param_details: [{name: $name | type: string | required: true | desc: Relation name as declared in static arrays.}]
+#AI return_detail: {type: mixed | desc: Model, array of models, or null depending on relation type.}
+#AI side_effects: May execute a SELECT query on first access.
+
+#AI:attach
+#AI group: Pivot Operations
+#AI frequency: medium
+#AI signature: public function attach(string $relation, array $ids): void
+#AI contract: Inserts pivot rows for the given IDs. INSERT IGNORE skips duplicates silently.
+#AI param_details: [{name: $relation | type: string | required: true | desc: many_to_many relation name.}; {name: $ids | type: array | required: true | desc: Related model IDs to attach.}]
+#AI throws_details: [{type: \InvalidArgumentException | desc: If relation is not declared as many_to_many.}]
+#AI side_effects: Inserts rows into the pivot table.
+
+#AI:detach
+#AI group: Pivot Operations
+#AI frequency: medium
+#AI signature: public function detach(string $relation, array $ids = []): void
+#AI contract: Deletes pivot rows for the given IDs. Empty $ids removes ALL pivot rows for this model.
+#AI param_details: [{name: $relation | type: string | required: true | desc: many_to_many relation name.}; {name: $ids | type: array | required: false | desc: Specific IDs to detach. Empty = detach all.}]
+#AI throws_details: [{type: \InvalidArgumentException | desc: If relation is not declared as many_to_many.}]
+#AI warnings: [Empty $ids removes ALL pivot rows for this model's foreign key]
+#AI side_effects: Deletes rows from the pivot table.
+
+#AI:sync
+#AI group: Pivot Operations
+#AI frequency: medium
+#AI signature: public function sync(string $relation, array $ids): void
+#AI contract: Detaches all existing pivot rows, then attaches the given IDs. Result: pivot matches exactly $ids.
+#AI param_details: [{name: $relation | type: string | required: true | desc: many_to_many relation name.}; {name: $ids | type: array | required: true | desc: Exact set of related IDs to maintain.}]
+#AI warnings: [Detaches ALL existing pivot rows before re-attaching]
+#AI side_effects: Deletes and inserts rows in the pivot table.

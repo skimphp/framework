@@ -2,13 +2,33 @@
 
 namespace skim\dev\docs\emitter;
 
-// Generates component-style MDX from llm.json class records.
+/**
+ * Generates component-style MDX from llm.json class records for the Starlight docs site. #AI:class
+ *
+ * Use after docs:extract to produce one .mdx file per class with ApiBadge,
+ * ApiMethod, ApiParam, WarningBox, and AiContext components. Duplicate class
+ * names receive a source-file suffix to avoid overwrites.
+ *
+ * Example:
+ *   $data = (new json_emitter())->load('llm.json');
+ *   $count = (new mdx_emitter())->emit($data, 'docs/src/content/docs/api');
+ *
+ * Testing: Instantiate directly; operates on filesystem paths.
+ *
+ * #AI:class
+ */
 class mdx_emitter {
     /**
-     * @ai-contract accepts decoded llm.json array and output directory path
-     * @ai-contract creates one MDX file per class; duplicate class names include a source-file suffix
-     * @ai-contract returns count of files written
-     * @ai-contract throws \RuntimeException on write failure
+     * Writes one MDX file per class and returns the count of files written. #AI:emit
+     *
+     * Creates the output directory if it does not exist. Duplicate class names
+     * include a source-file suffix. Colliding filenames get a numeric suffix.
+     *
+     * @param array  $data       Decoded llm.json array.
+     * @param string $output_dir Directory to write .mdx files into.
+     * @return int Number of MDX files written.
+     *
+     * @throws \RuntimeException On write failure.
      */
     public function emit(array $data, string $output_dir): int {
         $classes = $data['classes'] ?? [];
@@ -16,17 +36,34 @@ class mdx_emitter {
             mkdir($output_dir, 0755, recursive: true);
         }
 
+        $this->clean_output_dir($output_dir);
+
         $count = 0;
         $duplicates = $this->duplicate_class_names($classes);
         $filenames = [];
         foreach ($classes as $class) {
             $file = $this->unique_mdx_file_name($this->mdx_file_name($class, $duplicates), $filenames);
-            $path = $output_dir . '/' . $file;
+            $subdir = $this->namespace_to_dir($class['namespace'] ?? '');
+            if ($subdir === '') {
+                $subdir = 'other';
+            }
+            $target_dir = $output_dir . '/' . $subdir;
+            if (!is_dir($target_dir)) {
+                mkdir($target_dir, 0755, recursive: true);
+            }
+            $path = $target_dir . '/' . $file;
             if (file_put_contents($path, $this->render_class($class)) === false) {
                 throw new \RuntimeException("mdx_emitter: cannot write {$path}");
             }
             $count++;
         }
+
+        $index_path = $output_dir . '/index.mdx';
+        if (file_put_contents($index_path, $this->render_index($classes)) === false) {
+            throw new \RuntimeException("mdx_emitter: cannot write {$index_path}");
+        }
+        $count++;
+
         return $count;
     }
 
@@ -64,9 +101,68 @@ class mdx_emitter {
         return $slug !== '' ? $slug : 'class';
     }
 
+    private function namespace_to_dir(string $namespace): string {
+        if (!str_starts_with($namespace, 'skim\\')) {
+            return '';
+        }
+        $parts = explode('\\', substr($namespace, 5));
+        return $parts[0] ?? '';
+    }
+
+    private function clean_output_dir(string $dir): void {
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        $dirs = [];
+        foreach ($files as $fileinfo) {
+            if ($fileinfo->isFile() && $fileinfo->getExtension() === 'mdx') {
+                unlink($fileinfo->getPathname());
+            } elseif ($fileinfo->isDir()) {
+                $dirs[] = $fileinfo->getPathname();
+            }
+        }
+        foreach (array_reverse($dirs) as $d) {
+            if (count(glob($d . '/*')) === 0) {
+                rmdir($d);
+            }
+        }
+    }
+
+    private function render_index(array $classes): string {
+        $groups = [];
+        foreach ($classes as $class) {
+            $dir = $this->namespace_to_dir($class['namespace'] ?? '');
+            if ($dir === '') {
+                $dir = 'other';
+            }
+            $groups[$dir][] = $class['title'] ?? $class['class_name'] ?? 'class';
+        }
+        ksort($groups);
+
+        $lines = [
+            '---',
+            'title: API Reference',
+            'description: "Complete API reference for the SKIM PHP framework, organized by module."',
+            '---',
+            '',
+            '# API Reference',
+            '',
+            'Browse the framework by module:',
+            '',
+        ];
+        foreach ($groups as $dir => $items) {
+            $label = ucfirst($dir);
+            $count = count($items);
+            $lines[] = "- [**{$label}**](./{$dir}/) — {$count} classes";
+        }
+        $lines[] = '';
+        return implode("\n", $lines) . "\n";
+    }
+
     private function render_class(array $class): string {
-        $title = (string) ($class['title'] ?? $class['class_name'] ?? 'class');
-        $description = $this->one_line((string) ($class['description'] ?? $class['summary'] ?? "Class {$title}."));
+        $title = str_replace('`', '&#96;', (string) ($class['title'] ?? $class['class_name'] ?? 'class'));
+        $description = str_replace('`', '&#96;', $this->one_line((string) ($class['description'] ?? $class['summary'] ?? "Class {$title}.")));
         $lines = ['---', "title: {$title}", 'description: "' . str_replace('"', '\\"', $description) . '"', '---', ''];
 
         foreach ($class['badges'] ?? [] as $badge) {
@@ -272,15 +368,41 @@ class mdx_emitter {
     }
 
     private function escape_mdx(string $text): string {
-        $parts = preg_split('/(`[^`]*`)/', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
-        if ($parts === false) {
-            return $text;
-        }
-        foreach ($parts as $i => &$part) {
-            if ($i % 2 === 0) {
-                $part = str_replace(['<', '>', '{', '}'], ['&lt;', '&gt;', '&#123;', '&#125;'], $part);
-            }
-        }
-        return implode('', $parts);
+        $text = str_replace('`', '&#96;', $text);
+        return str_replace(['<', '>', '{', '}'], ['&lt;', '&gt;', '&#123;', '&#125;'], $text);
     }
 }
+
+#AI:class
+#AI symbol: skim\dev\docs\emitter\mdx_emitter
+#AI source_path: src/dev/docs/emitter/mdx_emitter.php
+#AI title: mdx_emitter
+#AI description: Generates component-style MDX files from llm.json class records for the Starlight documentation site.
+#AI role: MDX documentation generator
+#AI layer: dev
+#AI badges: [emitter; mdx; starlight; docs]
+#AI intro: `mdx_emitter` transforms decoded llm.json data into one .mdx file per class using Starlight-compatible components (ApiBadge, ApiMethod, ApiParam, ApiThrows, WarningBox, NoteBox, ScopeBox, AiContext, LifecycleFlow). Handles duplicate class names and filename collisions.
+#AI lifecycle: instantiated per-use by docs_site_command, no state retained
+#AI fallback: none — throws on write failure
+#AI test_seam: instantiate directly with temp directory paths
+#AI invariants: [one MDX file per class; duplicate class names get source-file suffix; colliding filenames get numeric suffix; Architecture group methods excluded from method sections; writes classes into namespace subdirectories; cleans stale .mdx before writing; generates api/index.mdx]
+#AI core_behaviors: [Renders frontmatter with title and description; Emits ApiBadge, WarningBox, ScopeBox, and AiContext components; Groups methods by section_order; Escapes MDX special characters outside code spans; Organizes output into namespace subdirectories; Generates index.mdx landing page]
+#AI owns: none — stateless
+#AI entry_points: [emit]
+#AI config_reads: []
+#AI non_goals: [Does not generate Markdown; Does not extract or load llm.json]
+#AI side_effects: [writes .mdx files to output directory; creates directory if needed; cleans stale .mdx files recursively]
+#AI flow: emit(data, dir) -> clean_output_dir -> duplicate_class_names -> namespace_to_dir -> mdx_file_name -> render_class -> write; render_index -> write index.mdx
+#AI lifecycle_steps: [emit(); -> clean stale .mdx files; -> detect duplicate class names; -> derive namespace subdirectory; -> generate unique filenames; -> render_class() per class; -> write .mdx files; -> render_index(); -> write api/index.mdx]
+#AI section_order: [Emit; Architecture]
+#AI architectural_notes: MDX output uses Starlight-specific components; the emitter is coupled to the Starlight/Astro component API.
+
+#AI:emit
+#AI group: Emit
+#AI frequency: high
+#AI signature: public function emit(array $data, string $output_dir): int
+#AI contract: Accepts decoded llm.json array and writes one MDX file per class into namespace subdirectories under the output directory. Also writes an index.mdx landing page. Returns the count of files written. Handles duplicate class names and filename collisions. Cleans stale .mdx files before writing.
+#AI param_details: [{name: $data | type: array | required: true | desc: Decoded llm.json array with 'classes' key.}; {name: $output_dir | type: string | required: true | desc: Directory to write .mdx files into. Created if it does not exist.}]
+#AI return_detail: {type: int | desc: Number of MDX files written (including index.mdx).}
+#AI throws_details: [{type: \RuntimeException | desc: When a file cannot be written.}]
+#AI side_effects: [writes .mdx files to disk; creates output directory; cleans stale .mdx files recursively; creates namespace subdirectories]

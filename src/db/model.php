@@ -4,39 +4,45 @@ namespace skim\db;
 
 use skim\db\exceptions\not_found_exception;
 
-// Active record base. Subclasses declare $table and optional property hooks.
-//
-// PHP 8.4+ features used:
-//   - Property hooks  — auto-normalization (email→lowercase), computed fields, dirty tracking
-//   - Asymmetric visibility — id/timestamps writable only inside hydrate_one()
-//
-// Schema fetch: DESCRIBE (MySQL) / information_schema (PostgreSQL) on first model access,
-// stored in cache. Invalidate with cache::flush('schema:') after migrations.
-//
-// save() behaviour:
-//   - No id set  → INSERT, assigns returned insert_id to $id
-//   - id set     → UPDATE only dirty columns (tracked via $dirty_cols)
-//   - No dirty   → no query executed (no-op)
+/**
+ * Active record base class with dirty tracking and schema caching. #AI:class
+ *
+ * Use as the base class for all database-backed models. Subclasses declare
+ * $table and optional property hooks for auto-normalization. PHP 8.4+
+ * asymmetric visibility protects id/timestamps from external writes.
+ * Schema is fetched via DESCRIBE/information_schema on first access and cached.
+ *
+ * Example:
+ *   class user extends model {
+ *       protected static string $table = 'users';
+ *       public string $email { set(string $val) => strtolower(trim($val)); }
+ *   }
+ *   $user = user::find(1);           // model|null
+ *   $user = user::find_or_fail(1);   // model|throws
+ *   user::create(['name' => 'John', 'email' => 'J@J.COM']);
+ *
+ * Testing: Use test_db() for SQLite :memory:, models work directly against it.
+ *
+ * #AI:class
+ */
 abstract class model {
-    // Subclasses override:
     protected static string $table      = '';
     protected static string $connection = 'default';
     protected static string $primary    = 'id';
     protected static array  $guarded    = ['id', 'created_at', 'updated_at'];
-    protected static array  $casts      = [];   // ['age' => 'int', 'is_active' => 'bool']
+    protected static array  $casts      = [];
 
-    // Internal dirty tracking — populated by __set() when value changes.
-    // Not exposed externally; read via get_dirty() in save().
     private array $dirty_cols = [];
-
-    // Raw attribute storage — bypasses property hooks when loading from DB.
     private array $attributes = [];
 
     // --- factory methods ---
 
     /**
-     * @ai-contract returns model instance if found, null if not found — never throws
-     * @ai-contract input $id cast to int internally
+     * Finds a record by primary key, returning null if not found. #AI:find
+     *
+     * Never throws — always check for null.
+     *
+     * @param int|string $id Primary key value.
      */
     public static function find(int|string $id): ?static {
         $row = db::row(
@@ -48,8 +54,12 @@ abstract class model {
     }
 
     /**
-     * @ai-contract throws not_found_exception when record missing — use in controllers
-     * @ai-contract never returns null — guarantees a model instance or exception
+     * Finds a record by primary key, throwing not_found_exception if missing. #AI:find_or_fail
+     *
+     * Use in controllers where missing records should produce a 404 response.
+     *
+     * @param int|string $id Primary key value.
+     * @throws not_found_exception When no record matches.
      */
     public static function find_or_fail(int|string $id): static {
         $model = static::find($id);
@@ -60,7 +70,13 @@ abstract class model {
     }
 
     /**
-     * @ai-contract returns first row matching col=val, or null
+     * Finds the first record matching a column=value condition. #AI:find_by
+     *
+     * Returns null if no match. Column name is validated against injection.
+     *
+     * @param string $col Column name (must be a valid identifier).
+     * @param mixed  $val Value to match.
+     * @throws \InvalidArgumentException If column name contains invalid characters.
      */
     public static function find_by(string $col, mixed $val): ?static {
         if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $col)) {
@@ -75,8 +91,15 @@ abstract class model {
     }
 
     /**
-     * @ai-contract returns a query_scope — call all()/first()/count()/paginate() to execute
-     * @ai-contract $conditions can be array ['col' => 'val'] or string 'col = :col'
+     * Returns a query_scope for building filtered queries. #AI:where
+     *
+     * Chain ->order(), ->limit(), ->paginate() before calling a terminal method.
+     *
+     * Example:
+     *   $users = user::where(['status' => 'active'])->order('name')->limit(20)->all();
+     *
+     * @param string|array $conditions SQL fragment or column=>value pairs.
+     * @param array        $params     PDO params when $conditions is a string.
      */
     #[\NoDiscard]
     public static function where(string|array $conditions, array $params = []): query_scope {
@@ -84,22 +107,31 @@ abstract class model {
     }
 
     /**
-     * @ai-contract returns all rows as hydrated model array — always use limit() on large tables
+     * Returns all rows as hydrated models — always use limit on large tables. #AI:all
+     *
+     * Default limit is 1000 to prevent accidental full-table scans.
+     *
+     * @param int $limit Maximum rows to return.
      */
     public static function all(int $limit = 1000): array {
         return static::where([])->limit($limit)->all();
     }
 
     /**
-     * @ai-contract returns COUNT(*) for the table, optional conditions filter
+     * Returns COUNT(*) for the table, optionally filtered by conditions. #AI:count
+     *
+     * @param array $conditions Column=>value filter pairs.
      */
     public static function count(array $conditions = []): int {
         return static::where($conditions)->count();
     }
 
     /**
-     * @ai-contract creates model, mass-assigns non-guarded columns, calls save()
-     * @ai-contract $guarded columns in $data are silently ignored
+     * Creates a model, mass-assigns non-guarded columns, and saves. #AI:create
+     *
+     * Guarded columns in $data are silently ignored.
+     *
+     * @param array $data Column=>value pairs to assign.
      */
     public static function create(array $data): static {
         $m = new static();
@@ -109,8 +141,13 @@ abstract class model {
     }
 
     /**
-     * @ai-contract runs raw query_gen SQL scoped to this model's connection
-     * @ai-contract returns array of hydrated model instances
+     * Runs raw query_gen SQL scoped to this model's connection. #AI:raw
+     *
+     * Returns hydrated model instances. Use for complex queries that
+     * query_scope cannot express (JOINs, subqueries, etc.).
+     *
+     * @param string $sql    SQL template with %placeholders%.
+     * @param array  $params Placeholder values and :named params.
      */
     public static function raw(string $sql, array $params = []): array {
         $rows = db::all($sql, $params, connection: static::$connection);
@@ -118,11 +155,15 @@ abstract class model {
     }
 
     /**
-     * @ai-contract deletes all rows matching conditions
+     * Deletes all rows matching the given conditions. #AI:delete_where
+     *
+     * WARNING: No limit — deletes ALL matching rows. Use with specific conditions.
+     *
+     * @param array $conditions Column=>value filter pairs.
+     * @return int Number of rows deleted.
      */
     public static function delete_where(array $conditions): int {
         $scope = (new query_scope(static::class))->where($conditions);
-        // Build directly since query_scope doesn't expose delete
         [$built, $pdoParams] = query_builder::build(
             'DELETE FROM ' . static::$table . ' %where%',
             static::scope_to_params($scope),
@@ -133,9 +174,10 @@ abstract class model {
     // --- instance methods ---
 
     /**
-     * @ai-contract INSERT if no primary key; UPDATE only dirty columns if pk present
-     * @ai-contract no-op when id is set but no columns changed (dirty_cols empty)
-     * @ai-contract assigns insert_id to $id after INSERT
+     * Persists the model — INSERT if no primary key, UPDATE only dirty columns if set. #AI:save
+     *
+     * No-op when id is set but no columns changed (dirty_cols empty).
+     * After INSERT, assigns the auto-generated insert_id to $id.
      */
     public function save(): void {
         if (!isset($this->attributes[static::$primary])) {
@@ -146,8 +188,9 @@ abstract class model {
     }
 
     /**
-     * @ai-contract deletes the current record from the database
-     * @ai-contract throws \LogicException if model has no primary key set
+     * Deletes the current record from the database. #AI:delete
+     *
+     * @throws \LogicException If model has no primary key set.
      */
     public function delete(): void {
         $id = $this->attributes[static::$primary]
@@ -161,7 +204,11 @@ abstract class model {
     }
 
     /**
-     * @ai-contract fills non-guarded attributes from array (mass-assignment safe)
+     * Fills non-guarded attributes from an array (mass-assignment safe). #AI:fill
+     *
+     * Guarded columns (id, created_at, updated_at by default) are silently skipped.
+     *
+     * @param array $data Column=>value pairs to assign.
      */
     public function fill(array $data): void {
         foreach ($data as $key => $value) {
@@ -172,7 +219,7 @@ abstract class model {
     }
 
     /**
-     * @ai-contract returns all current attributes as a plain array
+     * Returns all current attributes as a plain array. #AI:to_array
      */
     public function to_array(): array {
         return $this->attributes;
@@ -181,20 +228,25 @@ abstract class model {
     // --- hydration ---
 
     /**
-     * @ai-contract creates model instance from DB row — bypasses guarded check
-     * @ai-contract called by find/all/raw — never call directly in application code
+     * Creates a model instance from a DB row — bypasses guarded check. #AI:hydrate_one
+     *
+     * Called internally by find/all/raw — never call directly in application code.
+     *
+     * @param array $row Associative array from DB fetch.
      */
     public static function hydrate_one(array $row): static {
         $m = new static();
         foreach ($row as $col => $val) {
             $m->set_raw($col, $val);
         }
-        $m->dirty_cols = [];   // hydrated rows start clean
+        $m->dirty_cols = [];
         return $m;
     }
 
     /**
-     * @ai-contract bulk hydrate — returns array of static instances from DB rows
+     * Bulk hydrates an array of DB rows into model instances. #AI:hydrate_many
+     *
+     * @param array $rows Array of associative arrays from DB fetch.
      */
     public static function hydrate_many(array $rows): array {
         return array_map(fn(array $row) => static::hydrate_one($row), $rows);
@@ -202,18 +254,25 @@ abstract class model {
 
     // --- table / connection accessors (used by query_scope) ---
 
+    /**
+     * Returns the table name for this model. #AI:get_table
+     */
     public static function get_table(): string {
         return static::$table;
     }
 
+    /**
+     * Returns the connection name for this model. #AI:get_connection
+     */
     public static function get_connection(): string {
         return static::$connection;
     }
 
     /**
-     * @ai-contract returns array of column definitions from DB, cached via cache facade
-     * @ai-contract supports mysql (DESCRIBE), pgsql (information_schema), sqlite (PRAGMA table_info)
-     * @ai-contract cache key: schema:{table}:{connection} — flush with cache::flush('schema:')
+     * Returns column definitions from DB schema, cached for 1 hour. #AI:schema
+     *
+     * Supports MySQL (DESCRIBE), PostgreSQL (information_schema), SQLite (PRAGMA).
+     * Cache key: schema:{table}:{connection} — flush with cache::flush('schema:').
      */
     public static function schema(): array {
         $cache_key = 'schema:' . static::$table . ':' . static::$connection;
@@ -264,7 +323,7 @@ abstract class model {
     }
 
     /**
-     * @ai-contract returns flat array of column names from cached schema
+     * Returns a flat array of column names from the cached schema. #AI:column_names
      */
     public static function column_names(): array {
         return array_column(static::schema(), 'Field');
@@ -287,20 +346,17 @@ abstract class model {
     // --- internals ---
 
     private function set_attribute(string $key, mixed $value): void {
-        // Track dirty only for existing attributes (UPDATE context), not during initial fill
         if (isset($this->attributes[$key]) && $this->attributes[$key] !== $value) {
             if (!in_array($key, $this->dirty_cols, true)) {
                 $this->dirty_cols[] = $key;
             }
         } elseif (!isset($this->attributes[$key])) {
-            // New attribute — mark dirty so INSERT includes it
             $this->dirty_cols[] = $key;
         }
 
         $this->attributes[$key] = $this->cast($key, $value);
     }
 
-    // Writes directly without triggering dirty tracking — for hydrate_one()
     private function set_raw(string $key, mixed $value): void {
         $this->attributes[$key] = $this->cast($key, $value);
     }
@@ -317,7 +373,6 @@ abstract class model {
     }
 
     private function do_insert(): void {
-        // Filter to non-guarded attributes only
         $data = array_filter(
             $this->attributes,
             fn($k) => !in_array($k, static::$guarded, true),
@@ -334,7 +389,6 @@ abstract class model {
             connection: static::$connection,
         );
 
-        // Assign new id — uses set_raw to bypass dirty tracking
         $pdo = db::pdo(static::$connection);
         $this->set_raw(static::$primary, (int) $pdo->lastInsertId());
         $this->dirty_cols = [];
@@ -342,7 +396,7 @@ abstract class model {
 
     private function do_update(): void {
         if ($this->dirty_cols === []) {
-            return;   // nothing changed — skip query
+            return;
         }
 
         $set = [];
@@ -366,8 +420,186 @@ abstract class model {
         $this->dirty_cols = [];
     }
 
-    // query_scope needs to read internal params — helper for delete_where
     private static function scope_to_params(query_scope $scope): array {
         return $scope->to_builder_params();
     }
 }
+
+#AI:class
+#AI symbol: skim\db\model
+#AI source_path: src/db/model.php
+#AI title: model
+#AI description: Active record base class with dirty tracking, schema caching, guarded mass-assignment, and type casting.
+#AI role: active record base
+#AI layer: db
+#AI badges: [orm; active-record; dirty-tracking; schema-cache; guarded]
+#AI intro: `model` is the active record base class for all database-backed models. It provides find/create/save/delete operations with automatic dirty tracking for efficient UPDATE queries, schema caching for introspection, guarded mass-assignment protection, and configurable type casting.
+#AI lifecycle: instantiated via find/create/new, persisted via save(), schema cached per table for 1 hour
+#AI fallback: none
+#AI test_seam: test_db() for SQLite :memory:, models work directly against it
+#AI invariants: [find() returns null on missing — never throws; find_or_fail() throws not_found_exception; save() is INSERT when no PK, UPDATE only dirty columns when PK set; guarded columns silently skipped in fill() and INSERT; schema cached for 1 hour with key schema:{table}:{connection}]
+#AI core_behaviors: [dirty tracking via set_attribute() records changed columns; hydrate_one() uses set_raw() to bypass dirty tracking; casts apply on both set and hydrate; query_scope provides fluent WHERE/ORDER/LIMIT chaining]
+#AI warnings: [all() defaults to limit 1000 — always paginate large tables; delete_where() has no limit — deletes ALL matching rows]
+#AI notes: Subclasses should use PHP 8.4 property hooks for normalization and asymmetric visibility for id/timestamps.
+#AI scope_items: [{name: $table | mutable: false | desc: Database table name.}; {name: $connection | mutable: false | desc: Named DB connection from config/db.php.}; {name: $primary | mutable: false | desc: Primary key column name.}; {name: $guarded | mutable: false | desc: Columns excluded from mass-assignment.}; {name: $casts | mutable: false | desc: Column type casting rules.}]
+#AI owns: attributes array, dirty_cols tracking
+#AI entry_points: [find; find_or_fail; find_by; where; all; count; create; raw; delete_where; save; delete; fill; to_array; hydrate_one; hydrate_many; schema; column_names]
+#AI config_reads: [db.*.connection]
+#AI non_goals: [Does not support relations — use merry_model; Does not provide query builder — use query_scope via where(); Does not handle validation — use validate::make()]
+#AI side_effects: [save() executes INSERT or UPDATE; delete() executes DELETE; schema() reads and caches DB schema]
+#AI flow: model::find(id) -> db::row() -> hydrate_one() -> model instance; model->save() -> do_insert()/do_update() -> db::query()
+#AI lifecycle_steps: [model::find/create/new; -> hydration or fill(); -> attribute assignment with dirty tracking; -> save() checks PK presence; -> do_insert() or do_update(); -> db::query() with %values% or %set%; -> dirty_cols reset]
+#AI section_order: [Finders; Query Building; Creation; Persistence; Deletion; Mass Assignment; Hydration; Schema; Accessors]
+#AI architectural_notes: Active record pattern with dirty tracking for efficient updates. Schema caching avoids repeated DESCRIBE calls. Guarded columns protect against mass-assignment vulnerabilities.
+
+#AI:find
+#AI group: Finders
+#AI frequency: high
+#AI signature: public static function find(int|string $id): ?static
+#AI contract: Finds a record by primary key. Returns null if not found — never throws.
+#AI param_details: [{name: $id | type: int|string | required: true | desc: Primary key value.}]
+#AI return_detail: {type: ?static | desc: Hydrated model instance or null.}
+
+#AI:find_or_fail
+#AI group: Finders
+#AI frequency: high
+#AI signature: public static function find_or_fail(int|string $id): static
+#AI contract: Finds a record by primary key. Throws not_found_exception if missing — use in controllers for 404 responses.
+#AI param_details: [{name: $id | type: int|string | required: true | desc: Primary key value.}]
+#AI return_detail: {type: static | desc: Hydrated model instance.}
+#AI throws_details: [{type: not_found_exception | desc: When no record matches the primary key.}]
+
+#AI:find_by
+#AI group: Finders
+#AI frequency: medium
+#AI signature: public static function find_by(string $col, mixed $val): ?static
+#AI contract: Finds the first record matching a column=value condition. Validates column name against injection. Returns null if no match.
+#AI param_details: [{name: $col | type: string | required: true | desc: Column name (validated as identifier).}; {name: $val | type: mixed | required: true | desc: Value to match.}]
+#AI return_detail: {type: ?static | desc: Hydrated model instance or null.}
+#AI throws_details: [{type: \InvalidArgumentException | desc: If column name contains invalid characters.}]
+
+#AI:where
+#AI group: Query Building
+#AI frequency: high
+#AI signature: public static function where(string|array $conditions, array $params = []): query_scope
+#AI contract: Returns a query_scope for building filtered queries. Chain order/limit/paginate before terminal methods.
+#AI param_details: [{name: $conditions | type: string|array | required: true | desc: SQL fragment or column=>value pairs.}; {name: $params | type: array | required: false | desc: PDO params when conditions is a string.}]
+#AI return_detail: {type: query_scope | desc: Fluent query builder scoped to this model.}
+#AI notes: #[\NoDiscard] — always capture or chain the return value.
+
+#AI:all
+#AI group: Finders
+#AI frequency: high
+#AI signature: public static function all(int $limit = 1000): array
+#AI contract: Returns all rows as hydrated models. Default limit of 1000 prevents accidental full-table scans.
+#AI param_details: [{name: $limit | type: int | required: false | desc: Maximum rows to return. Default 1000.}]
+#AI return_detail: {type: array | desc: Array of hydrated model instances.}
+
+#AI:count
+#AI group: Query Building
+#AI frequency: medium
+#AI signature: public static function count(array $conditions = []): int
+#AI contract: Returns COUNT(*) for the table, optionally filtered by conditions.
+#AI param_details: [{name: $conditions | type: array | required: false | desc: Column=>value filter pairs.}]
+#AI return_detail: {type: int | desc: Number of matching rows.}
+
+#AI:create
+#AI group: Creation
+#AI frequency: high
+#AI signature: public static function create(array $data): static
+#AI contract: Creates a new model, mass-assigns non-guarded columns, and persists via save(). Guarded columns in $data are silently ignored.
+#AI param_details: [{name: $data | type: array | required: true | desc: Column=>value pairs to assign.}]
+#AI return_detail: {type: static | desc: Persisted model instance with assigned id.}
+#AI side_effects: Executes INSERT query.
+
+#AI:raw
+#AI group: Query Building
+#AI frequency: medium
+#AI signature: public static function raw(string $sql, array $params = []): array
+#AI contract: Runs raw query_gen SQL scoped to this model's connection. Returns hydrated model instances. Use for JOINs and subqueries.
+#AI param_details: [{name: $sql | type: string | required: true | desc: SQL template with %placeholders%.}; {name: $params | type: array | required: false | desc: Placeholder values and :named params.}]
+#AI return_detail: {type: array | desc: Array of hydrated model instances.}
+
+#AI:delete_where
+#AI group: Deletion
+#AI frequency: low
+#AI signature: public static function delete_where(array $conditions): int
+#AI contract: Deletes all rows matching the conditions. No limit — deletes ALL matching rows.
+#AI param_details: [{name: $conditions | type: array | required: true | desc: Column=>value filter pairs.}]
+#AI return_detail: {type: int | desc: Number of rows deleted.}
+#AI warnings: [No limit — deletes ALL matching rows. Use with specific conditions.]
+#AI side_effects: Executes DELETE query.
+
+#AI:save
+#AI group: Persistence
+#AI frequency: high
+#AI signature: public function save(): void
+#AI contract: INSERT if no primary key set; UPDATE only dirty columns if PK present. No-op when id is set but no columns changed.
+#AI side_effects: Executes INSERT or UPDATE query.
+
+#AI:delete
+#AI group: Deletion
+#AI frequency: medium
+#AI signature: public function delete(): void
+#AI contract: Deletes the current record from the database.
+#AI throws_details: [{type: \LogicException | desc: If model has no primary key set.}]
+#AI side_effects: Executes DELETE query.
+
+#AI:fill
+#AI group: Mass Assignment
+#AI frequency: high
+#AI signature: public function fill(array $data): void
+#AI contract: Assigns non-guarded attributes from an array. Guarded columns are silently skipped.
+#AI param_details: [{name: $data | type: array | required: true | desc: Column=>value pairs to assign.}]
+
+#AI:to_array
+#AI group: Accessors
+#AI frequency: medium
+#AI signature: public function to_array(): array
+#AI contract: Returns all current attributes as a plain associative array.
+#AI return_detail: {type: array | desc: Model attributes.}
+
+#AI:hydrate_one
+#AI group: Hydration
+#AI frequency: internal
+#AI signature: public static function hydrate_one(array $row): static
+#AI contract: Creates a model instance from a DB row. Bypasses guarded check and dirty tracking. Never call directly in application code.
+#AI param_details: [{name: $row | type: array | required: true | desc: Associative array from DB fetch.}]
+#AI return_detail: {type: static | desc: Clean hydrated model instance.}
+
+#AI:hydrate_many
+#AI group: Hydration
+#AI frequency: internal
+#AI signature: public static function hydrate_many(array $rows): array
+#AI contract: Bulk hydrates an array of DB rows into model instances.
+#AI param_details: [{name: $rows | type: array | required: true | desc: Array of associative arrays.}]
+#AI return_detail: {type: array | desc: Array of hydrated model instances.}
+
+#AI:get_table
+#AI group: Accessors
+#AI frequency: internal
+#AI signature: public static function get_table(): string
+#AI contract: Returns the table name for this model.
+#AI return_detail: {type: string | desc: Table name.}
+
+#AI:get_connection
+#AI group: Accessors
+#AI frequency: internal
+#AI signature: public static function get_connection(): string
+#AI contract: Returns the connection name for this model.
+#AI return_detail: {type: string | desc: Connection name.}
+
+#AI:schema
+#AI group: Schema
+#AI frequency: low
+#AI signature: public static function schema(): array
+#AI contract: Returns column definitions from the DB schema. Cached for 1 hour. Supports MySQL, PostgreSQL, and SQLite.
+#AI return_detail: {type: array | desc: Array of column definition arrays with Field, Type, Null keys.}
+#AI side_effects: Reads DB schema on first call, caches result.
+
+#AI:column_names
+#AI group: Schema
+#AI frequency: low
+#AI signature: public static function column_names(): array
+#AI contract: Returns a flat array of column names from the cached schema.
+#AI return_detail: {type: array | desc: Array of column name strings.}

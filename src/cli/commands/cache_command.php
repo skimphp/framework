@@ -5,11 +5,32 @@ namespace skim\cli\commands;
 use skim\cli\command;
 use skim\cache\cache;
 
-// Usage:
-//   php skim cache:clear           → flushes everything
-//   php skim cache:clear user:     → flushes only keys with 'user:' prefix
-//   php skim cache:flush           → alias for clear
+/**
+ * CLI command that flushes the cache by prefix or clears the entire backend.
+ *
+ * Use when operators need to invalidate cached data from the terminal.
+ * Delegates to cache::flush() for prefix-based invalidation and
+ * cache::flush_all() when no prefix is given.
+ *
+ * Example:
+ *   php skim cache:clear           # flushes everything
+ *   php skim cache:clear user:     # flushes only user:* keys
+ *
+ * Testing: Inject a mock cache driver via cache::set_driver() before dispatching.
+ *
+ * #AI:class
+ */
 class cache_command extends command {
+    /**
+     * Dispatches clear/flush sub-commands. #AI:handle
+     *
+     * WARNING: Running without a prefix argument calls cache::flush_all(),
+     * which clears the ENTIRE active cache backend.
+     *
+     * Example:
+     *   php skim cache:clear user:     # safe — prefix-scoped
+     *   php skim cache:clear           # DANGEROUS — full backend flush
+     */
     public function handle(): int {
         $sub    = $this->arg(0, 'clear');
         $prefix = $this->arg(1, '');
@@ -25,3 +46,36 @@ class cache_command extends command {
         return 1;
     }
 }
+
+#AI:class
+#AI symbol: skim\cli\commands\cache_command
+#AI source_path: src/cli/commands/cache_command.php
+#AI title: cache_command
+#AI description: CLI command for cache invalidation by prefix or full backend flush.
+#AI role: CLI cache invalidation command
+#AI layer: cli
+#AI badges: [cli; command; cache; destructive]
+#AI intro: `cache_command` provides the `php skim cache:clear` and `php skim cache:flush` CLI entry points. It delegates to `cache::flush($prefix)` for prefix-scoped invalidation or `cache::flush_all()` when no prefix is supplied.
+#AI lifecycle: instantiated by CLI kernel, handle() called once per invocation
+#AI fallback: none — unknown sub-commands print an error and return exit code 1
+#AI test_seam: cache::set_driver() to inject array_driver, cache::reset() in tearDown
+#AI invariants: [clear and flush sub-commands are treated identically; empty prefix triggers full backend flush]
+#AI core_behaviors: [Delegates prefix flush to cache::flush(); Delegates full flush to cache::flush_all(); Prints success or error message to stdout]
+#AI warnings: [Running `php skim cache:clear` without a prefix calls cache::flush_all() which clears the entire cache backend]
+#AI owns: nothing — delegates all cache operations to cache facade
+#AI entry_points: [handle]
+#AI config_reads: []
+#AI non_goals: [Does not support tag-based invalidation; Does not list cached keys]
+#AI side_effects: [cache::flush() or cache::flush_all() mutates the active cache backend]
+#AI flow: cache_command::handle() -> arg(0) sub-command -> cache::flush(prefix) or cache::flush_all() -> print result
+#AI lifecycle_steps: [kernel dispatches cache_command; -> handle(); -> read sub-command from arg(0); -> read prefix from arg(1); -> cache::flush(prefix) or cache::flush_all(); -> print success/error]
+#AI section_order: [Command Execution]
+#AI architectural_notes: Thin CLI wrapper over the cache facade. All cache logic lives in cache.php.
+
+#AI:handle
+#AI group: Command Execution
+#AI frequency: low
+#AI signature: public function handle(): int
+#AI contract: Dispatches clear/flush sub-commands. When a prefix is provided, calls cache::flush($prefix). When no prefix is given, calls cache::flush_all() which clears the entire backend.
+#AI warnings: [Without a prefix argument, the entire cache backend is cleared — prefer prefix-scoped invalidation in production]
+#AI return_detail: {type: int | desc: 0 on success, 1 on unknown sub-command.}

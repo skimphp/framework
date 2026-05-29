@@ -2,14 +2,29 @@
 
 namespace skim\dev;
 
-// Developer-friendly error page rendered when APP_DEBUG=true.
-// Active only when set_exception_handler is invoked from app::run().
-// In production (APP_DEBUG=false) the handler logs + shows a generic 500 page.
+/**
+ * Developer-friendly error page rendered when APP_DEBUG=true. #AI:class
+ *
+ * Use only via the exception handler registered in app::run(). Shows full
+ * exception details including code context and stack trace. Never expose
+ * this in production — APP_DEBUG=false shows a generic 500 page instead.
+ *
+ * Example:
+ *   // Registered by app::run() when APP_DEBUG=true:
+ *   set_exception_handler(fn(\Throwable $e) => error_page::render($e));
+ *
+ * Testing: Call render() directly with a test Throwable; output goes to stdout.
+ *
+ * #AI:class
+ */
 final class error_page {
     /**
-     * @ai-contract renders a full HTML error page to stdout and exits
-     * @ai-contract shows: exception class, message, file, line, code context, stack trace
-     * @ai-contract only called when APP_DEBUG=true — never expose internals in production
+     * Renders a full HTML error page to stdout with code context and stack trace. #AI:render
+     *
+     * WARNING: Exposes exception details, file paths, and source code. Only
+     * call when APP_DEBUG=true — never in production.
+     *
+     * @param \Throwable $e The exception to render.
      */
     public static function render(\Throwable $e): void {
         http_response_code(500);
@@ -79,3 +94,37 @@ final class error_page {
         return $output;
     }
 }
+
+#AI:class
+#AI symbol: skim\dev\error_page
+#AI source_path: src/dev/error_page.php
+#AI title: error_page
+#AI description: Developer-friendly HTML error page rendered when APP_DEBUG=true, showing exception details, code context, and stack trace.
+#AI role: debug error renderer
+#AI layer: dev
+#AI badges: [dev; debug; error-page; html]
+#AI intro: `error_page` renders a styled HTML error page with exception class, message, file location, surrounding code context, and full stack trace. It is only active when APP_DEBUG=true; production uses a generic 500 page.
+#AI lifecycle: called by exception handler registered in app::run(), outputs directly to stdout
+#AI fallback: none — always renders full details when called
+#AI test_seam: call render() directly with a test Throwable
+#AI invariants: [only called when APP_DEBUG=true; outputs HTTP 500 status; all output is HTML-escaped]
+#AI core_behaviors: [Sets HTTP 500 status code; Renders exception class, message, file, and line; Shows ±5 lines of code context around the error; Displays full stack trace]
+#AI warnings: [Exposes exception details, file paths, and source code — never call in production]
+#AI owns: none — stateless
+#AI entry_points: [render]
+#AI config_reads: []
+#AI non_goals: [Does not log errors; Does not handle production error pages; Does not format JSON error responses]
+#AI side_effects: [sets HTTP response code to 500; writes HTML to stdout]
+#AI flow: render(Throwable) -> http_response_code(500) -> code_context() -> echo HTML
+#AI lifecycle_steps: [render(); -> set 500 status; -> extract exception details; -> code_context(); -> echo HTML template]
+#AI section_order: [Rendering; Architecture]
+#AI architectural_notes: Registered as exception handler by app::run() only when APP_DEBUG=true.
+
+#AI:render
+#AI group: Rendering
+#AI frequency: low
+#AI signature: public static function render(\Throwable $e): void
+#AI contract: Renders a full HTML error page to stdout with exception class, message, file location, ±5 lines of code context, and full stack trace. Sets HTTP 500 status.
+#AI param_details: [{name: $e | type: \Throwable | required: true | desc: The exception to render.}]
+#AI warnings: [Exposes internal file paths and source code — only safe when APP_DEBUG=true]
+#AI side_effects: [sets HTTP 500 status; writes HTML to stdout]

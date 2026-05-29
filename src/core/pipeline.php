@@ -2,18 +2,44 @@
 
 namespace skim\core;
 
-// Builds and executes the middleware chain.
-// Chain direction: first registered = outermost wrapper = first to run.
-// Each middleware wraps the next — onion model.
-//
-// Short-circuit: a middleware returning without calling $next stops execution.
-// The controller is the innermost callable at the end of the chain.
+/**
+ * Builds and executes the middleware chain using the onion model.
+ *
+ * Use when dispatching a request through a stack of middleware before reaching
+ * a controller. The pipeline reverses the middleware list internally so that
+ * the first-registered middleware becomes the outermost wrapper — it runs first,
+ * calls $next to descend, and receives the response on the way back out. A
+ * middleware that returns without calling $next short-circuits the chain.
+ *
+ * Example:
+ *   $res = (new pipeline())->run(
+ *       $req, $res,
+ *       middlewares: [cors::class, auth_middleware::class],
+ *       core: fn(request $req, response $res) => $controller->handle($req, $res),
+ *   );
+ *
+ * Testing: instantiate pipeline directly with test doubles as middlewares and a
+ * callable core; assert the final response value.
+ *
+ * #AI:class
+ */
 class pipeline {
     /**
-     * @ai-contract executes $middlewares as a chain, $core is the terminal handler (controller)
-     * @ai-contract each $middleware entry is either a class-string or ['class' => ..., 'args' => [...]]
-     * @ai-contract middlewares are resolved via the app container if available
-     * @ai-contract returns mixed — whatever the terminal handler or a short-circuit middleware returns
+     * Executes the middleware chain and returns the result. #AI:run
+     *
+     * Resolves each middleware entry to a concrete instance, builds the chain from
+     * innermost to outermost, then invokes the chain with the given request and
+     * response. The terminal callable ($core) is only reached if no middleware
+     * short-circuits.
+     *
+     * @param request  $req         The incoming request.
+     * @param response $res         The mutable response object.
+     * @param array    $middlewares Ordered list of middleware entries. Each entry
+     *                              is either a class-string, a middleware instance,
+     *                              or ['class' => ..., 'args' => [...]].
+     * @param callable $core        Terminal handler (typically the controller).
+     *                              Signature: (request, response): mixed.
+     * @return mixed Whatever the terminal handler or a short-circuit middleware returns.
      */
     public function run(
         request  $req,
@@ -25,6 +51,17 @@ class pipeline {
         return $chain($req, $res);
     }
 
+    /**
+     * Builds the chain from innermost to outermost. #AI:build
+     *
+     * Starts with $core as the innermost callable, then wraps it with each
+     * middleware in reverse order. The result is a single closure where the
+     * first middleware in the list is the outermost wrapper.
+     *
+     * @param array    $middlewares Ordered middleware entries.
+     * @param callable $core        Terminal handler.
+     * @return callable Composed chain: (request, response): mixed.
+     */
     private function build(array $middlewares, callable $core): callable {
         // Build from end to start — last middleware in list wraps the core first,
         // so that when called the first middleware runs first (correct onion order).
@@ -42,6 +79,17 @@ class pipeline {
         return $chain;
     }
 
+    /**
+     * Resolves a middleware entry to a concrete instance. #AI:resolve
+     *
+     * Accepts three formats:
+     * - middleware instance: returned as-is.
+     * - class-string: instantiated with no arguments via `new $class()`.
+     * - array with 'class' and optional 'args': instantiated with constructor args.
+     *
+     * @param string|array|middleware $entry Middleware entry.
+     * @return middleware Resolved middleware instance.
+     */
     private function resolve(string|array|middleware $entry): middleware {
         if ($entry instanceof middleware) {
             return $entry;
@@ -56,3 +104,43 @@ class pipeline {
         return new $class(...$args);
     }
 }
+
+#AI:class
+#AI symbol: skim\core\pipeline
+#AI source_path: src/core/pipeline.php
+#AI title: pipeline
+#AI description: Middleware chain builder and executor using the onion model.
+#AI role: middleware pipeline
+#AI layer: core
+#AI badges: [pipeline; middleware; onion-model]
+#AI intro: `skim\core\pipeline` builds a composed callable from an ordered list of middleware entries and a terminal handler. The list is reversed internally so execution follows FIFO order: first-registered = first to run.
+#AI flow: run($req, $res, $middlewares, $core) -> build($middlewares, $core) -> resolve() each entry -> reversed closure chain -> invoke chain($req, $res)
+#AI lifecycle: Fresh pipeline instance per request — no mutable state is retained between calls.
+#AI invariants: [middleware list is reversed internally for correct onion order; short-circuit skips $core entirely; resolve() supports instance, class-string, and factory-array formats]
+#AI test_seam: Instantiate pipeline directly; pass test doubles and assert invocation order or short-circuit behavior.
+#AI section_order: [Execution; Internals]
+#AI architectural_notes: The pipeline is stateless — all three methods are pure functions of their inputs. The `resolve()` method does not use the DI container; middleware resolution is intentionally direct instantiation for clarity and simplicity.
+
+#AI:run
+#AI group: Execution
+#AI frequency: high
+#AI signature: public function run(request $req, response $res, array $middlewares, callable $core): mixed
+#AI contract: Resolves and chains middlewares, invokes the composed chain, and returns the terminal or short-circuit response.
+#AI param_details: [{name: $req | type: request | required: true | desc: Incoming request}; {name: $res | type: response | required: true | desc: Mutable response}; {name: $middlewares | type: array | required: true | desc: Ordered list of class-string, instance, or factory-array entries}; {name: $core | type: callable | required: true | desc: Terminal handler, signature (request, response): mixed}]
+#AI return_detail: {type: mixed | desc: Response from terminal handler or short-circuit middleware.}
+
+#AI:build
+#AI group: Internals
+#AI frequency: internal
+#AI signature: private function build(array $middlewares, callable $core): callable
+#AI contract: Reverses the middleware list and wraps $core with each resolved instance from innermost to outermost.
+#AI param_details: [{name: $middlewares | type: array | required: true | desc: Ordered middleware entries}; {name: $core | type: callable | required: true | desc: Terminal handler}]
+#AI return_detail: {type: callable | desc: Composed closure with signature (request, response): mixed.}
+
+#AI:resolve
+#AI group: Internals
+#AI frequency: internal
+#AI signature: private function resolve(string|array|middleware $entry): middleware
+#AI contract: Normalizes a middleware entry to a concrete middleware instance. Accepts instances (returned as-is), class-strings (instantiated via new), and factory arrays ['class' => ..., 'args' => [...]].
+#AI param_details: [{name: $entry | type: string|array|middleware | required: true | desc: Entry in one of three supported formats}]
+#AI return_detail: {type: middleware | desc: Resolved middleware instance.}

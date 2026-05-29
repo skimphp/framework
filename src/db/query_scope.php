@@ -2,12 +2,23 @@
 
 namespace skim\db;
 
-// Fluent query builder scoped to a model class.
-// Collects where/order/limit/offset clauses without touching the DB.
-// Terminal methods (all, count, paginate, first) compile and execute.
-//
-// #[\NoDiscard] on every clause method: ignoring the return loses the clause.
-// Why: unlike Eloquent, query_scope is NOT the model — it builds a one-shot query.
+/**
+ * Fluent query builder scoped to a model class. #AI:class
+ *
+ * Use when building filtered, ordered, or paginated queries on a model.
+ * Collects WHERE/ORDER/LIMIT/OFFSET clauses without touching the DB until
+ * a terminal method (all, first, count, paginate) is called.
+ *
+ * Example:
+ *   $users = user::where(['status' => 'active'])
+ *       ->order('created_at DESC')
+ *       ->limit(20)
+ *       ->all();
+ *
+ * Testing: Use test_db() SQLite :memory: — query_scope executes real queries.
+ *
+ * #AI:class
+ */
 class query_scope {
     private array  $conditions = [];
     private array  $pdo_params = [];
@@ -18,8 +29,13 @@ class query_scope {
     public function __construct(private readonly string $model_class) {}
 
     /**
-     * @ai-contract adds a WHERE condition — repeated calls join with AND
-     * @ai-contract $condition can be string 'col = :col' or array ['col' => 'val']
+     * Adds a WHERE condition — repeated calls join with AND. #AI:where
+     *
+     * Accepts array ['col' => 'val'] for simple equality or string
+     * 'col = :col' with separate $params for complex expressions.
+     *
+     * @param string|array $condition SQL fragment or column=>value pairs.
+     * @param array        $params    PDO params when $condition is a string.
      */
     #[\NoDiscard]
     public function where(string|array $condition, array $params = []): static {
@@ -39,7 +55,9 @@ class query_scope {
     }
 
     /**
-     * @ai-contract sets ORDER BY clause — last call wins
+     * Sets ORDER BY clause — last call wins. #AI:order
+     *
+     * @param string $clause SQL ORDER BY expression, e.g. 'created_at DESC'.
      */
     #[\NoDiscard]
     public function order(string $clause): static {
@@ -48,7 +66,9 @@ class query_scope {
     }
 
     /**
-     * @ai-contract sets LIMIT — last call wins
+     * Sets LIMIT — last call wins. #AI:limit
+     *
+     * @param int $n Maximum rows to return.
      */
     #[\NoDiscard]
     public function limit(int $n): static {
@@ -57,7 +77,9 @@ class query_scope {
     }
 
     /**
-     * @ai-contract sets OFFSET — last call wins
+     * Sets OFFSET — last call wins. #AI:offset
+     *
+     * @param int $n Number of rows to skip.
      */
     #[\NoDiscard]
     public function offset(int $n): static {
@@ -66,14 +88,14 @@ class query_scope {
     }
 
     /**
-     * @ai-contract executes query, returns array of hydrated model instances
+     * Executes the query and returns hydrated model instances. #AI:all
      */
     public function all(): array {
         return $this->model_class::hydrate_many($this->execute());
     }
 
     /**
-     * @ai-contract executes query, returns first hydrated model or null
+     * Executes the query and returns the first model or null. #AI:first
      */
     public function first(): mixed {
         $rows = $this->limit(1)->execute();
@@ -81,7 +103,7 @@ class query_scope {
     }
 
     /**
-     * @ai-contract executes COUNT(*) with current conditions — ignores limit/offset
+     * Executes COUNT(*) with current conditions — ignores limit/offset. #AI:count
      */
     public function count(): int {
         /** @var model $class */
@@ -95,7 +117,14 @@ class query_scope {
     }
 
     /**
-     * @ai-contract paginates results, returns pagination value object
+     * Paginates results, returning a pagination value object. #AI:paginate
+     *
+     * Example:
+     *   $page = user::where(['role' => 'admin'])->paginate(page: 2, per_page: 25);
+     *   // $page->items, $page->total, $page->pages, $page->has_next
+     *
+     * @param int $page     Current page number (1-indexed).
+     * @param int $per_page Items per page.
      */
     public function paginate(int $page = 1, int $per_page = 20): pagination {
         $total = $this->count();
@@ -104,8 +133,9 @@ class query_scope {
     }
 
     /**
-     * @ai-contract returns params array in query_builder::build() format for external use
-     * @ai-contract used by model::delete_where() to build scoped DELETE queries
+     * Exports collected params in query_builder::build() format. #AI:to_builder_params
+     *
+     * Used internally by model::delete_where() to build scoped DELETE queries.
      */
     public function to_builder_params(): array {
         return array_merge(['where' => $this->conditions], $this->pdo_params);
@@ -138,3 +168,103 @@ class query_scope {
         return is_array($result) ? $result : [];
     }
 }
+
+#AI:class
+#AI symbol: skim\db\query_scope
+#AI source_path: src/db/query_scope.php
+#AI title: query_scope
+#AI description: Fluent query builder scoped to a model class with WHERE/ORDER/LIMIT/OFFSET collection and terminal execution.
+#AI role: fluent query builder
+#AI layer: db
+#AI badges: [fluent; builder; orm; no-discard]
+#AI intro: `query_scope` collects WHERE, ORDER BY, LIMIT, and OFFSET clauses without executing any SQL. Terminal methods (`all()`, `first()`, `count()`, `paginate()`) compile the collected state into a query_gen SQL template and execute it via `db::query()`.
+#AI lifecycle: created by model::where(), consumed by terminal method call
+#AI fallback: none
+#AI test_seam: test via model::where() against test_db() SQLite :memory:
+#AI invariants: [clause methods are #[\NoDiscard] — discarding the return silently loses the clause; repeated where() calls join with AND; order/limit/offset use last-call-wins; count() ignores limit/offset]
+#AI core_behaviors: [Collects conditions without DB access until terminal method; Array conditions auto-generate unique placeholders to avoid collisions; Terminal methods compile to query_gen SQL and execute]
+#AI warnings: [Discarding the return of where()/order()/limit()/offset() loses that clause — always capture or chain]
+#AI notes: Unlike Eloquent, query_scope is NOT the model — it builds a one-shot query. Each terminal call executes independently.
+#AI scope_items: []
+#AI owns: conditions array, pdo_params, order/limit/offset state
+#AI entry_points: [where; order; limit; offset; all; first; count; paginate]
+#AI config_reads: []
+#AI non_goals: [Does not support JOINs; Does not support GROUP BY or HAVING; Does not cache results]
+#AI side_effects: [Terminal methods execute real DB queries]
+#AI flow: model::where() -> new query_scope -> chain clauses -> terminal method -> execute() -> db::query()
+#AI lifecycle_steps: [model::where(conditions); -> new query_scope(class); -> chain where/order/limit/offset; -> terminal method (all/first/count/paginate); -> execute() compiles SQL; -> db::query() with query_gen placeholders]
+#AI section_order: [Clause Methods; Terminal Methods; Internal]
+#AI architectural_notes: query_scope is a thin collector over query_gen placeholders. All SQL generation happens in query_builder::build() at execution time.
+
+#AI:where
+#AI group: Clause Methods
+#AI frequency: high
+#AI signature: public function where(string|array $condition, array $params = []): static
+#AI contract: Adds a WHERE condition. Array form ['col' => 'val'] generates unique placeholders automatically. String form 'col = :col' requires matching $params. Repeated calls join with AND.
+#AI param_details: [{name: $condition | type: string|array | required: true | desc: SQL fragment or column=>value equality pairs.}; {name: $params | type: array | required: false | desc: PDO params when $condition is a string fragment.}]
+#AI return_detail: {type: static | desc: Returns $this for chaining.}
+#AI notes: #[\NoDiscard] — always capture or chain the return value.
+
+#AI:order
+#AI group: Clause Methods
+#AI frequency: medium
+#AI signature: public function order(string $clause): static
+#AI contract: Sets ORDER BY clause. Last call wins — does not accumulate.
+#AI param_details: [{name: $clause | type: string | required: true | desc: SQL ORDER BY expression like 'created_at DESC'.}]
+#AI return_detail: {type: static | desc: Returns $this for chaining.}
+
+#AI:limit
+#AI group: Clause Methods
+#AI frequency: high
+#AI signature: public function limit(int $n): static
+#AI contract: Sets LIMIT. Last call wins.
+#AI param_details: [{name: $n | type: int | required: true | desc: Maximum rows to return.}]
+#AI return_detail: {type: static | desc: Returns $this for chaining.}
+
+#AI:offset
+#AI group: Clause Methods
+#AI frequency: medium
+#AI signature: public function offset(int $n): static
+#AI contract: Sets OFFSET. Last call wins.
+#AI param_details: [{name: $n | type: int | required: true | desc: Number of rows to skip.}]
+#AI return_detail: {type: static | desc: Returns $this for chaining.}
+
+#AI:all
+#AI group: Terminal Methods
+#AI frequency: high
+#AI signature: public function all(): array
+#AI contract: Executes the collected query and returns an array of hydrated model instances.
+#AI return_detail: {type: array | desc: Array of hydrated model instances.}
+#AI side_effects: Executes a SELECT query.
+
+#AI:first
+#AI group: Terminal Methods
+#AI frequency: high
+#AI signature: public function first(): mixed
+#AI contract: Executes the query with LIMIT 1 and returns the first hydrated model or null.
+#AI return_detail: {type: mixed | desc: Hydrated model instance or null.}
+#AI side_effects: Executes a SELECT query.
+
+#AI:count
+#AI group: Terminal Methods
+#AI frequency: high
+#AI signature: public function count(): int
+#AI contract: Executes COUNT(*) with current WHERE conditions. Ignores limit and offset.
+#AI return_detail: {type: int | desc: Number of matching rows.}
+#AI side_effects: Executes a SELECT COUNT(*) query.
+
+#AI:paginate
+#AI group: Terminal Methods
+#AI frequency: high
+#AI signature: public function paginate(int $page = 1, int $per_page = 20): pagination
+#AI contract: Executes count() and a limited all() to produce a pagination value object with items, total, and navigation properties.
+#AI param_details: [{name: $page | type: int | required: false | desc: Current page number (1-indexed). Default 1.}; {name: $per_page | type: int | required: false | desc: Items per page. Default 20.}]
+#AI return_detail: {type: pagination | desc: Immutable pagination value object.}
+#AI side_effects: Executes two queries — COUNT(*) and SELECT with LIMIT/OFFSET.
+
+#AI:to_builder_params
+#AI group: Internal
+#AI frequency: internal
+#AI signature: public function to_builder_params(): array
+#AI contract: Exports collected conditions and params in query_builder::build() format. Used by model::delete_where().
+#AI return_detail: {type: array | desc: Params array compatible with query_builder::build().}

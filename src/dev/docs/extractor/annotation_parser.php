@@ -2,9 +2,23 @@
 
 namespace skim\dev\docs\extractor;
 
-// Parses raw PHPDoc string and extracts all @ai.* tags into typed arrays.
-// Unknown tags are silently ignored — never thrown.
-// No framework dependencies — plain PHP only.
+/**
+ * Parses raw PHPDoc strings and inline comments, extracting all @ai.* and #AI tags into typed arrays. #AI:class
+ *
+ * Use as the low-level parser for annotation extraction. Handles three input
+ * formats: PHPDoc blocks, inline // comments, and detached #AI hash blocks.
+ * Unknown tags are silently ignored unless $strict is enabled.
+ *
+ * Example:
+ *   $parser = new annotation_parser();
+ *   $tags = $parser->parse($docblock_string);
+ *   $inline = $parser->parse_inline($source_lines);
+ *   $hash = $parser->parse_hash_ai('#AI role: cache facade');
+ *
+ * Testing: Instantiate directly; no framework dependencies.
+ *
+ * #AI:class
+ */
 class annotation_parser {
     public static bool $strict = false;
 
@@ -19,11 +33,13 @@ class annotation_parser {
     ];
 
     /**
-     * @ai-contract accepts raw docblock string (including /** delimiters or stripped)
-     * @ai-contract returns associative array keyed by tag suffix: 'contract', 'invariant', etc.
-     * @ai-contract each value is an array of strings (one entry per tag occurrence)
-     * @ai-contract unknown tags and non-@ai.* tags are silently ignored
-     * @ai-contract tag values are trimmed; continuation lines starting with whitespace are appended
+     * Parses a PHPDoc block and extracts all @ai.* and #AI tags. #AI:parse
+     *
+     * Each value is an array of strings (one entry per tag occurrence).
+     * Continuation lines starting with whitespace are appended to the previous tag.
+     *
+     * @param string $docblock Raw docblock string (with or without delimiters).
+     * @return array<string, array<string>> Tag values keyed by tag suffix.
      */
     public function parse(string $docblock): array {
         $lines  = $this->strip_lines($docblock);
@@ -45,7 +61,6 @@ class annotation_parser {
                 continue;
             }
 
-            // Check if there are any @ai. or @ai- tags on this line
             if (preg_match_all('/@ai[.-](\w+)\s+([^@#]*)/', $line, $matches, PREG_SET_ORDER)) {
                 if ($current_key !== null) {
                     $result[$current_key][] = trim($current_value);
@@ -83,8 +98,12 @@ class annotation_parser {
     }
 
     /**
-     * @ai-contract parses inline comments (starting with //) and extracts @ai.* tags
-     * @ai-contract extracts any human comment lines preceding @ai.* tags as 'summary'
+     * Parses inline // comments and extracts @ai.* tags and preceding summary text. #AI:parse_inline
+     *
+     * Lines before the first @ai.* or #AI tag are captured as 'summary'.
+     *
+     * @param string $source Raw source lines starting with //.
+     * @return array<string, mixed> Tags plus 'summary' key.
      */
     public function parse_inline(string $source): array {
         $lines = explode("\n", $source);
@@ -130,7 +149,6 @@ class annotation_parser {
                 continue;
             }
 
-            // Check if there are any @ai. or @ai- tags on this line
             if (preg_match_all('/@ai[.-](\w+)\s+([^@#]*)/', $line, $matches, PREG_SET_ORDER)) {
                 if ($current_key !== null) {
                     $result[$current_key][] = trim($current_value);
@@ -175,7 +193,15 @@ class annotation_parser {
     }
 
     /**
-     * @ai-contract parses a single or multi-line #AI semicolon-delimited annotation block
+     * Parses a #AI hash annotation block into key-value pairs. #AI:parse_hash_ai
+     *
+     * Handles `#AI:{target}` section headers and `#AI key: value` pairs.
+     * Semicolons split top-level items; brackets and braces are preserved.
+     *
+     * @param string $source One or more lines starting with #AI.
+     * @return array<string, mixed> Parsed key-value pairs.
+     *
+     * @throws \UnexpectedValueException When $strict is true and an unknown key is encountered.
      */
     public function parse_hash_ai(string $source): array {
         $result = [];
@@ -211,7 +237,11 @@ class annotation_parser {
     }
 
     /**
-     * @ai-contract splits [a,b,c] into a trimmed array of strings
+     * Parses a bracket-delimited list into a trimmed array of coerced values. #AI:parse_bracket_list
+     *
+     * Supports both comma and semicolon delimiters (semicolon preferred).
+     *
+     * @param string $value Bracket-delimited string like `[a; b; c]`.
      */
     public function parse_bracket_list(string $value): array {
         $trimmed = trim($value);
@@ -233,7 +263,11 @@ class annotation_parser {
     }
 
     /**
-     * @ai-contract parses {key: value | key: value} into a typed associative array
+     * Parses a pipe-delimited record into a typed associative array. #AI:parse_record
+     *
+     * Input format: `{key: value | key: value}`.
+     *
+     * @param string $value Record string with optional braces.
      */
     public function parse_record(string $value): array {
         $trimmed = trim($value);
@@ -254,7 +288,12 @@ class annotation_parser {
     }
 
     /**
-     * @ai-contract coerces scalar/list/record annotation values into PHP values
+     * Coerces a string annotation value into its PHP equivalent. #AI:coerce_value
+     *
+     * Bracket lists become arrays, brace records become arrays, and
+     * true/false/yes/no/1/0 become booleans.
+     *
+     * @param string $value Raw string value from an annotation.
      */
     public function coerce_value(string $value): mixed {
         $trimmed = trim($value);
@@ -276,7 +315,10 @@ class annotation_parser {
     }
 
     /**
-     * @ai-contract splits only at top-level delimiters, preserving delimiters inside [] and {}
+     * Splits a string at top-level delimiters only, preserving nested brackets and braces. #AI:split_top_level
+     *
+     * @param string $value     String to split.
+     * @param string $delimiter Single-character delimiter.
      */
     public function split_top_level(string $value, string $delimiter): array {
         $items = [];
@@ -318,8 +360,10 @@ class annotation_parser {
     }
 
     /**
-     * @ai-contract extracts the first non-tag, non-empty line as the summary sentence
-     * @ai-contract returns empty string if no such line exists
+     * Extracts the first non-tag, non-empty lines as the summary sentence. #AI:extract_summary
+     *
+     * @param string $docblock Raw docblock string.
+     * @return string Summary text, or empty string if none found.
      */
     public function extract_summary(string $docblock): string {
         $summary_lines = [];
@@ -329,7 +373,6 @@ class annotation_parser {
             }
             $summary_lines[] = $line;
         }
-        // Trim leading and trailing empty lines from the array
         while (count($summary_lines) > 0 && trim(reset($summary_lines)) === '') {
             array_shift($summary_lines);
         }
@@ -340,8 +383,10 @@ class annotation_parser {
     }
 
     /**
-     * @ai-contract strips docblock delimiters and leading * characters from each line
-     * @ai-contract returns array of trimmed content lines
+     * Strips docblock delimiters and leading * characters from each line. #AI:strip_lines
+     *
+     * @param string $docblock Raw docblock string.
+     * @return string[] Trimmed content lines.
      */
     private function strip_lines(string $docblock): array {
         $raw   = preg_replace('#^/\*\*|\*/$#m', '', $docblock) ?? $docblock;
@@ -359,3 +404,99 @@ class annotation_parser {
         return $out;
     }
 }
+
+#AI:class
+#AI symbol: skim\dev\docs\extractor\annotation_parser
+#AI source_path: src/dev/docs/extractor/annotation_parser.php
+#AI title: annotation_parser
+#AI description: Parses PHPDoc blocks, inline comments, and #AI hash blocks to extract @ai.* tags into typed arrays.
+#AI role: annotation parser
+#AI layer: dev
+#AI badges: [extractor; parser; annotations; no-framework-deps]
+#AI intro: `annotation_parser` is the low-level parsing engine for the docs extraction pipeline. It handles three input formats (PHPDoc, inline //, and #AI hash blocks) and coerces values into PHP types (arrays, records, booleans).
+#AI lifecycle: instantiated per-use by class_visitor, no state retained between calls
+#AI fallback: unknown tags silently ignored unless $strict is true
+#AI test_seam: instantiate directly; set $strict = true for validation testing
+#AI invariants: [unknown tags silently ignored by default; $strict mode throws on unknown keys; continuation lines appended to previous tag; semicolons split top-level items only]
+#AI core_behaviors: [Parses PHPDoc @ai.* tags with continuation line support; Parses inline // comments with summary extraction; Parses #AI hash blocks with nested bracket/brace awareness; Coerces values to PHP types]
+#AI scope_items: [{name: $strict | mutable: true | desc: When true, throws UnexpectedValueException on unknown #AI keys. Default false.}]
+#AI owns: VOCABULARY constant
+#AI entry_points: [parse; parse_inline; parse_hash_ai; parse_bracket_list; parse_record; coerce_value; split_top_level; extract_summary]
+#AI config_reads: []
+#AI non_goals: [Does not read files; Does not traverse AST; Does not validate tag semantics]
+#AI side_effects: []
+#AI flow: parse/parse_inline/parse_hash_ai -> split_top_level -> coerce_value -> typed result
+#AI lifecycle_steps: [parse(); -> strip_lines(); -> iterate lines; -> match @ai.* or #AI; -> split_top_level; -> coerce_value; parse_inline(); -> split summary vs tags; -> parse tags; parse_hash_ai(); -> detect __target or key:value; -> split_top_level; -> coerce_value]
+#AI section_order: [Parsing; Value Coercion; Utilities; Architecture]
+#AI architectural_notes: No framework dependencies — plain PHP only. The VOCABULARY constant defines the known key set for strict mode validation.
+
+#AI:parse
+#AI group: Parsing
+#AI frequency: high
+#AI signature: public function parse(string $docblock): array
+#AI contract: Accepts a raw docblock string and extracts all @ai.* and #AI tags into an associative array keyed by tag suffix. Each value is an array of strings. Continuation lines starting with whitespace are appended to the previous tag.
+#AI param_details: [{name: $docblock | type: string | required: true | desc: Raw docblock string, with or without /** delimiters.}]
+#AI return_detail: {type: array<string, array<string>> | desc: Tag values keyed by tag suffix (e.g. 'contract', 'invariant').}
+
+#AI:parse_inline
+#AI group: Parsing
+#AI frequency: medium
+#AI signature: public function parse_inline(string $source): array
+#AI contract: Parses inline // comments, extracting @ai.* tags and capturing preceding non-tag lines as a 'summary' key. Stops at the first non-// line.
+#AI param_details: [{name: $source | type: string | required: true | desc: Raw source lines starting with //.}]
+#AI return_detail: {type: array<string, mixed> | desc: Tags plus 'summary' key containing preceding comment text.}
+
+#AI:parse_hash_ai
+#AI group: Parsing
+#AI frequency: high
+#AI signature: public function parse_hash_ai(string $source): array
+#AI contract: Parses #AI hash annotation blocks. Detects `#AI:{target}` section headers (stored as __target) and `#AI key: value` pairs split by semicolons. Nested brackets and braces are preserved during splitting.
+#AI param_details: [{name: $source | type: string | required: true | desc: One or more lines starting with #AI.}]
+#AI return_detail: {type: array<string, mixed> | desc: Parsed key-value pairs, with __target for section headers.}
+#AI throws_details: [{type: \UnexpectedValueException | desc: When $strict is true and an unknown key is encountered.}]
+
+#AI:parse_bracket_list
+#AI group: Value Coercion
+#AI frequency: medium
+#AI signature: public function parse_bracket_list(string $value): array
+#AI contract: Parses a bracket-delimited list string into an array of coerced values. Supports both comma and semicolon delimiters.
+#AI param_details: [{name: $value | type: string | required: true | desc: Bracket-delimited string like `[a; b; c]`.}]
+#AI return_detail: {type: array | desc: Array of coerced values.}
+
+#AI:parse_record
+#AI group: Value Coercion
+#AI frequency: medium
+#AI signature: public function parse_record(string $value): array
+#AI contract: Parses a pipe-delimited record string `{key: value | key: value}` into an associative array with coerced values.
+#AI param_details: [{name: $value | type: string | required: true | desc: Record string with optional braces.}]
+#AI return_detail: {type: array | desc: Associative array of coerced values.}
+
+#AI:coerce_value
+#AI group: Value Coercion
+#AI frequency: high
+#AI signature: public function coerce_value(string $value): mixed
+#AI contract: Coerces a string annotation value into its PHP equivalent. Bracket lists become arrays, brace records become associative arrays, and true/false/yes/no/1/0 become booleans.
+#AI param_details: [{name: $value | type: string | required: true | desc: Raw string value from an annotation.}]
+#AI return_detail: {type: mixed | desc: Coerced PHP value (string, bool, array).}
+
+#AI:split_top_level
+#AI group: Utilities
+#AI frequency: high
+#AI signature: public function split_top_level(string $value, string $delimiter): array
+#AI contract: Splits a string at top-level delimiters only, preserving content inside square brackets and curly braces. Tracks nesting depth to avoid splitting nested structures.
+#AI param_details: [{name: $value | type: string | required: true | desc: String to split.}; {name: $delimiter | type: string | required: true | desc: Single-character delimiter.}]
+#AI return_detail: {type: array<string> | desc: Trimmed parts split at top-level delimiters only.}
+
+#AI:extract_summary
+#AI group: Utilities
+#AI frequency: medium
+#AI signature: public function extract_summary(string $docblock): string
+#AI contract: Extracts the first non-tag, non-empty lines from a docblock as the summary sentence. Stops at the first @tag or #AI line.
+#AI param_details: [{name: $docblock | type: string | required: true | desc: Raw docblock string.}]
+#AI return_detail: {type: string | desc: Summary text, or empty string if none found.}
+
+#AI:strip_lines
+#AI group: Architecture
+#AI frequency: internal
+#AI signature: private function strip_lines(string $docblock): array
+#AI contract: Strips PHPDoc delimiters (/** and */) and leading * characters from each line, returning trimmed content lines.

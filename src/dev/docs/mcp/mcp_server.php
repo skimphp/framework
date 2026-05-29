@@ -1,6 +1,30 @@
 #!/usr/bin/env php
 <?php declare(strict_types=1);
 
+#AI:class
+#AI symbol: skim\dev\docs\mcp\mcp_server
+#AI source_path: src/dev/docs/mcp/mcp_server.php
+#AI title: mcp_server
+#AI description: PHP stdio MCP server transport — reads JSON-RPC 2.0 from stdin, writes responses to stdout.
+#AI role: MCP stdio transport
+#AI layer: dev
+#AI badges: [mcp; stdio; transport; json-rpc]
+#AI intro: `mcp_server.php` is the transport layer for the MCP protocol. It reads JSON-RPC 2.0 requests from stdin, dispatches to mcp_tools for tool execution, and writes responses to stdout. All tool logic lives in mcp_tools — this file handles only protocol framing.
+#AI lifecycle: launched by mcp_serve_command, runs until stdin closes
+#AI fallback: returns JSON-RPC error on parse failure or unknown method
+#AI test_seam: invoke directly with a test llm.json path as argv[1]
+#AI invariants: [reads one JSON line per request; writes one JSON line per response; exits on stdin EOF; parse errors return -32700; unknown methods return -32601]
+#AI core_behaviors: [Reads JSON-RPC 2.0 from stdin line by line; Dispatches initialize, tools/list, and tools/call methods; Delegates tool execution to mcp_tools; Writes JSON responses to stdout]
+#AI owns: mcp_tools instance
+#AI entry_points: [main loop; handle_tool_call; write_response]
+#AI config_reads: []
+#AI non_goals: [Does not implement tool logic; Does not validate tool arguments; Does not handle HTTP transport]
+#AI side_effects: [reads stdin; writes stdout; writes stderr on fatal errors]
+#AI flow: stdin -> json_decode -> match method -> mcp_tools -> json_encode -> stdout
+#AI lifecycle_steps: [load llm.json path from argv; -> create mcp_tools; -> while stdin; -> json_decode request; -> match method; -> dispatch to mcp_tools; -> write_response]
+#AI section_order: [Transport; Architecture]
+#AI architectural_notes: This is a script file, not a class. All tool logic is delegated to mcp_tools. The script handles only JSON-RPC 2.0 framing and stdio I/O.
+
 // PHP stdio MCP server — reads JSON-RPC 2.0 from stdin, writes responses to stdout.
 // Invoked by mcp_serve_command: php mcp_server.php /path/to/llm.json
 // All tool logic lives in mcp_tools.php — this file is transport only.

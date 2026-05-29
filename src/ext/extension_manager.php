@@ -5,21 +5,44 @@ namespace skim\ext;
 use skim\core\app;
 
 /**
- * Coordinates discovered extension lifecycle hooks.
+ * Coordinates discovered extension lifecycle: discovery, validation, and boot.
+ *
+ * Use during app boot to discover extensions from Composer packages,
+ * validate their dependencies, topologically sort them, and invoke
+ * register()/boot() hooks in the correct order.
+ *
+ * Example:
+ *   $manager = extension_manager::discover(base_path(), $app);
+ *   $manager->register($app);
+ *   $manager->boot($app);
+ *
+ * #AI:class
  */
 final class extension_manager {
     private array $instances = [];
 
     /**
-     * @ai-contract extensions are normalized metadata arrays from ext_registry::installed()
+     * Accepts normalized extension metadata arrays from ext_registry. #AI:__construct
+     *
+     * @param array $extensions Extension metadata arrays from ext_registry::installed().
      */
     public function __construct(
         private readonly array $extensions,
     ) {}
 
     /**
-     * @ai-contract discovers extensions, validates dependencies, topologically sorts them,
-     *              stores metadata in sys.extensions, and returns a lifecycle manager
+     * Discovers, validates, and sorts extensions, then stores metadata in the app. #AI:discover
+     *
+     * Scans Composer packages via ext_registry, validates dependency
+     * requirements, topologically sorts by dependency graph, and stores
+     * the result in sys.extensions and sys.extension_conflicts.
+     *
+     * Example:
+     *   $manager = extension_manager::discover(base_path(), $app);
+     *
+     * @param string $root Project root directory containing vendor/.
+     * @param app    $app  Application container to store extension metadata.
+     * @throws \RuntimeException On missing dependency or circular dependency.
      */
     public static function discover(string $root, app $app): self {
         $registry   = new ext_registry($root);
@@ -35,7 +58,14 @@ final class extension_manager {
     }
 
     /**
-     * @ai-contract calls register(app) for every discovered extension in priority order
+     * Calls register(app) for every extension in priority order. #AI:register
+     *
+     * Throws immediately if any extension conflict was detected during
+     * discovery. Each extension's register() runs inside an extension
+     * context for profiler attribution.
+     *
+     * @param app $app Application container.
+     * @throws \RuntimeException When extension conflicts exist.
      */
     public function register(app $app): void {
         $conflicts = $app->get('sys.extension_conflicts', []);
@@ -58,7 +88,12 @@ final class extension_manager {
     }
 
     /**
-     * @ai-contract calls boot(app) for every discovered extension in priority order
+     * Calls boot(app) for every extension in priority order. #AI:boot
+     *
+     * Runs after all extensions have been registered. Each extension's
+     * boot() runs inside an extension context for profiler attribution.
+     *
+     * @param app $app Application container.
      */
     public function boot(app $app): void {
         foreach ($this->extensions as $extension) {
@@ -98,7 +133,10 @@ final class extension_manager {
     }
 
     /**
-     * @ai-contract throws RuntimeException when a required capability or name is not provided by any installed extension
+     * Validates that all required capabilities are provided by installed extensions. #AI:validate_dependencies
+     *
+     * @param array $extensions Extension metadata arrays.
+     * @throws \RuntimeException When a required capability is not provided by any extension.
      */
     private static function validate_dependencies(array $extensions): void {
         $available = [];
@@ -125,8 +163,11 @@ final class extension_manager {
     }
 
     /**
-     * @ai-contract returns extensions sorted so dependencies always come before dependents
-     * @ai-contract throws RuntimeException on circular dependency
+     * Returns extensions sorted so dependencies always come before dependents. #AI:topological_sort
+     *
+     * @param array $extensions Extension metadata arrays.
+     * @return array Topologically sorted extensions.
+     * @throws \RuntimeException On circular dependency.
      */
     private static function topological_sort(array $extensions): array {
         $by_name    = [];
@@ -170,3 +211,75 @@ final class extension_manager {
         return $sorted;
     }
 }
+
+#AI:class
+#AI symbol: skim\ext\extension_manager
+#AI source_path: src/ext/extension_manager.php
+#AI title: extension_manager
+#AI description: Coordinates extension discovery, dependency validation, topological sorting, and lifecycle hooks.
+#AI role: extension lifecycle coordinator
+#AI layer: ext
+#AI badges: [extension; lifecycle; discovery; dependency-graph]
+#AI intro: `extension_manager` discovers extensions from Composer packages, validates their dependency requirements, topologically sorts them, and invokes register()/boot() hooks in the correct order during app boot.
+#AI lifecycle: created by discover() during app boot; register() then boot() called sequentially
+#AI test_seam: construct with mock extension metadata arrays; test with empty extensions list
+#AI invariants: [register() runs before boot(); dependencies are validated before sorting; circular dependencies throw; replacement extensions must declare conflicts]
+#AI core_behaviors: [Discovers via ext_registry; Validates requires against provides+capabilities; Topological sort ensures dependency order; Calls register/boot within extension context for profiler]
+#AI owns: extension instances cache
+#AI entry_points: [discover; register; boot]
+#AI config_reads: []
+#AI non_goals: [Does not install or download extensions; Does not resolve version conflicts; Does not hot-reload extensions at runtime]
+#AI side_effects: [Stores sys.extensions and sys.extension_conflicts in app container; Instantiates extension classes; Calls register() and boot() hooks]
+#AI flow: discover() -> ext_registry::installed() -> validate_dependencies() -> topological_sort() -> store in app; register() -> foreach: instance()->register(app); boot() -> foreach: instance()->boot(app)
+#AI section_order: [Discovery; Lifecycle Hooks; Architecture]
+
+#AI:__construct
+#AI group: Architecture
+#AI frequency: internal
+#AI signature: public function __construct(array $extensions)
+#AI contract: Accepts normalized extension metadata arrays from ext_registry::installed().
+#AI param_details: [{name: $extensions | type: array | required: true | desc: Extension metadata arrays from ext_registry.}]
+
+#AI:discover
+#AI group: Discovery
+#AI frequency: high
+#AI signature: public static function discover(string $root, app $app): self
+#AI contract: Scans Composer packages for extensions, validates dependencies, topologically sorts them, and stores metadata in the app container.
+#AI param_details: [{name: $root | type: string | required: true | desc: Project root directory containing vendor/.}; {name: $app | type: app | required: true | desc: Application container to store extension metadata.}]
+#AI return_detail: {type: self | desc: Configured extension_manager ready for register()/boot().}
+#AI throws_details: [{type: \RuntimeException | desc: On missing dependency or circular dependency.}]
+#AI side_effects: [Stores sys.extensions and sys.extension_conflicts in app container]
+
+#AI:register
+#AI group: Lifecycle Hooks
+#AI frequency: high
+#AI signature: public function register(app $app): void
+#AI contract: Calls register(app) for every extension in dependency-sorted order. Throws immediately if conflicts exist.
+#AI param_details: [{name: $app | type: app | required: true | desc: Application container.}]
+#AI throws_details: [{type: \RuntimeException | desc: When extension conflicts are detected.}]
+#AI side_effects: [Calls extension register() hooks; Mutates app container via extension registrations]
+
+#AI:boot
+#AI group: Lifecycle Hooks
+#AI frequency: high
+#AI signature: public function boot(app $app): void
+#AI contract: Calls boot(app) for every extension in dependency-sorted order. Runs after all extensions have been registered.
+#AI param_details: [{name: $app | type: app | required: true | desc: Application container.}]
+#AI side_effects: [Calls extension boot() hooks]
+
+#AI:validate_dependencies
+#AI group: Architecture
+#AI frequency: internal
+#AI signature: private static function validate_dependencies(array $extensions): void
+#AI contract: Throws RuntimeException when a required capability or name is not provided by any installed extension.
+#AI param_details: [{name: $extensions | type: array | required: true | desc: Extension metadata arrays.}]
+#AI throws_details: [{type: \RuntimeException | desc: When a required capability is not provided.}]
+
+#AI:topological_sort
+#AI group: Architecture
+#AI frequency: internal
+#AI signature: private static function topological_sort(array $extensions): array
+#AI contract: Returns extensions sorted so dependencies always come before dependents. Throws on circular dependency.
+#AI param_details: [{name: $extensions | type: array | required: true | desc: Extension metadata arrays.}]
+#AI return_detail: {type: array | desc: Topologically sorted extension metadata arrays.}
+#AI throws_details: [{type: \RuntimeException | desc: On circular dependency.}]

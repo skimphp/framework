@@ -9,9 +9,17 @@ use PhpParser\NodeVisitorAbstract;
 use skim\dev\docs\value\extracted_class;
 use skim\dev\docs\value\extracted_method;
 
-// Internal AST visitor used by class_extractor.
-// Captures the first non-anonymous class found in the traversed file.
-// Not part of the public API — only instantiated by class_extractor.
+/**
+ * Internal AST visitor that captures the first non-anonymous class and its annotated methods. #AI:class
+ *
+ * Use only via class_extractor — not part of the public API.
+ * Captures class-level and method-level @ai.* tags from PHPDoc blocks,
+ * inline // comments, and detached #AI blocks at the bottom of the file.
+ *
+ * Testing: Instantiate via class_extractor; not designed for direct use.
+ *
+ * #AI:class
+ */
 class class_visitor extends NodeVisitorAbstract {
     public ?extracted_class $result = null;
     private string $current_namespace = '';
@@ -22,6 +30,9 @@ class class_visitor extends NodeVisitorAbstract {
         private readonly string $file,
     ) {}
 
+    /**
+     * Returns cached file lines, reading from disk on first call. #AI:get_file_lines
+     */
     private function get_file_lines(): array {
         if ($this->file_lines === null) {
             $content = file_exists($this->file) ? file_get_contents($this->file) : '';
@@ -30,6 +41,9 @@ class class_visitor extends NodeVisitorAbstract {
         return $this->file_lines;
     }
 
+    /**
+     * Collects consecutive // comment lines immediately preceding a node. #AI:get_preceding_inline_comments
+     */
     private function get_preceding_inline_comments(Node $node): string {
         $lines = $this->get_file_lines();
         $start_line = $node->getStartLine();
@@ -48,6 +62,12 @@ class class_visitor extends NodeVisitorAbstract {
         return implode("\n", $comment_lines);
     }
 
+    /**
+     * Visits AST nodes, capturing the first non-anonymous class. #AI:enterNode
+     *
+     * Merges tags from PHPDoc, inline comments, detached #AI blocks, and
+     * comment-trailing #AI blocks. Builds extracted_class with all methods.
+     */
     public function enterNode(Node $node): null {
         if ($node instanceof Node\Stmt\Namespace_) {
             $this->current_namespace = $node->name !== null ? (string) $node->name : '';
@@ -71,7 +91,6 @@ class class_visitor extends NodeVisitorAbstract {
             unset($tags['summary']);
         }
 
-        // Check $node->getComments() for a /* #AI */ block
         foreach ($node->getComments() as $comment) {
             $comment_text = $comment->getText();
             if (str_contains($comment_text, '#AI')) {
@@ -180,6 +199,9 @@ class class_visitor extends NodeVisitorAbstract {
         return null;
     }
 
+    /**
+     * Builds an extracted_method from a ClassMethod node and its merged tags. #AI:extract_method
+     */
     private function extract_method(ClassMethod $method, string $owner, array $tags): extracted_method {
         $params = [];
         foreach ($method->params as $param) {
@@ -236,6 +258,9 @@ class class_visitor extends NodeVisitorAbstract {
         );
     }
 
+    /**
+     * Parses detached #AI blocks at the bottom of the file into class and method sections. #AI:parse_detached_blocks
+     */
     private function parse_detached_blocks(): array {
         $source = file_exists($this->file) ? (string) file_get_contents($this->file) : '';
         $blocks = ['class' => [], 'methods' => []];
@@ -272,6 +297,9 @@ class class_visitor extends NodeVisitorAbstract {
         return $blocks;
     }
 
+    /**
+     * Returns the raw tag value, unwrapping single-element arrays. #AI:raw_value
+     */
     private function raw_value(array $tags, string $key): mixed {
         if (!array_key_exists($key, $tags)) {
             return null;
@@ -283,6 +311,9 @@ class class_visitor extends NodeVisitorAbstract {
         return $value;
     }
 
+    /**
+     * Returns a scalar string value from tags, with optional default. #AI:scalar_value
+     */
     private function scalar_value(array $tags, string $key, string $default = ''): string {
         $value = $this->raw_value($tags, $key);
         if ($value === null) {
@@ -295,6 +326,9 @@ class class_visitor extends NodeVisitorAbstract {
         return is_scalar($value) ? (string) $value : $default;
     }
 
+    /**
+     * Returns a list value from tags, parsing bracket lists when needed. #AI:list_value
+     */
     private function list_value(array $tags, string $key): array {
         $value = $this->raw_value($tags, $key);
         if ($value === null || $value === '') {
@@ -318,6 +352,9 @@ class class_visitor extends NodeVisitorAbstract {
         return [(string) $value];
     }
 
+    /**
+     * Returns a record value from tags, parsing pipe-delimited records when needed. #AI:record_value
+     */
     private function record_value(array $tags, string $key): array {
         $value = $this->raw_value($tags, $key);
         if ($value === null || $value === '') {
@@ -335,6 +372,9 @@ class class_visitor extends NodeVisitorAbstract {
         return [];
     }
 
+    /**
+     * Converts a PhpParser type node to its string representation. #AI:type_to_string
+     */
     private function type_to_string(Node $type): string {
         return match (true) {
             $type instanceof Node\Identifier       => $type->name,
@@ -346,3 +386,75 @@ class class_visitor extends NodeVisitorAbstract {
         };
     }
 }
+
+#AI:class
+#AI symbol: skim\dev\docs\extractor\class_visitor
+#AI source_path: src/dev/docs/extractor/class_visitor.php
+#AI title: class_visitor
+#AI description: Internal AST visitor that captures class-level and method-level @ai.* annotations from PHPDoc, inline comments, and detached #AI blocks.
+#AI role: internal AST visitor
+#AI layer: dev
+#AI badges: [extractor; ast; visitor; internal]
+#AI intro: `class_visitor` is the AST traversal engine used by `class_extractor`. It visits namespace and class nodes, merges annotations from three sources (PHPDoc, inline //, detached #AI blocks), and builds `extracted_class` and `extracted_method` value objects.
+#AI lifecycle: created per-file by class_extractor, single-use
+#AI fallback: none — captures first non-anonymous class only
+#AI test_seam: use via class_extractor; not designed for direct instantiation
+#AI invariants: [captures only the first non-anonymous class; anonymous classes skipped; private methods included only when they carry annotations or detached blocks; detached blocks override inline tags]
+#AI core_behaviors: [Merges tags from PHPDoc, inline comments, and detached #AI blocks; Builds method signatures from AST type nodes; Falls back to role tag when summary is empty; Parses detached #AI blocks from file bottom]
+#AI owns: result (extracted_class), file_lines cache
+#AI entry_points: [enterNode]
+#AI config_reads: []
+#AI non_goals: [Does not parse files directly; Does not validate annotations; Does not handle multiple classes per file]
+#AI side_effects: [sets $result property on class capture]
+#AI flow: enterNode() -> detect Class_ -> parse PHPDoc/inline/detached -> merge tags -> build extracted_class + extracted_method[]
+#AI lifecycle_steps: [enterNode(); -> namespace tracking; -> Class_ detection; -> PHPDoc or inline parse; -> detached block merge; -> method iteration; -> extract_method(); -> build extracted_class]
+#AI section_order: [Traversal; Extraction; Value Helpers; Architecture]
+#AI architectural_notes: Not part of the public API — only instantiated by class_extractor.
+
+#AI:enterNode
+#AI group: Traversal
+#AI frequency: high
+#AI signature: public function enterNode(Node $node): null
+#AI contract: Visits each AST node. Tracks namespace context and captures the first non-anonymous class with all its annotated methods. Merges tags from PHPDoc, inline comments, trailing comment #AI blocks, and detached #AI blocks.
+
+#AI:extract_method
+#AI group: Extraction
+#AI frequency: internal
+#AI signature: private function extract_method(ClassMethod $method, string $owner, array $tags): extracted_method
+#AI contract: Builds an extracted_method from a ClassMethod AST node and its merged annotation tags. Constructs the method signature string from AST type nodes.
+
+#AI:parse_detached_blocks
+#AI group: Extraction
+#AI frequency: internal
+#AI signature: private function parse_detached_blocks(): array
+#AI contract: Reads the source file and parses all detached #AI blocks at the bottom into class-level and method-level tag arrays. Uses #AI:{target} headers to determine section boundaries.
+
+#AI:raw_value
+#AI group: Value Helpers
+#AI frequency: internal
+#AI signature: private function raw_value(array $tags, string $key): mixed
+#AI contract: Returns the raw tag value for a key, unwrapping single-element list arrays to their scalar value.
+
+#AI:scalar_value
+#AI group: Value Helpers
+#AI frequency: internal
+#AI signature: private function scalar_value(array $tags, string $key, string $default = ''): string
+#AI contract: Returns a scalar string from tags with optional default fallback.
+
+#AI:list_value
+#AI group: Value Helpers
+#AI frequency: internal
+#AI signature: private function list_value(array $tags, string $key): array
+#AI contract: Returns a list value from tags, parsing bracket-delimited strings when needed.
+
+#AI:record_value
+#AI group: Value Helpers
+#AI frequency: internal
+#AI signature: private function record_value(array $tags, string $key): array
+#AI contract: Returns a record value from tags, parsing pipe-delimited record strings when needed.
+
+#AI:type_to_string
+#AI group: Architecture
+#AI frequency: internal
+#AI signature: private function type_to_string(Node $type): string
+#AI contract: Converts a PhpParser type node (Identifier, Name, Nullable, Union, Intersection) to its PHP string representation.

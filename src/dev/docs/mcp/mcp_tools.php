@@ -2,14 +2,34 @@
 
 namespace skim\dev\docs\mcp;
 
-// All MCP tool logic — reads from llm.json, no live AST at query time.
+/**
+ * MCP tool implementations — reads from llm.json, no live AST at query time. #AI:class
+ *
+ * Use as the tool dispatch layer for the MCP server. Provides generic tools
+ * (skim_class, skim_method, skim_search, skim_lifecycle, skim_non_goals) plus
+ * one dynamic tool per documented non-Architecture method.
+ *
+ * Example:
+ *   $tools = new mcp_tools('llm.json');
+ *   $defs  = $tools->definitions();
+ *   $result = $tools->call('skim_class', ['name' => 'cache']);
+ *
+ * Testing: Instantiate with a test llm.json path.
+ *
+ * #AI:class
+ */
 class mcp_tools {
     private array $data;
     private array $index = [];
 
     /**
-     * @ai-contract loads llm.json from $json_path and builds an in-memory class index
-     * @ai-contract throws \RuntimeException if file is missing or JSON is invalid
+     * Loads llm.json and builds an in-memory class index. #AI:__construct
+     *
+     * Indexes classes by lowercase title, class_name, and symbol for fast lookup.
+     *
+     * @param string $json_path Path to llm.json.
+     *
+     * @throws \RuntimeException If file is missing or JSON is invalid.
      */
     public function __construct(string $json_path) {
         if (!file_exists($json_path)) {
@@ -31,14 +51,19 @@ class mcp_tools {
     }
 
     /**
-     * @ai-contract returns generic MCP tools plus one method tool per non-Architecture documented method
+     * Returns generic MCP tools plus one method tool per documented method. #AI:definitions
+     *
+     * Architecture-group methods are excluded from dynamic tool generation.
      */
     public function definitions(): array {
         return array_merge($this->generic_definitions(), $this->method_definitions());
     }
 
     /**
-     * @ai-contract dispatches tool call by name; returns result array or error array
+     * Dispatches a tool call by name and returns the result or error array. #AI:call
+     *
+     * @param string $tool Tool name (generic or dynamic method tool).
+     * @param array  $args Tool arguments from the MCP client.
      */
     public function call(string $tool, array $args): array {
         return match ($tool) {
@@ -275,3 +300,50 @@ class mcp_tools {
         ];
     }
 }
+
+#AI:class
+#AI symbol: skim\dev\docs\mcp\mcp_tools
+#AI source_path: src/dev/docs/mcp/mcp_tools.php
+#AI title: mcp_tools
+#AI description: MCP tool implementations that query llm.json data — provides generic tools and one dynamic tool per documented method.
+#AI role: MCP tool dispatch
+#AI layer: dev
+#AI badges: [mcp; tools; query; llm]
+#AI intro: `mcp_tools` is the tool dispatch layer for the MCP server. It loads llm.json into an in-memory index and exposes generic tools (skim_class, skim_method, skim_search, skim_lifecycle, skim_non_goals) plus one dynamic tool per documented non-Architecture method.
+#AI lifecycle: instantiated once by mcp_server.php, reused for all requests
+#AI fallback: returns error arrays for missing classes/methods/tools
+#AI test_seam: instantiate with a test llm.json path
+#AI invariants: [class index keyed by lowercase title/class_name/symbol; Architecture methods excluded from dynamic tools; search limited to 20 results; methods without contracts excluded from dynamic tools]
+#AI core_behaviors: [Builds in-memory class index for fast lookup; Generates generic MCP tool definitions; Generates one dynamic tool per documented method; Dispatches tool calls by name; Fuzzy search across class names, method names, and contract text]
+#AI owns: data (decoded llm.json), index (class lookup map)
+#AI entry_points: [definitions; call]
+#AI config_reads: []
+#AI non_goals: [Does not read from AST at query time; Does not modify llm.json; Does not handle MCP transport]
+#AI side_effects: []
+#AI flow: definitions() -> generic + method definitions; call(name, args) -> match tool -> tool_* method -> result
+#AI lifecycle_steps: [__construct(); -> load llm.json; -> build index; definitions(); -> generic_definitions() + method_definitions(); call(); -> match tool name; -> dispatch to tool_* method]
+#AI section_order: [Construction; Tool Definitions; Tool Dispatch; Architecture]
+#AI architectural_notes: All queries run against the in-memory index — no live AST parsing at query time.
+
+#AI:__construct
+#AI group: Construction
+#AI frequency: high
+#AI signature: public function __construct(string $json_path)
+#AI contract: Loads llm.json from the given path and builds an in-memory class index keyed by lowercase title, class_name, and symbol for fast lookup.
+#AI param_details: [{name: $json_path | type: string | required: true | desc: Path to llm.json file.}]
+#AI throws_details: [{type: \RuntimeException | desc: When file is missing or JSON is invalid.}]
+
+#AI:definitions
+#AI group: Tool Definitions
+#AI frequency: high
+#AI signature: public function definitions(): array
+#AI contract: Returns the full list of MCP tool definitions — generic tools plus one dynamic tool per documented non-Architecture method.
+#AI return_detail: {type: array | desc: Array of MCP tool definition objects with name, description, inputSchema, and annotations.}
+
+#AI:call
+#AI group: Tool Dispatch
+#AI frequency: high
+#AI signature: public function call(string $tool, array $args): array
+#AI contract: Dispatches a tool call by name. Routes generic tools to their dedicated handlers and dynamic method tools to tool_dynamic_method.
+#AI param_details: [{name: $tool | type: string | required: true | desc: Tool name (generic or dynamic method tool).}; {name: $args | type: array | required: true | desc: Tool arguments from the MCP client.}]
+#AI return_detail: {type: array | desc: Result array or error array with 'error' key.}

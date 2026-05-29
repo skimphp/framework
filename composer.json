@@ -1,5 +1,5 @@
 {
-    "name": "skim/skim",
+    "name": "skim/framework",
     "description": "SKIM — modern PHP 8.5+ micro-framework",
     "type": "project",
     "license": "MIT",

@@ -2,12 +2,28 @@
 
 namespace skim\validation;
 
-// Validation engine. Own implementation, zero external dependencies.
-// validate::make() declares the expected data shape.
-// check() runs rules, returns result with errors() and validated().
-//
-// Fields not in the make() map are silently dropped from validated() —
-// prevents mass-assignment of unexpected POST fields into model::create().
+/**
+ * Zero-dependency validation engine with mass-assignment protection. #AI:class
+ *
+ * Use to validate request data before passing to model::create(). Fields not
+ * declared in make() are silently dropped from validated(), preventing
+ * mass-assignment of unexpected POST fields.
+ *
+ * Example:
+ *   $result = validate::make([
+ *       'email' => ['required', 'email'],
+ *       'age'   => ['required', 'int', 'min:18'],
+ *   ])->check($req->post());
+ *
+ *   if (!$result->ok()) {
+ *       return $res->status(422)->json(['errors' => $result->errors()]);
+ *   }
+ *   user::create($result->validated());
+ *
+ * Testing: Call make() and check() directly — no container or config needed.
+ *
+ * #AI:class
+ */
 class validate {
     private static array $custom_rules = [];
 
@@ -18,15 +34,22 @@ class validate {
     }
 
     /**
-     * @ai-contract factory — declares field→rules map, returns validator instance
+     * Declares the expected field-to-rules map. #AI:make
+     *
+     * @param array $rules Map of field name to rule array or pipe-delimited string.
      */
     public static function make(array $rules): static {
         return new static($rules);
     }
 
     /**
-     * @ai-contract runs all rules against $data, returns result
-     * @ai-contract result::ok() is false if any field failed any rule
+     * Runs all rules against $data and returns a result. #AI:check
+     *
+     * Fields that pass all rules appear in validated(). Fields not declared
+     * in make() are silently excluded. Optional fields absent from $data
+     * pass validation without error.
+     *
+     * @param array $data Input data to validate (typically $req->post()).
      */
     public function check(array $data): result {
         $errors    = [];
@@ -55,8 +78,18 @@ class validate {
     }
 
     /**
-     * @ai-contract registers a custom rule globally — available in all validate::make() calls
-     * @ai-contract $callback returns null on pass, string error message on fail
+     * Registers a custom rule globally for all validate::make() calls. #AI:rule
+     *
+     * The callback receives the field value and returns null on pass or
+     * a string error message on fail. Use `:field` in the message as a
+     * placeholder for the field name.
+     *
+     * Example:
+     *   validate::rule('even', fn($v) => $v % 2 === 0, ':field must be even');
+     *
+     * @param string   $name     Rule name used in rule lists.
+     * @param callable $callback Receives value, returns null or error string.
+     * @param string   $message  Default error message (`:field` is replaced).
      */
     public static function rule(string $name, callable $callback, string $message = 'Invalid value'): void {
         self::$custom_rules[$name] = ['fn' => $callback, 'message' => $message];
@@ -102,3 +135,54 @@ class validate {
         return null;
     }
 }
+
+#AI:class
+#AI symbol: skim\validation\validate
+#AI source_path: src/validation/validate.php
+#AI title: validate
+#AI description: Zero-dependency validation engine with built-in rules, custom rule registration, and mass-assignment protection.
+#AI role: validation engine
+#AI layer: validation
+#AI badges: [validation; engine; zero-deps; mass-assignment-safe]
+#AI intro: `validate` is SKIM's built-in validation engine. It declares expected data shapes via `make()`, runs rules via `check()`, and returns a `result` with errors and validated data. Undeclared fields are silently dropped from `validated()`.
+#AI lifecycle: instantiated per-validation via make(), check() runs synchronously
+#AI fallback: n/a — own implementation
+#AI test_seam: call make() and check() directly, register custom rules via rule()
+#AI invariants: [Fields not in make() are excluded from validated(); Optional fields absent from data pass without error; Unknown custom rules silently pass; Custom rules are registered globally and persist across instances]
+#AI core_behaviors: [Built-in rules: required, email, url, int, float, bool, slug, min, max, min_len, max_len, in, regex, same; Custom rules via rule() with callback; Pipe-delimited or array rule syntax]
+#AI warnings: [Custom rules registered via rule() are global and persist for the process lifetime; Unknown rule names silently pass — typos in rule names go undetected]
+#AI notes: Rules accept both array syntax `['required', 'email']` and pipe syntax `'required|email'`. The `:field` placeholder in custom rule messages is replaced with the actual field name.
+#AI owns: custom_rules static registry
+#AI entry_points: [make; check; rule]
+#AI config_reads: []
+#AI non_goals: [Does not sanitize input; Does not handle file upload validation; Does not provide localized error messages]
+#AI side_effects: [rule() mutates the static custom_rules registry]
+#AI flow: validate::make($rules) -> check($data) -> apply_rule() per field per rule -> new result($errors, $validated)
+#AI lifecycle_steps: [validate::make([...]); -> check($req->post()); -> foreach field -> foreach rule -> apply_rule(); -> new result(errors, validated); -> controller branches on ok()]
+#AI section_order: [Validation API; Custom Rules; Architecture]
+#AI architectural_notes: Own implementation with zero external dependencies. Uses skim\helpers\filter for type checking. Custom rules are global — register once during boot.
+
+#AI:make
+#AI group: Validation API
+#AI frequency: high
+#AI signature: public static function make(array $rules): static
+#AI contract: Factory that declares the field-to-rules map and returns a validator instance.
+#AI param_details: [{name: $rules | type: array | required: true | desc: Map of field name to rule array or pipe-delimited string.}]
+#AI return_detail: {type: static | desc: Validator instance ready for check().}
+
+#AI:check
+#AI group: Validation API
+#AI frequency: high
+#AI signature: public function check(array $data): result
+#AI contract: Runs all declared rules against $data. Returns a result where ok() is false if any field failed any rule. Only declared fields appear in validated().
+#AI param_details: [{name: $data | type: array | required: true | desc: Input data to validate, typically $req->post().}]
+#AI return_detail: {type: result | desc: Immutable result with errors() and validated().}
+
+#AI:rule
+#AI group: Custom Rules
+#AI frequency: low
+#AI signature: public static function rule(string $name, callable $callback, string $message = 'Invalid value'): void
+#AI contract: Registers a custom rule globally. The callback receives the field value and returns null on pass or a string error message on fail.
+#AI param_details: [{name: $name | type: string | required: true | desc: Rule name used in rule lists.}; {name: $callback | type: callable | required: true | desc: Receives value, returns null on pass or error string on fail.}; {name: $message | type: string | required: false | desc: Default error message. Use :field as placeholder for field name.}]
+#AI side_effects: [Mutates the static custom_rules registry]
+#AI warnings: [Custom rules are global and persist for the process lifetime]

@@ -3,8 +3,20 @@
 namespace skim\cli;
 
 /**
- * Pure value object produced by parsing $argv.
- * No side-effects, no I/O — safe to test directly.
+ * Pure value object produced by parsing $argv into command, args, and flags.
+ *
+ * Use when the CLI kernel needs structured access to raw command-line tokens.
+ * Strips argv[0] (script name) automatically. Supports --flag=value, --flag,
+ * -f short flags, and positional args. For colon-commands like `migrate:down`,
+ * the sub-part is prepended to args so commands can detect it via arg(0).
+ *
+ * Example:
+ *   $parsed = argv_parser::parse(['skim', 'migrate:down', '--steps=2']);
+ *   // $parsed->command === 'migrate:down', $parsed->args === ['down'], $parsed->flags === ['steps' => '2']
+ *
+ * Testing: Pure value object with no side-effects — instantiate directly in tests.
+ *
+ * #AI:class
  */
 final class argv_parser {
 
@@ -19,26 +31,23 @@ final class argv_parser {
     }
 
     /**
-     * Parse the raw $argv array (as received by PHP).
-     * Strips the script name (argv[0]) automatically.
+     * Parses the raw $argv array into a structured value object. #AI:parse
      *
-     * Supports:
-     *   --flag=value   → flags['flag'] = 'value'
-     *   --flag         → flags['flag'] = true
-     *   -f             → flags['f']    = true
-     *   positional     → args[]
-     *
-     * Subcommand arg injection: for colon-commands like `migrate:down`,
+     * Strips argv[0] automatically. For colon-commands like `migrate:down`,
      * the sub-part ('down') is prepended to args so the command class
-     * can detect it via arg(0) without extra wiring in the entrypoint.
+     * can detect it via arg(0) without extra wiring.
+     *
+     * Example:
+     *   $parsed = argv_parser::parse(['skim', 'cache:clear', 'user:', '--force']);
+     *   // command='cache:clear', args=['clear','user:'], flags=['force'=>true]
+     *
+     * @param array $argv Raw $argv as received by PHP (argv[0] is script name).
      */
     public static function parse(array $argv): self {
         $tokens  = array_slice($argv, 1);
         $args    = [];
         $flags   = [];
 
-        // First pass: collect all flags and find the command name.
-        // Flags may appear before OR after the command token.
         $command_raw = 'help';
         $found_cmd   = false;
 
@@ -54,7 +63,6 @@ final class argv_parser {
             } elseif (str_starts_with($token, '-') && strlen($token) > 1) {
                 $flags[substr($token, 1)] = true;
             } elseif (!$found_cmd) {
-                // First non-flag token is the command name
                 $command_raw = $token;
                 $found_cmd   = true;
             } else {
@@ -62,9 +70,6 @@ final class argv_parser {
             }
         }
 
-        // Inject sub-command as first positional arg so command classes
-        // can read arg(0) without knowing the full name.
-        // e.g. "migrate:down" → command="migrate:down", args[0]="down"
         if (str_contains($command_raw, ':')) {
             $sub = substr($command_raw, strpos($command_raw, ':') + 1);
             if (empty($args) || $args[0] !== $sub) {
@@ -75,7 +80,11 @@ final class argv_parser {
         return new self($command_raw, $args, $flags);
     }
 
-    /** Convenience: check if a flag is set (boolean or with value). */
+    /**
+     * Returns true when any of the given flag names is set. #AI:has_flag
+     *
+     * @param string ...$names Flag names to test (without leading dashes).
+     */
     public function has_flag(string ...$names): bool {
         foreach ($names as $name) {
             if (isset($this->flags[$name])) {
@@ -85,3 +94,43 @@ final class argv_parser {
         return false;
     }
 }
+
+#AI:class
+#AI symbol: skim\cli\argv_parser
+#AI source_path: src/cli/argv_parser.php
+#AI title: argv_parser
+#AI description: Pure value object that parses $argv into command name, positional args, and flags.
+#AI role: CLI argument parser
+#AI layer: cli
+#AI badges: [value-object; cli; parser; immutable]
+#AI intro: `argv_parser` is a pure, immutable value object that transforms the raw PHP `$argv` array into structured command, args, and flags. It handles `--flag=value`, `--flag`, `-f` short flags, and positional arguments. Colon-commands like `migrate:down` automatically inject the sub-part as the first positional arg.
+#AI lifecycle: instantiated once per CLI invocation via parse()
+#AI fallback: defaults to 'help' command when no command token is found
+#AI test_seam: pure value object — instantiate directly in tests with known $argv arrays
+#AI invariants: [argv[0] is always stripped; first non-flag token becomes the command; colon-commands inject sub-part into args[0]; flags may appear before or after the command token]
+#AI core_behaviors: [Parses --flag=value into flags['flag']='value'; Parses --flag into flags['flag']=true; Parses -f into flags['f']=true; All remaining non-flag tokens after the command become positional args]
+#AI owns: parsed command, args, and flags
+#AI entry_points: [parse; has_flag]
+#AI config_reads: []
+#AI non_goals: [Does not validate command names against a registry; Does not handle quoted strings with spaces; Does not support --flag value (space-separated) syntax]
+#AI side_effects: []
+#AI flow: argv_parser::parse($argv) -> strip argv[0] -> tokenize flags/args/command -> inject colon sub-part -> return immutable value object
+#AI lifecycle_steps: [argv_parser::parse($argv); -> strip argv[0]; -> iterate tokens; -> classify as flag/command/arg; -> inject colon sub-part; -> return new self(...)]
+#AI section_order: [Parsing; Flag Access]
+#AI architectural_notes: Pure value object with no I/O or side-effects. Safe to test directly without mocks.
+
+#AI:parse
+#AI group: Parsing
+#AI frequency: high
+#AI signature: public static function parse(array $argv): self
+#AI contract: Parses the raw $argv array into a structured value object. Strips argv[0], classifies tokens as flags, command, or positional args, and injects the colon sub-part for commands like `migrate:down`.
+#AI param_details: [{name: $argv | type: array | required: true | desc: Raw $argv as received by PHP. argv[0] is the script name and is stripped automatically.}]
+#AI return_detail: {type: self | desc: Immutable value object with command, args, and flags properties.}
+
+#AI:has_flag
+#AI group: Flag Access
+#AI frequency: medium
+#AI signature: public function has_flag(string ...$names): bool
+#AI contract: Returns true when any of the given flag names is set in the parsed flags array. Accepts variadic names for convenience (e.g. checking both 'quiet' and 'q').
+#AI param_details: [{name: $names | type: string | required: true | desc: Flag names to test, without leading dashes. Variadic — pass one or more names.}]
+#AI return_detail: {type: bool | desc: True if at least one of the given flag names is present.}

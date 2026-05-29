@@ -8,12 +8,29 @@ use skim\dev\docs\extractor\project_scanner;
 use skim\dev\docs\value\docs_generation_paths;
 use skim\ext\ext_registry;
 
-// Scans all configured source paths and writes llm.json.
-// Usage: php skim docs:extract [--source=DIR] [--output=DIR]
+/**
+ * Scans all configured source paths and writes llm.json. #AI:class
+ *
+ * Use as the first step of the docs pipeline, or standalone to regenerate
+ * the JSON source of truth. Reads scan paths from config/docs.php or
+ * --source flag override. Enriches output with extension capability data.
+ *
+ * Example:
+ *   php skim docs:extract
+ *   php skim docs:extract --source=app --output=build/docs
+ *
+ * Testing: Instantiate directly; no static state.
+ *
+ * #AI:class
+ */
 class docs_extract_command extends command {
     /**
-     * @ai-contract runs project_scanner → json_emitter, writes llm.json to config path
-     * @ai-contract returns 0 on success, 1 on failure
+     * Runs project_scanner → json_emitter, writes llm.json. #AI:handle
+     *
+     * Enriches output with extension capability details from ext_registry.
+     * Returns 1 when the source directory does not exist or scan/write fails.
+     *
+     * @return int 0 on success, 1 on failure.
      */
     public function handle(): int {
         $paths  = docs_generation_paths::from_flags($this->flags);
@@ -64,3 +81,35 @@ class docs_extract_command extends command {
         return 0;
     }
 }
+
+#AI:class
+#AI symbol: skim\dev\docs\commands\docs_extract_command
+#AI source_path: src/dev/docs/commands/docs_extract_command.php
+#AI title: docs_extract_command
+#AI description: CLI command that scans PHP source files, extracts @ai.* annotations via AST, and writes llm.json.
+#AI role: CLI extraction command
+#AI layer: dev
+#AI badges: [cli; docs; extraction; ast]
+#AI intro: `docs_extract_command` is the first step in the docs pipeline. It uses `project_scanner` to walk source paths, runs `class_extractor` on each .php file, enriches the result with extension capability data from `ext_registry`, and writes the output to llm.json via `json_emitter`.
+#AI lifecycle: instantiated by CLI router or docs_command, runs synchronously
+#AI fallback: none — returns 1 on scan or write failure
+#AI test_seam: instantiate directly with set_input() to inject flags
+#AI invariants: [scan failure returns 1 with error message; write failure returns 1; null classes are silently discarded by scanner]
+#AI core_behaviors: [Scans configured or overridden source paths for .php files; Extracts annotations via AST using class_extractor; Enriches output with extension capabilities from ext_registry]
+#AI owns: project_scanner, json_emitter instances
+#AI entry_points: [handle]
+#AI config_reads: [docs.scan_paths; docs.output.json]
+#AI non_goals: [Does not generate MDX or Markdown; Does not validate annotation coverage]
+#AI side_effects: [writes llm.json to configured or overridden output path]
+#AI flow: handle() -> docs_generation_paths -> project_scanner -> ext_registry -> json_emitter -> llm.json
+#AI lifecycle_steps: [handle(); -> resolve paths from flags/config; -> project_scanner.scan(); -> ext_registry.installed(); -> json_emitter.emit(); -> llm.json written]
+#AI section_order: [Pipeline; Architecture]
+#AI architectural_notes: Separates scanning, enrichment, and writing into distinct steps for clear error reporting.
+
+#AI:handle
+#AI group: Pipeline
+#AI frequency: high
+#AI signature: public function handle(): int
+#AI contract: Scans source paths, extracts class annotations, enriches with extension data, and writes llm.json. Returns 1 when the source directory is missing or any step throws.
+#AI return_detail: {type: int | desc: 0 on success, 1 on scan or write failure.}
+#AI side_effects: [writes llm.json to disk]

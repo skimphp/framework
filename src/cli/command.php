@@ -1,38 +1,72 @@
 <?php declare(strict_types=1);
-// Modified: Added command metadata properties, help display, and dynamic metadata resolution.
 
 namespace skim\cli;
 
-// Base class for all CLI commands.
-// Commands are registered in config/app.php under 'commands' key
-// or via $app->command('name', handler) in routes.php.
-//
-// Exit codes follow POSIX convention: 0 = success, 1+ = error.
+/**
+ * Abstract base class for all CLI commands with arg/flag access and output helpers.
+ *
+ * Use when creating new CLI commands — extend this class and implement handle().
+ * Commands are registered in config/app.php under the 'commands' key or via
+ * the kernel's built-in COMMANDS map. Exit codes follow POSIX: 0 = success, 1+ = error.
+ *
+ * Example:
+ *   class greet_command extends command {
+ *       public function handle(): int {
+ *           $name = $this->arg(0, 'World');
+ *           $this->info("Hello {$name}!");
+ *           return 0;
+ *       }
+ *   }
+ *
+ * Testing: Instantiate the command, call set_input() with test args/flags, then handle().
+ *
+ * #AI:class
+ */
 abstract class command {
-    protected array $args  = [];   // positional arguments after command name
-    protected array $flags = [];   // --flag=value or --flag (bool true)
+    protected array $args  = [];
+    protected array $flags = [];
 
     protected string $name        = '';
     protected string $description = '';
     protected string $group       = 'general';
     protected string $usage       = '';
 
+    /**
+     * Returns the registered command name. #AI:get_name
+     */
     public function get_name(): string {
         return $this->name;
     }
 
+    /**
+     * Returns the command description for help display. #AI:get_description
+     */
     public function get_description(): string {
         return $this->description;
     }
 
+    /**
+     * Returns the command group for categorized help listing. #AI:get_group
+     */
     public function get_group(): string {
         return $this->group;
     }
 
+    /**
+     * Returns the usage string for help display. #AI:get_usage
+     */
     public function get_usage(): string {
         return $this->usage;
     }
 
+    /**
+     * Auto-fills name, group, description, and usage from the registered command name. #AI:configure_for_name
+     *
+     * Called by the kernel before dispatch. Only sets values that are still at
+     * their defaults — subclass overrides are preserved.
+     *
+     * @param string $name The registered command name (e.g. 'migrate:down').
+     */
     public function configure_for_name(string $name): void {
         if ($this->name === '') {
             $this->name = $name;
@@ -90,6 +124,9 @@ abstract class command {
         }
     }
 
+    /**
+     * Prints usage and description to the terminal. #AI:help
+     */
     public function help(): void {
         cli::bold("Usage:");
         $usage_str = $this->name;
@@ -104,14 +141,18 @@ abstract class command {
         }
     }
 
-
     /**
-     * @ai-contract implement the command logic here — return exit code (0 = success)
+     * Implements the command logic — return POSIX exit code (0 = success). #AI:handle
      */
     abstract public function handle(): int;
 
     /**
-     * @ai-contract called by bin/skim to inject parsed argv before handle()
+     * Injects parsed argv args and flags before handle() is called. #AI:set_input
+     *
+     * Called by the kernel after resolving the command class.
+     *
+     * @param array $args  Positional arguments after the command name.
+     * @param array $flags Parsed flags (--flag=value or --flag as true).
      */
     public function set_input(array $args, array $flags): void {
         $this->args  = $args;
@@ -119,23 +160,130 @@ abstract class command {
     }
 
     /**
-     * @ai-contract returns positional argument by index, or $default if not set
+     * Returns a positional argument by index, or $default if not set. #AI:arg
+     *
+     * @param int   $index   Zero-based argument position.
+     * @param mixed $default Returned when the index does not exist.
      */
     protected function arg(int $index, mixed $default = null): mixed {
         return $this->args[$index] ?? $default;
     }
 
     /**
-     * @ai-contract returns flag value: --flag=val → 'val', --flag → true, absent → $default
+     * Returns a flag value: --flag=val returns 'val', --flag returns true. #AI:flag
+     *
+     * @param string $name    Flag name without leading dashes.
+     * @param mixed  $default Returned when the flag is absent.
      */
     protected function flag(string $name, mixed $default = null): mixed {
         return $this->flags[$name] ?? $default;
     }
 
+    /** @see cli::info */
     protected function info(string $msg): void    { cli::info($msg); }
+    /** @see cli::success */
     protected function success(string $msg): void { cli::success($msg); }
+    /** @see cli::warn */
     protected function warn(string $msg): void    { cli::warn($msg); }
+    /** @see cli::error */
     protected function error(string $msg): void   { cli::error($msg); }
+    /** @see cli::line */
     protected function line(string $msg = ''): void { cli::line($msg); }
+    /** @see cli::muted */
     protected function muted(string $msg): void   { cli::muted($msg); }
 }
+
+#AI:class
+#AI symbol: skim\cli\command
+#AI source_path: src/cli/command.php
+#AI title: command
+#AI description: Abstract base class for CLI commands with arg/flag access, output helpers, and auto-configured metadata.
+#AI role: CLI command base class
+#AI layer: cli
+#AI badges: [cli; command; abstract; base-class]
+#AI intro: `command` is the abstract base class that all SKIM CLI commands extend. It provides positional arg access, flag access, output helper proxies (info, success, warn, error), and auto-configuration of name/group/description/usage from the registered command name.
+#AI lifecycle: instantiated by kernel, set_input() called with parsed argv, then handle() invoked
+#AI fallback: configure_for_name() provides default descriptions and usage strings for built-in commands
+#AI test_seam: instantiate subclass, call set_input() with test data, then handle()
+#AI invariants: [handle() must return POSIX exit code; args and flags are set by kernel before handle(); configure_for_name() preserves subclass overrides]
+#AI core_behaviors: [arg() and flag() provide safe access with defaults; configure_for_name() auto-fills metadata from command name; output helpers delegate to cli:: static methods]
+#AI owns: args, flags, name, description, group, usage
+#AI entry_points: [handle; set_input; arg; flag; help]
+#AI config_reads: []
+#AI non_goals: [Does not parse argv (see argv_parser); Does not register commands (see kernel); Does not handle process signals]
+#AI side_effects: [Output helpers write to STDOUT/STDERR via cli::]
+#AI flow: kernel -> new Command() -> configure_for_name() -> set_input(args, flags) -> handle() -> exit code
+#AI lifecycle_steps: [kernel resolves command class; -> new $class(); -> configure_for_name($name); -> set_input($args, $flags); -> handle(); -> return exit code]
+#AI section_order: [Metadata Access; Configuration; Command Execution; Input Access; Output Helpers]
+#AI architectural_notes: Abstract base class — never instantiated directly. Subclasses implement handle() and optionally override $name, $description, $group, $usage properties.
+
+#AI:get_name
+#AI group: Metadata Access
+#AI frequency: low
+#AI signature: public function get_name(): string
+#AI contract: Returns the registered command name as set by configure_for_name().
+#AI return_detail: {type: string | desc: Command name (e.g. 'migrate:down').}
+
+#AI:get_description
+#AI group: Metadata Access
+#AI frequency: low
+#AI signature: public function get_description(): string
+#AI contract: Returns the command description for help display.
+#AI return_detail: {type: string | desc: Human-readable description.}
+
+#AI:get_group
+#AI group: Metadata Access
+#AI frequency: low
+#AI signature: public function get_group(): string
+#AI contract: Returns the command group for categorized help listing.
+#AI return_detail: {type: string | desc: Group key (e.g. 'database', 'queue', 'general').}
+
+#AI:get_usage
+#AI group: Metadata Access
+#AI frequency: low
+#AI signature: public function get_usage(): string
+#AI contract: Returns the usage string for help display.
+#AI return_detail: {type: string | desc: Usage string (e.g. '[--steps=N]').}
+
+#AI:configure_for_name
+#AI group: Configuration
+#AI frequency: internal
+#AI signature: public function configure_for_name(string $name): void
+#AI contract: Auto-fills name, group, description, and usage from the registered command name. Only sets values still at defaults — subclass property overrides are preserved.
+#AI param_details: [{name: $name | type: string | required: true | desc: Registered command name (e.g. 'migrate:down').}]
+
+#AI:help
+#AI group: Configuration
+#AI frequency: low
+#AI signature: public function help(): void
+#AI contract: Prints usage and description to the terminal via cli:: output helpers.
+
+#AI:handle
+#AI group: Command Execution
+#AI frequency: high
+#AI signature: abstract public function handle(): int
+#AI contract: Implements the command logic. Must return a POSIX exit code (0 = success, 1+ = error).
+#AI return_detail: {type: int | desc: POSIX exit code. 0 for success, 1+ for error.}
+
+#AI:set_input
+#AI group: Input Access
+#AI frequency: internal
+#AI signature: public function set_input(array $args, array $flags): void
+#AI contract: Injects parsed argv args and flags. Called by the kernel before handle().
+#AI param_details: [{name: $args | type: array | required: true | desc: Positional arguments after the command name.}; {name: $flags | type: array | required: true | desc: Parsed flags (--flag=value or --flag as true).}]
+
+#AI:arg
+#AI group: Input Access
+#AI frequency: high
+#AI signature: protected function arg(int $index, mixed $default = null): mixed
+#AI contract: Returns a positional argument by zero-based index, or $default if the index does not exist.
+#AI param_details: [{name: $index | type: int | required: true | desc: Zero-based argument position.}; {name: $default | type: mixed | required: false | desc: Returned when the index does not exist.}]
+#AI return_detail: {type: mixed | desc: The argument value at $index, or $default.}
+
+#AI:flag
+#AI group: Input Access
+#AI frequency: high
+#AI signature: protected function flag(string $name, mixed $default = null): mixed
+#AI contract: Returns a flag value. --flag=val returns 'val', --flag returns true, absent returns $default.
+#AI param_details: [{name: $name | type: string | required: true | desc: Flag name without leading dashes.}; {name: $default | type: mixed | required: false | desc: Returned when the flag is absent.}]
+#AI return_detail: {type: mixed | desc: Flag value, true for boolean flags, or $default.}

@@ -6,21 +6,37 @@ use skim\core\middleware;
 use skim\core\request;
 use skim\core\response;
 
-// Redis-backed sliding window rate limiter.
-// Uses a sorted set per IP: timestamps as scores, expiry = window seconds.
-// Why sliding window: fixed window (e.g. INCR per minute) allows 2× burst at window boundary.
+/**
+ * Redis-backed sliding window rate limiter middleware.
+ *
+ * Use on API routes to protect against abuse. Counts requests per IP
+ * in a Redis sorted set with timestamps as scores. Falls back to
+ * passthrough (no rate limit) when Redis is unavailable.
+ *
+ * Example:
+ *   $app->router->group('/api', function(router $r) {
+ *       $r->get('/data', [api_controller::class, 'index']);
+ *   }, middleware: [new rate_limit(limit: 100, window: 60)]);
+ *
+ * #AI:class
+ */
 class rate_limit implements middleware {
     public function __construct(
-        private readonly int    $limit  = 60,   // max requests per $window
-        private readonly int    $window = 60,   // window size in seconds
+        private readonly int    $limit  = 60,
+        private readonly int    $window = 60,
         private readonly string $prefix = 'rl:',
     ) {}
 
     /**
-     * @ai-contract counts requests per IP in a Redis sorted set sliding window
-     * @ai-contract short-circuits with 429 when limit exceeded
-     * @ai-contract adds X-RateLimit-* headers to every response (remaining, reset)
-     * @ai-contract falls back to passthrough (no rate limit) when Redis is unavailable
+     * Counts requests per IP and short-circuits with 429 when limit exceeded. #AI:handle
+     *
+     * Uses a Redis sorted set sliding window per IP. Adds X-RateLimit-*
+     * headers to every response. Falls back to passthrough when Redis
+     * is unavailable — never blocks legitimate traffic due to Redis outage.
+     *
+     * @param request  $req  Current HTTP request.
+     * @param response $res  Current HTTP response.
+     * @param callable $next Next middleware or controller in the pipeline.
      */
     public function handle(request $req, response $res, callable $next): mixed {
         $key = $this->prefix . $req->ip();
@@ -67,3 +83,34 @@ class rate_limit implements middleware {
         return $r;
     }
 }
+
+#AI:class
+#AI symbol: skim\middleware\rate_limit
+#AI source_path: src/middleware/rate_limit.php
+#AI title: rate_limit
+#AI description: Redis-backed sliding window rate limiter with fail-open fallback.
+#AI role: rate limiting middleware
+#AI layer: middleware
+#AI badges: [middleware; rate-limit; redis; fail-open]
+#AI intro: `rate_limit` uses a Redis sorted set sliding window to count requests per IP. When the limit is exceeded, it returns 429. When Redis is unavailable, it fails open and passes all requests through.
+#AI lifecycle: registered per-route or per-group; creates a Redis connection per request
+#AI fallback: passthrough (no rate limiting) when Redis is unreachable
+#AI test_seam: mock Redis or test with Redis available; verify X-RateLimit-* headers
+#AI invariants: [Sliding window prevents boundary burst; Fail-open on Redis failure; X-RateLimit-* headers on every response when Redis is available]
+#AI core_behaviors: [Counts requests per IP in Redis sorted set; Short-circuits with 429 when count exceeds limit; Adds rate limit headers to responses]
+#AI owns: Redis sorted set keys per IP
+#AI entry_points: [handle]
+#AI config_reads: [cache.redis]
+#AI non_goals: [Does not rate limit by user ID; Does not support distributed rate limiting across servers without shared Redis; Does not throttle — it blocks]
+#AI side_effects: [Writes to Redis sorted set; Adds X-RateLimit-* headers to response]
+#AI flow: handle() -> redis() -> pipeline(zremrangebyscore, zadd, zcard, expire) -> count > limit? -> 429 : $next()
+#AI section_order: [Middleware]
+
+#AI:handle
+#AI group: Middleware
+#AI frequency: high
+#AI signature: public function handle(request $req, response $res, callable $next): mixed
+#AI contract: Counts the request in a Redis sliding window per IP. Returns 429 when the limit is exceeded. Adds X-RateLimit-* headers. Falls open when Redis is unavailable.
+#AI param_details: [{name: $req | type: request | required: true | desc: Current HTTP request (IP extracted for key).}; {name: $res | type: response | required: true | desc: Current HTTP response (headers added).}; {name: $next | type: callable | required: true | desc: Next middleware or controller.}]
+#AI return_detail: {type: mixed | desc: Response with rate limit headers, or 429 JSON when limit exceeded.}
+#AI side_effects: [Writes to Redis sorted set; Adds X-RateLimit-* response headers]

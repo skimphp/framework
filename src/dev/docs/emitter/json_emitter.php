@@ -4,17 +4,37 @@ namespace skim\dev\docs\emitter;
 
 use skim\dev\docs\value\extracted_class;
 
-// Serializes extracted_class[] to llm.json — the single source of truth for all doc outputs.
-// All other emitters (llm_md_emitter, mdx_emitter) and the MCP server read from this file.
-// No framework dependencies — plain PHP only.
+/**
+ * Serializes extracted_class[] to llm.json — the single source of truth for all doc outputs. #AI:class
+ *
+ * Use when writing the intermediate JSON that all other emitters and the
+ * MCP server consume. No framework dependencies — plain PHP only.
+ *
+ * Example:
+ *   (new json_emitter())->emit($classes, 'llm.json', $capability_map, $extensions);
+ *   $data = (new json_emitter())->load('llm.json');
+ *
+ * Testing: Instantiate directly; operates on filesystem paths.
+ *
+ * #AI:class
+ */
 class json_emitter {
     /**
-     * @ai-contract accepts extracted_class[], writes structured JSON to $output_path
-     * @ai-contract creates parent directories if they do not exist
-     * @ai-contract throws \RuntimeException if the file cannot be written
-     * @ai-contract JSON is pretty-printed for readability and diff-friendliness
-     * @ai-contract $capability_map, when non-empty, is written as top-level "capabilities" section
-     * @ai-contract $installed_extensions, when non-empty, is written under top-level "extensions.installed"
+     * Writes extracted classes as pretty-printed JSON. #AI:emit
+     *
+     * Creates parent directories if they do not exist. When $capability_map
+     * is non-empty, it is written as a top-level "capabilities" section.
+     * When $installed_extensions is non-empty, written under "extensions.installed".
+     *
+     * Example:
+     *   (new json_emitter())->emit($classes, 'build/llm.json');
+     *
+     * @param extracted_class[] $classes             Extracted class records to serialize.
+     * @param string            $output_path          Absolute or relative path for the JSON file.
+     * @param array             $capability_map       Extension capability details, keyed by capability name.
+     * @param string[]          $installed_extensions List of installed extension names.
+     *
+     * @throws \RuntimeException If json_encode fails or the file cannot be written.
      */
     public function emit(array $classes, string $output_path, array $capability_map = [], array $installed_extensions = []): void {
         $data = [
@@ -46,9 +66,12 @@ class json_emitter {
     }
 
     /**
-     * @ai-contract reads and decodes llm.json from $path
-     * @ai-contract returns decoded array on success
-     * @ai-contract throws \RuntimeException if file is missing or JSON is invalid
+     * Reads and decodes llm.json from disk. #AI:load
+     *
+     * @param string $path Path to the llm.json file.
+     * @return array Decoded JSON data.
+     *
+     * @throws \RuntimeException If file is missing, unreadable, or contains invalid JSON.
      */
     public function load(string $path): array {
         if (!file_exists($path)) {
@@ -65,3 +88,45 @@ class json_emitter {
         return $data;
     }
 }
+
+#AI:class
+#AI symbol: skim\dev\docs\emitter\json_emitter
+#AI source_path: src/dev/docs/emitter/json_emitter.php
+#AI title: json_emitter
+#AI description: Serializes extracted class metadata to llm.json and loads it back — the single source of truth for all doc outputs.
+#AI role: JSON serialization layer
+#AI layer: dev
+#AI badges: [emitter; json; docs; no-framework-deps]
+#AI intro: `json_emitter` is the serialization boundary between the AST extraction pipeline and all downstream consumers (llm_md_emitter, mdx_emitter, mcp_server). It writes pretty-printed JSON with optional extension capability enrichment.
+#AI lifecycle: instantiated per-use by commands, no state retained
+#AI fallback: none — throws on write/read failure
+#AI test_seam: instantiate directly with temp file paths
+#AI invariants: [emit() creates parent directories; load() throws when file is missing or JSON is invalid; JSON is pretty-printed with unescaped slashes and unicode]
+#AI core_behaviors: [Serializes extracted_class[] to structured JSON; Optionally enriches with extension capabilities; Loads and validates llm.json for downstream consumers]
+#AI owns: none — stateless
+#AI entry_points: [emit; load]
+#AI config_reads: []
+#AI non_goals: [Does not extract classes; Does not generate Markdown or MDX]
+#AI side_effects: [writes llm.json to disk; creates parent directories]
+#AI flow: emit(classes, path) -> json_encode -> file_put_contents; load(path) -> file_get_contents -> json_decode
+#AI lifecycle_steps: [emit(); -> build data array; -> json_encode; -> mkdir if needed; -> file_put_contents; load(); -> file_exists check; -> file_get_contents; -> json_decode]
+#AI section_order: [Serialization; Deserialization; Architecture]
+#AI architectural_notes: No framework dependencies — plain PHP only. All other emitters and the MCP server read from the file this class produces.
+
+#AI:emit
+#AI group: Serialization
+#AI frequency: high
+#AI signature: public function emit(array $classes, string $output_path, array $capability_map = [], array $installed_extensions = []): void
+#AI contract: Serializes extracted_class[] to pretty-printed JSON at the given path. Creates parent directories if needed. Optionally includes extension capability data and installed extension names as top-level sections.
+#AI param_details: [{name: $classes | type: extracted_class[] | required: true | desc: Class records to serialize.}; {name: $output_path | type: string | required: true | desc: Filesystem path for the output JSON file.}; {name: $capability_map | type: array | required: false | desc: Extension capability details written as top-level "capabilities" section when non-empty.}; {name: $installed_extensions | type: string[] | required: false | desc: Installed extension names written under "extensions.installed" when non-empty.}]
+#AI throws_details: [{type: \RuntimeException | desc: When json_encode fails or the file cannot be written.}]
+#AI side_effects: [writes JSON file to disk; creates parent directories]
+
+#AI:load
+#AI group: Deserialization
+#AI frequency: high
+#AI signature: public function load(string $path): array
+#AI contract: Reads and decodes llm.json from the given path. Throws when the file is missing, unreadable, or contains invalid JSON.
+#AI param_details: [{name: $path | type: string | required: true | desc: Path to the llm.json file.}]
+#AI return_detail: {type: array | desc: Decoded JSON data as an associative array.}
+#AI throws_details: [{type: \RuntimeException | desc: When file is missing, unreadable, or contains invalid JSON.}]

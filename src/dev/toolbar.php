@@ -4,13 +4,32 @@ namespace skim\dev;
 
 use skim\core\request;
 
-// Debug toolbar — appended before </body> for text/html responses.
-// Only rendered when APP_DEBUG=true AND request is not JSON/AJAX.
-// Toolbar middleware (toolbar_middleware) injects this; it's not called directly.
+/**
+ * Debug toolbar appended before </body> for text/html responses when APP_DEBUG=true. #AI:class
+ *
+ * Use only via toolbar_middleware — not called directly. Renders a fixed-bottom
+ * panel with tabs for request info, DB queries, cache stats, timeline, views,
+ * and log entries. Only rendered for non-JSON, non-AJAX HTML responses.
+ *
+ * Example:
+ *   // Called by toolbar_middleware, not directly:
+ *   $html = toolbar::render($req);
+ *   $response_body .= $html;
+ *
+ * Testing: Call render() with a mock request; requires profiler to be populated.
+ *
+ * #AI:class
+ */
 final class toolbar {
 	/**
-	 * @ai-contract generates the debug toolbar HTML string
-	 * @ai-contract returns empty string when APP_DEBUG=false (should not be called, but safe)
+	 * Generates the debug toolbar HTML string from profiler data. #AI:render
+	 *
+	 * Returns empty string when APP_DEBUG=false (safe guard). Reads all
+	 * events from profiler::summary() and profiler::events() to build
+	 * tabbed panels for request, queries, cache, timeline, views, and log.
+	 *
+	 * @param request $req Current HTTP request for method/path display.
+	 * @return string Complete toolbar HTML, or empty string when debug is off.
 	 */
 	public static function render(request $req): string {
 		if (!\skim\core\config::get('app.debug', false)) {
@@ -20,14 +39,12 @@ final class toolbar {
 		$summary = profiler::summary();
 		$events  = profiler::events();
 
-		// ── query stats ──────────────────────────────────────────────────────
 		$db_count   = $summary['db']['count'];
 		$db_ms      = $summary['db']['ms'];
 		$db_warn    = $db_count > 20 ? ' warn-tab' : '';
 		$db_rows    = array_filter($events, fn($e) => $e['type'] === 'db');
 		$db_html    = self::build_db_rows($db_rows);
 
-		// ── cache stats ───────────────────────────────────────────────────────
 		$cache_hits  = $summary['cache']['hits'];
 		$cache_miss  = $summary['cache']['misses'];
 		$cache_total = $cache_hits + $cache_miss;
@@ -45,33 +62,26 @@ final class toolbar {
 			$cache_driver = \skim\core\config::get('cache.driver', '—');
 		}
 
-		// ── view stats ────────────────────────────────────────────────────────
 		$view_count  = $summary['views'];
 		$view_rows   = array_filter($events, fn($e) => $e['type'] === 'view');
 		$view_html   = self::build_view_rows($view_rows);
 
-		// ── total request time ────────────────────────────────────────────────
 		$total_ms = isset($_SERVER['REQUEST_TIME_FLOAT'])
 			? round((microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']) * 1000, 1)
 			: $db_ms;
 
-		// ── timeline ──────────────────────────────────────────────────────────
 		$timeline_html = self::build_timeline($summary, $total_ms);
 
-		// ── log ───────────────────────────────────────────────────────────────
 		$log_count = $summary['logs'];
 		$log_html  = self::build_log_rows($events);
 
-		// ── memory / php ──────────────────────────────────────────────────────
 		$peak_mem = round(memory_get_peak_usage(true) / 1024 / 1024, 1);
 		$ms_class = $total_ms > 200 ? 'warn' : ($total_ms > 100 ? '' : 'ok');
 		$php_ver  = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
 
-		// ── request basics ────────────────────────────────────────────────────
 		$method = htmlspecialchars($req->method(),    ENT_QUOTES, 'UTF-8');
 		$path   = htmlspecialchars($req->path(),      ENT_QUOTES, 'UTF-8');
 
-		// ── request tab data ──────────────────────────────────────────────────
 		$req_html = self::build_request_panel($req);
 
 		return <<<HTML
@@ -350,9 +360,6 @@ final class toolbar {
         HTML;
 	}
 
-	// ─────────────────────────────────────────────────────────────────────────
-	// Request panel — $_SERVER, headers, GET/POST/COOKIE
-	// ─────────────────────────────────────────────────────────────────────────
 	private static function build_request_panel(request $req): string {
 		$s = $_SERVER;
 
@@ -370,7 +377,6 @@ final class toolbar {
 		$qs_out   = $qs !== '' ? $qs : '—';
 		$qs_class = $qs !== '' ? '' : 'muted';
 
-		// server / php
 		$php_full   = htmlspecialchars(PHP_VERSION, ENT_QUOTES, 'UTF-8');
 		$sapi       = htmlspecialchars(PHP_SAPI, ENT_QUOTES, 'UTF-8');
 		$software   = htmlspecialchars($s['SERVER_SOFTWARE'] ?? '—', ENT_QUOTES, 'UTF-8');
@@ -382,7 +388,6 @@ final class toolbar {
 		$opcache    = function_exists('opcache_get_status') ? 'enabled' : 'disabled';
 		$opcache_cl = $opcache === 'enabled' ? 'ok' : 'warn';
 
-		// headers (HTTP_* keys)
 		$raw_headers = [
 			'accept'           => $s['HTTP_ACCEPT']           ?? null,
 			'accept-encoding'  => $s['HTTP_ACCEPT_ENCODING']  ?? null,
@@ -398,14 +403,12 @@ final class toolbar {
 			$v     = $val !== null ? htmlspecialchars($val, ENT_QUOTES, 'UTF-8') : null;
 			$cls   = $v !== null ? '' : 'muted';
 			$show  = $v !== null ? $v : '—';
-			// truncate long values for display
 			if (mb_strlen($show) > 40) {
 				$show = mb_substr($show, 0, 37) . '…';
 			}
 			$header_rows .= "<div class=\"kv\"><span class=\"kv-k\">{$key}</span><span class=\"kv-v {$cls}\">{$show}</span></div>";
 		}
 
-		// GET params
 		$get_html = '';
 		if (!empty($_GET)) {
 			$get_html .= '<table class="param-table">';
@@ -419,7 +422,6 @@ final class toolbar {
 			$get_html = '<div class="empty-note">no $_GET params</div>';
 		}
 
-		// POST params
 		$post_html = '';
 		if (!empty($_POST)) {
 			$post_html .= '<table class="param-table">';
@@ -433,7 +435,6 @@ final class toolbar {
 			$post_html = '<div class="empty-note">no $_POST params</div>';
 		}
 
-		// Cookies (mask values)
 		$cookie_html = '';
 		if (!empty($_COOKIE)) {
 			$cookie_html .= '<table class="param-table">';
@@ -491,9 +492,6 @@ final class toolbar {
         HTML;
 	}
 
-	// ─────────────────────────────────────────────────────────────────────────
-	// DB query rows
-	// ─────────────────────────────────────────────────────────────────────────
 	private static function build_db_rows(array $events): string {
 		if ($events === []) {
 			return '<div style="padding:20px 14px;font-size:11px;color:#64748b;font-style:italic">No queries</div>';
@@ -530,9 +528,6 @@ final class toolbar {
 		return $html;
 	}
 
-	// ─────────────────────────────────────────────────────────────────────────
-	// Cache key/value rows
-	// ─────────────────────────────────────────────────────────────────────────
 	private static function build_cache_rows(array $events): string {
 		if ($events === []) {
 			return '<div style="padding:8px 0;font-size:11px;color:#64748b;font-style:italic">No cache events</div>';
@@ -551,9 +546,6 @@ final class toolbar {
 		return $html;
 	}
 
-	// ─────────────────────────────────────────────────────────────────────────
-	// View rows
-	// ─────────────────────────────────────────────────────────────────────────
 	private static function build_view_rows(array $events): string {
 		if ($events === []) {
 			return '<div style="padding:20px 14px;font-size:11px;color:#64748b;font-style:italic">No views rendered</div>';
@@ -572,9 +564,6 @@ final class toolbar {
 		return $html;
 	}
 
-	// ─────────────────────────────────────────────────────────────────────────
-	// Timeline bars
-	// ─────────────────────────────────────────────────────────────────────────
 	private static function build_timeline(array $summary, float $total_ms): string {
 		$db_ms   = (float)($summary['db']['ms']  ?? 0);
 		$view_ms = (float)($summary['view_ms']   ?? 0);
@@ -614,9 +603,6 @@ final class toolbar {
 		return $html;
 	}
 
-	// ─────────────────────────────────────────────────────────────────────────
-	// Log rows (all profiler events in order)
-	// ─────────────────────────────────────────────────────────────────────────
 	private static function build_log_rows(array $events): string {
 		if ($events === []) {
 			return '<div style="padding:20px 14px;font-size:11px;color:#64748b;font-style:italic">No events logged</div>';
@@ -645,3 +631,35 @@ final class toolbar {
 		return $html;
 	}
 }
+
+#AI:class
+#AI symbol: skim\dev\toolbar
+#AI source_path: src/dev/toolbar.php
+#AI title: toolbar
+#AI description: Debug toolbar rendered before </body> for HTML responses when APP_DEBUG=true, showing queries, cache, timeline, views, and log.
+#AI role: debug toolbar renderer
+#AI layer: dev
+#AI badges: [dev; debug; toolbar; html; profiler]
+#AI intro: `toolbar` generates a fixed-bottom debug panel with tabbed views for request info, DB queries, cache statistics, timeline breakdown, rendered views, and log entries. It reads all data from profiler::summary() and profiler::events().
+#AI lifecycle: called by toolbar_middleware after controller returns, before response is sent
+#AI fallback: returns empty string when APP_DEBUG=false
+#AI test_seam: call render() with a mock request after populating profiler
+#AI invariants: [returns empty string when debug is off; all output is HTML-escaped; reads from profiler static state]
+#AI core_behaviors: [Renders tabbed debug panel with request, queries, cache, timeline, views, and log tabs; Shows query count warning when > 20 queries; Color-codes query timing (fast/medium/slow); Displays cache hit/miss ratio; Shows timeline breakdown of db/views/other time]
+#AI owns: none — reads from profiler
+#AI entry_points: [render]
+#AI config_reads: [app.debug; cache.driver]
+#AI non_goals: [Does not collect events (profiler does); Does not inject itself (toolbar_middleware does); Does not render for JSON/AJAX responses]
+#AI side_effects: [generates large HTML string with inline CSS and JavaScript]
+#AI flow: render(req) -> config debug check -> profiler::summary() + events() -> build_*_rows() -> HTML template
+#AI lifecycle_steps: [render(); -> check app.debug; -> profiler::summary(); -> profiler::events(); -> build panels; -> return HTML]
+#AI section_order: [Rendering; Architecture]
+#AI architectural_notes: Called by toolbar_middleware, not directly. The toolbar includes inline CSS and JavaScript for self-contained rendering.
+
+#AI:render
+#AI group: Rendering
+#AI frequency: medium
+#AI signature: public static function render(request $req): string
+#AI contract: Generates the complete debug toolbar HTML string from profiler data. Returns empty string when APP_DEBUG=false. Builds tabbed panels for request info, DB queries, cache stats, timeline, views, and log entries.
+#AI param_details: [{name: $req | type: request | required: true | desc: Current HTTP request for method/path display in the toolbar header.}]
+#AI return_detail: {type: string | desc: Complete toolbar HTML with inline CSS and JS, or empty string when debug is off.}

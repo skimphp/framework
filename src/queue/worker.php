@@ -2,29 +2,42 @@
 
 namespace skim\queue;
 
-// Queue worker — runs as a long-lived CLI process.
-// Launched via: php skim queue:work [queue] [--sleep=N]
-//
-// Loop:
-//   1. promote_delayed() — move due delayed jobs to the main list
-//   2. BRPOP $queue 2 — block up to 2s waiting for a job
-//   3. unserialize job → attempt handle()
-//   4. on exception: increment attempts, push back (if tries remain) or call failed()
-//
-// Restart: the worker does not hot-reload. After deployments, restart with:
-//   php skim queue:restart  (sets a Redis key; workers check it each iteration)
+/**
+ * Long-lived queue worker that polls Redis with BRPOP and executes jobs with retry logic.
+ *
+ * Use when running `php skim queue:work` to process background jobs.
+ * The worker promotes delayed jobs, blocks on BRPOP for up to $sleep seconds,
+ * unserializes and executes each job, and handles retries with exponential
+ * back-off. Supports graceful shutdown via SIGTERM/SIGINT and Redis restart signals.
+ *
+ * Example:
+ *   $worker = new worker(queue: 'default', sleep: 3, max_jobs: 0);
+ *   $worker->work(); // blocks until stopped
+ *
+ * Testing: Instantiate with mock queue::set_redis(), call work() with max_jobs=1.
+ *
+ * #AI:class
+ */
 final class worker {
     private bool $should_stop = false;
 
+    /**
+     * @param string $queue    Queue name to poll.
+     * @param int    $sleep    Seconds to block on BRPOP when queue is empty.
+     * @param int    $max_jobs Maximum jobs to process before stopping (0 = unlimited).
+     */
     public function __construct(
         private readonly string $queue   = 'default',
         private readonly int    $sleep   = 3,
-        private readonly int    $max_jobs = 0,   // 0 = unlimited
+        private readonly int    $max_jobs = 0,
     ) {}
 
     /**
-     * @ai-contract runs the main work loop — blocks until stop() or process signal
-     * @ai-contract handles SIGTERM/SIGINT for graceful shutdown (pcntl required)
+     * Runs the main work loop — blocks until stop(), signal, or max_jobs reached. #AI:work
+     *
+     * Each iteration: promotes delayed jobs, checks restart signal, BRPOPs for
+     * a job, and processes it. Registers SIGTERM/SIGINT handlers for graceful
+     * shutdown when pcntl is available.
      */
     public function work(): void {
         $this->register_signals();
@@ -55,14 +68,20 @@ final class worker {
     }
 
     /**
-     * @ai-contract signals the worker to stop after current job completes
+     * Signals the worker to stop after the current job completes. #AI:stop
      */
     public function stop(): void {
         $this->should_stop = true;
     }
 
-    // --- internals ---
-
+    /**
+     * Processes a raw Redis payload: unserializes job, runs handle(), manages retries. #AI:process
+     *
+     * On exception: increments attempts, re-queues with exponential back-off
+     * (5s, 10s, 15s...) if retries remain, or calls failed() on exhaustion.
+     *
+     * @param string $raw JSON payload from Redis BRPOP.
+     */
     private function process(string $raw): void {
         $data     = queue::deserialize($raw);
         $class    = $data['class'] ?? '';
@@ -83,8 +102,7 @@ final class worker {
             error_log(sprintf("[worker] Job %s attempt %d/%d failed: %s", $class, $attempts, $tries, $e->getMessage()));
 
             if ($attempts < $tries) {
-                // Re-queue with incremented attempts and exponential back-off delay
-                $back_off = $attempts * 5;   // 5s, 10s, 15s...
+                $back_off = $attempts * 5;
                 $retry_payload = (string) json_encode(array_merge(
                     $data,
                     ['attempts' => $attempts],
@@ -100,6 +118,11 @@ final class worker {
         }
     }
 
+    /**
+     * Registers SIGTERM/SIGINT handlers for graceful shutdown. #AI:register_signals
+     *
+     * Requires pcntl extension. No-ops when pcntl is not available.
+     */
     private function register_signals(): void {
         if (!extension_loaded('pcntl')) {
             return;
@@ -110,6 +133,9 @@ final class worker {
         pcntl_signal(\SIGINT,  $stop);
     }
 
+    /**
+     * Checks the Redis restart signal timestamp and stops if newer than process start. #AI:check_restart_signal
+     */
     private function check_restart_signal(): void {
         $restart_at = (int) queue::redis()->get('skim:queue:restart');
         if ($restart_at > 0 && $restart_at > (int) $_SERVER['REQUEST_TIME_FLOAT']) {
@@ -117,3 +143,58 @@ final class worker {
         }
     }
 }
+
+#AI:class
+#AI symbol: skim\queue\worker
+#AI source_path: src/queue/worker.php
+#AI title: worker
+#AI description: Long-lived queue worker that polls Redis with BRPOP, executes jobs, and handles retries with exponential back-off.
+#AI role: queue worker process
+#AI layer: queue
+#AI badges: [queue; worker; long-lived; retry; signal-handling]
+#AI intro: `worker` is the long-lived CLI process that polls Redis for queued jobs using BRPOP. It promotes delayed jobs, unserializes and executes each job, handles retries with exponential back-off (5s, 10s, 15s...), and supports graceful shutdown via SIGTERM/SIGINT and Redis restart signals.
+#AI lifecycle: instantiated by queue_command, work() blocks until stopped by signal, max_jobs, or restart signal
+#AI fallback: unserializable jobs are logged and skipped; failed() exceptions are caught and logged
+#AI test_seam: use queue::set_redis() for mock Redis, set max_jobs=1 for single-iteration testing
+#AI invariants: [BRPOP blocks for $sleep seconds when queue is empty; retries use exponential back-off; restart signal checked every iteration; pcntl signals registered when available]
+#AI core_behaviors: [Promotes delayed jobs each iteration; BRPOP blocks efficiently without spinning; Retries with exponential back-off (attempts * 5 seconds); Calls failed() on retry exhaustion; Graceful shutdown via SIGTERM/SIGINT; Redis restart signal checked each loop]
+#AI owns: should_stop flag, processed job count
+#AI entry_points: [work; stop]
+#AI config_reads: []
+#AI non_goals: [Does not manage multiple queues simultaneously; Does not implement job priorities; Does not hot-reload code after deployments]
+#AI side_effects: [executes job handle() methods; writes retry payloads to Redis delayed sorted set; reads restart signal from Redis]
+#AI flow: worker::work() -> loop: promote_delayed() -> check_restart_signal() -> BRPOP -> process() -> handle() or retry/failed()
+#AI lifecycle_steps: [work(); -> register_signals(); -> loop: promote_delayed(); -> check_restart_signal(); -> BRPOP(sleep); -> process(payload); -> unserialize job; -> handle(); -> on exception: retry with back-off or failed(); -> increment processed; -> check max_jobs]
+#AI section_order: [Worker Execution; Job Processing; Signal Handling; Architecture]
+#AI architectural_notes: The worker does not hot-reload code. After deployments, use `php skim queue:restart` to signal workers to stop and restart with fresh code. Exponential back-off prevents thundering herd on transient failures.
+
+#AI:work
+#AI group: Worker Execution
+#AI frequency: high
+#AI signature: public function work(): void
+#AI contract: Runs the main work loop. Blocks until stop() is called, a process signal is received, or max_jobs is reached.
+
+#AI:stop
+#AI group: Worker Execution
+#AI frequency: low
+#AI signature: public function stop(): void
+#AI contract: Signals the worker to stop after the current job completes. Called by signal handlers and restart signal check.
+
+#AI:process
+#AI group: Job Processing
+#AI frequency: internal
+#AI signature: private function process(string $raw): void
+#AI contract: Unserializes a job from raw Redis payload, executes handle(), and manages retries with exponential back-off on failure.
+#AI param_details: [{name: $raw | type: string | required: true | desc: JSON payload from Redis BRPOP.}]
+
+#AI:register_signals
+#AI group: Signal Handling
+#AI frequency: internal
+#AI signature: private function register_signals(): void
+#AI contract: Registers SIGTERM and SIGINT handlers for graceful shutdown. No-ops when pcntl extension is not available.
+
+#AI:check_restart_signal
+#AI group: Signal Handling
+#AI frequency: internal
+#AI signature: private function check_restart_signal(): void
+#AI contract: Checks the Redis restart signal timestamp. Stops the worker if the signal is newer than the process start time.

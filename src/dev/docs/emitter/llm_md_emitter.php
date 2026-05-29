@@ -2,12 +2,32 @@
 
 namespace skim\dev\docs\emitter;
 
-// Reads decoded llm.json data and writes compact grouped Markdown for LLM use.
+/**
+ * Reads decoded llm.json data and writes compact grouped Markdown for LLM context windows. #AI:class
+ *
+ * Use when producing a single Markdown file that can be pasted into any LLM.
+ * Groups methods by section_order, renders compact signatures, and optionally
+ * prepends framework-level llm.md for full API context.
+ *
+ * Example:
+ *   $data = (new json_emitter())->load('llm.json');
+ *   (new llm_md_emitter())->emit($data, 'llm.md', framework_llm_md: 'vendor/skim/framework/llm.md');
+ *
+ * Testing: Instantiate directly; operates on filesystem paths.
+ *
+ * #AI:class
+ */
 class llm_md_emitter {
     /**
-     * @ai-contract accepts decoded llm.json array and output path
-     * @ai-contract writes compact class sections grouped by section_order
-     * @ai-contract throws \RuntimeException if the file cannot be written
+     * Writes compact class sections grouped by section_order to a Markdown file. #AI:emit
+     *
+     * Prepends framework llm.md content when provided and the file exists.
+     *
+     * @param array       $data              Decoded llm.json array.
+     * @param string      $output_path        Filesystem path for the output Markdown file.
+     * @param string|null $framework_llm_md  Optional path to framework-level llm.md to prepend.
+     *
+     * @throws \RuntimeException If the file cannot be written.
      */
     public function emit(array $data, string $output_path, ?string $framework_llm_md = null): void {
         $classes = $data['classes'] ?? [];
@@ -207,3 +227,36 @@ class llm_md_emitter {
         }
     }
 }
+
+#AI:class
+#AI symbol: skim\dev\docs\emitter\llm_md_emitter
+#AI source_path: src/dev/docs/emitter/llm_md_emitter.php
+#AI title: llm_md_emitter
+#AI description: Converts decoded llm.json data into compact grouped Markdown optimized for LLM context windows.
+#AI role: Markdown emitter for LLM consumption
+#AI layer: dev
+#AI badges: [emitter; markdown; llm; docs]
+#AI intro: `llm_md_emitter` transforms the structured llm.json array into a single Markdown file with class sections grouped by section_order. It renders compact signatures, param tables, and warning annotations in a format that fits within LLM context windows.
+#AI lifecycle: instantiated per-use by docs_llm_command, no state retained
+#AI fallback: none — throws on write failure
+#AI test_seam: instantiate directly with temp file paths
+#AI invariants: [methods grouped by section_order; compact signatures strip types from params; #AI markers stripped from output text]
+#AI core_behaviors: [Renders class sections with symbol, badges, metadata, and intro; Groups methods by section_order; Optionally prepends framework llm.md content; Strips #AI markers from output]
+#AI owns: none — stateless
+#AI entry_points: [emit]
+#AI config_reads: []
+#AI non_goals: [Does not generate MDX; Does not extract or load llm.json]
+#AI side_effects: [writes Markdown file to disk; creates parent directories]
+#AI flow: emit(data, path) -> render_class[] -> render_method[] -> group_methods -> write
+#AI lifecycle_steps: [emit(); -> build header lines; -> optionally prepend framework llm.md; -> iterate classes; -> render_class(); -> group_methods(); -> render_method(); -> write()]
+#AI section_order: [Emit; Architecture]
+#AI architectural_notes: Produces a single-file Markdown output designed for paste-into-LLM usage, not for human browsing.
+
+#AI:emit
+#AI group: Emit
+#AI frequency: high
+#AI signature: public function emit(array $data, string $output_path, ?string $framework_llm_md = null): void
+#AI contract: Accepts decoded llm.json array and writes compact class sections grouped by section_order. Prepends framework llm.md content when the optional path is provided and the file exists.
+#AI param_details: [{name: $data | type: array | required: true | desc: Decoded llm.json array with 'classes' and 'generated_at' keys.}; {name: $output_path | type: string | required: true | desc: Filesystem path for the output Markdown file.}; {name: $framework_llm_md | type: ?string | required: false | desc: Optional path to framework-level llm.md to prepend.}]
+#AI throws_details: [{type: \RuntimeException | desc: When the output directory cannot be created or the file cannot be written.}]
+#AI side_effects: [writes Markdown file to disk]

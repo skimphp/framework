@@ -124,7 +124,7 @@ describe('file_driver', function(): void {
         $driver = new file_driver($dir);
         $driver->set('hello', 'world');
         expect($driver->get('hello'))->toBe('world');
-        $driver->flush('');
+        $driver->flush_all();
         rmdir($dir);
     });
 
