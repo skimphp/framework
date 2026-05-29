@@ -1,7 +1,7 @@
 {
     "name": "skim/framework",
     "description": "SKIM — modern PHP 8.5+ micro-framework",
-    "type": "project",
+    "type": "library",
     "license": "MIT",
     "require": {
         "php": "^8.5",
