@@ -22,5 +22,18 @@ return [
         'days'    => 14,
     ],
 
-    'commands' => [],
+    'commands' => [
+        'ext:install' => \skim\cli\commands\ext_install_command::class,
+        'ext:list'    => \skim\cli\commands\ext_list_command::class,
+        'ext:manifest' => \skim\cli\commands\ext_manifest_command::class,
+
+        ...(env('APP_ENV') !== 'production' ? [
+            'docs'          => \skim\dev\docs\commands\docs_command::class,
+            'docs:extract'  => \skim\dev\docs\commands\docs_extract_command::class,
+            'docs:llm'      => \skim\dev\docs\commands\docs_llm_command::class,
+            'docs:site'     => \skim\dev\docs\commands\docs_site_command::class,
+            'docs:validate' => \skim\dev\docs\commands\docs_validate_command::class,
+            'mcp:serve'     => \skim\dev\docs\commands\mcp_serve_command::class,
+        ] : []),
+    ],
 ];
