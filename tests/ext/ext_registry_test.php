@@ -77,4 +77,74 @@ describe('ext_registry', function(): void {
         $registry->refresh();
         expect($registry->installed())->toHaveCount(1);
     });
+
+    test('writes compiled cache after scanning vendor', function() use (&$root): void {
+        file_put_contents($root . '/vendor/skim/auth/composer.json', json_encode([
+            'name' => 'skim/auth',
+            'version' => '1.0.0',
+            'extra' => ['skim' => ['extension' => 'skim\\auth\\auth_extension']],
+        ]));
+
+        $cache_path = $root . '/storage/cache/extensions.php';
+        expect(is_file($cache_path))->toBeFalse();
+
+        $registry = new ext_registry($root);
+        $registry->installed();
+
+        expect(is_file($cache_path))->toBeTrue();
+        $cached = require $cache_path;
+        expect($cached)->toBeArray()->toHaveCount(1);
+        expect($cached[0]['name'])->toBe('skim/auth');
+    });
+
+    test('loads from compiled cache without re-scanning vendor', function() use (&$root): void {
+        file_put_contents($root . '/vendor/skim/auth/composer.json', json_encode([
+            'name' => 'skim/auth',
+            'version' => '1.0.0',
+            'extra' => ['skim' => ['extension' => 'skim\\auth\\auth_extension']],
+        ]));
+
+        // First scan writes cache
+        $registry = new ext_registry($root);
+        $first = $registry->installed();
+
+        // Delete vendor to prove second call uses cache, not filesystem
+        $remove = function(string $path) use (&$remove): void {
+            if (!file_exists($path)) return;
+            if (is_file($path)) { unlink($path); return; }
+            foreach (array_diff(scandir($path) ?: [], ['.', '..']) as $child) {
+                $remove($path . '/' . $child);
+            }
+            rmdir($path);
+        };
+        $remove($root . '/vendor');
+
+        // Fresh registry should still load from cache
+        $registry2 = new ext_registry($root);
+        $second = $registry2->installed();
+
+        expect($second)->toHaveCount(1);
+        expect($second[0]['name'])->toBe('skim/auth');
+    });
+
+    test('does not write cache when root is not base_path', function() use (&$root): void {
+        file_put_contents($root . '/vendor/skim/auth/composer.json', json_encode([
+            'name' => 'skim/auth',
+            'extra' => ['skim' => ['extension' => 'skim\\auth\\auth_extension']],
+        ]));
+
+        // Create a subdirectory that is NOT base_path
+        $sub_root = $root . '/subproject';
+        mkdir($sub_root . '/vendor/skim/auth', 0777, true);
+        file_put_contents($sub_root . '/vendor/skim/auth/composer.json', json_encode([
+            'name' => 'skim/auth',
+            'extra' => ['skim' => ['extension' => 'skim\\auth\\auth_extension']],
+        ]));
+
+        $cache_path = $sub_root . '/storage/cache/extensions.php';
+        $registry = new ext_registry($sub_root);
+        $registry->installed();
+
+        expect(is_file($cache_path))->toBeFalse('Cache should not be written for non-base_path root');
+    });
 });
