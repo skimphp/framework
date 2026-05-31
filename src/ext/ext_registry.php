@@ -46,6 +46,10 @@ final class ext_registry {
             return $this->installed;
         }
 
+        if ($this->load_compiled_cache()) {
+            return $this->installed;
+        }
+
         $extensions = [];
         foreach ($this->composer_files() as $file) {
             $json = json_decode((string) file_get_contents($file), true);
@@ -63,7 +67,10 @@ final class ext_registry {
 
         usort($extensions, static fn(array $a, array $b): int => [$a['priority'], $a['name']] <=> [$b['priority'], $b['name']]);
 
-        return $this->installed = $extensions;
+        $this->installed = $extensions;
+        $this->write_compiled_cache();
+
+        return $this->installed;
     }
 
     /**
@@ -212,6 +219,57 @@ final class ext_registry {
         $this->conflicts = array_values($conflicts);
 
         return $this->capability_map = $map;
+    }
+
+    /**
+     * Attempts to load extension metadata from a pre-compiled PHP array cache. #AI:load_compiled_cache
+     *
+     * WHY: Pure arrays allow OPcache shared-memory hit with zero parse overhead.
+     * Returns false when the cache file is missing or stale (dev mode with
+     * APP_DEBUG=true and vendor/composer/installed.json newer than cache).
+     */
+    private function load_compiled_cache(): bool {
+        $cache_path = $this->root . '/storage/cache/extensions.php';
+        if (!is_file($cache_path)) {
+            return false;
+        }
+
+        $debug = $_SERVER['APP_DEBUG'] ?? $_ENV['APP_DEBUG'] ?? false;
+        $installed_json = $this->root . '/vendor/composer/installed.json';
+        $installed_php  = $this->root . '/vendor/composer/installed.php';
+
+        if ($debug) {
+            if (is_file($installed_json) && filemtime($installed_json) > filemtime($cache_path)) {
+                return false;
+            }
+            if (is_file($installed_php) && filemtime($installed_php) > filemtime($cache_path)) {
+                return false;
+            }
+        }
+
+        $this->installed = require $cache_path;
+        return true;
+    }
+
+    /**
+     * Writes the scanned extension metadata to a compiled PHP array cache file. #AI:write_compiled_cache
+     *
+     * WHY: Pure arrays allow OPcache shared-memory hit with zero parse overhead.
+     */
+    private function write_compiled_cache(): void {
+        if (realpath($this->root) !== realpath(base_path())) {
+            return;
+        }
+
+        $cache_dir = $this->root . '/storage/cache';
+        if (!is_dir($cache_dir)) {
+            mkdir($cache_dir, 0755, true);
+        }
+
+        file_put_contents(
+            $cache_dir . '/extensions.php',
+            '<?php return ' . var_export($this->installed, true) . ';'
+        );
     }
 
     private function composer_files(): array {

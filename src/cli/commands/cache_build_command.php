@@ -3,9 +3,9 @@
 namespace skim\cli\commands;
 
 use skim\cli\command;
-use skim\core\app;
 use skim\core\config;
 use skim\core\env;
+use skim\ext\ext_registry;
 
 /**
  * CLI command that pre-compiles env and config into pure PHP array caches.
@@ -52,8 +52,7 @@ class cache_build_command extends command {
             '<?php return ' . var_export(config::all(), true) . ';'
         );
 
-        $app  = app::instance();
-        $exts = $app->get('sys.extensions', []);
+        $exts = ext_registry::all();
         file_put_contents(
             $cache_dir . '/extensions.php',
             '<?php return ' . var_export($exts, true) . ';'
