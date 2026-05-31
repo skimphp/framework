@@ -65,6 +65,8 @@ class app {
     private ?extension_manager $extension_manager = null;
     // Idempotent boot guard: prevents extension re-boot on repeated calls.
     private bool $extensions_booted = false;
+    // Idempotent boot guard: prevents re-running boot() on repeated calls.
+    private bool $booted = false;
 
     /**
      * Private constructor enforces singleton access via instance(). #AI:__construct
@@ -86,18 +88,18 @@ class app {
     }
 
     /**
-     * Returns the process-wide singleton, booting on first call. #AI:instance
+     * Returns the process-wide singleton, creating it on first call. #AI:instance
      *
-     * Loads .env, config, profiler, router, pipeline, and extensions in order.
-     * Subsequent calls return the same instance without re-booting.
+     * Does NOT call `boot()` — boot is deferred to `run()` or `dispatch()` via
+     * `ensureBooted()`. This allows extensions and routes to be registered
+     * before the boot sequence runs.
      *
-     * @return static The booted application instance.
+     * @return static The application instance (not yet booted).
      */
     public static function instance(): static {
         if (self::$instance === null) {
             $root = defined('SKIM_ROOT') ? SKIM_ROOT : dirname(__DIR__, 2);
             self::$instance = new static($root);
-            self::$instance->boot();
         }
         return self::$instance;
     }
@@ -131,17 +133,16 @@ class app {
     /**
      * Boots framework subsystems in dependency order. #AI:boot
      *
-     * Sequence: env → config → profiler → view layout → router → pipeline → extensions.
-     * Each step depends on the previous; reordering breaks initialization.
+     * Idempotent — subsequent calls after the first are no-ops.
+     * Sequence: view layout → router → pipeline → extension discovery and registration.
+     * Profiler and request_trace are NOT enabled here; they are enabled in `run()`.
+     * env and config are lazy-loaded on first access via get().
      */
-    private function boot(): void {
-        env::load($this->root . '/.env');
-        config::load($this->root . '/config');
-
-        if (config::get('app.debug', false)) {
-            profiler::enable();
-            request_trace::enable();
+    public function boot(): void {
+        if ($this->booted) {
+            return;
         }
+        $this->booted = true;
 
         if ($layout = config::get('app.view.default_layout')) {
             \skim\view\view::set_default_layout((string) $layout);
@@ -154,6 +155,18 @@ class app {
 
         $this->extension_manager = extension_manager::discover($this->root, $this);
         $this->extension_manager->register($this);
+    }
+
+    /**
+     * Calls boot() if not yet booted. #AI:ensureBooted
+     *
+     * Called from run() and dispatch() to guarantee the framework is initialised
+     * before any request handling occurs.
+     */
+    private function ensureBooted(): void {
+        if (!$this->booted) {
+            $this->boot();
+        }
     }
 
     /**
@@ -363,7 +376,8 @@ class app {
     /**
      * Dispatches the HTTP request through middleware and sends the response. #AI:run
      *
-     * Installs a global exception handler (error_page in debug, 500 in production),
+     * Calls `ensureBooted()`, enables profiler and request_trace (if debug),
+     * installs a global exception handler (error_page in debug, 500 in production),
      * boots extensions, freezes the app, builds the request from globals, dispatches
      * through the middleware pipeline, records request traces, and sends the response.
      * Called once per request from `public/index.php`.
@@ -377,7 +391,15 @@ class app {
      *   app::instance()->run();
      */
     public function run(): void {
+        $this->ensureBooted();
+
         $is_debug = (bool) config::get('app.debug', false);
+
+        if ($is_debug) {
+            profiler::enable();
+            request_trace::enable();
+        }
+
         set_exception_handler(function(\Throwable $e) use ($is_debug): void {
             if ($is_debug) {
                 \skim\dev\error_page::render($e);
@@ -435,6 +457,8 @@ class app {
      * @return response The populated response (404 if no route, 405 if method not allowed).
      */
     public function dispatch(request $req, response $res, bool $skip_middleware = false): response {
+        $this->ensureBooted();
+
         $previous = self::$instance;
         self::$instance = $this;
 
@@ -661,7 +685,7 @@ class app {
 #AI layer: core
 #AI badges: [singleton; container; kernel; di; middleware; scoped-store]
 #AI intro: `skim\core\app` is the central application kernel. It combines three responsibilities in one singleton: a scoped key-value store (sys/app/user), a dependency injection container with factory bindings and reflection auto-wiring, and an HTTP kernel with a middleware pipeline. Extensions register services and middleware through `with_extension_context()` during the boot phase.
-#AI lifecycle: singleton, booted on first `instance()` call, frozen before request dispatch
+#AI lifecycle: singleton, created on first `instance()` call, booted lazily via `ensureBooted()` in `run()` or `dispatch()`, frozen before request dispatch
 #AI fallback: none — app is the root; subsystems fall back to their own defaults
 #AI test_seam: test_instance() for isolated containers without env/config loading
 #AI invariants: [instance() returns the same object for the process lifetime; sys.* keys are write-once in production; bind/decorate/use throw after freeze(); make() caches singletons until the container is cloned]
@@ -673,9 +697,9 @@ class app {
 #AI entry_points: [instance; test_instance; run; dispatch]
 #AI config_reads: [app.debug; app.view.default_layout; app.*]
 #AI non_goals: [Does not handle HTTP transport (delegates to request/response); Does not manage database connections directly; Does not serialize or persist state across requests]
-#AI side_effects: [instance() triggers full boot sequence; run() installs global exception handler and sends HTTP response; freeze() permanently locks mutation; set() may throw on sys.* overwrite in production]
-#AI flow: app::instance() -> boot() [env -> config -> profiler -> router -> extensions] -> run() -> boot_extensions() -> freeze() -> dispatch() -> pipeline -> call_handler() -> response
-#AI lifecycle_steps: [app::instance(); -> boot(); -> env::load(); -> config::load(); -> profiler/request_trace enable (if debug); -> router + pipeline init; -> extension_manager::discover + register; -> run(); -> boot_extensions(); -> freeze(); -> request::from_globals(); -> dispatch(); -> pipeline::run(); -> call_handler(); -> response::send()]
+#AI side_effects: [run() installs global exception handler and sends HTTP response; freeze() permanently locks mutation; set() may throw on sys.* overwrite in production; boot() initialises router, pipeline, and extensions once]
+#AI flow: app::instance() -> run() -> ensureBooted() -> boot() [router -> extensions] -> profiler/request_trace -> boot_extensions() -> freeze() -> dispatch() -> pipeline -> call_handler() -> response
+#AI lifecycle_steps: [app::instance(); -> run(); -> ensureBooted(); -> boot() [view layout + router + pipeline + extension_manager::discover + register]; -> profiler/request_trace enable (if debug); -> boot_extensions(); -> freeze(); -> request::from_globals(); -> dispatch(); -> pipeline::run(); -> call_handler(); -> response::send()]
 #AI section_order: [Lifecycle; Scoped Store; DI Container; Middleware; Request Dispatch; Extensions; Testing]
 #AI architectural_notes: The app class is intentionally a god object combining container, kernel, and store. This keeps the framework surface area small — one class to learn, one singleton to pass around. Extensions interact with app exclusively through `with_extension_context()` during boot, then the app freezes to prevent further mutation.
 
@@ -683,9 +707,9 @@ class app {
 #AI group: Lifecycle
 #AI frequency: high
 #AI signature: public static function instance(): static
-#AI contract: Returns the process-wide singleton. On first call, creates the instance with SKIM_ROOT (or auto-detected root) and runs the full boot sequence. Subsequent calls return the cached instance without re-booting.
-#AI return_detail: {type: static | desc: The booted application singleton.}
-#AI side_effects: [Triggers full boot sequence on first call: env, config, profiler, router, extensions]
+#AI contract: Returns the process-wide singleton. On first call, creates the instance with SKIM_ROOT (or auto-detected root) but does NOT call boot(). Boot is deferred to run() or dispatch() via ensureBooted(). Subsequent calls return the cached instance.
+#AI return_detail: {type: static | desc: The application instance (not yet booted).}
+#AI side_effects: [Creates the singleton on first call; does not trigger boot]
 
 #AI:test_instance
 #AI group: Testing
@@ -698,9 +722,16 @@ class app {
 
 #AI:boot
 #AI group: Lifecycle
+#AI frequency: medium
+#AI signature: public function boot(): void
+#AI contract: Initializes framework subsystems in strict dependency order: view layout → router → pipeline → extension discovery and registration. Idempotent — subsequent calls after the first are no-ops. Profiler and request_trace are NOT enabled here; they are enabled in run(). env and config are lazy-loaded on first access.
+#AI side_effects: [Sets $booted = true; initialises router, pipeline, extension_manager; registers extensions]
+
+#AI:ensureBooted
+#AI group: Lifecycle
 #AI frequency: internal
-#AI signature: private function boot(): void
-#AI contract: Initializes framework subsystems in strict dependency order: env → config → profiler → view layout → router → pipeline → extension discovery and registration.
+#AI signature: private function ensureBooted(): void
+#AI contract: Calls boot() if not yet booted. Called from run() and dispatch() to guarantee the framework is initialised before any request handling occurs.
 
 #AI:set
 #AI group: Scoped Store
@@ -786,16 +817,16 @@ class app {
 #AI group: Lifecycle
 #AI frequency: low
 #AI signature: public function run(): void
-#AI contract: Executes the full HTTP request cycle: installs a global exception handler, boots extensions, freezes the app, builds the request from PHP globals, dispatches through the middleware pipeline, records request traces, and sends the response. Called once per request from public/index.php.
+#AI contract: Executes the full HTTP request cycle: calls ensureBooted(), enables profiler and request_trace (if debug), installs a global exception handler, boots extensions, freezes the app, builds the request from PHP globals, dispatches through the middleware pipeline, records request traces, and sends the response. Called once per request from public/index.php.
 #AI warnings: [Not re-entrant; Installs a global exception handler that persists for the process lifetime; In production, 500 errors return a bare 'Internal Server Error' string]
-#AI side_effects: [Installs global exception handler; Boots extensions; Freezes the app; Sends HTTP response headers and body; Records request trace or error log]
+#AI side_effects: [Calls ensureBooted(); Enables profiler and request_trace (if debug); Installs global exception handler; Boots extensions; Freezes the app; Sends HTTP response headers and body; Records request trace or error log]
 #AI examples: [{label: Entry point | code: // public/index.php\nrequire __DIR__ . '/../vendor/autoload.php';\napp::instance()->run();}]
 
 #AI:dispatch
 #AI group: Request Dispatch
 #AI frequency: high
 #AI signature: public function dispatch(request $req, response $res, bool $skip_middleware = false): response
-#AI contract: Dispatches a request through the router and middleware pipeline without sending headers or body. Returns 404 for unmatched routes, 405 for method mismatches. Temporarily sets this instance as the global singleton during dispatch and restores the previous instance in a finally block.
+#AI contract: Dispatches a request through the router and middleware pipeline without sending headers or body. Calls ensureBooted() first to guarantee the framework is initialised. Returns 404 for unmatched routes, 405 for method mismatches. Temporarily sets this instance as the global singleton during dispatch and restores the previous instance in a finally block.
 #AI param_details: [{name: $req | type: request | required: true | desc: The request to dispatch.}; {name: $res | type: response | required: true | desc: The response object to populate.}; {name: $skip_middleware | type: bool | required: false | desc: When true, bypasses all global and route middleware. Useful for unit tests.}]
 #AI return_detail: {type: response | desc: The populated response. Status 404 if no route matches, 405 if path matches but method does not.}
 #AI side_effects: [Temporarily replaces self::$instance during dispatch]

@@ -79,9 +79,17 @@ This means values set in `docker-compose.yml` `environment:` block or passed by
 Kubernetes/CI will override whatever is in `.env`. The `.env` file is the fallback
 for when no OS variable is set — i.e., plain local dev without Docker.
 
-> **Current status:** `env::load()` does not yet implement this priority correctly —
-> it overwrites OS variables with `.env` values. See `cross-check.md §7.1` for the
-> planned fix. For now, keep `.env` and `docker-compose.yml` in sync.
+### Compiled Cache (Production)
+
+For maximum performance in production, pre-compile config and env into OPcache-friendly PHP arrays:
+
+```bash
+php skim cache:build
+```
+
+This generates `storage/cache/{env,config,extensions}.php` — pure `return [...]` files
+that bypass all parsing overhead on every request. In development (`APP_DEBUG=true`),
+the framework automatically falls back to raw parsing when source files change.
 
 ### Config files
 
@@ -264,15 +272,32 @@ php skim migrate:down       # rollback last batch
 php skim migrate:fresh      # drop all + re-run (dev only)
 php skim migrate:status     # show applied/pending list
 php skim queue:work         # start queue worker
+php skim cache:build        # pre-compile env + config for production
 php skim cache:clear        # flush cache by prefix
 php skim ide:generate       # generate .ide-helper.php from DB schema
+php skim list --agent       # compact command list for agents/scripts
 ```
+
+### Agent-friendly CLI output
+
+Use `--agent` when an LLM agent, shell script, or parser needs concise output:
+
+```bash
+php bin/skim list --agent
+php bin/skim migrate:status --agent
+```
+
+`--agent` implies `--quiet` and `--no-ansi`, disables the interactive help menu,
+removes the banner and timing footer, and prints `help` / `list` as tab-separated
+rows: `command<TAB>usage<TAB>description`. Unknown commands and uncaught command
+errors are reported as one-line tab-separated messages on STDERR.
 
 ### Docs commands (dev only — disabled in `production`)
 
 ```bash
 php skim docs               # full build: extract → llm.md → MDX site
 php skim docs --watch       # rebuild on file change
+php skim docs --source=DIR --output=DIR  # scan another PHP source dir and write llm.json, llm.md, *.mdx into DIR
 php skim docs:extract       # scan @ai.* annotations → llm.json
 php skim docs:llm           # llm.json → llm.md (paste to any LLM)
 php skim docs:site          # llm.json → MDX files for Starlight docs site
@@ -281,6 +306,15 @@ php skim mcp:serve          # start stdio MCP server (requires llm.json)
 ```
 
 `llm.md` is committed to the repo root — paste it into any LLM when no tooling is available.
+
+Use `--source` and `--output` for isolated documentation builds without overwriting the root docs files:
+
+```bash
+php bin/skim docs --source=.agents/skills/better-commenting/test/5 --output=.agents/skills/better-commenting/test/5/res_mdx
+```
+
+With `--output`, the generator writes `llm.json`, `llm.md`, and all generated `*.mdx` files directly into that directory.
+If multiple extracted classes share the same class name, MDX filenames include the source filename to avoid overwrites.
 
 ### Write your own command
 

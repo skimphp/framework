@@ -97,6 +97,7 @@ abstract class command {
                 'queue:restart'  => 'restart all queue workers',
                 'cache:clear'    => 'flush the cache',
                 'cache:flush'    => 'flush the cache',
+                'cache:build'    => 'compile env and config to PHP array cache',
                 'ext:install'    => 'install a SKIM extension',
                 'ext:list'       => 'list installed SKIM extensions',
                 'serve'          => 'start the built-in development server',

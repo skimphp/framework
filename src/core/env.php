@@ -7,34 +7,31 @@ namespace skim\core;
  *
  * Use when reading configuration that varies between environments without
  * adding the vlucas/phpdotenv dependency — this is 30 lines of trivial parsing.
- * Loads once per process; OS environment variables always take priority over
- * .env values. Missing .env files are silently skipped.
+ * Lazy-loads on first get() call; OS environment variables always take priority
+ * over .env values. Missing .env files are silently skipped.
  *
  * Example:
- *   env::load(dirname(__DIR__) . '/.env');
- *   $debug = env::get('APP_DEBUG', false);
+ *   $debug = env::get('APP_DEBUG', false);   // auto-loads .env on first call
  *
  * Testing: Use set() to override keys, reset() to clear state between tests.
  *
  * #AI:class
  */
 final class env {
+    // Parsed .env values and test overrides; never touches $_ENV or putenv().
     private static array $cache = [];
+    // Idempotent guard: true after first load() or set() call.
     private static bool  $loaded = false;
 
     /**
-     * Parses a .env file and populates the internal cache and $_ENV. #AI:load
+     * Parses a .env file into the internal cache only. #AI:load
      *
      * Idempotent — subsequent calls are no-ops. Silently skips missing files
-     * (.env is optional in production). OS environment variables set by Docker,
-     * CI, or the shell always take priority over .env values.
-     *
-     * WARNING: OS env vars override .env values intentionally. If a key exists
-     * in getenv() or $_ENV, the .env value for that key is ignored. This prevents
-     * docker-compose `environment:` values from being silently overwritten.
+     * (.env is optional in production). OS variable priority is enforced at
+     * read time in get(), not at load time.
      *
      * Example:
-     *   env::load(dirname(__DIR__) . '/.env');
+     *   env::load(base_path('.env'));
      *
      * @param string $path Absolute path to the .env file.
      */
@@ -51,7 +48,6 @@ final class env {
         $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         foreach ($lines as $line) {
             $line = trim($line);
-            // Skip comments and lines without '='
             if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) {
                 continue;
             }
@@ -60,7 +56,6 @@ final class env {
             $key = trim($key);
             $val = trim($val);
 
-            // Strip surrounding quotes: "value" or 'value'
             if (
                 (str_starts_with($val, '"') && str_ends_with($val, '"')) ||
                 (str_starts_with($val, "'") && str_ends_with($val, "'"))
@@ -68,35 +63,31 @@ final class env {
                 $val = substr($val, 1, -1);
             }
 
-            // OS environment variables (set by Docker, CI, or the shell) take priority
-            // over .env file values. .env is a local-dev convenience fallback — it should
-            // never override what the deployment environment explicitly injected.
-            // Without this check, docker-compose `environment:` values would be silently
-            // overwritten every time the .env file exists on disk.
-            if (getenv($key) !== false || isset($_ENV[$key])) {
-                self::$cache[$key] = getenv($key) !== false ? getenv($key) : $_ENV[$key];
-                continue;
-            }
-
+            // WHY: putenv() removed — internal cache only, no process-global mutations.
             self::$cache[$key] = $val;
-            $_ENV[$key]        = $val;
-            putenv("{$key}={$val}");
         }
     }
 
     /**
      * Returns an environment variable value with automatic type casting. #AI:get
      *
-     * Casts string values 'true', 'false', and 'null' to their native PHP types.
-     * Falls back through internal cache, $_ENV, and getenv() in that order.
+     * Read priority: $_SERVER → $_ENV → internal cache (.env + set()) → $default.
+     * Auto-loads .env on first call when not yet loaded. Casts 'true', 'false',
+     * and 'null' strings to native PHP types.
      *
      * @param string $key     Environment variable name.
      * @param mixed  $default Returned as-is when the key is absent.
      */
     public static function get(string $key, mixed $default = null): mixed {
-        $raw = self::$cache[$key] ?? $_ENV[$key] ?? getenv($key);
+        if (!self::$loaded) {
+            if (!self::load_compiled_cache()) {
+                self::load(base_path('.env'));
+            }
+        }
 
-        if ($raw === false || $raw === null) {
+        $raw = $_SERVER[$key] ?? $_ENV[$key] ?? self::$cache[$key] ?? null;
+
+        if ($raw === null) {
             return $default;
         }
 
@@ -111,7 +102,8 @@ final class env {
     /**
      * Overrides a single environment variable (testing only). #AI:set
      *
-     * Writes to both the internal cache and $_ENV. Does not touch the .env file.
+     * Writes to internal cache only — does not touch $_ENV or putenv().
+     * Sets the loaded flag to prevent auto-load from overwriting test values.
      * Call reset() in tearDown() to restore clean state.
      *
      * @param string $key   Environment variable name to override.
@@ -119,7 +111,46 @@ final class env {
      */
     public static function set(string $key, mixed $value): void {
         self::$cache[$key] = $value;
-        $_ENV[$key]        = $value;
+        self::$loaded      = true;
+    }
+
+    /**
+     * Returns all cached environment variables as a flat array. #AI:all
+     *
+     * Auto-loads on first call. Includes values from .env and set() overrides.
+     * Does not include $_SERVER or $_ENV values — only the internal cache.
+     */
+    public static function all(): array {
+        if (!self::$loaded) {
+            if (!self::load_compiled_cache()) {
+                self::load(base_path('.env'));
+            }
+        }
+        return self::$cache;
+    }
+
+    /**
+     * Attempts to load env values from a pre-compiled PHP array cache. #AI:load_compiled_cache
+     *
+     * WHY: Pure arrays allow OPcache shared-memory hit with zero parse overhead.
+     * Returns false when the cache file is missing or stale (dev mode with
+     * APP_DEBUG=true and .env newer than cache), so the caller falls back
+     * to parsing .env directly.
+     */
+    private static function load_compiled_cache(): bool {
+        $cache_path = base_path('storage/cache/env.php');
+        if (!is_file($cache_path)) {
+            return false;
+        }
+
+        $debug = $_SERVER['APP_DEBUG'] ?? $_ENV['APP_DEBUG'] ?? false;
+        if ($debug && is_file(base_path('.env')) && filemtime(base_path('.env')) > filemtime($cache_path)) {
+            return false;
+        }
+
+        self::$cache  = require $cache_path;
+        self::$loaded = true;
+        return true;
     }
 
     /**
@@ -137,53 +168,68 @@ final class env {
 #AI symbol: skim\core\env
 #AI source_path: src/core/env.php
 #AI title: env
-#AI description: Static facade for parsing .env files and accessing typed environment variables with OS-var priority.
+#AI description: Static facade for lazy-loading .env files and accessing typed environment variables with OS-var priority.
 #AI role: static environment facade
 #AI layer: core
-#AI badges: [facade; env; static; zero-dependency]
-#AI intro: `skim\core\env` parses a `.env` file once per process and provides typed access to environment variables. OS environment variables always take priority over `.env` values, ensuring deployment-injected values are never silently overwritten.
-#AI lifecycle: static facade, .env parsed once on first load() call
+#AI badges: [facade; env; static; zero-dependency; lazy-load]
+#AI intro: `skim\core\env` lazy-loads a `.env` file on first `get()` call and provides typed access to environment variables. OS environment variables (`$_SERVER`, `$_ENV`) always take priority over `.env` values, ensuring deployment-injected values are never silently overwritten. No `putenv()` or `$_ENV` mutations — internal cache only.
+#AI lifecycle: static facade, .env lazy-loaded on first get() call
 #AI test_seam: set(), reset()
-#AI invariants: [load() is idempotent — subsequent calls are no-ops; OS env vars take priority over .env file values; get() casts 'true', 'false', 'null' strings to native PHP types; missing .env file is silently skipped]
-#AI core_behaviors: [Parses KEY=VALUE lines from .env, stripping quotes and comments; Populates internal cache, $_ENV, and putenv() for new keys; OS env vars are read into cache but never overwritten by .env values]
-#AI warnings: [OS environment variables set by Docker, CI, or the shell always override .env file values — this is intentional but may surprise developers expecting .env to win]
+#AI invariants: [load() is idempotent — subsequent calls are no-ops; get() auto-loads .env when not yet loaded; Read priority is $_SERVER → $_ENV → internal cache → $default; get() casts 'true', 'false', 'null' strings to native PHP types; missing .env file is silently skipped; No putenv() or $_ENV mutations]
+#AI core_behaviors: [Parses KEY=VALUE lines from .env into internal cache only; OS var priority enforced at read time in get(), not at load time; set() writes to cache and sets loaded flag to prevent auto-load clobbering]
+#AI warnings: [OS environment variables in $_SERVER or $_ENV always override .env file values — this is intentional]
 #AI notes: Own implementation avoiding vlucas/phpdotenv dependency. The parsing logic is approximately 30 lines.
 #AI owns: in-memory env cache, loaded flag
-#AI entry_points: [load; get]
+#AI entry_points: [get; load; all]
 #AI non_goals: [Does not cast numeric strings to int or float; Does not validate .env syntax; Does not support nested or multiline values; Does not expand variable references like ${OTHER_VAR}]
-#AI side_effects: [load() populates $_ENV and calls putenv() for new keys; set() mutates $_ENV and internal cache; reset() clears internal cache and loaded flag]
-#AI flow: env::load(path) -> parse .env -> OS var check -> cache + $_ENV + putenv(); env::get(key) -> cache ?? $_ENV ?? getenv() -> type cast
-#AI lifecycle_steps: [env::load(path); -> idempotent check (self::$loaded); -> is_file check; -> parse lines; -> OS var priority check; -> cache + $_ENV + putenv]
+#AI side_effects: [load() populates internal cache only; set() mutates internal cache and sets loaded flag; reset() clears internal cache and loaded flag]
+#AI flow: env::get(key) -> auto-load if !$loaded -> $_SERVER ?? $_ENV ?? cache ?? default -> type cast; env::load(path) -> parse .env -> cache only
+#AI lifecycle_steps: [env::get(key); -> !$loaded check; -> auto-load base_path('.env'); -> idempotent check; -> is_file check; -> parse lines into cache; -> $_SERVER[$key] ?? $_ENV[$key] ?? cache[$key] ?? default -> type cast]
 #AI section_order: [Read API; Write API; Testing Hooks]
-#AI architectural_notes: Own implementation avoids the vlucas/phpdotenv dependency. Environment parsing is trivial and does not warrant an external package.
+#AI architectural_notes: Own implementation avoids the vlucas/phpdotenv dependency. putenv() removed to avoid process-global mutations — internal cache only.
 
 #AI:load
 #AI group: Write API
 #AI frequency: low
 #AI signature: public static function load(string $path): void
-#AI contract: Parses the .env file at the given path and populates the internal cache, $_ENV, and putenv(). Idempotent — only the first call has effect. Silently skips missing files. OS environment variables take priority over .env values.
-#AI param_details: [{name: $path | type: string | required: true | desc: Absolute path to the .env file. Typically dirname(__DIR__) . '/.env' from public/index.php.}]
-#AI side_effects: [Populates self::$cache with parsed key-value pairs; Writes to $_ENV superglobal; Calls putenv() for keys not already set in the OS environment]
-#AI warnings: [OS environment variables override .env values — docker-compose environment: block wins over .env file; Idempotent — calling load() a second time with a different path has no effect]
+#AI contract: Parses the .env file at the given path into the internal cache only. Idempotent — only the first call has effect. Silently skips missing files. OS variable priority is enforced at read time in get(), not at load time.
+#AI param_details: [{name: $path | type: string | required: true | desc: Absolute path to the .env file. Typically base_path('.env').}]
+#AI side_effects: [Populates self::$cache with parsed key-value pairs; No $_ENV or putenv() mutations]
+#AI warnings: [Idempotent — calling load() a second time with a different path has no effect]
 #AI notes: Lines starting with # are treated as comments. Surrounding single or double quotes are stripped from values.
 
 #AI:get
 #AI group: Read API
 #AI frequency: high
 #AI signature: public static function get(string $key, mixed $default = null): mixed
-#AI contract: Returns the environment variable value for the given key. Casts string values 'true', 'false', and 'null' (case-insensitive) to their native PHP types. Returns $default when the key is absent from all sources.
-#AI param_details: [{name: $key | type: string | required: true | desc: Environment variable name.}; {name: $default | type: mixed | required: false | desc: Fallback value returned as-is when the key is not found in cache, $_ENV, or getenv().}]
+#AI contract: Returns the environment variable value for the given key. Auto-loads .env on first call when not yet loaded. Read priority: $_SERVER → $_ENV → internal cache → $default. Casts string values 'true', 'false', and 'null' (case-insensitive) to native PHP types.
+#AI param_details: [{name: $key | type: string | required: true | desc: Environment variable name.}; {name: $default | type: mixed | required: false | desc: Fallback value returned as-is when the key is not found in any source.}]
 #AI return_detail: {type: mixed | desc: The typed value (bool for 'true'/'false', null for 'null', string otherwise) or $default if absent.}
-#AI notes: Lookup order is internal cache, then $_ENV, then getenv(). Numeric strings are NOT cast to int or float.
+#AI notes: Lookup order is $_SERVER, then $_ENV, then internal cache. Numeric strings are NOT cast to int or float.
 
 #AI:set
 #AI group: Testing Hooks
 #AI frequency: low
 #AI signature: public static function set(string $key, mixed $value): void
-#AI contract: Overrides a single environment variable in both the internal cache and $_ENV. Does not modify the .env file on disk. Intended for test isolation.
+#AI contract: Overrides a single environment variable in the internal cache only. Sets the loaded flag to prevent auto-load from overwriting test values. Does not touch $_ENV or putenv(). Intended for test isolation.
 #AI param_details: [{name: $key | type: string | required: true | desc: Environment variable name to override.}; {name: $value | type: mixed | required: true | desc: Value to store. Persists for the process lifetime until reset().}]
-#AI side_effects: [Mutates self::$cache and $_ENV superglobal]
-#AI notes: Does not call putenv() — the override is visible to env::get() but not to getenv().
+#AI side_effects: [Mutates self::$cache; Sets self::$loaded to true]
+#AI notes: Override is visible to env::get() but not to getenv() or $_ENV readers.
+
+#AI:all
+#AI group: Read API
+#AI frequency: low
+#AI signature: public static function all(): array
+#AI contract: Returns all cached environment variables as a flat array. Auto-loads on first call. Includes values from .env and set() overrides. Does not include $_SERVER or $_ENV values.
+#AI return_detail: {type: array | desc: Flat key-value map of all cached environment variables.}
+
+#AI:load_compiled_cache
+#AI group: Read API
+#AI frequency: internal
+#AI signature: private static function load_compiled_cache(): bool
+#AI contract: Attempts to load env values from a pre-compiled PHP array cache at storage/cache/env.php. Returns false when the cache file is missing or stale (APP_DEBUG=true and .env newer than cache). Sets loaded flag on success.
+#AI return_detail: {type: bool | desc: True if cache was loaded, false if caller should fall back to load().}
+#AI side_effects: [Populates self::$cache from compiled file; Sets self::$loaded to true on success]
 
 #AI:reset
 #AI group: Testing Hooks
@@ -191,4 +237,3 @@ final class env {
 #AI signature: public static function reset(): void
 #AI contract: Clears the internal cache and resets the loaded flag, allowing a subsequent load() call to re-parse the .env file. Use in test tearDown().
 #AI side_effects: [Clears self::$cache; Sets self::$loaded to false]
-#AI notes: Does not remove values from $_ENV or putenv(). Previously loaded or set values remain in the OS environment.

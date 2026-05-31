@@ -33,6 +33,7 @@ final class kernel {
         'queue:restart'  => \skim\cli\commands\queue_command::class,
         'cache:clear'    => \skim\cli\commands\cache_command::class,
         'cache:flush'    => \skim\cli\commands\cache_command::class,
+        'cache:build'    => \skim\cli\commands\cache_build_command::class,
         'ext:install'    => \skim\cli\commands\ext_install_command::class,
         'ext:list'       => \skim\cli\commands\ext_list_command::class,
         'serve'          => \skim\cli\commands\serve_command::class,
