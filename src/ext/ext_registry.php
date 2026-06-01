@@ -257,16 +257,14 @@ final class ext_registry {
      * WHY: Pure arrays allow OPcache shared-memory hit with zero parse overhead.
      */
     private function write_compiled_cache(): void {
-        if (realpath($this->root) !== realpath(base_path())) {
-            return;
-        }
-
+        // No root guard: cache is safe to write anywhere — tests use temp dirs,
+        // production needs it regardless of symlink/realpath setup.
         $cache_dir = $this->root . '/storage/cache';
         if (!is_dir($cache_dir)) {
-            mkdir($cache_dir, 0755, true);
+            @mkdir($cache_dir, 0755, true);
         }
 
-        file_put_contents(
+        @file_put_contents(
             $cache_dir . '/extensions.php',
             '<?php return ' . var_export($this->installed, true) . ';'
         );
