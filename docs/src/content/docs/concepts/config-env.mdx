@@ -11,7 +11,7 @@ You can read configuration values using dot-notation via the helper `config()`:
 
 ```php
 // Reads 'default' key from config/db.php
-$dbHost = config('db.default.host');
+$db_host = config('db.default.host');
 ```
 
 Config is **lazy-loaded** on the first `config::get()` call. The framework does not scan the `config/` directory until a config value is actually requested, keeping the initial boot footprint minimal.

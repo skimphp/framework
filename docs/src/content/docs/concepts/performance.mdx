@@ -1,0 +1,422 @@
+---
+
+title: Performance & Optimization
+description: Benchmark results, production tuning, OPcache preloading, Composer optimization, cache compilation, and deployment best practices for SKIM Framework.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+SKIM prioritizes developer experience by default. For production workloads, a small set of optimization steps unlocks its full performance potential.
+
+This page explains benchmark results, the sources of framework overhead, recommended production settings, and deployment best practices.
+
+## Benchmark Results
+
+**Environment:** PHP 8.5, Nginx + PHP-FPM, Docker (MacBook M1, 16 GB), 10 iterations after 2 warmup runs
+**Date:** June 1, 2026
+
+### Hello World (plain text response)
+
+| Framework          | Avg Response | Requests/sec |
+| ------------------ | ------------ | ------------ |
+| Fat Free Framework | **1.39 ms**  | **721**      |
+| SKIM (optimized)   | 1.61 ms      | 622          |
+| Slim               | 1.66 ms      | 601          |
+| Next.js 14         | 2.16 ms      | 463          |
+| SKIM (default)     | ~16 ms       | ~62          |
+| CodeIgniter 4      | 61.70 ms     | 16           |
+
+### JSON Response
+
+| Framework          | Avg Response | Requests/sec |
+| ------------------ | ------------ | ------------ |
+| Next.js 14         | **2.61 ms**  | **383**      |
+| SKIM (optimized)   | 4.74 ms      | 211          |
+| Slim               | 4.91 ms      | 204          |
+| Fat Free Framework | 4.93 ms      | 203          |
+| SKIM (default)     | ~18 ms       | ~56          |
+| CodeIgniter 4      | 60.73 ms     | 16           |
+
+### Summary
+
+With production optimizations enabled, SKIM performs on par with Slim and Fat Free Framework while maintaining a richer feature set and extension system.
+
+The gap between default and optimized performance is primarily caused by filesystem lookups, runtime discovery, and PHP compilation overhead.
+
+---
+
+## Why SKIM Is Slower by Default
+
+SKIM loads framework classes, vendor packages, configuration, and extension metadata during application bootstrap.
+
+Without optimization, three factors contribute most of the startup cost:
+
+### 1. PSR-4 Filesystem Lookups
+
+Composer's PSR-4 autoloader resolves classes by checking the filesystem.
+
+Every class lookup may trigger filesystem operations such as:
+
+```php
+file_exists(...)
+is_file(...)
+realpath(...)
+```
+
+On native Linux filesystems this overhead is relatively small.
+
+On Docker bind mounts (especially macOS virtiofs), filesystem operations can become significantly more expensive and dominate request startup time.
+
+### 2. PHP Compilation
+
+When a PHP file is loaded for the first time, PHP must:
+
+1. Read the file
+2. Parse source code
+3. Build an AST
+4. Compile bytecode
+5. Store the result in OPcache
+
+This cost disappears after the file is cached.
+
+### 3. Runtime Extension Discovery
+
+The extension registry scans installed packages and metadata to discover available framework extensions.
+
+While convenient during development, this work is unnecessary on every production request.
+
+---
+
+## Production Optimization Strategy
+
+A production deployment should enable all of the following:
+
+1. Composer classmap optimization
+2. OPcache
+3. OPcache preloading
+4. Framework cache compilation
+
+Together these eliminate most filesystem access and startup work.
+
+---
+
+## Step 1: Optimize Composer Autoloading
+
+Run:
+
+```bash
+composer dump-autoload --optimize --classmap-authoritative
+```
+
+### What It Does
+
+`--optimize`
+
+Builds a complete classmap of all discovered classes.
+
+`--classmap-authoritative`
+
+Disables PSR-4 fallback scanning. If a class is missing from the classmap, Composer fails immediately instead of scanning directories.
+
+### Benefits
+
+* Eliminates filesystem lookups during class resolution
+* Reduces startup latency
+* Improves consistency across environments
+* Particularly beneficial on Docker bind mounts
+
+### When To Run
+
+Run after:
+
+* `composer install`
+* `composer update`
+* dependency upgrades
+* CI build jobs
+
+Example Composer hook:
+
+```json
+{
+  "scripts": {
+    "post-install-cmd": [
+      "@composer dump-autoload --optimize --classmap-authoritative"
+    ]
+  }
+}
+```
+
+---
+
+## Step 2: Enable OPcache
+
+Recommended production configuration:
+
+```ini
+[opcache]
+opcache.enable=1
+opcache.memory_consumption=256
+opcache.interned_strings_buffer=32
+opcache.max_accelerated_files=20000
+opcache.validate_timestamps=0
+opcache.save_comments=1
+opcache.enable_cli=0
+```
+
+### Benefits
+
+* Eliminates repeated parsing
+* Eliminates repeated compilation
+* Stores bytecode in shared memory
+* Improves request latency and throughput
+
+---
+
+## Step 3: Enable OPcache Preloading
+
+Preloading compiles framework and dependency code during PHP-FPM startup.
+
+Instead of compiling files during the first request, PHP loads them into shared memory before any request reaches the application.
+
+### Example preload.php
+
+```php
+<?php declare(strict_types=1);
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+function preload_dir(string $dir): void
+{
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator(
+            $dir,
+            FilesystemIterator::SKIP_DOTS
+        )
+    );
+
+    foreach ($iterator as $file) {
+        if ($file->getExtension() !== 'php') {
+            continue;
+        }
+
+        $path = $file->getRealPath();
+
+        if (!$path) {
+            continue;
+        }
+
+        opcache_compile_file($path);
+    }
+}
+
+preload_dir(__DIR__ . '/src');
+preload_dir(__DIR__ . '/vendor');
+```
+
+Configure PHP:
+
+```ini
+opcache.preload=/app/preload.php
+opcache.preload_user=www-data
+```
+
+### Benefits
+
+* Eliminates first-request compilation
+* Reduces worker warmup time
+* Improves startup consistency
+* Particularly useful for large applications
+
+---
+
+## Step 4: Build Framework Cache
+
+Compile framework metadata into static PHP files.
+
+```bash
+php skim cache:build
+```
+
+Generated cache files contain precomputed framework state and eliminate expensive runtime discovery.
+
+### Benefits
+
+* Faster configuration loading
+* Faster extension discovery
+* Reduced bootstrap overhead
+* Better OPcache utilization
+
+Because cache files are ordinary PHP arrays, OPcache stores them efficiently in shared memory.
+
+---
+
+## Deployment & Cache Invalidation
+
+When timestamp validation is disabled:
+
+```ini
+opcache.validate_timestamps=0
+```
+
+PHP never checks whether source files have changed.
+
+This delivers maximum performance but requires deployments to refresh OPcache explicitly.
+
+---
+
+## Development Configuration
+
+For local development:
+
+```ini
+opcache.validate_timestamps=1
+opcache.revalidate_freq=0
+```
+
+PHP automatically reloads modified files.
+
+No manual cache invalidation is required.
+
+---
+
+## Production Configuration
+
+For production:
+
+```ini
+opcache.validate_timestamps=0
+```
+
+Benefits:
+
+* No filesystem stat calls
+* Lower request latency
+* Better throughput
+* More predictable performance
+
+---
+
+## Recommended Deployment Flow
+
+A deployment should refresh the entire runtime environment rather than attempting to invalidate individual files.
+
+Example:
+
+```text
+git pull
+composer install --no-dev --optimize-autoloader
+composer dump-autoload --classmap-authoritative
+php skim cache:build
+restart php-fpm
+health check
+switch traffic
+```
+
+Restarting PHP-FPM:
+
+* clears OPcache
+* rebuilds preload data
+* reloads workers
+* makes all new files visible immediately
+
+This works regardless of whether one file changed or hundreds.
+
+---
+
+## CI/CD Integration
+
+Build optimizations should run during the CI phase rather than on production servers.
+
+Typical build stage:
+
+```bash
+composer install --no-dev --optimize-autoloader
+composer dump-autoload --classmap-authoritative
+php skim cache:build
+```
+
+Typical deployment stage:
+
+```bash
+docker compose restart php-fpm
+```
+
+or
+
+```bash
+systemctl restart php-fpm
+```
+
+---
+
+## Selective Invalidation
+
+For plugin systems or runtime-generated code, individual files can be invalidated manually.
+
+```php
+opcache_invalidate('routes.php', true);
+```
+
+Or reset the entire cache:
+
+```php
+opcache_reset();
+```
+
+For normal deployments, restarting PHP-FPM is usually simpler and safer.
+
+---
+
+## Preloading Considerations
+
+When preloading is enabled, invalidating a single script does not rebuild the preload cache.
+
+Preloaded code is loaded only during PHP-FPM startup.
+
+Any deployment that modifies:
+
+* framework classes
+* application code
+* vendor packages
+* preload configuration
+
+should restart PHP-FPM.
+
+---
+
+## Production Checklist
+
+Before deploying:
+
+* Enable OPcache
+* Enable OPcache preloading
+* Disable timestamp validation
+* Run `composer install --no-dev`
+* Run `composer dump-autoload --classmap-authoritative`
+* Run `php skim cache:build`
+* Restart PHP-FPM
+* Verify application health checks
+
+---
+
+## Optimization Summary
+
+| Optimization                  | Benefit                         | Recommended     |
+| ----------------------------- | ------------------------------- | --------------- |
+| Composer classmap             | Eliminates autoload scanning    | Yes             |
+| OPcache                       | Eliminates repeated compilation | Yes             |
+| OPcache preloading            | Eliminates startup compilation  | Yes             |
+| Framework cache               | Eliminates runtime discovery    | Yes             |
+| Timestamp validation disabled | Eliminates stat calls           | Production only |
+
+---
+
+## Final Recommendation
+
+For production deployments, always combine:
+
+* Composer classmap optimization
+* OPcache
+* OPcache preloading
+* Framework cache compilation
+* PHP-FPM restart during deployment
+
+These optimizations remove nearly all avoidable startup overhead and allow SKIM to perform competitively with the fastest PHP microframeworks while preserving framework functionality and developer ergonomics.

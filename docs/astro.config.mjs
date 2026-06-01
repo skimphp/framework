@@ -59,6 +59,7 @@ export default defineConfig({
                         { label: 'Middleware', slug: 'concepts/middleware' },
                         { label: 'DI Container & Scopes', slug: 'concepts/di-container' },
                         { label: 'Config & Env', slug: 'concepts/config-env' },
+                        { label: 'Performance & Optimization', slug: 'concepts/performance' },
                     ],
                 },
                 {
