@@ -9,7 +9,7 @@ the Docker container — no local PHP install required.
 
 ```bash
 # 1. Build compiled cache (production mode)
-docker compose exec app php bin/skim cache:build
+docker compose exec app php bin/skim --agent cache:build
 
 # 2. Run all three benchmarks
 docker compose exec app php benchmarks/boot_isolation.php
@@ -101,7 +101,7 @@ The same hardware on bare metal will be faster. To reproduce:
 docker compose up -d
 
 # Build cache
-docker compose exec app php bin/skim cache:build
+docker compose exec app php bin/skim --agent cache:build
 
 # Run a 1000-request benchmark with 10 concurrent connections
 docker compose exec app php benchmarks/http_warm.php http://localhost:8080/ 1000 10
@@ -144,7 +144,7 @@ docker compose up -d
 
 **Cache hit shows high numbers** — Make sure you built the cache first:
 ```bash
-docker compose exec app php bin/skim cache:build
+docker compose exec app php bin/skim --agent cache:build
 # Check the file exists:
 docker compose exec app ls -la storage/cache/
 ```
