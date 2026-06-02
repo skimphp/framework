@@ -3,6 +3,9 @@
 
 // SKIM CLI entry point.
 // Usage: php skim <command> [args...] [--flag=value] [--agent]
+//   php vendor/bin/skim migrate     (when installed via Composer)
+//   php bin/skim migrate             (when working inside framework source)
+//
 // Examples:
 //   php skim migrate
 //   php skim migrate:down --steps=1
@@ -11,9 +14,30 @@
 //   php skim serve --port=8080
 //   php skim list --agent
 
-define('SKIM_ROOT', dirname(__DIR__));
+// Locate autoload.php whether this is the root project or a dependency.
+$candidates = [
+    __DIR__ . '/../vendor/autoload.php',       // framework is root (dev)
+    __DIR__ . '/../../autoload.php',           // installed as vendor/skim/framework/bin/
+    __DIR__ . '/../../../autoload.php',        // deeper nesting (monorepo, etc.)
+];
 
-require SKIM_ROOT . '/vendor/autoload.php';
+$autoload = null;
+foreach ($candidates as $file) {
+    if (file_exists($file)) {
+        $autoload = realpath($file);
+        break;
+    }
+}
+
+if (!$autoload) {
+    fwrite(STDERR, "Cannot find vendor/autoload.php. Did you run composer install?\n");
+    exit(1);
+}
+
+require $autoload;
+
+// Project root is the directory that contains vendor/autoload.php.
+define('SKIM_ROOT', dirname($autoload));
 
 \skim\core\env::load(SKIM_ROOT . '/.env');
 \skim\core\config::load(SKIM_ROOT . '/config');

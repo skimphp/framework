@@ -229,7 +229,7 @@ final class ext_registry {
      * APP_DEBUG=true and vendor/composer/installed.json newer than cache).
      */
     private function load_compiled_cache(): bool {
-        $cache_path = $this->root . '/storage/cache/extensions.php';
+        $cache_path = $this->root . '/.skim/config_cache/extensions.php';
         if (!is_file($cache_path)) {
             return false;
         }
@@ -259,7 +259,7 @@ final class ext_registry {
     private function write_compiled_cache(): void {
         // No root guard: cache is safe to write anywhere — tests use temp dirs,
         // production needs it regardless of symlink/realpath setup.
-        $cache_dir = $this->root . '/storage/cache';
+        $cache_dir = $this->root . '/.skim/config_cache';
         if (!is_dir($cache_dir)) {
             @mkdir($cache_dir, 0755, true);
         }

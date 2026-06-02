@@ -25,6 +25,9 @@
             "tests\\": "tests/"
         }
     },
+    "bin": [
+        "bin/skim"
+    ],
     "scripts": {
         "test": "pest",
         "docker-test": "docker compose exec -T app composer test"

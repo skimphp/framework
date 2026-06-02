@@ -48,17 +48,17 @@ if (!function_exists('route')) {
 
 if (!function_exists('storage_path')) {
     /**
-     * Absolute path under the storage/ directory. #AI:storage_path
+     * Absolute path under the .skim/ directory. #AI:storage_path
      *
      * Resolves SKIM_ROOT when defined, falls back to getcwd().
      *
      * Example:
-     *   storage_path('logs/app.log')  // → /var/www/myapp/storage/logs/app.log
+     *   storage_path('logs/app.log')  // → /var/www/myapp/.skim/logs/app.log
      *
-     * @param string $path Sub-path appended to storage root. Empty returns the root itself.
+     * @param string $path Sub-path appended to .skim root. Empty returns the root itself.
      */
     function storage_path(string $path = ''): string {
-        $base = defined('SKIM_ROOT') ? SKIM_ROOT . '/storage' : getcwd() . '/storage';
+        $base = defined('SKIM_ROOT') ? SKIM_ROOT . '/.skim' : getcwd() . '/.skim';
         return $path !== '' ? $base . '/' . ltrim($path, '/') : $base;
     }
 }
@@ -176,10 +176,10 @@ if (!function_exists('asset')) {
 #AI group: Templates & Routing
 #AI frequency: medium
 #AI signature: function storage_path(string $path = ''): string
-#AI contract: Returns the absolute path under the storage/ directory. Uses SKIM_ROOT when defined, falls back to getcwd(). Appends the optional sub-path.
-#AI param_details: [{name: $path | type: string | required: false | desc: Sub-path under storage/. Empty string returns the storage root itself.}]
-#AI return_detail: {type: string | desc: Absolute filesystem path under storage/.}
-#AI examples: [{label: Log file path | code: storage_path('logs/app.log')  // → /var/www/myapp/storage/logs/app.log}]
+#AI contract: Returns the absolute path under the .skim/ directory. Uses SKIM_ROOT when defined, falls back to getcwd(). Appends the optional sub-path.
+#AI param_details: [{name: $path | type: string | required: false | desc: Sub-path under .skim/. Empty string returns the .skim root itself.}]
+#AI return_detail: {type: string | desc: Absolute filesystem path under .skim/.}
+#AI examples: [{label: Log file path | code: storage_path('logs/app.log')  // → /var/www/myapp/.skim/logs/app.log}]
 
 #AI:e
 #AI group: Templates & Routing

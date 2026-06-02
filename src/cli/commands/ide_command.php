@@ -37,7 +37,7 @@ class ide_command extends command {
 
         $models  = $this->discover_models();
         $output  = $this->build_output($models);
-        $path    = base_path('generated/.ide-helper.php');
+        $path    = storage_path('ide_helper/.ide-helper.php');
 
         file_put_contents($path, $output);
         $this->success("Written to {$path} (" . count($models) . " models)");

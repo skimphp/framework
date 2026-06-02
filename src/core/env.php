@@ -138,7 +138,7 @@ final class env {
      * to parsing .env directly.
      */
     private static function load_compiled_cache(): bool {
-        $cache_path = base_path('storage/cache/env.php');
+        $cache_path = storage_path('config_cache/env.php');
         if (!is_file($cache_path)) {
             return false;
         }
@@ -227,7 +227,7 @@ final class env {
 #AI group: Read API
 #AI frequency: internal
 #AI signature: private static function load_compiled_cache(): bool
-#AI contract: Attempts to load env values from a pre-compiled PHP array cache at storage/cache/env.php. Returns false when the cache file is missing or stale (APP_DEBUG=true and .env newer than cache). Sets loaded flag on success.
+#AI contract: Attempts to load env values from a pre-compiled PHP array cache at storage/config_cache/env.php. Returns false when the cache file is missing or stale (APP_DEBUG=true and .env newer than cache). Sets loaded flag on success.
 #AI return_detail: {type: bool | desc: True if cache was loaded, false if caller should fall back to load().}
 #AI side_effects: [Populates self::$cache from compiled file; Sets self::$loaded to true on success]
 
