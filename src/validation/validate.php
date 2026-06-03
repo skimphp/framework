@@ -15,7 +15,7 @@ namespace skim\validation;
  *       'age'   => ['required', 'int', 'min:18'],
  *   ])->check($req->post());
  *
- *   if (!$result->ok()) {
+ *   if (!$result->ok) {
  *       return $res->status(422)->json(['errors' => $result->errors()]);
  *   }
  *   user::create($result->validated());
@@ -25,7 +25,8 @@ namespace skim\validation;
  * #AI:class
  */
 class validate {
-    private static array $custom_rules = [];
+    // Instance-level custom rules registry — safe for FrankenPHP worker mode.
+    private array $custom_rules = [];
 
     private array $rules;
 
@@ -40,6 +41,27 @@ class validate {
      */
     public static function make(array $rules): static {
         return new static($rules);
+    }
+
+    /**
+     * Registers a custom rule on this validator instance. #AI:extend
+     *
+     * The callback receives the field value and returns true on pass or
+     * false on fail. Use `:field` in the message as a placeholder for
+     * the field name. Returns $this for fluent chaining.
+     *
+     * Example:
+     *   validate::make([...])
+     *       ->extend('even', fn($v) => (int)$v % 2 === 0, ':field must be even')
+     *       ->check($data);
+     *
+     * @param string   $name    Rule name used in rule lists.
+     * @param callable $fn      Receives value, returns true on pass or false on fail.
+     * @param string   $message Default error message (`:field` is replaced).
+     */
+    public function extend(string $name, callable $fn, string $message = 'Invalid.'): static {
+        $this->custom_rules[$name] = ['fn' => $fn, 'message' => $message];
+        return $this;
     }
 
     /**
@@ -60,39 +82,55 @@ class validate {
             $rule_list = is_string($rules) ? explode('|', $rules) : $rules;
             $field_ok  = true;
 
-            foreach ($rule_list as $rule) {
-                $error = $this->apply_rule($rule, $field, $value, $data);
+            // Extract rule name strings for cast() — skip objects/callables
+            $field_rules_strings = array_map(
+                fn($r) => is_string($r) ? explode(':', $r, 2)[0] : '',
+                $rule_list,
+            );
+
+            // Nullable shortcut: if field is nullable and value is null, skip all rules
+            $is_nullable = in_array('nullable', $field_rules_strings, true);
+            if ($is_nullable && $value === null) {
+                $validated[$field] = null;
+                continue;
+            }
+
+            foreach ($rule_list as $rule_item) {
+                // Rule object (implements rule interface)
+                if ($rule_item instanceof rule) {
+                    $ok = $rule_item->validate($value, $field, $data);
+                    if (!$ok) {
+                        $errors[$field][] = $rule_item->message($field);
+                        $field_ok = false;
+                    }
+                    continue;
+                }
+
+                // One-off callable (but not a string — strings are rule names)
+                if (is_callable($rule_item) && !is_string($rule_item)) {
+                    $ok = (bool) $rule_item($value);
+                    if (!$ok) {
+                        $errors[$field][] = "The {$field} is invalid.";
+                        $field_ok = false;
+                    }
+                    continue;
+                }
+
+                // String rule — existing apply_rule() path
+                $error = $this->apply_rule((string) $rule_item, $field, $value, $data);
                 if ($error !== null) {
                     $errors[$field][] = $error;
-                    $field_ok         = false;
+                    $field_ok = false;
                 }
             }
 
             // Include field in validated() if it passed, or if not required and absent
             if ($field_ok) {
-                $validated[$field] = $value;
+                $validated[$field] = $this->cast($field_rules_strings, $value);
             }
         }
 
         return new result($errors, $validated);
-    }
-
-    /**
-     * Registers a custom rule globally for all validate::make() calls. #AI:rule
-     *
-     * The callback receives the field value and returns null on pass or
-     * a string error message on fail. Use `:field` in the message as a
-     * placeholder for the field name.
-     *
-     * Example:
-     *   validate::rule('even', fn($v) => $v % 2 === 0, ':field must be even');
-     *
-     * @param string   $name     Rule name used in rule lists.
-     * @param callable $callback Receives value, returns null or error string.
-     * @param string   $message  Default error message (`:field` is replaced).
-     */
-    public static function rule(string $name, callable $callback, string $message = 'Invalid value'): void {
-        self::$custom_rules[$name] = ['fn' => $callback, 'message' => $message];
     }
 
     // --- rule evaluation ---
@@ -106,33 +144,66 @@ class validate {
         }
 
         return match ($rule) {
-            'required'  => ($value === null || $value === '') ? "The {$field} field is required." : null,
-            'email'     => !\skim\helpers\filter::email($value) ? "The {$field} must be a valid email." : null,
-            'url'       => !\skim\helpers\filter::url($value) ? "The {$field} must be a valid URL." : null,
-            'int'       => !\skim\helpers\filter::int($value) ? "The {$field} must be an integer." : null,
-            'float'     => !\skim\helpers\filter::float($value) ? "The {$field} must be a number." : null,
-            'bool'      => \skim\helpers\filter::bool($value) === false ? "The {$field} must be a boolean." : null,
-            'slug'      => !\skim\helpers\filter::slug($value) ? "The {$field} must be a valid slug." : null,
-            'min'       => (is_numeric($value) && (float)$value < (float)$param) ? "The {$field} must be at least {$param}." : null,
-            'max'       => (is_numeric($value) && (float)$value > (float)$param) ? "The {$field} must not exceed {$param}." : null,
-            'min_len'   => (mb_strlen((string)$value) < (int)$param) ? "The {$field} must be at least {$param} characters." : null,
-            'max_len'   => (mb_strlen((string)$value) > (int)$param) ? "The {$field} must not exceed {$param} characters." : null,
-            'in'        => !in_array($value, explode(',', (string)$param), true) ? "The {$field} must be one of: {$param}." : null,
-            'regex'     => !preg_match((string)$param, (string)$value) ? "The {$field} format is invalid." : null,
-            'same'      => ($value !== ($data[$param] ?? null)) ? "The {$field} must match {$param}." : null,
-            default     => $this->apply_custom($rule, $field, $value),
+            'required' => ($value === null || $value === '') ? "The {$field} field is required." : null,
+            'email'    => !\skim\helpers\filter::email($value) ? "The {$field} must be a valid email." : null,
+            'url'      => !\skim\helpers\filter::url($value) ? "The {$field} must be a valid URL." : null,
+            'int'      => !\skim\helpers\filter::int($value) ? "The {$field} must be an integer." : null,
+            'float'    => !\skim\helpers\filter::float($value) ? "The {$field} must be a number." : null,
+            // Bool rule: explicit string allowlist check instead of filter::bool() which always returns bool
+            'bool'     => !in_array(
+                is_bool($value) ? ($value ? 'true' : 'false') : strtolower(trim((string)$value)),
+                ['1', '0', 'true', 'false', 'yes', 'no', 'on', 'off'],
+                true,
+            ) ? "The {$field} must be a boolean." : null,
+            'slug'     => !\skim\helpers\filter::slug($value) ? "The {$field} must be a valid slug." : null,
+            // Smart min/max: numeric → compare value, string → compare mb_strlen()
+            'min'      => match (true) {
+                is_numeric($value) => (float)$value < (float)$param
+                    ? "The {$field} must be at least {$param}." : null,
+                is_string($value)  => mb_strlen($value) < (int)$param
+                    ? "The {$field} must be at least {$param} characters." : null,
+                default => null,
+            },
+            'max'      => match (true) {
+                is_numeric($value) => (float)$value > (float)$param
+                    ? "The {$field} must not exceed {$param}." : null,
+                is_string($value)  => mb_strlen($value) > (int)$param
+                    ? "The {$field} must not exceed {$param} characters." : null,
+                default => null,
+            },
+            'in'       => !in_array($value, explode(',', (string)$param), true) ? "The {$field} must be one of: {$param}." : null,
+            'regex'    => !preg_match((string)$param, (string)$value) ? "The {$field} format is invalid." : null,
+            'same'     => ($value !== ($data[$param] ?? null)) ? "The {$field} must match {$param}." : null,
+            'nullable' => null, // always passes — signals intent
+            default    => $this->apply_custom($rule, $field, $value),
         };
     }
 
     private function apply_custom(string $rule, string $field, mixed $value): ?string {
-        if (!isset(self::$custom_rules[$rule])) {
+        if (!isset($this->custom_rules[$rule])) {
             return null;   // unknown rules silently pass — prevents accidental lockouts
         }
-        $entry = self::$custom_rules[$rule];
+        $entry = $this->custom_rules[$rule];
         if (!(bool)($entry['fn'])($value)) {
             return str_replace(':field', $field, $entry['message']);
         }
         return null;
+    }
+
+    /**
+     * Casts validated values to their PHP types based on declared rules. #AI:cast
+     *
+     * @param array $rule_names Flat list of rule name strings for the field.
+     * @param mixed $value      The raw value from input data.
+     */
+    private function cast(array $rule_names, mixed $value): mixed {
+        return match (true) {
+            in_array('int', $rule_names, true)   => \skim\helpers\filter::int($value) ?: $value,
+            in_array('float', $rule_names, true) => \skim\helpers\filter::float($value) ?: $value,
+            in_array('bool', $rule_names, true)  => \skim\helpers\filter::bool($value),
+            in_array('email', $rule_names, true) => \skim\helpers\filter::email($value) ?: $value,
+            default => $value,
+        };
     }
 }
 
@@ -147,20 +218,20 @@ class validate {
 #AI intro: `validate` is SKIM's built-in validation engine. It declares expected data shapes via `make()`, runs rules via `check()`, and returns a `result` with errors and validated data. Undeclared fields are silently dropped from `validated()`.
 #AI lifecycle: instantiated per-validation via make(), check() runs synchronously
 #AI fallback: n/a — own implementation
-#AI test_seam: call make() and check() directly, register custom rules via rule()
-#AI invariants: [Fields not in make() are excluded from validated(); Optional fields absent from data pass without error; Unknown custom rules silently pass; Custom rules are registered globally and persist across instances]
-#AI core_behaviors: [Built-in rules: required, email, url, int, float, bool, slug, min, max, min_len, max_len, in, regex, same; Custom rules via rule() with callback; Pipe-delimited or array rule syntax]
-#AI warnings: [Custom rules registered via rule() are global and persist for the process lifetime; Unknown rule names silently pass — typos in rule names go undetected]
-#AI notes: Rules accept both array syntax `['required', 'email']` and pipe syntax `'required|email'`. The `:field` placeholder in custom rule messages is replaced with the actual field name.
-#AI owns: custom_rules static registry
-#AI entry_points: [make; check; rule]
+#AI test_seam: call make() and check() directly, register custom rules via extend()
+#AI invariants: [Fields not in make() are excluded from validated(); Optional fields absent from data pass without error; Unknown custom rules silently pass; Custom rules are instance-scoped via extend() — safe for FrankenPHP worker mode]
+#AI core_behaviors: [Built-in rules: required, email, url, int, float, bool, slug, min, max, in, regex, same, nullable; Custom rules via extend() with fluent return; Rule objects implementing rule interface; Inline callables in rule arrays; Pipe-delimited or array rule syntax; Typed validated() values via cast()]
+#AI warnings: [Unknown rule names silently pass — typos in rule names go undetected]
+#AI notes: Rules accept both array syntax `['required', 'email']` and pipe syntax `'required|email'`. The `:field` placeholder in custom rule messages is replaced with the actual field name. Custom rules are instance-scoped — register via extend() on the validator instance.
+#AI owns: custom_rules instance property
+#AI entry_points: [make; check; extend]
 #AI config_reads: []
 #AI non_goals: [Does not sanitize input; Does not handle file upload validation; Does not provide localized error messages]
-#AI side_effects: [rule() mutates the static custom_rules registry]
-#AI flow: validate::make($rules) -> check($data) -> apply_rule() per field per rule -> new result($errors, $validated)
-#AI lifecycle_steps: [validate::make([...]); -> check($req->post()); -> foreach field -> foreach rule -> apply_rule(); -> new result(errors, validated); -> controller branches on ok()]
+#AI side_effects: []
+#AI flow: validate::make($rules) -> extend() (optional) -> check($data) -> apply_rule() per field per rule -> new result($errors, $validated)
+#AI lifecycle_steps: [validate::make([...]); -> extend() for custom rules; -> check($req->post()); -> foreach field -> foreach rule -> apply_rule(); -> new result(errors, validated); -> controller branches on ok]
 #AI section_order: [Validation API; Custom Rules; Architecture]
-#AI architectural_notes: Own implementation with zero external dependencies. Uses skim\helpers\filter for type checking. Custom rules are global — register once during boot.
+#AI architectural_notes: Own implementation with zero external dependencies. Uses skim\helpers\filter for type checking. Custom rules are instance-scoped via extend() — safe for long-lived FrankenPHP processes.
 
 #AI:make
 #AI group: Validation API
@@ -168,21 +239,29 @@ class validate {
 #AI signature: public static function make(array $rules): static
 #AI contract: Factory that declares the field-to-rules map and returns a validator instance.
 #AI param_details: [{name: $rules | type: array | required: true | desc: Map of field name to rule array or pipe-delimited string.}]
-#AI return_detail: {type: static | desc: Validator instance ready for check().}
+#AI return_detail: {type: static | desc: Validator instance ready for extend() and check().}
+
+#AI:extend
+#AI group: Custom Rules
+#AI frequency: medium
+#AI signature: public function extend(string $name, callable $fn, string $message = 'Invalid.'): static
+#AI contract: Registers a custom rule on this validator instance. Returns $this for fluent chaining. The callback receives the field value and returns true on pass or false on fail.
+#AI param_details: [{name: $name | type: string | required: true | desc: Rule name used in rule lists.}; {name: $fn | type: callable | required: true | desc: Receives value, returns true on pass or false on fail.}; {name: $message | type: string | required: false | desc: Default error message. Use :field as placeholder for field name.}]
+#AI side_effects: []
+#AI warnings: []
 
 #AI:check
 #AI group: Validation API
 #AI frequency: high
 #AI signature: public function check(array $data): result
-#AI contract: Runs all declared rules against $data. Returns a result where ok() is false if any field failed any rule. Only declared fields appear in validated().
+#AI contract: Runs all declared rules against $data. Returns a result where ok is false if any field failed any rule. Only declared fields appear in validated().
 #AI param_details: [{name: $data | type: array | required: true | desc: Input data to validate, typically $req->post().}]
-#AI return_detail: {type: result | desc: Immutable result with errors() and validated().}
+#AI return_detail: {type: result | desc: Immutable result with errors and validated().}
 
-#AI:rule
-#AI group: Custom Rules
-#AI frequency: low
-#AI signature: public static function rule(string $name, callable $callback, string $message = 'Invalid value'): void
-#AI contract: Registers a custom rule globally. The callback receives the field value and returns null on pass or a string error message on fail.
-#AI param_details: [{name: $name | type: string | required: true | desc: Rule name used in rule lists.}; {name: $callback | type: callable | required: true | desc: Receives value, returns null on pass or error string on fail.}; {name: $message | type: string | required: false | desc: Default error message. Use :field as placeholder for field name.}]
-#AI side_effects: [Mutates the static custom_rules registry]
-#AI warnings: [Custom rules are global and persist for the process lifetime]
+#AI:cast
+#AI group: Internal
+#AI frequency: high
+#AI signature: private function cast(array $rule_names, mixed $value): mixed
+#AI contract: Casts validated values to their PHP types based on declared rules. Returns typed value for int, float, bool, email rules; raw value otherwise.
+#AI param_details: [{name: $rule_names | type: array | required: true | desc: Flat list of rule name strings for the field.}; {name: $value | type: mixed | required: true | desc: The raw value from input data.}]
+#AI return_detail: {type: mixed | desc: Typed value based on rule declarations.}

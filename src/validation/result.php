@@ -5,12 +5,12 @@ namespace skim\validation;
 /**
  * Immutable validation result returned by validate::check(). #AI:class
  *
- * Use in controllers to branch on ok(), display errors(), or pass validated()
- * data to model::create(). All three methods are the only calls needed.
+ * Use in controllers to branch on ok, display errors(), or pass validated()
+ * data to model::create(). All three accessors are the only calls needed.
  *
  * Example:
  *   $result = validate::make([...])->check($req->post());
- *   if (!$result->ok()) {
+ *   if (!$result->ok) {
  *       return $res->status(422)->json(['errors' => $result->errors()]);
  *   }
  *   $user = user::create($result->validated());
@@ -20,17 +20,13 @@ namespace skim\validation;
  * #AI:class
  */
 final class result {
-    public function __construct(
-        private readonly array $errors,      // ['field' => ['message', ...]]
-        private readonly array $validated,   // only declared fields, values cast
-    ) {}
+    // Virtual property — derived from errors array, no storage needed.
+    public bool $ok { get => $this->errors === []; }
 
-    /**
-     * Returns true when no validation errors were found. #AI:ok
-     */
-    public function ok(): bool {
-        return $this->errors === [];
-    }
+    public function __construct(
+        public readonly array $errors,      // ['field' => ['message', ...]]
+        public readonly array $validated,   // only declared fields, values cast
+    ) {}
 
     /**
      * Returns field-to-messages map matching 422 API response shape. #AI:errors
@@ -56,33 +52,26 @@ final class result {
 #AI symbol: skim\validation\result
 #AI source_path: src/validation/result.php
 #AI title: result
-#AI description: Immutable validation result with ok(), errors(), and validated() accessors.
+#AI description: Immutable validation result with ok (virtual property), errors(), and validated() accessors.
 #AI role: validation result value object
 #AI layer: validation
-#AI badges: [validation; result; immutable; value-object]
-#AI intro: `result` is the immutable value object returned by `validate::check()`. It carries both the error map and the validated data subset, providing the three methods controllers need: `ok()`, `errors()`, and `validated()`.
+#AI badges: [validation; result; immutable; value-object; property-hooks]
+#AI intro: `result` is the immutable value object returned by `validate::check()`. It carries both the error map and the validated data subset, providing the three accessors controllers need: `ok` (virtual property), `errors()`, and `validated()`.
 #AI lifecycle: created by validate::check(), consumed by controller in the same request
 #AI fallback: n/a — pure value object
 #AI test_seam: construct directly with known arrays
-#AI invariants: [ok() returns true only when errors array is empty; validated() contains only fields declared in the rules; errors() shape matches 422 JSON response format]
-#AI core_behaviors: [Immutable — all properties are readonly; errors() returns field-to-messages map; validated() returns only rule-declared fields]
-#AI notes: validated() silently drops undeclared fields, providing mass-assignment safety without explicit guarded lists.
+#AI invariants: [ok returns true only when errors array is empty; validated() contains only fields declared in the rules; errors() shape matches 422 JSON response format]
+#AI core_behaviors: [Immutable — all properties are readonly; errors() returns field-to-messages map; validated() returns only rule-declared fields; ok is a virtual property via PHP 8.4+ property hooks]
+#AI notes: validated() silently drops undeclared fields, providing mass-assignment safety without explicit guarded lists. The ok property is virtual — computed from errors array via property hook.
 #AI owns: errors array, validated array
 #AI entry_points: [ok; errors; validated]
 #AI config_reads: []
 #AI non_goals: [Does not run validation; Does not format error messages for display]
 #AI side_effects: []
 #AI flow: validate::check() -> new result($errors, $validated) -> controller reads ok/errors/validated
-#AI lifecycle_steps: [validate::check() runs rules; -> new result(errors, validated); -> controller calls ok(); -> branches on result]
+#AI lifecycle_steps: [validate::check() runs rules; -> new result(errors, validated); -> controller reads ok; -> branches on result]
 #AI section_order: [Result API; Architecture]
-#AI architectural_notes: Kept as a pure value object — no behavior beyond accessors. The validate class is responsible for populating both arrays correctly.
-
-#AI:ok
-#AI group: Result API
-#AI frequency: high
-#AI signature: public function ok(): bool
-#AI contract: Returns true when no validation errors were found.
-#AI return_detail: {type: bool | desc: True if all fields passed validation.}
+#AI architectural_notes: Kept as a pure value object — no behavior beyond accessors. The validate class is responsible for populating both arrays correctly. Uses PHP 8.4+ property hooks for the virtual ok property.
 
 #AI:errors
 #AI group: Result API
