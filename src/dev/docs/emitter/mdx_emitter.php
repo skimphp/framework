@@ -58,11 +58,13 @@ class mdx_emitter {
             $count++;
         }
 
-        $index_path = $output_dir . '/index.mdx';
-        if (file_put_contents($index_path, $this->render_index($classes)) === false) {
-            throw new \RuntimeException("mdx_emitter: cannot write {$index_path}");
+        if ($classes !== []) {
+            $index_path = $output_dir . '/index.mdx';
+            if (file_put_contents($index_path, $this->render_index($classes)) === false) {
+                throw new \RuntimeException("mdx_emitter: cannot write {$index_path}");
+            }
+            $count++;
         }
-        $count++;
 
         return $count;
     }
@@ -110,6 +112,9 @@ class mdx_emitter {
     }
 
     private function clean_output_dir(string $dir): void {
+        if (!is_dir($dir)) {
+            return;
+        }
         $files = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::CHILD_FIRST
@@ -124,7 +129,7 @@ class mdx_emitter {
         }
         foreach (array_reverse($dirs) as $d) {
             if (count(glob($d . '/*')) === 0) {
-                rmdir($d);
+                @rmdir($d);
             }
         }
     }
@@ -233,8 +238,8 @@ class mdx_emitter {
     }
 
     private function render_class(array $class): string {
-        $title = str_replace('`', '&#96;', (string) ($class['title'] ?? $class['class_name'] ?? 'class'));
-        $description = str_replace('`', '&#96;', $this->one_line((string) ($class['description'] ?? $class['summary'] ?? "Class {$title}.")));
+        $title = (string) ($class['title'] ?? $class['class_name'] ?? 'class');
+        $description = $this->one_line((string) ($class['description'] ?? $class['summary'] ?? "Class {$title}."));
         $lines = ['---', "title: {$title}", 'description: "' . str_replace('"', '\\"', $description) . '"', '---', ''];
 
         foreach ($class['badges'] ?? [] as $badge) {
@@ -472,8 +477,16 @@ class mdx_emitter {
     }
 
     private function escape_mdx(string $text): string {
-        $text = str_replace('`', '&#96;', $text);
-        return str_replace(['<', '>', '{', '}'], ['&lt;', '&gt;', '&#123;', '&#125;'], $text);
+        $parts = preg_split('/(`[^`]+`)/', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $result = '';
+        foreach ($parts as $part) {
+            if (str_starts_with($part, '`') && str_ends_with($part, '`')) {
+                $result .= $part;
+            } else {
+                $result .= str_replace(['<', '>', '{', '}'], ['&lt;', '&gt;', '&#123;', '&#125;'], $part);
+            }
+        }
+        return $result;
     }
 }
 
