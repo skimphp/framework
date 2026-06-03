@@ -5,11 +5,11 @@ namespace skim\cli\commands;
 use skim\cli\command;
 
 /**
- * Generates generated/.ide-helper.php with typed model property stubs for IDE autocomplete.
+ * Generates .skim/ide-helper.php with typed model property stubs for IDE autocomplete.
  *
  * Use after every migration to keep IDE hints in sync with the database schema.
  * Discovers model classes in app/models, reads their schema (from cache or DESCRIBE),
- * and writes typed property stubs to generated/.ide-helper.php.
+ * and writes typed property stubs to .skim/ide-helper.php.
  *
  * Example:
  *   php skim ide:generate
@@ -24,7 +24,7 @@ class ide_command extends command {
      *
      * Scans app/models/*.php for model classes, reads column metadata via
      * model::schema() (uses schema cache if warm, falls back to DESCRIBE),
-     * and writes typed property stubs to generated/.ide-helper.php.
+     * and writes typed property stubs to .skim/ide-helper.php.
      */
     public function handle(): int {
         $sub = $this->arg(0, 'generate');
@@ -37,7 +37,7 @@ class ide_command extends command {
 
         $models  = $this->discover_models();
         $output  = $this->build_output($models);
-        $path    = storage_path('ide_helper/.ide-helper.php');
+        $path    = storage_path('ide-helper.php');
 
         file_put_contents($path, $output);
         $this->success("Written to {$path} (" . count($models) . " models)");
@@ -147,19 +147,19 @@ class ide_command extends command {
 #AI role: CLI IDE helper generator
 #AI layer: cli
 #AI badges: [cli; command; ide; code-generation]
-#AI intro: `ide_command` implements the `php skim ide:generate` CLI command. It discovers model classes in app/models, reads their database schema (from cache or DESCRIBE queries), and generates typed property stubs in `generated/.ide-helper.php` for IDE autocomplete.
+#AI intro: `ide_command` implements the `php skim ide:generate` CLI command. It discovers model classes in app/models, reads their database schema (from cache or DESCRIBE queries), and generates typed property stubs in `.skim/ide-helper.php` for IDE autocomplete.
 #AI lifecycle: instantiated by kernel, handle() called once per invocation
 #AI fallback: models that fail reflection or schema reads are silently skipped
 #AI test_seam: instantiate directly, call set_input() with test args, then handle()
 #AI invariants: [output file is auto-generated — never edit manually; re-run after every migration; schema cache is used when warm]
-#AI core_behaviors: [Discovers models via glob on app/models/*.php; Reads column metadata via model::schema(); Maps SQL types to PHP scalar types; Writes typed property stubs to generated/.ide-helper.php]
+#AI core_behaviors: [Discovers models via glob on app/models/*.php; Reads column metadata via model::schema(); Maps SQL types to PHP scalar types; Writes typed property stubs to .skim/ide-helper.php]
 #AI owns: nothing — reads schema and writes generated file
 #AI entry_points: [handle]
 #AI config_reads: []
 #AI non_goals: [Does not generate method stubs; Does not generate relation hints; Does not validate model correctness]
-#AI side_effects: [writes generated/.ide-helper.php; may trigger DESCRIBE queries if schema cache is cold]
+#AI side_effects: [writes .skim/ide-helper.php; may trigger DESCRIBE queries if schema cache is cold]
 #AI flow: ide_command::handle() -> discover_models() -> for each model: get_columns() -> stub() -> build_output() -> file_put_contents()
-#AI lifecycle_steps: [handle(); -> discover_models() globs app/models; -> for each model: get_columns() via model::schema(); -> stub() generates typed properties; -> build_output() assembles PHP source; -> file_put_contents(generated/.ide-helper.php)]
+#AI lifecycle_steps: [handle(); -> discover_models() globs app/models; -> for each model: get_columns() via model::schema(); -> stub() generates typed properties; -> build_output() assembles PHP source; -> file_put_contents(.skim/ide-helper.php)]
 #AI section_order: [Command Execution; Model Discovery; Schema Reading; Code Generation]
 #AI architectural_notes: Output file is committed to git so IDEs can use it without running the app. The generated file uses @generated annotation to signal it should not be edited.
 

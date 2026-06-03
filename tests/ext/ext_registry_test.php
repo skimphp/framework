@@ -85,7 +85,7 @@ describe('ext_registry', function(): void {
             'extra' => ['skim' => ['extension' => 'skim\\auth\\auth_extension']],
         ]));
 
-        $cache_path = $root . '/storage/cache/extensions.php';
+        $cache_path = $root . '/.skim/config_cache/extensions.php';
         expect(is_file($cache_path))->toBeFalse();
 
         $registry = new ext_registry($root);
@@ -127,7 +127,7 @@ describe('ext_registry', function(): void {
         expect($second[0]['name'])->toBe('skim/auth');
     });
 
-    test('does not write cache when root is not base_path', function() use (&$root): void {
+    test('writes cache regardless of project root', function() use (&$root): void {
         file_put_contents($root . '/vendor/skim/auth/composer.json', json_encode([
             'name' => 'skim/auth',
             'extra' => ['skim' => ['extension' => 'skim\\auth\\auth_extension']],
@@ -141,10 +141,10 @@ describe('ext_registry', function(): void {
             'extra' => ['skim' => ['extension' => 'skim\\auth\\auth_extension']],
         ]));
 
-        $cache_path = $sub_root . '/storage/cache/extensions.php';
+        $cache_path = $sub_root . '/.skim/config_cache/extensions.php';
         $registry = new ext_registry($sub_root);
         $registry->installed();
 
-        expect(is_file($cache_path))->toBeFalse('Cache should not be written for non-base_path root');
+        expect(is_file($cache_path))->toBeTrue('Cache is written for any project root');
     });
 });

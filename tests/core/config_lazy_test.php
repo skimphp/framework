@@ -47,7 +47,7 @@ describe('config lazy loading', function (): void {
     test('config::load() with compiled cache skips directory scan', function (): void {
         config::reset();
 
-        $cache_path = base_path('storage/cache/config.php');
+        $cache_path = storage_path('config_cache/config.php');
         $backup     = is_file($cache_path) ? file_get_contents($cache_path) : null;
 
         try {

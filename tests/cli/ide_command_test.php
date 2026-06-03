@@ -6,7 +6,7 @@ use skim\cli\commands\ide_command;
 describe('ide_command schema generation with SQLite', function(): void {
     $modelsDir = base_path('app/models');
     $modelFile = $modelsDir . '/post.php';
-    $helperFile = base_path('generated/.ide-helper.php');
+    $helperFile = storage_path('ide-helper.php');
     $hadModelsDir = false;
     $hadHelperFile = false;
     $oldHelperContent = '';

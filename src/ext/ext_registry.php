@@ -95,6 +95,11 @@ final class ext_registry {
         $this->installed = null;
         $this->capability_map = null;
         $this->conflicts = null;
+
+        $cache_path = $this->root . '/.skim/config_cache/extensions.php';
+        if (is_file($cache_path)) {
+            unlink($cache_path);
+        }
     }
 
     /**
@@ -257,8 +262,6 @@ final class ext_registry {
      * WHY: Pure arrays allow OPcache shared-memory hit with zero parse overhead.
      */
     private function write_compiled_cache(): void {
-        // No root guard: cache is safe to write anywhere — tests use temp dirs,
-        // production needs it regardless of symlink/realpath setup.
         $cache_dir = $this->root . '/.skim/config_cache';
         if (!is_dir($cache_dir)) {
             @mkdir($cache_dir, 0755, true);

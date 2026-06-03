@@ -66,7 +66,15 @@ describe('docs command path overrides', function(): void {
         expect($code)->toBe(0);
         expect(file_exists($output . '/llm.json'))->toBeTrue();
         expect(file_exists($output . '/llm.md'))->toBeTrue();
-        expect(glob($output . '/*.mdx'))->toHaveCount(5);
+
+        $mdx_files = [];
+        $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($output, FilesystemIterator::SKIP_DOTS));
+        foreach ($rii as $file) {
+            if ($file->getExtension() === 'mdx') {
+                $mdx_files[] = $file->getPathname();
+            }
+        }
+        expect($mdx_files)->toHaveCount(6);
 
         $data = json_decode((string) file_get_contents($output . '/llm.json'), associative: true);
         expect($data['classes'])->not->toBeEmpty();

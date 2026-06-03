@@ -71,7 +71,7 @@ describe('env lazy loading', function (): void {
     test('env::get() with compiled cache does not read .env from disk', function (): void {
         env::reset();
 
-        $cache_path = base_path('storage/cache/env.php');
+        $cache_path = storage_path('config_cache/env.php');
         $backup     = is_file($cache_path) ? file_get_contents($cache_path) : null;
 
         try {

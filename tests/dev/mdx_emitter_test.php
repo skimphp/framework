@@ -47,20 +47,25 @@ describe('mdx_emitter', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_test_' . uniqid();
         $count = (new mdx_emitter())->emit(sample_mdx_data(), $dir);
 
-        expect($count)->toBe(2);
-        expect(file_exists($dir . '/request.mdx'))->toBeTrue();
-        expect(file_exists($dir . '/response.mdx'))->toBeTrue();
+        expect($count)->toBe(3);
+        expect(file_exists($dir . '/core/request.mdx'))->toBeTrue();
+        expect(file_exists($dir . '/core/response.mdx'))->toBeTrue();
+        expect(file_exists($dir . '/index.mdx'))->toBeTrue();
 
-        array_map('unlink', glob($dir . '/*.mdx'));
+        array_map('unlink', glob($dir . '/core/*.mdx'));
+        unlink($dir . '/index.mdx');
+        rmdir($dir . '/core');
         rmdir($dir);
     });
 
     test('returns count of files written', function(): void {
         $dir   = sys_get_temp_dir() . '/skim_mdx_count_' . uniqid();
         $count = (new mdx_emitter())->emit(sample_mdx_data(), $dir);
-        expect($count)->toBe(2);
+        expect($count)->toBe(3);
 
-        array_map('unlink', glob($dir . '/*.mdx'));
+        array_map('unlink', glob($dir . '/core/*.mdx'));
+        unlink($dir . '/index.mdx');
+        rmdir($dir . '/core');
         rmdir($dir);
     });
 
@@ -72,11 +77,13 @@ describe('mdx_emitter', function(): void {
 
         $count = (new mdx_emitter())->emit($data, $dir);
 
-        expect($count)->toBe(2);
-        expect(file_exists($dir . '/request-request.mdx'))->toBeTrue();
-        expect(file_exists($dir . '/request-response.mdx'))->toBeTrue();
+        expect($count)->toBe(3);
+        expect(file_exists($dir . '/core/request-request.mdx'))->toBeTrue();
+        expect(file_exists($dir . '/core/request-response.mdx'))->toBeTrue();
 
-        array_map('unlink', glob($dir . '/*.mdx'));
+        array_map('unlink', glob($dir . '/core/*.mdx'));
+        unlink($dir . '/index.mdx');
+        rmdir($dir . '/core');
         rmdir($dir);
     });
 
@@ -88,46 +95,54 @@ describe('mdx_emitter', function(): void {
 
         $count = (new mdx_emitter())->emit($data, $dir);
 
-        expect($count)->toBe(2);
-        expect(file_exists($dir . '/request-request.mdx'))->toBeTrue();
-        expect(file_exists($dir . '/request-request-2.mdx'))->toBeTrue();
+        expect($count)->toBe(3);
+        expect(file_exists($dir . '/core/request-request.mdx'))->toBeTrue();
+        expect(file_exists($dir . '/core/request-request-2.mdx'))->toBeTrue();
 
-        array_map('unlink', glob($dir . '/*.mdx'));
+        array_map('unlink', glob($dir . '/core/*.mdx'));
+        unlink($dir . '/index.mdx');
+        rmdir($dir . '/core');
         rmdir($dir);
     });
 
     test('MDX file contains frontmatter title and description', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_front_' . uniqid();
         (new mdx_emitter())->emit(sample_mdx_data(), $dir);
-        $content = file_get_contents($dir . '/request.mdx');
+        $content = file_get_contents($dir . '/core/request.mdx');
 
         expect($content)->toContain('title: request');
         expect($content)->toContain('HTTP request abstraction.');
 
-        array_map('unlink', glob($dir . '/*.mdx'));
+        array_map('unlink', glob($dir . '/core/*.mdx'));
+        unlink($dir . '/index.mdx');
+        rmdir($dir . '/core');
         rmdir($dir);
     });
 
     test('MDX file contains method name and signature', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_method_' . uniqid();
         (new mdx_emitter())->emit(sample_mdx_data(), $dir);
-        $content = file_get_contents($dir . '/request.mdx');
+        $content = file_get_contents($dir . '/core/request.mdx');
 
         expect($content)->toContain('<ApiMethod name="get">')
             ->and($content)->toContain('public function get(string $key, mixed $default): mixed');
 
-        array_map('unlink', glob($dir . '/*.mdx'));
+        array_map('unlink', glob($dir . '/core/*.mdx'));
+        unlink($dir . '/index.mdx');
+        rmdir($dir . '/core');
         rmdir($dir);
     });
 
     test('MDX file contains contracts and non-goals', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_tags_' . uniqid();
         (new mdx_emitter())->emit(sample_mdx_data(), $dir);
-        $content = file_get_contents($dir . '/request.mdx');
+        $content = file_get_contents($dir . '/core/request.mdx');
 
         expect($content)->toContain('returns query param by key');
 
-        array_map('unlink', glob($dir . '/*.mdx'));
+        array_map('unlink', glob($dir . '/core/*.mdx'));
+        unlink($dir . '/index.mdx');
+        rmdir($dir . '/core');
         rmdir($dir);
     });
 
@@ -177,12 +192,14 @@ describe('mdx_emitter', function(): void {
         ];
 
         (new mdx_emitter())->emit($data, $dir);
-        $content = file_get_contents($dir . '/escaper.mdx');
+        $content = file_get_contents($dir . '/core/escaper.mdx');
 
         expect($content)->toContain('Handles &lt;tags&gt; and &#123;braces&#125; properly, but `keeps <tag> inside backticks`.');
         expect($content)->toContain('processes &lt;input&gt; and &#123;values&#125; in description, but `ignores <tag>`');
 
-        array_map('unlink', glob($dir . '/*.mdx'));
+        array_map('unlink', glob($dir . '/core/*.mdx'));
+        unlink($dir . '/index.mdx');
+        rmdir($dir . '/core');
         rmdir($dir);
     });
 

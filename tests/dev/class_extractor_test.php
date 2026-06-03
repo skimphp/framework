@@ -166,7 +166,7 @@ describe('class_extractor — fixture: array_driver', function () {
 
     it('extracts summary from inline comments before class', function () {
         $result = $this->extractor->extract($this->fixture);
-        expect($result->summary)->toContain('In-memory array driver');
+        expect($result->summary)->toContain('In-memory cache driver for tests');
     });
 
     it('extracts public methods only', function () {
