@@ -24,9 +24,9 @@ final class toolbar {
 	/**
 	 * Generates the debug toolbar HTML string from profiler data. #AI:render
 	 *
-	 * Returns empty string when APP_DEBUG=false (safe guard). Reads all
-	 * events from profiler::summary() and profiler::events() to build
-	 * tabbed panels for request, queries, cache, timeline, views, and log.
+	 * Returns empty string when APP_DEBUG=false (safe guard). Delegates HTML
+	 * generation to dev_view templates with shared CSS from dev_theme. Falls
+	 * back to empty string if template rendering fails.
 	 *
 	 * @param request $req Current HTTP request for method/path display.
 	 * @return string Complete toolbar HTML, or empty string when debug is off.
@@ -77,287 +77,39 @@ final class toolbar {
 
 		$peak_mem = round(memory_get_peak_usage(true) / 1024 / 1024, 1);
 		$ms_class = $total_ms > 200 ? 'warn' : ($total_ms > 100 ? '' : 'ok');
-		$php_ver  = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
 
-		$method = htmlspecialchars($req->method(),    ENT_QUOTES, 'UTF-8');
-		$path   = htmlspecialchars($req->path(),      ENT_QUOTES, 'UTF-8');
-
+		$method  = $req->method();
+		$path    = $req->path();
 		$req_html = self::build_request_panel($req);
 
-		return <<<HTML
-        <style>
-        :root{--tb-bg:#0f1117;--tb-surface:#161b22;--tb-border:rgba(255,255,255,0.08);--tb-text:#e2e8f0;--tb-muted:#64748b;--tb-accent:#3b82f6;--tb-warn:#f59e0b;--tb-danger:#ef4444;--tb-success:#10b981;--tb-active-tab:#1e2535;--tb-height:36px;--tb-panel-h:280px}
-        #skim-tb{position:fixed;bottom:0;left:0;right:0;background:var(--tb-bg);border-top:1px solid var(--tb-border);border-radius:8px 8px 0 0;overflow:hidden;user-select:none;z-index:999999;font:12px/1.4 'JetBrains Mono','Fira Code',ui-monospace,monospace}
-        #skim-tb .bar{display:flex;align-items:stretch;height:var(--tb-height);border-bottom:1px solid var(--tb-border);overflow:hidden}
-        #skim-tb .brand{display:flex;align-items:center;padding:0 14px;border-right:1px solid var(--tb-border);gap:7px;flex-shrink:0}
-        #skim-tb .brand-dot{width:6px;height:6px;border-radius:50%;background:var(--tb-accent)}
-        #skim-tb .brand-name{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--tb-text);text-transform:uppercase}
-        #skim-tb .route{display:flex;align-items:center;padding:0 12px;gap:6px;border-right:1px solid var(--tb-border);flex-shrink:0}
-        #skim-tb .http-method{font-size:10px;font-weight:700;letter-spacing:.08em;background:rgba(59,130,246,.15);color:var(--tb-accent);padding:2px 6px;border-radius:3px;border:1px solid rgba(59,130,246,.3)}
-        #skim-tb .route-path{font-size:11px;color:var(--tb-text);opacity:.7;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        #skim-tb .tabs{display:flex;align-items:stretch;flex:1;overflow:hidden}
-        #skim-tb .tab{display:flex;align-items:center;gap:6px;padding:0 13px;cursor:pointer;border-right:1px solid var(--tb-border);font-size:11px;color:var(--tb-muted);white-space:nowrap;transition:background .12s,color .12s;position:relative}
-        #skim-tb .tab:hover{background:rgba(255,255,255,.03);color:var(--tb-text)}
-        #skim-tb .tab.active{background:var(--tb-active-tab);color:var(--tb-text)}
-        #skim-tb .tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--tb-accent)}
-        #skim-tb .tab.active.warn-tab::after{background:var(--tb-warn)}
-        #skim-tb .tab i{font-size:13px;opacity:.7}
-        #skim-tb .tab-count{font-size:10px;font-weight:600;padding:1px 5px;border-radius:10px;background:rgba(255,255,255,.06);color:var(--tb-muted)}
-        #skim-tb .tab.active .tab-count{background:rgba(59,130,246,.2);color:var(--tb-accent)}
-        #skim-tb .tab.warn-tab .tab-count{background:rgba(245,158,11,.2);color:var(--tb-warn)}
-        #skim-tb .stats{display:flex;align-items:center;margin-left:auto}
-        #skim-tb .stat{display:flex;align-items:center;gap:5px;padding:0 12px;border-left:1px solid var(--tb-border);font-size:11px;color:var(--tb-muted);white-space:nowrap}
-        #skim-tb .stat-val{color:var(--tb-text);font-variant-numeric:tabular-nums}
-        #skim-tb .stat-val.warn{color:var(--tb-warn)}
-        #skim-tb .stat-val.ok{color:var(--tb-success)}
-        #skim-tb .tb-close{display:flex;align-items:center;padding:0 12px;border-left:1px solid var(--tb-border);color:var(--tb-muted);cursor:pointer;font-size:15px;transition:color .1s}
-        #skim-tb .tb-close:hover{color:var(--tb-text)}
-        #skim-tb .panel{display:none;height:var(--tb-panel-h);background:var(--tb-surface);border-top:1px solid var(--tb-border);overflow:hidden}
-        #skim-tb .panel.open{display:flex;flex-direction:column}
-        #skim-tb .panel-inner{flex:1;overflow-y:auto;overflow-x:hidden}
-        #skim-tb .panel-inner::-webkit-scrollbar{width:4px}
-        #skim-tb .panel-inner::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
-        #skim-tb .req-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--tb-border)}
-        #skim-tb .req-section{background:var(--tb-surface);padding:10px 14px}
-        #skim-tb .req-head{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--tb-muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.06)}
-        #skim-tb .kv{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03);gap:10px}
-        #skim-tb .kv:last-child{border-bottom:none}
-        #skim-tb .kv-k{font-size:11px;color:var(--tb-muted);flex-shrink:0}
-        #skim-tb .kv-v{font-size:11px;color:var(--tb-text);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
-        #skim-tb .kv-v.ok{color:var(--tb-success)}
-        #skim-tb .kv-v.warn{color:var(--tb-warn)}
-        #skim-tb .kv-v.blue{color:#79c0ff}
-        #skim-tb .kv-v.purple{color:#d2a8ff}
-        #skim-tb .kv-v.muted{color:var(--tb-muted)}
-        #skim-tb .param-table{width:100%;border-collapse:collapse;table-layout:fixed}
-        #skim-tb .param-table td{padding:4px 0;font-size:11px;border-bottom:1px solid rgba(255,255,255,.03);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        #skim-tb .param-table td:first-child{color:var(--tb-muted);width:40%;padding-right:8px}
-        #skim-tb .param-table td:last-child{color:var(--tb-text)}
-        #skim-tb .empty-note{padding:8px 0;font-size:11px;color:var(--tb-muted);font-style:italic}
-        #skim-tb .col-head{display:grid;grid-template-columns:48px 58px 1fr 76px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.2)}
-        #skim-tb .col-head span{padding:5px 10px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--tb-muted)}
-        #skim-tb .col-head span:first-child{text-align:right}
-        #skim-tb .q-row{display:grid;grid-template-columns:48px 58px 1fr 76px;align-items:start;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .1s}
-        #skim-tb .q-row:hover{background:rgba(255,255,255,.03)}
-        #skim-tb .q-row.expanded{background:rgba(255,255,255,.04)}
-        #skim-tb .qc{padding:8px 10px;font-size:11px;overflow:hidden}
-        #skim-tb .qn{color:var(--tb-muted);text-align:right;padding-top:9px;font-variant-numeric:tabular-nums}
-        #skim-tb .qm{padding-top:9px;font-variant-numeric:tabular-nums}
-        #skim-tb .qm.fast{color:var(--tb-success)}
-        #skim-tb .qm.med{color:var(--tb-warn)}
-        #skim-tb .qm.slow{color:var(--tb-danger)}
-        #skim-tb .qs{color:var(--tb-text);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-top:9px;opacity:.85}
-        #skim-tb .qs .kw{color:#79c0ff}
-        #skim-tb .qt{font-size:10px;text-align:right;padding-top:10px;color:var(--tb-muted);letter-spacing:.05em}
-        #skim-tb .q-expand{display:none;grid-column:1/-1;padding:8px 12px 12px 116px;background:rgba(0,0,0,.3);border-bottom:1px solid rgba(255,255,255,.06)}
-        #skim-tb .q-expand.open{display:block}
-        #skim-tb .q-expand pre{margin:0;font-size:11px;white-space:pre-wrap;word-break:break-all;line-height:1.6;color:var(--tb-text);opacity:.9}
-        #skim-tb .q-expand pre .kw{color:#79c0ff}
-        #skim-tb .cache-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--tb-border);margin:12px 16px;border-radius:4px;overflow:hidden}
-        #skim-tb .cache-cell{background:rgba(0,0,0,.3);padding:12px 14px}
-        #skim-tb .cache-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--tb-muted);margin-bottom:4px}
-        #skim-tb .cache-val{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
-        #skim-tb .cache-val.hit{color:var(--tb-success)}
-        #skim-tb .cache-val.miss{color:var(--tb-warn)}
-        #skim-tb .cache-val.ratio{color:var(--tb-accent)}
-        #skim-tb .tl-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:11px}
-        #skim-tb .tl-lbl{color:var(--tb-muted);width:100px;flex-shrink:0}
-        #skim-tb .tl-wrap{flex:1;background:rgba(255,255,255,.04);border-radius:2px;height:6px}
-        #skim-tb .tl-bar{height:6px;border-radius:2px}
-        #skim-tb .tl-ms{color:var(--tb-muted);font-size:10px;width:48px;text-align:right;font-variant-numeric:tabular-nums}
-        #skim-tb .log-row{display:flex;gap:10px;padding:6px 12px;font-size:11px;border-bottom:1px solid rgba(255,255,255,.03)}
-        #skim-tb .log-time{color:var(--tb-muted);flex-shrink:0;font-variant-numeric:tabular-nums}
-        #skim-tb .log-msg{color:var(--tb-text);opacity:.8}
-        #skim-tb .log-tag{font-size:10px;padding:1px 6px;border-radius:3px;flex-shrink:0}
-        #skim-tb .tag-db{background:rgba(59,130,246,.15);color:#79c0ff}
-        #skim-tb .tag-cache{background:rgba(16,185,129,.15);color:var(--tb-success)}
-        #skim-tb .tag-view{background:rgba(168,85,247,.15);color:#d2a8ff}
-        #skim-tb .tag-warn{background:rgba(245,158,11,.15);color:var(--tb-warn)}
-        #skim-tb .kv-section-head{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--tb-muted);padding:10px 0 6px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:6px}
-        #skim-tb .tb-resize{height:4px;cursor:ns-resize;background:transparent;transition:background .15s;flex-shrink:0}
-        #skim-tb .tb-resize:hover,#skim-tb .tb-resize.dragging{background:var(--tb-accent)}
-        </style>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
-        <div id="skim-tb">
-            <div class="tb-resize" id="skim-resize"></div>
-            <div class="bar">
-                <div class="brand">
-                    <div class="brand-dot"></div>
-                    <span class="brand-name">skim</span>
-                </div>
-                <div class="route">
-                    <span class="http-method">{$method}</span>
-                    <span class="route-path">{$path}</span>
-                </div>
-                <div class="tabs">
-                    <div class="tab active" onclick="skimTab(this,'request')">
-                        <i class="ti ti-server" aria-hidden="true"></i>
-                        <span>request</span>
-                    </div>
-                    <div class="tab{$db_warn}" onclick="skimTab(this,'db')">
-                        <i class="ti ti-database" aria-hidden="true"></i>
-                        <span>queries</span>
-                        <span class="tab-count">{$db_count}</span>
-                    </div>
-                    <div class="tab" onclick="skimTab(this,'cache')">
-                        <i class="ti ti-bolt" aria-hidden="true"></i>
-                        <span>cache</span>
-                        <span class="tab-count">{$cache_tab_label}</span>
-                    </div>
-                    <div class="tab" onclick="skimTab(this,'timeline')">
-                        <i class="ti ti-timeline" aria-hidden="true"></i>
-                        <span>timeline</span>
-                    </div>
-                    <div class="tab" onclick="skimTab(this,'views')">
-                        <i class="ti ti-layout" aria-hidden="true"></i>
-                        <span>views</span>
-                        <span class="tab-count">{$view_count}</span>
-                    </div>
-                    <div class="tab" onclick="skimTab(this,'log')">
-                        <i class="ti ti-list" aria-hidden="true"></i>
-                        <span>log</span>
-                        <span class="tab-count">{$log_count}</span>
-                    </div>
-                </div>
-                <div class="stats">
-                    <div class="stat">
-                        <span>time</span>
-                        <span class="stat-val {$ms_class}">{$total_ms}ms</span>
-                    </div>
-                    <div class="stat">
-                        <span>mem</span>
-                        <span class="stat-val">{$peak_mem} MB</span>
-                    </div>
-                </div>
-                <div class="tb-close" onclick="skimClose()" title="Toggle panel">
-                    <i class="ti ti-chevron-down" aria-hidden="true"></i>
-                </div>
-            </div>
-
-            <div class="panel open" id="skim-panel-request">
-                <div class="panel-inner">
-                    {$req_html}
-                </div>
-            </div>
-
-            <div class="panel" id="skim-panel-db">
-                <div class="col-head">
-                    <span>#</span><span>ms</span><span>SQL</span><span style="text-align:right">type</span>
-                </div>
-                <div class="panel-inner">
-                    {$db_html}
-                </div>
-            </div>
-
-            <div class="panel" id="skim-panel-cache">
-                <div class="panel-inner">
-                    <div class="cache-grid">
-                        <div class="cache-cell">
-                            <div class="cache-lbl">hits</div>
-                            <div class="cache-val hit">{$cache_hits}</div>
-                        </div>
-                        <div class="cache-cell">
-                            <div class="cache-lbl">misses</div>
-                            <div class="cache-val miss">{$cache_miss}</div>
-                        </div>
-                        <div class="cache-cell">
-                            <div class="cache-lbl">hit ratio</div>
-                            <div class="cache-val ratio">{$cache_ratio}</div>
-                        </div>
-                        <div class="cache-cell">
-                            <div class="cache-lbl">driver</div>
-                            <div class="cache-val" style="font-size:16px;color:var(--tb-text)">{$cache_driver}</div>
-                        </div>
-                    </div>
-                    <div style="padding:0 16px">
-                        {$cache_kv}
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel" id="skim-panel-timeline">
-                <div class="panel-inner">
-                    <div style="padding:12px 16px">
-                        {$timeline_html}
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel" id="skim-panel-views">
-                <div class="panel-inner">
-                    <div style="padding:8px 0">
-                        {$view_html}
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel" id="skim-panel-log">
-                <div class="panel-inner">
-                    {$log_html}
-                </div>
-            </div>
-        </div>
-        <script>
-        (function(){
-            function skimTab(el,id){
-                document.querySelectorAll('#skim-tb .tab').forEach(t=>t.classList.remove('active'));
-                document.querySelectorAll('#skim-tb .panel').forEach(p=>p.classList.remove('open'));
-                el.classList.add('active');
-                var p=document.getElementById('skim-panel-'+id);
-                if(p) p.classList.add('open');
-            }
-            var _open=true;
-            function skimClose(){
-                var ch=document.querySelector('#skim-tb .tb-close .ti');
-                var panels=document.querySelectorAll('#skim-tb .panel');
-                if(_open){
-                    panels.forEach(p=>{if(p.classList.contains('open'))p.setAttribute('data-was-open','1');p.classList.remove('open');});
-                    if(ch){ch.className='ti ti-chevron-up';}
-                    _open=false;
-                } else {
-                    document.querySelectorAll('#skim-tb [data-was-open]').forEach(p=>{p.classList.add('open');p.removeAttribute('data-was-open');});
-                    if(ch){ch.className='ti ti-chevron-down';}
-                    _open=true;
-                }
-            }
-            function skimToggleQ(i){
-                var ex=document.getElementById('skim-ex-'+i);
-                var row=ex.previousElementSibling;
-                var wasOpen=ex.classList.contains('open');
-                document.querySelectorAll('#skim-tb .q-expand.open').forEach(function(e){
-                    e.classList.remove('open');
-                    e.previousElementSibling.classList.remove('expanded');
-                });
-                if(!wasOpen){ex.classList.add('open');row.classList.add('expanded');}
-            }
-            var _tb=document.getElementById('skim-tb');
-            var _rz=document.getElementById('skim-resize');
-            var _rzY=0,_rzH=280;
-            _rz.addEventListener('mousedown',function(e){
-                if(!_open)return;
-                _rzY=e.clientY;
-                _rzH=parseInt(getComputedStyle(_tb).getPropertyValue('--tb-panel-h'))||280;
-                _rz.classList.add('dragging');
-                document.addEventListener('mousemove',_rzMove);
-                document.addEventListener('mouseup',_rzUp);
-                e.preventDefault();
-            });
-            function _rzMove(e){
-                var d=_rzY-e.clientY;
-                var h=Math.max(80,Math.min(window.innerHeight-60,_rzH+d));
-                _tb.style.setProperty('--tb-panel-h',h+'px');
-            }
-            function _rzUp(){
-                _rz.classList.remove('dragging');
-                document.removeEventListener('mousemove',_rzMove);
-                document.removeEventListener('mouseup',_rzUp);
-            }
-            window.skimTab=skimTab;
-            window.skimClose=skimClose;
-            window.skimToggleQ=skimToggleQ;
-        })();
-        </script>
-        HTML;
+		try {
+			return dev_view::render('toolbar', [
+				'method'          => $method,
+				'path'            => $path,
+				'db_count'        => $db_count,
+				'db_warn'         => $db_warn,
+				'db_html'         => $db_html,
+				'cache_hits'      => $cache_hits,
+				'cache_miss'      => $cache_miss,
+				'cache_ratio'     => $cache_ratio,
+				'cache_tab_label' => $cache_tab_label,
+				'cache_driver'    => $cache_driver,
+				'cache_kv'        => $cache_kv,
+				'view_count'      => $view_count,
+				'view_html'       => $view_html,
+				'total_ms'        => $total_ms,
+				'timeline_html'   => $timeline_html,
+				'log_count'       => $log_count,
+				'log_html'        => $log_html,
+				'peak_mem'        => $peak_mem,
+				'ms_class'        => $ms_class,
+				'req_html'        => $req_html,
+				'custom_panels'   => profiler::panels(),
+			]);
+		}
+		catch (\Throwable) {
+			return '';
+		}
 	}
 
 	private static function build_request_panel(request $req): string {

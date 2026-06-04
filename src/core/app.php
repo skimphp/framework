@@ -156,6 +156,32 @@ class app {
     }
 
     /**
+     * Emits a 'route_matched' request_trace event with the matched pattern, params,
+     * and middleware stack. Read by the error page's Request panel and the toolbar.
+     *
+     * No-op when request_trace is disabled — never throws.
+     */
+    private function record_route_trace(array $route): void {
+        if (!\skim\dev\request_trace::is_enabled()) {
+            return;
+        }
+
+        \skim\dev\request_trace::event('route_matched', [
+            'pattern'    => (string) ($route['pattern'] ?? ''),
+            'params'     => $route['params'] ?? [],
+            'middleware' => array_values(array_map(
+                static fn(string|array|middleware $entry): string
+                    => match (true) {
+                        $entry instanceof middleware => $entry::class,
+                        is_string($entry)            => $entry,
+                        default                      => (string) ($entry['class'] ?? '?'),
+                    },
+                $route['middleware'] ?? [],
+            )),
+        ]);
+    }
+
+    /**
      * Calls boot() if not yet booted. #AI:ensureBooted
      *
      * Called from run() and dispatch() to guarantee the framework is initialised
@@ -474,6 +500,8 @@ class app {
             if (!empty($route['params'])) {
                 $req->set_route_params($route['params']);
             }
+
+            $this->record_route_trace($route);
 
             $middlewares = $skip_middleware
                 ? []

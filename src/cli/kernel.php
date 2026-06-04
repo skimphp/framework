@@ -39,6 +39,9 @@ final class kernel {
         'serve'          => \skim\cli\commands\serve_command::class,
         'ide:generate'   => \skim\cli\commands\ide_command::class,
         'install'        => \skim\cli\commands\install_command::class,
+    ];
+
+    private const DEV_COMMANDS = [
         'docs'           => \skim\dev\docs\commands\docs_command::class,
         'docs:extract'   => \skim\dev\docs\commands\docs_extract_command::class,
         'docs:llm'       => \skim\dev\docs\commands\docs_llm_command::class,
@@ -142,10 +145,16 @@ final class kernel {
 
     /**
      * Merges built-in commands with user-defined ones from config/app.php. #AI:all_commands
+     *
+     * Includes dev-only commands (docs, mcp:serve) when SKIM_DEV is true.
      */
     private function all_commands(): array {
+        $commands = self::COMMANDS;
+        if (defined('SKIM_DEV') && SKIM_DEV) {
+            $commands = array_merge($commands, self::DEV_COMMANDS);
+        }
         $user_commands = \skim\core\config::get('app.commands', []);
-        return array_merge(self::COMMANDS, $user_commands);
+        return array_merge($commands, $user_commands);
     }
 
     /**

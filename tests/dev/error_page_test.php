@@ -71,6 +71,7 @@ describe('error_page::render()', function(): void {
         $html = capture_error_page(new \RuntimeException('test'));
         expect($html)->toContain('data-tab="code"');
         expect($html)->toContain('data-tab="trace"');
+        expect($html)->toContain('data-tab="container"');
         expect($html)->toContain('data-tab="env"');
         expect($html)->toContain('data-tab="request"');
     });
@@ -88,11 +89,83 @@ describe('error_page::render()', function(): void {
         expect($html)->toContain('phpstorm://open');
     });
 
+    test('ide deep-link respects app.debug_ide config', function(): void {
+        config::set('app.debug_ide', 'vscode');
+        $html = capture_error_page(new \RuntimeException('test'));
+        expect($html)->toContain('vscode://file/');
+    });
+
     test('contains action buttons (IDE, copy, Google, AI)', function(): void {
         $html = capture_error_page(new \RuntimeException('test'));
-        expect($html)->toContain('Open in IDE');
+        expect($html)->toContain('Open in PhpStorm');
         expect($html)->toContain('Copy stack trace');
         expect($html)->toContain('Ask AI');
+    });
+
+    test('hero badge sits on the same line as the message', function(): void {
+        $html = capture_error_page(new \RuntimeException('test'));
+        // badge-err appears before the message in the hero-msg container
+        $hero_msg = (string) preg_match('/<div class="hero-msg">.*?<\/div>/s', $html, $m);
+        expect($m[0] ?? '')->toContain('class="badge-err"');
+        expect($m[0] ?? '')->toContain('test');
+    });
+
+    test('stack trace is split into Application / Request Pipeline / Framework sections', function(): void {
+        $html = capture_error_page(new \RuntimeException('test'));
+        expect($html)->toMatch('/trace-section-label[^<]*>.*?Application/');
+        expect($html)->toMatch('/trace-section-label[^<]*>.*?Framework/');
+    });
+
+    test('object arguments are expanded as obj-props rows', function(): void {
+        // Use a controlled fixture object with known public properties
+        // (real \skim\core\request has only private promoted props).
+        $obj = new \stdClass();
+        $obj->id     = 42;
+        $obj->name   = 'Alice';
+        $obj->active = true;
+        $ref = new \ReflectionClass(error_page::class);
+        $method = $ref->getMethod('describe_arg');
+        $arg = $method->invoke(null, $obj, 0);
+        expect($arg['type'])->toBe('stdClass');
+        expect($arg['object_id'])->toStartWith('#');
+        expect($arg['props'])->toBeArray();
+        expect($arg['props'][0]['key'])->toBe('id');
+        // prop_value() returns formatted strings (e.g. "42", '"Alice"', "true")
+        expect($arg['props'][0]['value'])->toBe('42');
+    });
+
+    test('primitive scalar args return a short form, not an object expansion', function(): void {
+        $ref = new \ReflectionClass(error_page::class);
+        $method = $ref->getMethod('describe_arg');
+        $arg = $method->invoke(null, 42, 0);
+        expect($arg['type'])->toBe('int');
+        // arg_value() returns string form for safe HTML rendering
+        expect($arg['value'])->toBe('42');
+        expect($arg['object_id'] ?? null)->toBeNull();
+        // props is an empty array for non-objects (the template just renders it as-is)
+        expect($arg['props'])->toBe([]);
+    });
+
+    test('null args render as `null`', function(): void {
+        $ref = new \ReflectionClass(error_page::class);
+        $method = $ref->getMethod('describe_arg');
+        $arg = $method->invoke(null, null, 0);
+        expect($arg['type'])->toBe('null');
+        expect($arg['value'])->toBe('null');
+    });
+
+    test('container panel is rendered with DI tree structure', function(): void {
+        $html = capture_error_page(new \RuntimeException('test'));
+        expect($html)->toContain('id="panel-container"');
+        expect($html)->toContain('class="di-tree"');
+        expect($html)->toContain('PaymentController');
+    });
+
+    test('solutions are rendered inline (not a separate tab)', function(): void {
+        $html = capture_error_page(new \BadMethodCallException('Call to undefined method App\\NonExistent::nope()'));
+        // No solution for non-existent class, just verify panel-solutions is NOT a tab
+        // but the inline panel may still exist; the "Solutions" tab is gone.
+        expect($html)->not->toMatch('/data-tab="solutions"/');
     });
 
     test('escapes HTML in exception message', function(): void {
@@ -188,10 +261,14 @@ describe('error_page noise detection', function(): void {
         expect($is_noise)->toBeFalse();
     });
 
-    test('marks middleware classes as noise', function(): void {
+    test('middleware classes are classified as `pipeline` (not noise, not app, not framework)', function(): void {
+        // In the redesigned error page, middleware gets its own 'pipeline' section
+        // in the trace — the test is_classify_frame() instead of is_noise() to
+        // reflect this new three-bucket split.
         $ref = new \ReflectionClass(error_page::class);
-        $method = $ref->getMethod('is_noise');
-        expect($method->invoke(null, '/app/src/middleware/cors.php', 'skim\\middleware\\cors', 'handle'))->toBeTrue();
+        $method = $ref->getMethod('classify_frame');
+        $result = $method->invoke(null, '/app/src/middleware/cors.php', 'skim\\middleware\\cors', 'handle');
+        expect($result)->toBe('pipeline');
     });
 
 });

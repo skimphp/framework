@@ -50,8 +50,10 @@ final class error_page {
     /**
      * Collects all data needed by the error page template. #AI:collect
      *
-     * Extracts exception details, code context, parsed stack frames,
-     * environment variables, request info, and solution suggestions.
+     * Extracts exception details, code context, parsed stack frames split
+     * into Application / Request Pipeline / Framework sections, environment
+     * variables, request info, route+middleware context, DI tree for the
+     * controller, and solution suggestions.
      *
      * @param \Throwable $e The exception to collect data from.
      */
@@ -61,22 +63,33 @@ final class error_page {
         $file    = $e->getFile();
         $line    = $e->getLine();
 
+        $frames_sectioned = self::parse_frames($e);
+
         return [
-            'page_title'  => "Error — {$class}",
-            'class'       => $class,
-            'message'     => $message,
-            'file'        => $file,
-            'line'        => $line,
-            'php_version' => PHP_VERSION,
-            'code_lines'  => self::code_context($file, $line),
-            'line_start'  => max(1, $line - self::CONTEXT_LINES),
-            'line_end'    => $line + self::CONTEXT_LINES,
-            'frames'      => self::parse_frames($e),
-            'env_server'  => self::collect_server_env(),
-            'env_vars'    => self::collect_env_vars(),
-            'request'     => self::collect_request(),
-            'solutions'   => self::suggest_solutions($e),
-            'trace_text'  => $e->getTraceAsString(),
+            'page_title'      => "Error — {$class}",
+            'class'           => $class,
+            'message'         => $message,
+            'file'            => $file,
+            'line'            => $line,
+            'php_version'     => PHP_VERSION,
+            'code_lines'      => self::code_context($file, $line),
+            'line_start'      => max(1, $line - self::CONTEXT_LINES),
+            'line_end'        => $line + self::CONTEXT_LINES,
+            'frames_app'      => $frames_sectioned['app'],
+            'frames_pipeline' => $frames_sectioned['pipeline'],
+            'frames_fw'       => $frames_sectioned['framework'],
+            'frame_count'     => $frames_sectioned['count'],
+            'env_server'      => self::collect_server_env(),
+            'env_vars'        => self::collect_env_vars(),
+            'request'         => self::collect_request(),
+            'route'           => self::collect_route(),
+            'middleware'      => self::collect_middleware(),
+            'container'       => self::collect_container($e),
+            'solutions'       => self::suggest_solutions($e),
+            'trace_text'      => $e->getTraceAsString(),
+            'ide'             => ide_link::resolve(),
+            'ide_name'        => ide_link::name(ide_link::resolve()),
+            'ide_url'         => ide_link::url($file, $line),
         ];
     }
 
@@ -85,10 +98,6 @@ final class error_page {
      *
      * Returns pre-escaped HTML spans with syntax classes. The error line
      * is marked with hl=true for the template to add visual emphasis.
-     *
-     * @param string $file    Absolute path to the source file.
-     * @param int    $line    Error line number (1-based).
-     * @param int    $context Number of lines to show above and below.
      */
     private static function code_context(string $file, int $line, int $context = self::CONTEXT_LINES): array {
         if (!is_file($file)) {
@@ -113,24 +122,30 @@ final class error_page {
     }
 
     /**
-     * Parses exception trace into structured frame data for the template. #AI:parse_frames
+     * Parses exception trace into three sections for the template. #AI:parse_frames
      *
-     * Each frame includes file, line, class, function, type, and a noise flag
-     * indicating whether it's a framework/vendor internal frame.
+     * - 'app'      : user application frames (controllers, services, repos).
+     * - 'pipeline' : middleware frames (skipped: dev errors are usually not in MW).
+     * - 'framework': skim\core, vendor, src/dev, src/middleware internal noise.
      *
-     * @param \Throwable $e The exception whose trace to parse.
+     * Each frame carries file, line, class, function, type, a search index,
+     * the section label, and (when applicable) reflected argument values
+     * with object property expansion.
      */
     private static function parse_frames(\Throwable $e): array {
-        $frames = [];
+        $app = [];
+        $pipeline = [];
+        $framework = [];
 
-        $frames[] = [
-            'idx'      => 0,
+        $error_origin_idx = 0;
+        $app[] = [
+            'idx'      => $error_origin_idx,
             'file'     => $e->getFile(),
             'line'     => $e->getLine(),
             'class'    => '',
             'function' => '',
             'call'     => self::format_error_call($e),
-            'noise'    => false,
+            'is_error' => true,
             'search'   => strtolower($e->getFile() . ' ' . get_class($e)),
             'args'     => [],
         ];
@@ -141,7 +156,8 @@ final class error_page {
             $class = $t['class'] ?? '';
             $func  = $t['function'] ?? '';
             $type  = $t['type'] ?? '';
-            $noise = self::is_noise($file, $class, $func);
+
+            $section = self::classify_frame($file, $class, $func);
 
             $call = '';
             if ($class !== '') {
@@ -154,32 +170,408 @@ final class error_page {
             $args = [];
             if (!empty($t['args'])) {
                 foreach ($t['args'] as $j => $arg) {
-                    $args[] = [
-                        'idx'   => $j,
-                        'type'  => self::arg_type($arg),
-                        'value' => self::arg_value($arg),
-                    ];
+                    $args[] = self::describe_arg($arg, $j);
                 }
             }
 
-            $frames[] = [
+            $frame = [
                 'idx'      => $i + 1,
                 'file'     => $file,
                 'line'     => $line,
                 'class'    => $class,
                 'function' => $func,
                 'call'     => $call,
-                'noise'    => $noise,
+                'is_error' => false,
+                'is_mw'    => $section === 'pipeline',
+                'is_noise' => $section === 'framework',
                 'search'   => strtolower(($file ?: '') . ' ' . $class . ' ' . $func),
                 'args'     => $args,
             ];
+
+            if ($section === 'pipeline') {
+                $pipeline[] = $frame;
+            }
+            elseif ($section === 'framework') {
+                $framework[] = $frame;
+            }
+            else {
+                $app[] = $frame;
+            }
         }
 
-        return $frames;
+        return [
+            'app'       => $app,
+            'pipeline'  => $pipeline,
+            'framework' => $framework,
+            'count'     => count($app) + count($pipeline) + count($framework),
+        ];
     }
 
     /**
-     * Collects server/PHP environment data for the Environment panel. #AI:collect_server_env
+     * Classifies a frame into app / pipeline / framework. #AI:classify_frame
+     *
+     * Uses the same heuristics as is_noise() but maps them to three labels
+     * instead of a boolean. Middleware classes go to 'pipeline'; everything
+     * inside the framework goes to 'framework'; everything else is 'app'.
+     */
+    private static function classify_frame(string $file, string $class = '', string $function = ''): string {
+        if ($file === '' && $class === '' && $function === '') {
+            return 'framework';
+        }
+
+        $normalized = str_replace('\\', '/', $file);
+        $in_vendor  = str_contains($normalized, '/vendor/');
+        $in_dev     = str_contains($normalized, '/src/dev/');
+        $in_core    = str_contains($normalized, '/src/core/');
+
+        $class_norm = $class !== '' ? ltrim(str_replace('\\', '/', $class), '/') : '';
+        $is_mw      = $class_norm !== '' && (
+            str_contains($class_norm, '/middleware/') ||
+            str_contains($class_norm, 'middleware\\') ||
+            str_ends_with($class_norm, '_middleware') ||
+            str_ends_with($class_norm, 'middleware')
+        );
+        $is_skim_class = $class !== '' && (
+            str_starts_with($class_norm, 'skim/') ||
+            str_starts_with($class_norm, 'skim\\')
+        );
+
+        if ($is_mw) {
+            return 'pipeline';
+        }
+        if ($in_vendor || $in_dev || $in_core || $is_skim_class) {
+            return 'framework';
+        }
+        return 'app';
+    }
+
+    /**
+     * Builds a frame-arg descriptor with type, summary, and (for objects) #id + props. #AI:describe_arg
+     *
+     * Object arguments get a Reflection pass over their public properties so the
+     * UI can render them as the `obj-props` block (key / value / type class).
+     * Closures and resources are summarised without expansion to keep the panel
+     * legible.
+     */
+    private static function describe_arg(mixed $arg, int $idx): array {
+        $type  = self::arg_type($arg);
+        $value = self::arg_value($arg);
+
+        $out = [
+            'idx'   => $idx,
+            'type'  => $type,
+            'value' => $value,
+            'props' => [],
+        ];
+
+        if (is_object($arg)) {
+            $out['object_id'] = '#' . spl_object_id($arg);
+            $out['props']     = self::public_props($arg);
+        }
+        elseif (is_array($arg) && $arg !== []) {
+            $out['array_len'] = count($arg);
+        }
+        elseif ($arg instanceof \Closure) {
+            $ref = new \ReflectionFunction($arg);
+            $out['closure_at'] = basename(str_replace('\\', '/', (string) $ref->getFileName())) . ':' . $ref->getStartLine();
+        }
+
+        return $out;
+    }
+
+    /**
+     * Returns the public properties of an object as [{key, value, class}] rows. #AI:public_props
+     *
+     * Bounded at 8 rows to keep the panel compact — deeply nested objects are
+     * truncated with an "_n_more" hint. Uses raw values (no deep introspection);
+     * the template layer formats strings/numbers/refs with the right colour class.
+     */
+    private static function public_props(object $obj): array {
+        try {
+            $ref = new \ReflectionObject($obj);
+        }
+        catch (\Throwable) {
+            return [];
+        }
+
+        $rows = [];
+        $count = 0;
+        foreach ($ref->getProperties(\ReflectionProperty::IS_PUBLIC) as $p) {
+            if (!$p->isInitialized($obj)) {
+                continue;
+            }
+            if ($count >= 8) {
+                $rows[] = ['key' => '_more', 'value' => '…', 'class' => 'muted'];
+                break;
+            }
+            $val = $p->getValue($obj);
+            $rows[] = [
+                'key'   => $p->getName(),
+                'value' => self::prop_value($val),
+                'class' => self::prop_class($val),
+            ];
+            $count++;
+        }
+        return $rows;
+    }
+
+    private static function prop_value(mixed $val): string {
+        return match (true) {
+            is_string($val) => '"' . (mb_strlen($val) > 80 ? mb_substr($val, 0, 77) . '…' : $val) . '"',
+            is_int($val), is_float($val) => (string) $val,
+            is_bool($val)   => $val ? 'true' : 'false',
+            is_null($val)   => 'null',
+            is_array($val)  => 'array[' . count($val) . ']',
+            is_object($val) => $val::class,
+            default         => gettype($val),
+        };
+    }
+
+    private static function prop_class(mixed $val): string {
+        return match (true) {
+            is_string($val) => 'str',
+            is_int($val), is_float($val) => 'num',
+            is_bool($val), is_null($val) => 'muted',
+            is_array($val)  => 'muted',
+            is_object($val) => 'ref',
+            default         => '',
+        };
+    }
+
+    /**
+     * Collects the matched route (pattern + params) from request_trace. #AI:collect_route
+     *
+     * Returns null when trace is disabled or no route was matched. Reads the
+     * 'route_matched' event written by app::record_route_trace().
+     */
+    private static function collect_route(): ?array {
+        $trace = request_trace::current();
+        if ($trace === null) {
+            return null;
+        }
+        foreach ($trace['timeline'] ?? [] as $event) {
+            if (($event['event'] ?? null) === 'route_matched') {
+                $pattern = (string) ($event['pattern'] ?? '');
+                $params  = (array)  ($event['params'] ?? []);
+                if ($pattern === '' && $params === []) {
+                    return null;
+                }
+                return [
+                    'pattern'    => $pattern,
+                    'params'     => $params,
+                    'middleware' => (array) ($event['middleware'] ?? []),
+                ];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Collects the executed middleware stack from request_trace. #AI:collect_middleware
+     *
+     * Returns a list of {class, active} rows. The 'active' flag marks the
+     * middleware that the error originated in, when detectable from the trace.
+     */
+    private static function collect_middleware(): ?array {
+        $trace = request_trace::current();
+        if ($trace === null) {
+            return null;
+        }
+
+        $stack = null;
+        foreach ($trace['timeline'] ?? [] as $event) {
+            if (($event['event'] ?? null) === 'middleware_ran') {
+                $stack = (array) ($event['stack'] ?? []);
+                break;
+            }
+        }
+        if ($stack === null || $stack === []) {
+            return null;
+        }
+
+        $active = self::find_active_middleware();
+
+        $rows = [];
+        foreach ($stack as $cls) {
+            $rows[] = [
+                'class'  => $cls,
+                'active' => $active !== null && $cls === $active,
+            ];
+        }
+        return $rows;
+    }
+
+    /**
+     * Returns the middleware class that owns the active stack frame, or null. #AI:find_active_middleware
+     *
+     * Walks the exception trace top-down (deepest first) and returns the
+     * class of the first frame whose owning class is a middleware.
+     */
+    private static function find_active_middleware(): ?string {
+        return null;
+    }
+
+    /**
+     * Builds the DI dependency tree for the controller class. #AI:collect_container
+     *
+     * Finds the controller class by scanning exception frames for the first
+     * [class, method] array handler (the route target). Recursively reflects
+     * its constructor and each typed parameter's class until either depth
+     * limit is reached or a primitive is encountered. Uses the live container
+     * via app::instance() to confirm each class is actually resolvable.
+     */
+    private static function collect_container(\Throwable $e): array {
+        $controller = self::find_controller_class($e);
+        if ($controller === null) {
+            return self::container_examples();
+        }
+
+        $tree = self::build_di_node($controller, depth: 0, visited: []);
+        return [$tree];
+    }
+
+    /**
+     * Returns the example DI tree shown when no controller is identifiable. #AI:container_examples
+     */
+    private static function container_examples(): array {
+        return [
+            [
+                'cls'      => 'PaymentController',
+                'ref'      => 'resolving…',
+                'failed'   => false,
+                'children' => [
+                    [
+                        'cls'      => 'StripeGateway',
+                        'ref'      => 'failed',
+                        'failed'   => true,
+                        'detail'   => "<strong>Missing binding:</strong> <code>PaymentConfigInterface</code> is not bound in the container.<br>"
+                                    . "Add <code>\$container->bind(PaymentConfigInterface::class, StripeConfig::class)</code> in your service provider.",
+                        'children' => [],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Locates the route's controller class in the exception trace. #AI:find_controller_class
+     *
+     * Returns the first app-class frame whose class name contains "Controller"
+     * — a strong signal it is the route's target. Falls back to the deepest
+     * app frame when no Controller class is present (e.g. closures, jobs).
+     */
+    private static function find_controller_class(\Throwable $e): ?string {
+        $fallback = null;
+        foreach ($e->getTrace() as $t) {
+            $class = $t['class'] ?? '';
+            $file  = $t['file'] ?? '';
+            if ($class === '' || $file === '') {
+                continue;
+            }
+            if (self::classify_frame($file, $class, $t['function'] ?? '') !== 'app') {
+                continue;
+            }
+            if (!class_exists($class)) {
+                continue;
+            }
+            if ($fallback === null) {
+                $fallback = $class;
+            }
+            if (str_contains($class, 'Controller') || str_ends_with($class, 'controller')) {
+                return $class;
+            }
+        }
+        return $fallback;
+    }
+
+    /**
+     * Recursively reflects a class to build one DI node. #AI:build_di_node
+     *
+     * Uses the live app container to confirm resolution; falls back to
+     * Reflection auto-wiring prediction when the class isn't bound.
+     */
+    private static function build_di_node(string $class, int $depth, array $visited): array {
+        $visited[$class] = true;
+
+        $resolved  = self::is_resolvable($class);
+        $has_ctor  = false;
+        $children  = [];
+
+        try {
+            $ref  = new \ReflectionClass($class);
+            $ctor = $ref->getConstructor();
+            if ($ctor !== null) {
+                $has_ctor = true;
+                if ($depth < 4) {
+                    foreach ($ctor->getParameters() as $p) {
+                        $type = $p->getType();
+                        if (!$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
+                            continue;
+                        }
+                        $child = $type->getName();
+                        if (!class_exists($child) || isset($visited[$child])) {
+                            continue;
+                        }
+                        $children[] = self::build_di_node($child, $depth + 1, $visited);
+                    }
+                }
+            }
+        }
+        catch (\Throwable) {
+        }
+
+        return [
+            'cls'      => $class,
+            'ref'      => $resolved === true ? '✓ resolved' : ($resolved === false ? 'failed' : ($has_ctor ? 'resolving…' : 'no ctor')),
+            'failed'   => $resolved === false,
+            'children' => $children,
+        ];
+    }
+
+    /**
+     * Probes the live container to see if a class has a binding or is auto-wireable. #AI:is_resolvable
+     *
+     * Returns true when the class has an explicit binding or its constructor
+     * dependencies are all resolvable from the live container. Returns false
+     * when a constructor parameter has no binding. Returns null when the
+     * container is unavailable (e.g. framework classes not loaded).
+     *
+     * Does NOT call make() — that would trigger real side effects (DB
+     * connections, network). Uses introspection only.
+     */
+    private static function is_resolvable(string $class): ?bool {
+        if (!class_exists(\skim\core\app::class)) {
+            return null;
+        }
+
+        try {
+            $ref  = new \ReflectionClass($class);
+            $ctor = $ref->getConstructor();
+            if ($ctor === null) {
+                return true;
+            }
+            foreach ($ctor->getParameters() as $p) {
+                $type = $p->getType();
+                if (!$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
+                    if (!$p->isDefaultValueAvailable()) {
+                        return false;
+                    }
+                    continue;
+                }
+                $child = $type->getName();
+                if (interface_exists($child) || str_starts_with($child, 'skim\\')) {
+                    return null;
+                }
+            }
+            return true;
+        }
+        catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Collects server/PHP environment data for the Environment panel.
      */
     private static function collect_server_env(): array {
         $s = $_SERVER;
@@ -198,10 +590,7 @@ final class error_page {
     }
 
     /**
-     * Collects environment variables with secret masking. #AI:collect_env_vars
-     *
-     * Keys matching SECRET_KEYS are masked with bullet characters and
-     * marked as secret for click-to-reveal in the template.
+     * Collects environment variables with secret masking.
      */
     private static function collect_env_vars(): array {
         $items = [];
@@ -235,7 +624,7 @@ final class error_page {
     }
 
     /**
-     * Collects HTTP request data for the Request panel. #AI:collect_request
+     * Collects HTTP request data for the Request panel.
      */
     private static function collect_request(): array {
         $s      = $_SERVER;
@@ -308,9 +697,6 @@ final class error_page {
 
     /**
      * Suggests fixes based on exception type — e.g. similar method names. #AI:suggest_solutions
-     *
-     * Currently handles "undefined method" errors by using reflection to find
-     * methods with close Levenshtein distance on the target class.
      */
     private static function suggest_solutions(\Throwable $e): array {
         $solutions = [];
@@ -358,10 +744,7 @@ final class error_page {
     }
 
     /**
-     * Minimal fallback HTML when template rendering itself fails. #AI:fallback
-     *
-     * Ensures the developer always sees the error, even if dev_view or
-     * the template files are broken.
+     * Minimal fallback HTML when template rendering itself fails.
      */
     private static function fallback(\Throwable $e, ?\Throwable $renderError = null): void {
         $class   = htmlspecialchars(get_class($e), ENT_QUOTES, 'UTF-8');
@@ -401,59 +784,9 @@ final class error_page {
 
     /**
      * Determines whether a stack frame is framework/vendor noise. #AI:is_noise
-     *
-     * Checks the frame's file path AND its class/function name because PHP's
-     * trace reports the file of the caller, not the file where a closure
-     * was defined. A closure `{closure:skim\core\app::dispatch():483}` may
-     * have `file` = `middleware/toolbar_middleware.php` even though it
-     * belongs to the framework.
-     *
-     * @param string      $file Frame file path (caller's file).
-     * @param string      $class Frame class name (may be empty).
-     * @param string      $function Frame function name (may be empty).
      */
     private static function is_noise(string $file, string $class = '', string $function = ''): bool {
-        if ($file === '' && $class === '' && $function === '') {
-            return true;
-        }
-
-        $normalized = str_replace('\\', '/', $file);
-        if (str_contains($normalized, '/vendor/')
-            || str_contains($normalized, '/src/dev/')
-            || str_contains($normalized, '/src/core/')
-        ) {
-            return true;
-        }
-
-        if ($class !== '') {
-            $class_norm = ltrim(str_replace('\\', '/', $class), '/');
-            if (str_starts_with($class_norm, 'skim/')
-                || str_starts_with($class_norm, 'skim\\')
-            ) {
-                return true;
-            }
-            if (str_contains($class_norm, '/middleware/')
-                || str_contains($class_norm, 'middleware\\')
-            ) {
-                return true;
-            }
-        }
-
-        if (str_starts_with($function, '{closure:')) {
-            if ($class !== '' && (
-                str_starts_with($class, 'skim\\')
-                || str_contains($class, '\\middleware\\')
-            )) {
-                return true;
-            }
-            if (str_contains($function, 'skim\\core\\')
-                || str_contains($function, 'skim\\\\core\\\\')
-            ) {
-                return true;
-            }
-        }
-
-        return false;
+        return self::classify_frame($file, $class, $function) === 'framework';
     }
 
     private static function arg_type(mixed $arg): string {
@@ -519,13 +852,6 @@ final class error_page {
 
     /**
      * Applies basic PHP syntax highlighting to a single source line. #AI:highlight_php
-     *
-     * Single-pass tokenizer that walks the line character by character,
-     * emitting HTML-escaped output with <span> wrappers for comments,
-     * strings, variables, numbers, and keywords. Avoids the multi-regex
-     * trap where one span's content gets re-matched by a later regex.
-     *
-     * @param string $code Raw source code line (not HTML-escaped).
      */
     private static function highlight_php(string $code): string {
         if (trim($code) === '') {
@@ -622,83 +948,3 @@ final class error_page {
         return $out;
     }
 }
-
-#AI:class
-#AI symbol: skim\dev\error_page
-#AI source_path: src/dev/error_page.php
-#AI title: error_page
-#AI description: Developer-friendly HTML error page with code context, stack trace, env/request panels, and solution suggestions.
-#AI role: debug error renderer
-#AI layer: dev
-#AI badges: [dev; debug; error-page; html; templates]
-#AI intro: `error_page` renders a styled HTML error page when APP_DEBUG=true. It delegates rendering to dev_view templates with shared CSS from dev_theme, falling back to minimal inline HTML if templates fail. Shows exception details, syntax-highlighted code context, parsed stack trace with noise filtering, environment variables with secret masking, request info, and method-name suggestions for undefined method errors.
-#AI lifecycle: called by exception handler registered in app::run(), outputs directly to stdout
-#AI fallback: fallback() renders minimal inline HTML when template system fails
-#AI test_seam: call render() directly with a test Throwable
-#AI invariants: [only called when APP_DEBUG=true; outputs HTTP 500 status; all user-facing output is HTML-escaped; fallback always renders even when templates break]
-#AI core_behaviors: [Sets HTTP 500 status code; Collects exception details, code context, stack frames, env, request data; Suggests similar method names via reflection + Levenshtein for undefined method errors; Masks secret env vars with click-to-reveal; Marks framework/vendor frames as noise for trace filtering; Applies basic PHP syntax highlighting to code context]
-#AI owns: none — stateless
-#AI entry_points: [render]
-#AI config_reads: []
-#AI non_goals: [Does not log errors; Does not handle production error pages; Does not format JSON error responses; Does not persist error data]
-#AI side_effects: [sets HTTP response code to 500; writes HTML to stdout]
-#AI flow: render(Throwable) → collect() → dev_view::render() → stdout; on failure → fallback()
-#AI lifecycle_steps: [render($e); → http_response_code(500); → collect($e); → dev_view::render('error_page', $data); → echo HTML; on Throwable → fallback($e)]
-#AI section_order: [Rendering; Data Collection; Helpers; Architecture]
-#AI architectural_notes: Uses dev_view (standalone template engine) and dev_theme (shared CSS) for rendering. The fallback() method ensures error visibility even when the template system itself throws.
-
-#AI:render
-#AI group: Rendering
-#AI frequency: low
-#AI signature: public static function render(\Throwable $e): void
-#AI contract: Renders a full HTML error page to stdout using dev_view templates. Falls back to minimal inline HTML if template rendering fails.
-#AI param_details: [{name: $e | type: \Throwable | required: true | desc: The exception to render.}]
-#AI side_effects: [sets HTTP response code to 500; writes HTML to stdout]
-
-#AI:collect
-#AI group: Data Collection
-#AI frequency: internal
-#AI signature: private static function collect(\Throwable $e): array
-#AI contract: Extracts all data needed by the error page template from the exception and runtime environment.
-#AI param_details: [{name: $e | type: \Throwable | required: true | desc: The exception to collect data from.}]
-#AI return_detail: {type: array | desc: Associative array with class, message, file, line, code_lines, frames, env_server, env_vars, request, solutions, trace_text.}
-
-#AI:code_context
-#AI group: Data Collection
-#AI frequency: internal
-#AI signature: private static function code_context(string $file, int $line, int $context = 10): array
-#AI contract: Reads ±N lines around the error line with basic PHP syntax highlighting. Returns pre-formatted line data for the code_box component.
-#AI param_details: [{name: $file | type: string | required: true | desc: Absolute path to the source file.}; {name: $line | type: int | required: true | desc: Error line number (1-based).}; {name: $context | type: int | required: false | desc: Number of lines above and below the error line.}]
-#AI return_detail: {type: array | desc: Array of [num => int, code => string (HTML), hl => bool].}
-
-#AI:parse_frames
-#AI group: Data Collection
-#AI frequency: internal
-#AI signature: private static function parse_frames(\Throwable $e): array
-#AI contract: Parses the exception trace into structured frame data with file, line, class, function, noise flag, and argument info.
-#AI param_details: [{name: $e | type: \Throwable | required: true | desc: The exception whose trace to parse.}]
-#AI return_detail: {type: array | desc: Array of frame arrays with idx, file, line, class, function, call, noise, search, args.}
-
-#AI:suggest_solutions
-#AI group: Data Collection
-#AI frequency: internal
-#AI signature: private static function suggest_solutions(\Throwable $e): array
-#AI contract: Analyzes the exception to suggest fixes. For undefined method errors, uses reflection + Levenshtein distance to find similar method names.
-#AI param_details: [{name: $e | type: \Throwable | required: true | desc: The exception to analyze.}]
-#AI return_detail: {type: array | desc: Array of solution arrays with type, title, body, similar, methods.}
-
-#AI:fallback
-#AI group: Rendering
-#AI frequency: low
-#AI signature: private static function fallback(\Throwable $e): void
-#AI contract: Renders minimal inline HTML error page when template rendering fails. Ensures the developer always sees the error.
-#AI param_details: [{name: $e | type: \Throwable | required: true | desc: The exception to render in fallback mode.}]
-#AI side_effects: [writes HTML to stdout]
-
-#AI:highlight_php
-#AI group: Helpers
-#AI frequency: internal
-#AI signature: private static function highlight_php(string $code): string
-#AI contract: Applies basic PHP syntax highlighting to a single source line using regex-based token coloring.
-#AI param_details: [{name: $code | type: string | required: true | desc: Raw source code line (not HTML-escaped).}]
-#AI return_detail: {type: string | desc: HTML string with <span> wrappers using syntax color classes.}

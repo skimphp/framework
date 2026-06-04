@@ -23,6 +23,9 @@ final class profiler {
     private static array $events   = [];
     private static bool  $enabled  = false;
 
+    // custom panel registry: id → {id, label, icon, html, data, template}
+    private static array $panels   = [];
+
     /**
      * Enables event collection. #AI:enable
      */
@@ -134,6 +137,45 @@ final class profiler {
     }
 
     /**
+     * Registers a custom toolbar panel for user-defined debug extensions. #AI:panel
+     *
+     * Use in controllers, middleware, or extensions to add debug panels to
+     * the toolbar. Panels appear as additional tabs after the built-in ones.
+     * When $html is provided, it renders directly. When $template is set,
+     * the toolbar renders it via dev_view with $data.
+     *
+     * Example:
+     *   profiler::panel('htmx', 'htmx Debug', [
+     *       'icon' => 'arrows exchange',
+     *       'data' => ['swaps' => 3, 'boosts' => 1],
+     *   ]);
+     *
+     * @param string      $id       Unique panel identifier (used as tab data-tab).
+     * @param string      $label    Tab label shown in the toolbar.
+     * @param array       $options  Panel options: icon, html, data, template.
+     */
+    public static function panel(string $id, string $label, array $options = []): void {
+        if (!self::$enabled) {
+            return;
+        }
+        self::$panels[$id] = array_merge([
+            'id'       => $id,
+            'label'    => $label,
+            'icon'     => 'puzzle',
+            'html'     => '',
+            'data'     => [],
+            'template' => '',
+        ], $options);
+    }
+
+    /**
+     * Returns all registered custom panels for toolbar rendering. #AI:panels
+     */
+    public static function panels(): array {
+        return self::$panels;
+    }
+
+    /**
      * Clears the event buffer without disabling the profiler. #AI:reset
      *
      * Call in tests between requests to isolate per-request data.
@@ -141,6 +183,7 @@ final class profiler {
      */
     public static function reset(): void {
         self::$events = [];
+        self::$panels = [];
     }
 }
 

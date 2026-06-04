@@ -293,11 +293,29 @@ class router {
                 'handler'    => $info[1]['handler'],
                 'params'     => $info[2],
                 'middleware' => $info[1]['middleware'] ?? [],
+                'pattern'    => $this->pattern_for_handler($info[1]['handler'], $method),
             ],
             Dispatcher::NOT_FOUND         => null,
             Dispatcher::METHOD_NOT_ALLOWED => false,
             default                        => null,
         };
+    }
+
+    /**
+     * Returns the original (un-compiled) pattern registered for a handler+method. #AI:pattern_for_handler
+     *
+     * Used by the trace recorder to publish the readable pattern like `/users/@id:int`
+     * rather than the compiled fast-route regex form. Returns null when no matching
+     * route is found in the registration list.
+     */
+    private function pattern_for_handler(mixed $handler, string $method): ?string {
+        foreach ($this->routes as $r) {
+            $methods = (array) $r['methods'];
+            if ($r['handler'] === $handler && in_array($method, $methods, true)) {
+                return $r['entry']->pattern;
+            }
+        }
+        return null;
     }
 
     /**

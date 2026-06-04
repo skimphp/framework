@@ -47,8 +47,41 @@ class pipeline {
         array    $middlewares,
         callable $core,
     ): mixed {
+        $this->record_pipeline_trace($req, $middlewares);
+
         $chain = $this->build($middlewares, $core);
         return $chain($req, $res);
+    }
+
+    /**
+     * Emits one timeline event summarising the middleware stack for this request. #AI:record_pipeline_trace
+     *
+     * Called at the top of run() so the trace always carries a 'middleware_ran' event
+     * with the full class list (in execution order) and a synthetic marker identifying
+     * the innermost entry. Read by the error page's Request panel and the toolbar.
+     *
+     * No-op when request_trace is disabled — never throws.
+     */
+    private function record_pipeline_trace(request $req, array $middlewares): void {
+        if (!\skim\dev\request_trace::is_enabled()) {
+            return;
+        }
+
+        $classes = array_values(array_map(
+            static fn(string|array|middleware $entry): string
+                => match (true) {
+                    $entry instanceof middleware => $entry::class,
+                    is_string($entry)            => $entry,
+                    default                      => (string) ($entry['class'] ?? '?'),
+                },
+            $middlewares,
+        ));
+
+        \skim\dev\request_trace::event('middleware_ran', [
+            'method' => $req->method(),
+            'path'   => $req->path(),
+            'stack'  => $classes,
+        ]);
     }
 
     /**
