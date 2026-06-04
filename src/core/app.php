@@ -73,7 +73,10 @@ class app {
      *
      * @param string $root Project root directory used for .env and config resolution.
      */
-    private function __construct(private readonly string $root) {}
+    private function __construct(private readonly string $root) {
+        $this->router   = new router();
+        $this->pipeline = new pipeline();
+    }
 
     /**
      * Resets resolved singletons and user scope on clone. #AI:__clone
@@ -90,16 +93,18 @@ class app {
     /**
      * Returns the process-wide singleton, creating it on first call. #AI:instance
      *
-     * Does NOT call `boot()` — boot is deferred to `run()` or `dispatch()` via
-     * `ensureBooted()`. This allows extensions and routes to be registered
-     * before the boot sequence runs.
+     * Initializes router and pipeline immediately so routes can be registered
+     * before `boot()` is called. Full boot (extensions, view layout) is deferred
+     * to `run()` or `dispatch()` via `ensureBooted()`.
      *
-     * @return static The application instance (not yet booted).
+     * @return static The application instance with router ready for route registration.
      */
     public static function instance(): static {
         if (self::$instance === null) {
             $root = defined('SKIM_ROOT') ? SKIM_ROOT : dirname(__DIR__, 2);
             self::$instance = new static($root);
+            self::$instance->router->set_mutation_guard(fn(): bool => !self::$instance->frozen);
+            self::$instance->set('sys.router', self::$instance->router);
         }
         return self::$instance;
     }
@@ -123,8 +128,6 @@ class app {
         foreach ($config as $key => $val) {
             $inst->app_data[$key] = $val;
         }
-        $inst->router   = new router();
-        $inst->pipeline = new pipeline();
         $inst->router->set_mutation_guard(fn(): bool => !$inst->frozen);
         $inst->set('sys.router', $inst->router);
         return $inst;
@@ -147,11 +150,6 @@ class app {
         if ($layout = config::get('app.view.default_layout')) {
             \skim\view\view::set_default_layout((string) $layout);
         }
-
-        $this->router   = new router();
-        $this->pipeline = new pipeline();
-        $this->router->set_mutation_guard(fn(): bool => !$this->frozen);
-        $this->set('sys.router', $this->router);
 
         $this->extension_manager = extension_manager::discover($this->root, $this);
         $this->extension_manager->register($this);
