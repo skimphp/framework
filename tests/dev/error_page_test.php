@@ -2,6 +2,7 @@
 
 use skim\dev\error_page;
 use skim\core\config;
+use skim\core\app;
 
 beforeEach(function(): void {
     config::reset();
@@ -76,6 +77,15 @@ describe('error_page::render()', function(): void {
         expect($html)->toContain('data-tab="request"');
     });
 
+    test('container panel is rendered with DI tree structure', function(): void {
+        $html = capture_error_page(new \RuntimeException('test'));
+        expect($html)->toContain('id="panel-container"');
+        expect($html)->toContain('class="di-tree"');
+        // Falls back to the hard-coded example (PaymentController → StripeGateway)
+        // when no controller is identifiable in the stack trace.
+        expect($html)->toContain('PaymentController');
+    });
+
     test('contains shared design system CSS variables', function(): void {
         $html = capture_error_page(new \RuntimeException('test'));
         expect($html)->toContain('--bg:');
@@ -134,6 +144,68 @@ describe('error_page::render()', function(): void {
         expect($arg['props'][0]['value'])->toBe('42');
     });
 
+    test('all_props() reads private and protected properties via Closure::bind', function(): void {
+        // Use a controlled fixture with all three visibilities — \Closure::bind
+        // should give us access to private/protected state without ever calling
+        // any setter or instantiating anything.
+        $obj = new class {
+            public string    $public_a  = 'pub';
+            protected int   $protected_b = 99;
+            private ?string $private_c  = 'secret';
+        };
+
+        $ref   = new \ReflectionClass(error_page::class);
+        $method = $ref->getMethod('all_props');
+        $rows   = $method->invoke(null, $obj);
+
+        $keys = array_column($rows, 'key');
+        expect($keys)->toContain('public_a');
+        expect($keys)->toContain('protected_b (p)');
+        expect($keys)->toContain('private_c (p)');
+    });
+
+    test('all_props() respects the 8-row cap with _more hint', function(): void {
+        $obj = new class {
+            public int $a = 1; public int $b = 2; public int $c = 3; public int $d = 4;
+            public int $e = 5; public int $f = 6; public int $g = 7; public int $h = 8;
+            public int $i = 9; public int $j = 10;
+        };
+        $ref    = new \ReflectionClass(error_page::class);
+        $method = $ref->getMethod('all_props');
+        $rows   = $method->invoke(null, $obj);
+
+        // 8 rows + 1 _more hint
+        expect(count($rows))->toBe(9);
+        expect($rows[8]['key'])->toBe('_more');
+        expect($rows[8]['value'])->toBe('…');
+    });
+
+    test('all_props() returns empty for unreflectable objects', function(): void {
+        // stdClass is an internal class — Closure::bind can't bind to its scope,
+        // so the method falls back to get_object_vars() for dynamic properties.
+        // A stdClass with no dynamic properties returns [].
+        $ref    = new \ReflectionClass(error_page::class);
+        $method = $ref->getMethod('all_props');
+        $rows   = $method->invoke(null, new \stdClass());
+
+        expect($rows)->toBe([]);
+    });
+
+    test('all_props() falls back to get_object_vars() for stdClass dynamic properties', function(): void {
+        // stdClass can't be ReflectionObject-ed via Closure::bind (internal class)
+        // — the method must use get_object_vars() as a fallback for dynamic props.
+        $obj = new \stdClass();
+        $obj->id   = 42;
+        $obj->name = 'Alice';
+        $ref    = new \ReflectionClass(error_page::class);
+        $method = $ref->getMethod('all_props');
+        $rows   = $method->invoke(null, $obj);
+
+        $keys = array_column($rows, 'key');
+        expect($keys)->toContain('id');
+        expect($keys)->toContain('name');
+    });
+
     test('primitive scalar args return a short form, not an object expansion', function(): void {
         $ref = new \ReflectionClass(error_page::class);
         $method = $ref->getMethod('describe_arg');
@@ -154,11 +226,47 @@ describe('error_page::render()', function(): void {
         expect($arg['value'])->toBe('null');
     });
 
-    test('container panel is rendered with DI tree structure', function(): void {
+    test('container panel shows the failed-resolution example as a demo', function(): void {
+        // The hard-coded PaymentController → StripeGateway example is always
+        // shown at the bottom of the panel as a "what failure looks like"
+        // demo, regardless of the actual request.
         $html = capture_error_page(new \RuntimeException('test'));
         expect($html)->toContain('id="panel-container"');
         expect($html)->toContain('class="di-tree"');
+        expect($html)->toContain('Example — failed resolution');
         expect($html)->toContain('PaymentController');
+        expect($html)->toContain('StripeGateway');
+    });
+
+    test('DI tree marks resolved services with the green checkmark', function(): void {
+        // Verify build_di_node() produces the `resolved` flag for services
+        // that appear in app::resolved_services() — the di_node component
+        // renders the green ✓ marker when this flag is true.
+        app::test_instance();
+        app::instance()->bind('svc.alpha', fn() => 'A');
+        app::instance()->make('svc.alpha');
+
+        $ref = new \ReflectionMethod(\skim\dev\error_page::class, 'build_di_node');
+        $ref->setAccessible(true);
+        $node = $ref->invoke(null, 'svc.alpha', depth: 0, visited: []);
+
+        expect($node['cls'])->toBe('svc.alpha');
+        expect($node['resolved'])->toBeTrue();
+        expect($node['ref'])->toBe('✓ resolved');
+    });
+
+    test('DI tree marks unresolved services without the checkmark', function(): void {
+        // A service that's bound but not yet resolved should NOT be marked
+        // as resolved — only services in app::resolved_services() get the ✓.
+        app::test_instance();
+        app::instance()->bind('svc.beta', fn() => 'B');
+
+        $ref = new \ReflectionMethod(\skim\dev\error_page::class, 'build_di_node');
+        $ref->setAccessible(true);
+        $node = $ref->invoke(null, 'svc.beta', depth: 0, visited: []);
+
+        expect($node['resolved'])->toBeFalse();
+        expect($node['ref'])->not->toBe('✓ resolved');
     });
 
     test('solutions are rendered inline (not a separate tab)', function(): void {

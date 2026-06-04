@@ -35,7 +35,15 @@ class serve_command extends command {
         $this->muted('Press Ctrl+C to stop.');
         $this->line();
 
-        $php_cmd  = "php -S {$host}:{$port} -t {$root}";
+        $ini_flags = trim((string) (getenv('PHP_INI_FLAGS') ?? ''));
+        $ini_args  = $ini_flags === '' ? '' : ' ' . $ini_flags;
+        $workers   = (int) (getenv('PHP_CLI_SERVER_WORKERS') ?? 0);
+        $preload   = base_path('storage/preload.php');
+        $preload_arg = is_file($preload) ? ' -d opcache.preload=' . escapeshellarg($preload) : '';
+        $php_cmd   = "php{$ini_args}{$preload_arg} -S {$host}:{$port} -t {$root}";
+        if ($workers > 0) {
+            $php_cmd = "PHP_CLI_SERVER_WORKERS={$workers} {$php_cmd}";
+        }
         $vite_cmd = file_exists(base_path('package.json')) ? 'npm run dev' : null;
 
         $procs = [];

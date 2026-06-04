@@ -281,6 +281,9 @@ body {
 .di-cls { color: var(--s-cls); }
 .di-ref { color: var(--muted); font-size: 12px; }
 .di-row.failed .di-cls { color: var(--danger); }
+.di-row.resolved .di-cls { color: #f9e2af; }
+.di-resolved { display: inline-flex; align-items: center; gap: 4px; color: var(--ok); font-size: 12px; }
+.di-check { color: var(--ok); font-weight: 700; }
 .di-fail-badge { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; background: var(--danger-dim); border: 1px solid rgba(241,76,76,.2); color: var(--danger); }
 .di-fail-detail { margin: 6px 0 8px 28px; padding: 10px 14px; background: var(--danger-dim); border: 1px solid rgba(241,76,76,.2); border-radius: 5px; font-size: 12.5px; color: var(--text); line-height: 1.7; }
 .di-fail-detail strong { color: var(--danger); }

@@ -269,29 +269,54 @@ $e = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
       <?php foreach ($container as $node): ?>
         <?= $this->include('components/di_node', ['node' => $node, 'depth' => 0]) ?>
       <?php endforeach ?>
-
-      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
-        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px">Example — failed resolution</div>
-        <?= $this->include('components/di_node', [
-          'node' => [
-            'cls'      => 'PaymentController',
-            'ref'      => 'resolving…',
-            'failed'   => false,
-            'children' => [
-              [
-                'cls'    => 'StripeGateway',
-                'ref'    => 'failed',
-                'failed' => true,
-                'detail' => '<strong>Missing binding:</strong> <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px;color:var(--s-cls)">PaymentConfigInterface</code> is not bound in the container.<br>'
-                          . 'Add <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px;color:var(--s-fn)">$container-&gt;bind(PaymentConfigInterface::class, StripeConfig::class)</code> in your service provider.',
-                'children' => [],
-              ],
+    </div>
+<!--
+    <div style="margin-top:32px;padding-top:20px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px">Example — failed resolution</div>
+      <?= $this->include('components/di_node', [
+        'node' => [
+          'cls'      => 'PaymentController',
+          'ref'      => 'resolving…',
+          'failed'   => false,
+          'children' => [
+            [
+              'cls'    => 'StripeGateway',
+              'ref'    => 'failed',
+              'failed' => true,
+              'detail' => '<strong>Missing binding:</strong> <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px;color:var(--s-cls)">PaymentConfigInterface</code> is not bound in the container.<br>'
+                        . 'Add <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px;color:var(--s-fn)">$container-&gt;bind(PaymentConfigInterface::class, StripeConfig::class)</code> in your service provider.',
+              'children' => [],
             ],
           ],
-          'depth' => 0,
-        ]) ?>
+        ],
+        'depth' => 0,
+      ]) ?>
+    </div>
+-->
+    <?php if ($bindings_list !== []): ?>
+    <div style="margin-top:32px;padding-top:20px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px">All bindings (<?= (int)count($bindings_list) ?>)</div>
+      <div class="kv-grid">
+        <?php foreach ($bindings_list as $b): ?>
+        <div class="kv-cell">
+          <span class="kv-k"><?= $e($b['abstract']) ?></span>
+          <span class="kv-v" style="font-size:11px;color:var(--muted)"><?= $e($b['factory']) ?> · p<?= (int)$b['priority'] ?></span>
+        </div>
+        <?php endforeach ?>
       </div>
     </div>
+    <?php endif ?>
+
+    <?php if ($resolved_list !== []): ?>
+    <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ok);margin-bottom:12px">Resolved in this request (<?= (int)count($resolved_list) ?>)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <?php foreach ($resolved_list as $r): ?>
+        <span class="badge ok" style="font-family:var(--mono);font-size:11px"><?= $e($r['abstract']) ?></span>
+        <?php endforeach ?>
+      </div>
+    </div>
+    <?php endif ?>
   </div>
 </div>
 

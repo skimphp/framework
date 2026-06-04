@@ -15,17 +15,25 @@
 //   php skim list --agent
 
 // Locate autoload.php whether this is the root project or a dependency.
-$candidates = [
-    __DIR__ . '/../vendor/autoload.php',       // framework is root (dev)
-    __DIR__ . '/../../autoload.php',           // installed as vendor/skim/framework/bin/
-    __DIR__ . '/../../../autoload.php',        // deeper nesting (monorepo, etc.)
-];
-
+// Composer's bin proxy sets _composer_autoload_path — use it when available
+// to resolve correctly even with symlinked packages.
 $autoload = null;
-foreach ($candidates as $file) {
-    if (file_exists($file)) {
-        $autoload = realpath($file);
-        break;
+
+if (isset($GLOBALS['_composer_autoload_path']) && is_file($GLOBALS['_composer_autoload_path'])) {
+    $autoload = realpath($GLOBALS['_composer_autoload_path']);
+}
+
+if (!$autoload) {
+    $candidates = [
+        __DIR__ . '/../vendor/autoload.php',       // framework is root (dev)
+        __DIR__ . '/../../autoload.php',           // installed as vendor/skim/framework/bin/
+        __DIR__ . '/../../../autoload.php',        // deeper nesting (monorepo, etc.)
+    ];
+    foreach ($candidates as $file) {
+        if (file_exists($file)) {
+            $autoload = realpath($file);
+            break;
+        }
     }
 }
 
@@ -36,8 +44,12 @@ if (!$autoload) {
 
 require $autoload;
 
-// Project root is the directory that contains vendor/autoload.php.
-define('SKIM_ROOT', dirname($autoload));
+// Project root is the directory that contains vendor/ (two levels up from vendor/autoload.php).
+define('SKIM_ROOT', dirname($autoload, 2));
+
+// Framework dev mode: true when running inside the framework source repo itself,
+// false when installed as a Composer dependency in a user project.
+define('SKIM_DEV', is_file(SKIM_ROOT . '/src/cli/kernel.php'));
 
 \skim\core\env::load(SKIM_ROOT . '/.env');
 \skim\core\config::load(SKIM_ROOT . '/config');

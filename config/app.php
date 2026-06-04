@@ -9,6 +9,10 @@ return [
     'key'      => env('APP_KEY', ''),
     'timezone' => 'UTC',
 
+    // Editor used for "Open in IDE" deep-links in the error page and toolbar.
+    // Supported: phpstorm, idea, webstorm, vscode, cursor, sublime, textmate, emacs, macvim, atom
+    'debug_ide' => env('APP_DEBUG_IDE', 'phpstorm'),
+
     'session' => [
         'driver'   => 'redis',
         'lifetime' => 7200,

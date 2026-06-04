@@ -41,6 +41,23 @@ class app {
     // Resolved singletons cache: abstract → instance (process-lifetime).
     private array $resolved = [];
 
+    // DI tracing — exposes in-flight resolution chain to error_page.
+    // Populated by make() when $tracing is on; read by error_page::collect_container()
+    // after a binding fails so the panel can show the exact stack that was being built.
+    //
+    //   $resolve_stack — chronological list of ['id' => string, 'time' => float]
+    //                    for every make() call currently in progress (LIFO).
+    //   $failed_at     — last abstract that threw during resolution (or null).
+    //   $partial_args  — constructor argument names that were being resolved
+    //                    when the failure occurred (frame context).
+    //   $bindings_snapshot — captured at boot() so the error page can list every
+    //                    registered binding even after the request blew up.
+    public array $resolve_stack    = [];
+    public ?string $failed_at      = null;
+    public array $partial_args     = [];
+    public array $bindings_snapshot = [];
+    public bool $tracing           = false;
+
     // SYS scope: framework internals, immutable after boot.
     private array $sys = [];
 
@@ -153,6 +170,33 @@ class app {
 
         $this->extension_manager = extension_manager::discover($this->root, $this);
         $this->extension_manager->register($this);
+
+        // Capture the bindings snapshot once at boot so the error page can list
+        // every registered service even if the request blows up later. Cheap —
+        // a single array_keys + a hash for type metadata.
+        $this->bindings_snapshot = $this->snapshot_bindings();
+    }
+
+    /**
+     * Returns a metadata array of every currently-registered binding. #AI:snapshot_bindings
+     *
+     * Used by error_page::collect_container() to render the "registered services"
+     * list in the Container panel. Captures [abstract, factory_kind, priority]
+     * triples; never the factory closure itself (closures don't survive var_export
+     * and would leak memory in the error page).
+     *
+     * @return array<int, array{abstract: string, factory_kind: string, priority: int}>
+     */
+    public function snapshot_bindings(): array {
+        $rows = [];
+        foreach ($this->bindings as $abstract => $factory) {
+            $rows[] = [
+                'abstract'     => $abstract,
+                'factory_kind' => is_string($factory) ? 'string' : 'closure',
+                'priority'     => $this->binding_priorities[$abstract] ?? 0,
+            ];
+        }
+        return $rows;
     }
 
     /**
@@ -313,22 +357,118 @@ class app {
             return $this->resolved[$abstract];
         }
 
-        if (isset($this->bindings[$abstract])) {
-            return $this->resolved[$abstract] = $this->apply_decorators(
-                $abstract,
-                ($this->bindings[$abstract])($this),
-            );
+        // DI tracing — record the in-flight chain so the error page can render
+        // it when something blows up downstream. Cost: one array_push + one
+        // array_pop per make() call, no-op when $tracing is off (default).
+        $tracking = $this->tracing;
+        if ($tracking) {
+            $this->resolve_stack[] = ['id' => $abstract, 'time' => microtime(true)];
         }
 
-        // auto-wire via reflection
-        if (class_exists($abstract)) {
-            return $this->resolved[$abstract] = $this->apply_decorators(
-                $abstract,
-                $this->build($abstract),
-            );
-        }
+        try {
+            if (isset($this->bindings[$abstract])) {
+                $instance = $this->apply_decorators(
+                    $abstract,
+                    ($this->bindings[$abstract])($this),
+                );
+                return $this->resolved[$abstract] = $instance;
+            }
 
-        throw new \RuntimeException("No binding registered for '{$abstract}'");
+            // auto-wire via reflection
+            if (class_exists($abstract)) {
+                $instance = $this->apply_decorators(
+                    $abstract,
+                    $this->build($abstract),
+                );
+                return $this->resolved[$abstract] = $instance;
+            }
+
+            throw new \RuntimeException("No binding registered for '{$abstract}'");
+        }
+        catch (\Throwable $e) {
+            // Capture for error_page::collect_container() — also clear the stack
+            // so a half-built chain doesn't leak into the next request.
+            if ($tracking) {
+                $this->failed_at     = $abstract;
+                $this->partial_args  = $this->current_ctor_params($abstract);
+            }
+            throw $e;
+        }
+        finally {
+            if ($tracking) {
+                array_pop($this->resolve_stack);
+            }
+        }
+    }
+
+    /**
+     * Returns the constructor parameter names of $class for trace context. #AI:current_ctor_params
+     *
+     * Used by make()'s catch block so error_page can show "this service needed
+     * [Db, Cache, HttpClient] but failed while resolving Cache". Returns [] when
+     * the class is missing or has no constructor.
+     *
+     * @return string[] Constructor parameter names.
+     */
+    private function current_ctor_params(string $class): array {
+        if (!class_exists($class)) {
+            return [];
+        }
+        $ref  = new \ReflectionClass($class);
+        $ctor = $ref->getConstructor();
+        if ($ctor === null) {
+            return [];
+        }
+        $out = [];
+        foreach ($ctor->getParameters() as $p) {
+            $out[] = $p->getName();
+        }
+        return $out;
+    }
+
+    /**
+     * Enables DI tracing — make() starts populating resolve_stack, failed_at, #AI:enable_tracing
+     * and partial_args so the error page can render the in-flight chain when
+     * a binding throws.
+     *
+     * Off by default to keep the hot path allocation-free. Should be turned on
+     * by the error handler before render(), not at request time, so normal
+     * requests pay nothing.
+     */
+    public function enable_tracing(): void {
+        $this->tracing        = true;
+        $this->resolve_stack  = [];
+        $this->failed_at      = null;
+        $this->partial_args   = [];
+    }
+
+    /**
+     * Disables DI tracing and clears the captured state. #AI:disable_tracing
+     *
+     * Safe to call between requests — resets the trace fields so a leftover
+     * state from a previous request can't leak into a new one.
+     */
+    public function disable_tracing(): void {
+        $this->tracing        = false;
+        $this->resolve_stack  = [];
+        $this->failed_at      = null;
+        $this->partial_args   = [];
+    }
+
+    /**
+     * Returns the list of abstracts that have been resolved during this request. #AI:resolved_services
+     *
+     * Mirrors Laravel's container->resolved() — used by the error page's
+     * Container tab to show which services have been instantiated and which
+     * are still pending. Exposes only the abstract names (not the instances
+     * themselves) so the list is safe to render.
+     *
+     * @return string[] Sorted list of resolved abstract identifiers.
+     */
+    public function resolved_services(): array {
+        $names = array_keys($this->resolved);
+        sort($names);
+        return $names;
     }
 
     /**
@@ -649,6 +789,11 @@ class app {
         foreach ($ctor->getParameters() as $param) {
             $type = $param->getType();
             if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+                // Record which params are being resolved so the error page can
+                // show "stuck on param #2" even if the make() throws.
+                if ($this->tracing) {
+                    $this->partial_args[] = $param->getName();
+                }
                 $deps[] = $this->make($type->getName());
             } elseif ($param->isDefaultValueAvailable()) {
                 $deps[] = $param->getDefaultValue();

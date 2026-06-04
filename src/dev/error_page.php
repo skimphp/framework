@@ -85,6 +85,8 @@ final class error_page {
             'route'           => self::collect_route(),
             'middleware'      => self::collect_middleware(),
             'container'       => self::collect_container($e),
+            'resolved_list'   => self::collect_resolved(),
+            'bindings_list'   => self::collect_bindings_list(),
             'solutions'       => self::suggest_solutions($e),
             'trace_text'      => $e->getTraceAsString(),
             'ide'             => ide_link::resolve(),
@@ -266,7 +268,10 @@ final class error_page {
 
         if (is_object($arg)) {
             $out['object_id'] = '#' . spl_object_id($arg);
-            $out['props']     = self::public_props($arg);
+            // all_props() reads public + protected + private via \Closure::bind.
+            // Cheaper than the DI tree call because it never calls make(), but
+            // gives the same visual fidelity.
+            $out['props']     = self::all_props($arg);
         }
         elseif (is_array($arg) && $arg !== []) {
             $out['array_len'] = count($arg);
@@ -309,6 +314,87 @@ final class error_page {
                 'key'   => $p->getName(),
                 'value' => self::prop_value($val),
                 'class' => self::prop_class($val),
+            ];
+            $count++;
+        }
+        return $rows;
+    }
+
+    /**
+     * Returns ALL properties (public + protected + private) of an object. #AI:all_props
+     *
+     * VarDumper-style introspection: uses \Closure::bind to read private and
+     * protected state without ever calling setters or instantiating anything.
+     * Capped at 8 rows for the same reason as public_props() — deeply nested
+     * objects get truncated with an "_n_more" hint.
+     *
+     * Same return shape as public_props(); protected/private rows are tagged
+     * with 'class' => 'muted' so the template can dim them visually.
+     */
+    private static function all_props(object $obj): array {
+        try {
+            $ref = new \ReflectionObject($obj);
+        }
+        catch (\Throwable) {
+            return [];
+        }
+
+        $rows  = [];
+        $count = 0;
+
+        // \Closure::bind emits a warning AND returns false when the third
+        // argument is an internal class (Closure, stdClass, Exception, ...).
+        // PHP 9 will make that an Error. So check isInternal() up front and
+        // skip the bind entirely for those — fall back to get_object_vars()
+        // which covers dynamic properties on stdClass.
+        $is_internal = (new \ReflectionClass($obj))->isInternal();
+
+        if ($is_internal) {
+            $all = [];
+            foreach (get_object_vars($obj) as $name => $value) {
+                $all[] = [
+                    'name'  => $name,
+                    'value' => $value,
+                    'vis'   => 'public',
+                ];
+            }
+        }
+        else {
+            // Closure bound to the object's class so we can read private /
+            // protected properties from outside. The closure runs in the
+            // object's scope — it can call getValue() on any property
+            // regardless of visibility.
+            $reader = \Closure::bind(static function(object $o): array {
+                $ref   = new \ReflectionObject($o);
+                $props = [];
+                foreach ($ref->getProperties() as $p) {
+                    if ($p->isStatic()) {
+                        continue;
+                    }
+                    if (!$p->isInitialized($o)) {
+                        continue;
+                    }
+                    $props[] = [
+                        'name'  => $p->getName(),
+                        'value' => $p->getValue($o),
+                        'vis'   => $p->isPrivate() ? 'private'
+                                : ($p->isProtected() ? 'protected' : 'public'),
+                    ];
+                }
+                return $props;
+            }, null, $obj);
+            $all = $reader($obj);
+        }
+
+        foreach ($all as $p) {
+            if ($count >= 8) {
+                $rows[] = ['key' => '_more', 'value' => '…', 'class' => 'muted'];
+                break;
+            }
+            $rows[] = [
+                'key'   => $p['name'] . ($p['vis'] !== 'public' ? ' (' . $p['vis'][0] . ')' : ''),
+                'value' => self::prop_value($p['value']),
+                'class' => self::prop_class($p['value']),
             ];
             $count++;
         }
@@ -454,11 +540,56 @@ final class error_page {
     }
 
     /**
+     * Returns the list of services already resolved during this request. #AI:collect_resolved
+     *
+     * Mirrors Laravel's container->resolved() — shows which abstracts have
+     * already been instantiated (and are cached in app::$resolved). Used by
+     * the Container tab to distinguish "already built" from "still pending".
+     *
+     * @return array<int, array{abstract:string, status:string}> One row per
+     *         resolved abstract, sorted alphabetically.
+     */
+    private static function collect_resolved(): array {
+        $rows = [];
+        foreach (\skim\core\app::instance()->resolved_services() as $abstract) {
+            $rows[] = [
+                'abstract' => $abstract,
+                'status'   => 'resolved',
+            ];
+        }
+        return $rows;
+    }
+
+    /**
+     * Returns the bindings list captured at app::boot() for the Container tab. #AI:collect_bindings_list
+     *
+     * @return array<int, array{abstract:string, factory:string, priority:int}>
+     *         One row per binding, sorted by abstract.
+     */
+    private static function collect_bindings_list(): array {
+        $rows = [];
+        foreach (\skim\core\app::instance()->bindings_snapshot as $snap) {
+            $rows[] = [
+                'abstract' => $snap['abstract'],
+                'factory'  => $snap['factory_kind'],
+                'priority' => $snap['priority'],
+            ];
+        }
+        usort($rows, fn(array $a, array $b): int => strcmp($a['abstract'], $b['abstract']));
+        return $rows;
+    }
+
+    /**
      * Locates the route's controller class in the exception trace. #AI:find_controller_class
      *
      * Returns the first app-class frame whose class name contains "Controller"
      * — a strong signal it is the route's target. Falls back to the deepest
      * app frame when no Controller class is present (e.g. closures, jobs).
+     *
+     * The frame's `file` is the call site (often a framework file like
+     * app.php), so we resolve the class's *own* file via Reflection and
+     * classify that. Otherwise call sites inside src/core/ would mask
+     * every user controller as "framework".
      */
     private static function find_controller_class(\Throwable $e): ?string {
         $fallback = null;
@@ -468,10 +599,19 @@ final class error_page {
             if ($class === '' || $file === '') {
                 continue;
             }
-            if (self::classify_frame($file, $class, $t['function'] ?? '') !== 'app') {
+            if (!class_exists($class)) {
                 continue;
             }
-            if (!class_exists($class)) {
+
+            // Classify by the class's own source file, not the call site.
+            try {
+                $class_file = (new \ReflectionClass($class))->getFileName() ?: $file;
+            }
+            catch (\Throwable) {
+                $class_file = $file;
+            }
+
+            if (self::classify_frame($class_file, $class, $t['function'] ?? '') !== 'app') {
                 continue;
             }
             if ($fallback === null) {
@@ -489,13 +629,17 @@ final class error_page {
      *
      * Uses the live app container to confirm resolution; falls back to
      * Reflection auto-wiring prediction when the class isn't bound.
+     * Marks each node as `resolved` if its abstract appears in
+     * app::resolved_services() — the actual list of services that
+     * make() instantiated during this request.
      */
     private static function build_di_node(string $class, int $depth, array $visited): array {
         $visited[$class] = true;
 
-        $resolved  = self::is_resolvable($class);
-        $has_ctor  = false;
-        $children  = [];
+        $resolved       = self::is_resolvable($class);
+        $is_resolved    = self::is_in_resolved_list($class);
+        $has_ctor       = false;
+        $children       = [];
 
         try {
             $ref  = new \ReflectionClass($class);
@@ -520,12 +664,35 @@ final class error_page {
         catch (\Throwable) {
         }
 
+        $ref_label = match (true) {
+            $is_resolved       => '✓ resolved',
+            $resolved === false => 'failed',
+            $has_ctor           => 'resolving…',
+            default             => 'no ctor',
+        };
+
         return [
             'cls'      => $class,
-            'ref'      => $resolved === true ? '✓ resolved' : ($resolved === false ? 'failed' : ($has_ctor ? 'resolving…' : 'no ctor')),
-            'failed'   => $resolved === false,
+            'ref'      => $ref_label,
+            'resolved' => $is_resolved,
+            'failed'   => $resolved === false && !$is_resolved,
             'children' => $children,
         ];
+    }
+
+    /**
+     * Returns true if the given class is in app::resolved_services(). #AI:is_in_resolved_list
+     *
+     * Used by build_di_node to mark every node that make() actually
+     * instantiated during this request with a green ✓ resolved badge.
+     */
+    private static function is_in_resolved_list(string $class): bool {
+        try {
+            return in_array(ltrim($class, '\\'), \skim\core\app::instance()->resolved_services(), true);
+        }
+        catch (\Throwable) {
+            return false;
+        }
     }
 
     /**
