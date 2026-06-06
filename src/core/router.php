@@ -14,10 +14,18 @@ use function FastRoute\simpleDispatcher;
  * than per-route string matching. Supports F3-compatible @param token syntax
  * (@id, @id:int, @slug:str, @any) converted to fast-route regex groups.
  *
+ * Per-method shortcuts: get(), post(), put(), patch(), delete() for single
+ * methods; any() for all five. map() is a Slim/Laravel-compatible alias for
+ * add() that accepts either a single method string or an array of methods —
+ * use it for shared routes (e.g. GET + HEAD on the same handler) or when
+ * porting framework-style code; for new code prefer the explicit shortcuts
+ * above or the generic add() directly.
+ *
  * Example:
  *   $router->get('/users/@id:int', [user_controller::class, 'show'])
  *          ->name('user.show')
  *          ->middleware(auth_middleware::class);
+ *   $router->map(['GET', 'HEAD'], '/ping', [health_controller::class, 'ping']);
  *   $router->group('/api/v1', function(router $r) {
  *       $r->get('/posts', [post_controller::class, 'index']);
  *   }, middleware: [auth_middleware::class]);
@@ -117,6 +125,27 @@ class router {
      */
     public function any(string $pattern, array|callable $handler, array $middleware = []): route_entry {
         return $this->add(['GET','POST','PUT','PATCH','DELETE'], $pattern, $handler)->middleware(...$middleware);
+    }
+
+    /**
+     * Registers one or more HTTP methods on a single pattern. #AI:map
+     *
+     * Slim/Laravel-style alias for {@see self::add()}. Use when mirroring
+     * framework-style code (e.g. GET + HEAD sharing one handler) or when the
+     * method set is dynamic. For single-method routes prefer the explicit
+     * get()/post()/put()/patch()/delete() helpers; for "all methods" use
+     * the hard-coded {@see self::any()}.
+     *
+     * Example:
+     *   $router->map(['GET', 'HEAD'], '/ping', [health_controller::class, 'ping']);
+     *
+     * @param string|array   $methods HTTP method(s) — one method ('GET') or a list (['GET','POST']).
+     * @param string         $pattern URL pattern with optional @param tokens.
+     * @param array|callable $handler Controller reference or closure.
+     * @throws \LogicException If the mutation guard blocks the call.
+     */
+    public function map(string|array $methods, string $pattern, array|callable $handler): route_entry {
+        return $this->add($methods, $pattern, $handler);
     }
 
     /**
@@ -384,7 +413,7 @@ class router {
 #AI warnings: [Route registration after freeze() throws LogicException; url() requires the app singleton to be available]
 #AI notes: Why fast-route over F3's router: compiles all routes into one regex, orders of magnitude faster than per-route string matching.
 #AI owns: routes, named routes, CLI commands, group stack, compiled dispatcher, mutation guard
-#AI entry_points: [get; post; put; patch; delete; any; add; group; command; dispatch; url]
+#AI entry_points: [get; post; put; patch; delete; any; map; add; group; command; dispatch; url]
 #AI config_reads: []
 #AI non_goals: [Does not handle middleware execution (delegated to pipeline); Does not resolve controller dependencies (delegated to app::call_handler)]
 #AI side_effects: [add() invalidates compiled dispatcher; group() pushes/pops group stack; compile() creates fast-route dispatcher]
@@ -439,6 +468,16 @@ class router {
 #AI contract: Registers a route for all HTTP methods (GET, POST, PUT, PATCH, DELETE).
 #AI param_details: [{name: $pattern | type: string | required: true | desc: URL pattern.}; {name: $handler | type: array|callable | required: true | desc: Controller reference or closure.}; {name: $middleware | type: array | required: false | desc: Route-level middleware.}]
 #AI return_detail: {type: route_entry | desc: Fluent route configuration object.}
+
+#AI:map
+#AI group: HTTP Methods
+#AI frequency: low
+#AI signature: public function map(string|array $methods, string $pattern, array|callable $handler): route_entry
+#AI contract: Registers a route for one or more HTTP methods. Thin alias for add() — provides Slim/Laravel-style map() for compatibility with code that expects that convention.
+#AI param_details: [{name: $methods | type: string|array | required: true | desc: One HTTP method ('GET') or a list (['GET','POST']).}; {name: $pattern | type: string | required: true | desc: URL pattern with optional @param tokens.}; {name: $handler | type: array|callable | required: true | desc: Controller reference or closure.}]
+#AI return_detail: {type: route_entry | desc: Fluent route configuration object.}
+#AI throws_details: [{type: \LogicException | desc: If the mutation guard blocks the call.}]
+#AI notes: Prefer get()/post()/put()/patch()/delete() for single-method routes and any() for all-method routes. Use map() when the method set is dynamic or when mirroring Slim/Laravel-style code.
 
 #AI:set_mutation_guard
 #AI group: Route Registration

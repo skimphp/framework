@@ -265,8 +265,10 @@ class response {
         }
 
         http_response_code($this->status_code);
-        foreach ($this->headers as $name => $value) {
-            header("{$name}: {$value}");
+        if (!headers_sent()) {
+            foreach ($this->headers as $name => $value) {
+                header("{$name}: {$value}");
+            }
         }
         echo $this->body;
     }
