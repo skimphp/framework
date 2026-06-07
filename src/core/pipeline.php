@@ -24,6 +24,9 @@ namespace skim\core;
  * #AI:class
  */
 class pipeline {
+    /** @var array<class-string,middleware> */
+    private static array $instance_cache = [];
+
     /**
      * Executes the middleware chain and returns the result. #AI:run
      *
@@ -47,7 +50,9 @@ class pipeline {
         array    $middlewares,
         callable $core,
     ): mixed {
-        $this->record_pipeline_trace($req, $middlewares);
+        if (\skim\dev\request_trace::is_enabled()) {
+            $this->record_pipeline_trace($req, $middlewares);
+        }
 
         $chain = $this->build($middlewares, $core);
         return $chain($req, $res);
@@ -128,7 +133,7 @@ class pipeline {
             return $entry;
         }
         if (is_string($entry)) {
-            return new $entry();
+            return self::$instance_cache[$entry] ??= new $entry();
         }
 
         // ['class' => ..., 'args' => [...]]

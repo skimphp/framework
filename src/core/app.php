@@ -84,6 +84,7 @@ class app {
     private bool $extensions_booted = false;
     // Idempotent boot guard: prevents re-running boot() on repeated calls.
     private bool $booted = false;
+    private bool $debug_mode = false;
 
     /**
      * Private constructor enforces singleton access via instance(). #AI:__construct
@@ -557,15 +558,15 @@ class app {
     public function run(): void {
         $this->ensureBooted();
 
-        $is_debug = (bool) config::get('app.debug', false);
+        $this->debug_mode = (bool) config::get('app.debug', false);
 
-        if ($is_debug) {
+        if ($this->debug_mode) {
             profiler::enable();
             request_trace::enable();
         }
 
-        set_exception_handler(function(\Throwable $e) use ($is_debug): void {
-            if ($is_debug) {
+        set_exception_handler(function(\Throwable $e): void {
+            if ($this->debug_mode) {
                 \skim\dev\error_page::render($e);
             } else {
                 http_response_code(500);
@@ -641,7 +642,9 @@ class app {
                 $req->set_route_params($route['params']);
             }
 
-            $this->record_route_trace($route);
+            if ($this->debug_mode) {
+                $this->record_route_trace($route);
+            }
 
             $middlewares = $skip_middleware
                 ? []

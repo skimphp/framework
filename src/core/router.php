@@ -4,6 +4,7 @@ namespace skim\core;
 
 use FastRoute\RouteCollector;
 use FastRoute\Dispatcher;
+use function FastRoute\cachedDispatcher;
 use function FastRoute\simpleDispatcher;
 
 /**
@@ -370,7 +371,23 @@ class router {
 
         $routes = $this->routes;
 
-        $this->dispatcher = simpleDispatcher(function(RouteCollector $r) use ($routes): void {
+        $hasClosures = false;
+        foreach ($routes as $route) {
+            if ($route['handler'] instanceof \Closure) {
+                $hasClosures = true;
+                break;
+            }
+        }
+
+        $cacheFile = null;
+        if (!$hasClosures && \skim\core\config::get('app.env') === 'production') {
+            $cacheFile = \storage_path('cache/routes.php');
+            if (!is_dir(dirname($cacheFile))) {
+                $cacheFile = null;
+            }
+        }
+
+        $dispatcherCallback = function(RouteCollector $r) use ($routes): void {
             foreach ($routes as $route) {
                 foreach ($route['methods'] as $method) {
                     $r->addRoute($method, $route['pattern'], [
@@ -382,7 +399,13 @@ class router {
                     ]);
                 }
             }
-        });
+        };
+
+        if ($cacheFile) {
+            $this->dispatcher = cachedDispatcher($dispatcherCallback, ['cacheFile' => $cacheFile]);
+        } else {
+            $this->dispatcher = simpleDispatcher($dispatcherCallback);
+        }
     }
 
     private function current_prefix(): string {
