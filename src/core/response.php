@@ -264,8 +264,8 @@ class response {
             return;
         }
 
-        http_response_code($this->status_code);
         if (!headers_sent()) {
+            http_response_code($this->status_code);
             foreach ($this->headers as $name => $value) {
                 header("{$name}: {$value}");
             }
