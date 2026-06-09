@@ -90,6 +90,90 @@ if (!function_exists('e')) {
     }
 }
 
+if (!function_exists('component')) {
+    /**
+     * Renders a component by name. #AI:component
+     *
+     * Supports both array props (legacy) and *_props readonly objects (new).
+     * Components render in clean scope with no parent data leakage.
+     *
+     * Example:
+     *   component('alert', ['message' => 'test']);
+     *   component('alert', new alert_props(message: 'test'));
+     *
+     * @param string $name Component name (maps to views/components/{$name}.php).
+     * @param array|object $props Props array or *_props readonly object.
+     */
+    function component(string $name, array|object $props = []): string {
+        return \skim\view\view::component($name, $props);
+    }
+}
+
+if (!function_exists('component_with_parts')) {
+    /**
+     * Renders a component with named parts via closures. #AI:component_with_parts
+     *
+     * Use for card headers, modal footers, or any component that needs
+     * multiple named content blocks passed from the call site.
+     *
+     * Example:
+     *   component_with_parts('card', new card_props(title: 'Profile'), function($c) {
+     *       $c->part('header', fn() => '<h2>Profile</h2>');
+     *       echo '<p>Main content</p>';
+     *   });
+     *
+     * @param string       $name   Component name (maps to views/components/{$name}.php).
+     * @param array|object $props  Props array or *_props readonly object.
+     * @param callable     $render Closure receiving the component_collector instance.
+     */
+    function component_with_parts(string $name, array|object $props, callable $render): string {
+        $collector = new \skim\view\component_collector();
+        $collector->capture_main(function() use ($render, $collector) {
+            $render($collector);
+        });
+
+        \skim\view\component_collector::push($collector);
+        try {
+            return \skim\view\component_renderer::render($name, $props);
+        } finally {
+            \skim\view\component_collector::pop();
+        }
+    }
+}
+
+if (!function_exists('part')) {
+    /**
+     * Returns a named part from the active component collector. #AI:part
+     *
+     * When called without $name, returns the main body content.
+     * Returns $default when the part is absent or no component is rendering.
+     *
+     * @param string $name    Part identifier, or empty string for main body.
+     * @param string $default Fallback HTML when the part is absent.
+     */
+    function part(string $name = '', string $default = ''): string {
+        $collector = \skim\view\component_collector::current();
+        if ($collector === null) {
+            return $default;
+        }
+        return $name === '' ? $collector->get_main() : $collector->get_part($name, $default);
+    }
+}
+
+if (!function_exists('has_part')) {
+    /**
+     * Checks if a named part exists in the active component collector. #AI:has_part
+     *
+     * Returns false when no component is currently rendering.
+     *
+     * @param string $name Part identifier to check.
+     */
+    function has_part(string $name): bool {
+        $collector = \skim\view\component_collector::current();
+        return $collector !== null && $collector->has_part($name);
+    }
+}
+
 if (!function_exists('t')) {
     /**
      * Translates a key using the current locale. #AI:t
@@ -133,7 +217,7 @@ if (!function_exists('asset')) {
 #AI core_behaviors: [Functions are thin pass-through wrappers; Application code may override any helper by defining it before autoload]
 #AI notes: App code should import facade classes directly for IDE support. Helpers are for templates and config files where `use` statements are unavailable or awkward.
 #AI owns: nothing
-#AI entry_points: [env; config; route; storage_path; base_path; e; t; asset]
+#AI entry_points: [env; config; route; storage_path; base_path; e; component; component_with_parts; part; has_part; t; asset]
 #AI config_reads: [app.*; db.*; cache.*]
 #AI non_goals: [Does not add behavior beyond the underlying facades; Does not replace facade usage in application controllers or models]
 #AI side_effects: [none — all functions are pure delegation]
@@ -189,6 +273,40 @@ if (!function_exists('asset')) {
 #AI param_details: [{name: $value | type: string | required: true | desc: Raw string to escape.}; {name: $double_encode | type: bool | required: false | desc: When false, existing HTML entities are not re-encoded.}]
 #AI return_detail: {type: string | desc: HTML-safe escaped string.}
 #AI warnings: [Skipping e() on user-supplied data is an XSS vulnerability]
+
+#AI:component
+#AI group: Templates & Routing
+#AI frequency: high
+#AI signature: function component(string $name, array|object $props = []): string
+#AI contract: Renders an isolated component in clean scope. Supports array props (legacy) and *_props readonly objects (new).
+#AI param_details: [{name: $name | type: string | required: true | desc: Component name (maps to views/components/{$name}.php).}; {name: $props | type: array|object | required: false | desc: Props array or *_props readonly object.}]
+#AI return_detail: {type: string | desc: Rendered component HTML.}
+#AI throws_details: [{type: \skim\view\exceptions\view_exception | desc: If props object is not a *_props class or component file is not found.}]
+
+#AI:component_with_parts
+#AI group: Templates & Routing
+#AI frequency: medium
+#AI signature: function component_with_parts(string $name, array|object $props, callable $render): string
+#AI contract: Renders a component with named parts captured via closures. The closure receives a component_collector to declare parts. Parts and main body are injected into the component template.
+#AI param_details: [{name: $name | type: string | required: true | desc: Component name (maps to views/components/{$name}.php).}; {name: $props | type: array|object | required: true | desc: Props array or *_props readonly object.}; {name: $render | type: callable | required: true | desc: Closure receiving the component_collector instance.}]
+#AI return_detail: {type: string | desc: Rendered component HTML with parts injected.}
+#AI throws_details: [{type: \skim\view\exceptions\view_exception | desc: If component file is not found.}]
+
+#AI:part
+#AI group: Templates & Routing
+#AI frequency: high
+#AI signature: function part(string $name = '', string $default = ''): string
+#AI contract: Returns a named part from the active component collector. Empty $name returns the main body. Returns $default when no component is rendering or the part is absent.
+#AI param_details: [{name: $name | type: string | required: false | desc: Part identifier, or empty string for main body.}; {name: $default | type: string | required: false | desc: Fallback HTML when the part is absent.}]
+#AI return_detail: {type: string | desc: Part HTML or default value.}
+
+#AI:has_part
+#AI group: Templates & Routing
+#AI frequency: medium
+#AI signature: function has_part(string $name): bool
+#AI contract: Returns true when the named part exists in the active component collector. Returns false when no component is rendering.
+#AI param_details: [{name: $name | type: string | required: true | desc: Part identifier to check.}]
+#AI return_detail: {type: bool | desc: True if the part exists and a component is rendering.}
 
 #AI:t
 #AI group: Templates & Routing

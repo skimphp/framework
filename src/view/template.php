@@ -27,10 +27,12 @@ class template {
     private ?string $layout_name  = null;
     private array   $slots        = [];   // name → captured HTML
     private ?string $active_slot  = null;
+    private bool    $fragment_mode = false; // true = ignore layout() calls
 
-    public function __construct(string $views_path, array $data = [], private readonly ?string $default_layout = null) {
+    public function __construct(string $views_path, array $data = [], private readonly ?string $default_layout = null, bool $fragment_mode = false) {
         $this->views_path = rtrim($views_path, '/');
         $this->data       = $data;
+        $this->fragment_mode = $fragment_mode;
     }
 
     /**
@@ -51,10 +53,14 @@ class template {
      *
      * Must be called before any output. The layout file uses $this->slot()
      * to inject child content. If not called, the default_layout is used.
+     * Ignored when fragment_mode is true (HTMX optimization).
      *
      * @param string $name Layout template path relative to views root.
      */
     public function layout(string $name): void {
+        if ($this->fragment_mode) {
+            return;
+        }
         $this->layout_name = $name;
     }
 
@@ -67,6 +73,9 @@ class template {
      * @param string $name Slot identifier used by the layout to retrieve content.
      */
     public function start(string $name): void {
+        if ($this->fragment_mode) {
+            return;
+        }
         $this->active_slot = $name;
         ob_start();
     }
@@ -77,6 +86,9 @@ class template {
      * @throws \LogicException If called without a matching start().
      */
     public function end(): void {
+        if ($this->fragment_mode) {
+            return;
+        }
         if ($this->active_slot === null) {
             throw new \LogicException('end() called without matching start()');
         }
@@ -85,14 +97,52 @@ class template {
     }
 
     /**
-     * Outputs captured slot content inside a layout file. #AI:slot
+     * Alias for start() — familiar section API. #AI:section
+     *
+     * @param string $name Slot identifier used by the layout to retrieve content.
+     */
+    public function section(string $name): void {
+        $this->start($name);
+    }
+
+    /**
+     * Alias for end() — familiar section API. #AI:end_section
+     *
+     * @throws \LogicException If called without a matching section().
+     */
+    public function end_section(): void {
+        $this->end();
+    }
+
+    /**
+     * Outputs captured slot content inside a layout file. #AI:block
      *
      * Returns empty string if the slot was never captured (missing start/end pair).
+     * Use has_section() to check existence before calling.
      *
      * @param string $name Slot identifier matching a previous start() call.
      */
-    public function slot(string $name): string {
-        return $this->slots[$name] ?? '';
+    public function block(string $name, string $default = ''): string {
+        return $this->slots[$name] ?? $default;
+    }
+
+    /**
+     * Checks if a named slot was captured. #AI:has_section
+     *
+     * @param string $name Slot identifier to check.
+     */
+    public function has_section(string $name): bool {
+        return isset($this->slots[$name]);
+    }
+
+    /**
+     * Backward compatibility alias for block(). #AI:slot
+     *
+     * @deprecated Use block() instead. Slot() will be removed in a future version.
+     * @param string $name Slot identifier matching a previous start() call.
+     */
+    public function slot(string $name, string $default = ''): string {
+        return $this->block($name, $default);
     }
 
     /**
@@ -155,7 +205,7 @@ class template {
 #AI warnings: [end() without matching start() throws LogicException; extract() with EXTR_SKIP means data keys cannot override existing local variables]
 #AI notes: The layout receives all captured slots from the child template. The 'content' slot is auto-populated with any non-slot output from the child.
 #AI owns: slots array, layout_name, active_slot state
-#AI entry_points: [include; layout; start; end; slot; render_file]
+#AI entry_points: [include; layout; start; end; section; end_section; block; has_section; slot; render_file]
 #AI config_reads: []
 #AI non_goals: [Does not handle fragment extraction (done by view class); Does not compile or cache templates; Does not escape output (use e() in templates)]
 #AI side_effects: [Uses ob_start/ob_get_clean for slot capture and template rendering; extract() creates local variables in render_file scope]
@@ -195,13 +245,45 @@ class template {
 #AI throws_details: [{type: \LogicException | desc: If called without a matching start().}]
 #AI side_effects: [Ends output buffering via ob_get_clean()]
 
-#AI:slot
+#AI:section
 #AI group: Layout System
 #AI frequency: medium
-#AI signature: public function slot(string $name): string
-#AI contract: Returns captured slot content. Returns empty string if the slot was never captured.
-#AI param_details: [{name: $name | type: string | required: true | desc: Slot identifier matching a previous start() call.}]
-#AI return_detail: {type: string | desc: Captured slot HTML or empty string.}
+#AI signature: public function section(string $name): void
+#AI contract: Alias for start() — provides a familiar section() API for Laravel/Symfony developers.
+#AI param_details: [{name: $name | type: string | required: true | desc: Slot identifier used by the layout to retrieve content.}]
+#AI side_effects: [Starts output buffering via ob_start()]
+
+#AI:end_section
+#AI group: Layout System
+#AI frequency: medium
+#AI signature: public function end_section(): void
+#AI contract: Alias for end() — provides a familiar end_section() API for Laravel/Symfony developers.
+#AI throws_details: [{type: \LogicException | desc: If called without a matching section().}]
+#AI side_effects: [Ends output buffering via ob_get_clean()]
+
+#AI:block
+#AI group: Layout System
+#AI frequency: medium
+#AI signature: public function block(string $name, string $default = ''): string
+#AI contract: Returns captured slot content. Returns $default if the slot was never captured. Use has_section() to check existence.
+#AI param_details: [{name: $name | type: string | required: true | desc: Slot identifier matching a previous start() call.}; {name: $default | type: string | required: false | desc: Default value returned when slot is not captured.}]
+#AI return_detail: {type: string | desc: Captured slot HTML or default value.}
+
+#AI:has_section
+#AI group: Layout System
+#AI frequency: low
+#AI signature: public function has_section(string $name): bool
+#AI contract: Checks if a named slot was captured by a previous start()/end() pair.
+#AI param_details: [{name: $name | type: string | required: true | desc: Slot identifier to check.}]
+#AI return_detail: {type: bool | desc: True if the slot exists, false otherwise.}
+
+#AI:slot
+#AI group: Layout System
+#AI frequency: low
+#AI signature: public function slot(string $name, string $default = ''): string
+#AI contract: Backward compatibility alias for block(). Deprecated — use block() instead.
+#AI param_details: [{name: $name | type: string | required: true | desc: Slot identifier matching a previous start() call.}; {name: $default | type: string | required: false | desc: Default value returned when slot is not captured.}]
+#AI return_detail: {type: string | desc: Captured slot HTML or default value.}
 
 #AI:render_file
 #AI group: Rendering

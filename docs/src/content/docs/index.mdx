@@ -59,6 +59,67 @@ docker compose up -d
 php skim migrate
 ```
 
+## Architecture at a Glance
+
+<div class="ascii-terminal">
+
+```
+        .---.         .---.         .---.         .---.
+       / S K \       / K I \       / I M \       / M _ \
+      '-----'       '-----'       '-----'       '-----'
+         |             |             |             |
+    8.5+ PHP ── strict_types ── snake_case ── zero_deps
+         |             |             |             |
+         '-------------+-------------+-------------'
+                         |
+                         ▼
+    ╔═══════════════════════════════════════════════════╗
+    ║                   HTTP  /  CLI                      ║
+    ╚═════════════════════════╤═════════════════════════╝
+                              │
+         ┌────────────────────┼────────────────────┐
+         ▼                    ▼                    ▼
+    ┌──────────┐       ┌──────────┐         ┌──────────┐
+    │  router  │◄─────►│    DI    │◄───────►│ pipeline │
+    │ dispatch │       │ container│         │  onion   │
+    └────┬─────┘       └────┬─────┘         └────┬─────┘
+         │                  │                    │
+         ▼                  ▼                    ▼
+    ┌──────────┐       ┌──────────┐         ┌──────────┐
+    │  db::    │       │ cache::  │         │session:: │
+    │ query()  │       │remember()│         │ flash() │
+    │ ORM      │       │ tags()   │         │regen()  │
+    └────┬─────┘       └────┬─────┘         └────┬─────┘
+         │                  │                    │
+         └──────────────────┼────────────────────┘
+                            │
+                            ▼
+              ┌─────────────────────┐
+              │   response::send()  │
+              │   view()  json()    │
+              └─────────────────────┘
+```
+
+</div>
+
+<style>{`
+  .ascii-terminal {
+    background: var(--sl-color-gray-6);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+  .ascii-terminal pre {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    color: var(--sl-color-accent-high);
+    background: transparent;
+  }
+`}</style>
+
 ## Generate Docs
 
 ```bash

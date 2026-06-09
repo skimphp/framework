@@ -323,9 +323,7 @@ class router {
                 'handler'    => $info[1]['handler'],
                 'params'     => $info[2],
                 'middleware' => $info[1]['middleware'] ?? [],
-                'pattern'    => \skim\dev\request_trace::is_enabled()
-                                    ? $this->pattern_for_handler($info[1]['handler'], $method)
-                                    : null,
+                'pattern'    => null,
             ],
             Dispatcher::NOT_FOUND         => null,
             Dispatcher::METHOD_NOT_ALLOWED => false,

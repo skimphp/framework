@@ -28,8 +28,8 @@ final class view {
      * Renders a template, optionally extracting a named fragment. #AI:render
      *
      * Merges $data with shared data, renders through the template/layout system,
-     * and records timing in the profiler. When $fragment is set, only the named
-     * <!-- @fragment name -->...<!-- @end --> block is returned.
+     * and records timing in the profiler. When $fragment is set, layout is bypassed
+     * and only the named <!-- @fragment name -->...<!-- @end --> block is returned.
      *
      * Example:
      *   view::render('users/show', ['user' => $user]);
@@ -41,10 +41,12 @@ final class view {
      * @throws exceptions\view_exception If template or fragment is not found.
      */
     public static function render(string $template, array $data = [], ?string $fragment = null): string {
-        $t    = microtime(true);
-        $path = self::views_path();
-        $ctx  = new template($path, array_merge(self::$shared_data, $data), self::$default_layout);
+        $t = microtime(true);
 
+        // CRITICAL: Disable layout if only a fragment is needed for HTMX performance
+        $layout = $fragment ? null : self::$default_layout;
+
+        $ctx = new template(self::views_path(), array_merge(self::$shared_data, $data), $layout, $fragment !== null);
         $html = $ctx->render_file($template);
 
         if ($fragment !== null) {
@@ -112,9 +114,28 @@ final class view {
         self::$default_layout = null;
     }
 
+    /**
+     * Renders an isolated component with strict props. #AI:component
+     *
+     * Delegates to component_renderer::render(). Supports both array props
+     * (legacy) and *_props readonly objects (new). Components render in clean
+     * scope with no parent data leakage.
+     *
+     * Example:
+     *   view::component('alert', ['message' => 'test']);
+     *   view::component('alert', new alert_props(message: 'test'));
+     *
+     * @param string $name Component name (maps to views/components/{$name}.php).
+     * @param array|object $props Props array or *_props readonly object.
+     * @throws exceptions\view_exception If props object is not a *_props class or component is missing.
+     */
+    public static function component(string $name, array|object $props = []): string {
+        return component_renderer::render($name, $props);
+    }
+
     // --- internals ---
 
-    private static function views_path(): string {
+    public static function views_path(): string {
         if (self::$views_path !== '') {
             return self::$views_path;
         }
@@ -123,15 +144,13 @@ final class view {
     }
 
     private static function extract_fragment(string $html, string $name, string $template): string {
-        $pattern = '/<!--\s*@fragment\s+' . preg_quote($name, '/') . '\s*-->(.*?)<!--\s*@end\s*-->/s';
-
-        if (!preg_match($pattern, $html, $m)) {
+        try {
+            return fragment_extractor::extract($html, $name);
+        } catch (exceptions\view_exception $e) {
             throw new exceptions\view_exception(
-                "Fragment '{$name}' not found in template '{$template}'."
+                "Fragment extraction failed in {$template}: {$e->getMessage()}"
             );
         }
-
-        return trim($m[1]);
     }
 }
 
@@ -147,25 +166,25 @@ final class view {
 #AI lifecycle: static facade, state persists for the current request
 #AI fallback: defaults to SKIM_ROOT/app/views when path is not set
 #AI test_seam: set_path() for test fixtures, reset() in tearDown()
-#AI invariants: [Shared data is merged with per-render data; Fragment extraction uses regex on rendered HTML; Profiler records every render call; Default layout is overridden by template-level layout() calls]
+#AI invariants: [Shared data is merged with per-render data; Fragment extraction uses state-machine parser on rendered HTML; Profiler records every render call; Default layout is overridden by template-level layout() calls]
 #AI core_behaviors: [Full page rendering via template context; Fragment extraction via HTML comment markers; Shared data injection for cross-cutting concerns; Profiler integration for render timing]
-#AI warnings: [Fragment extraction renders the full template first, then extracts — expensive for large templates when only a fragment is needed]
+#AI warnings: [Fragment extraction renders the full template first, then extracts — layout bypass optimization reduces this cost for HTMX requests]
 #AI notes: Fragment syntax uses HTML comments (<!-- @fragment name -->...<!-- @end -->) which produce zero bytes in browser output and no DOM changes.
 #AI owns: views_path, shared_data, default_layout
-#AI entry_points: [render; render_fragment; share; set_path; set_default_layout; reset]
+#AI entry_points: [render; render_fragment; share; set_path; set_default_layout; reset; views_path; component]
 #AI config_reads: []
 #AI non_goals: [Does not compile or cache templates; Does not escape output; Does not handle asset bundling]
 #AI side_effects: [Records render timing in profiler::view(); share() mutates static shared_data]
 #AI flow: view::render() -> template::render_file() -> layout system -> fragment extraction? -> profiler::view()
 #AI lifecycle_steps: [view::render($template, $data, $fragment); -> resolve views_path; -> new template(path, merged_data, default_layout); -> template::render_file(); -> fragment? -> extract_fragment(); -> profiler::view(); -> return HTML]
 #AI section_order: [Rendering API; Configuration; Testing Hooks; Architecture]
-#AI architectural_notes: Uses native PHP templates for real stack traces and opcache performance. Fragment extraction is a post-render regex pass — the full template always renders first.
+#AI architectural_notes: Uses native PHP templates for real stack traces and opcache performance. Fragment extraction is a post-render state-machine pass — the full template always renders first.
 
 #AI:render
 #AI group: Rendering API
 #AI frequency: high
 #AI signature: public static function render(string $template, array $data = [], ?string $fragment = null): string
-#AI contract: Renders a template with shared data merged in. When $fragment is set, extracts only the named fragment block. Records timing in profiler.
+#AI contract: Renders a template with shared data merged in. When $fragment is set, bypasses layout and extracts only the named fragment block. Records timing in profiler.
 #AI param_details: [{name: $template | type: string | required: true | desc: Template path relative to views root.}; {name: $data | type: array | required: false | desc: Data merged with shared data for this render.}; {name: $fragment | type: ?string | required: false | desc: Named fragment to extract, or null for full page.}]
 #AI return_detail: {type: string | desc: Rendered HTML or extracted fragment.}
 #AI throws_details: [{type: view_exception | desc: If template file or fragment name is not found.}]
@@ -207,3 +226,12 @@ final class view {
 #AI signature: public static function reset(): void
 #AI contract: Clears shared data, views path, and default layout. Use in test tearDown().
 #AI side_effects: [Clears all static state]
+
+#AI:component
+#AI group: Rendering API
+#AI frequency: high
+#AI signature: public static function component(string $name, array|object $props = []): string
+#AI contract: Renders an isolated component with strict props. Delegates to component_renderer::render(). Supports both array props (legacy) and *_props readonly objects (new).
+#AI param_details: [{name: $name | type: string | required: true | desc: Component name (maps to views/components/{$name}.php).}; {name: $props | type: array|object | required: false | desc: Props array or *_props readonly object.}]
+#AI return_detail: {type: string | desc: Rendered component HTML.}
+#AI throws_details: [{type: view_exception | desc: If props object is not a *_props class or component file is not found.}]

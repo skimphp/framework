@@ -33,6 +33,9 @@ export default defineConfig({
                     './src/components/docs/LifecycleFlow.astro': [['default', 'LifecycleFlow']],
                     './src/components/docs/AiContext.astro': [['default', 'AiContext']],
                     './src/components/docs/CustomHero.astro': [['default', 'CustomHero']],
+                },
+                {
+                    '@astrojs/starlight/components': ['Tabs', 'TabItem'],
                 }
             ]
         }),
@@ -69,9 +72,9 @@ export default defineConfig({
                         { label: 'Cache', slug: 'api/cache/cache' },
                         { label: 'Session', slug: 'api/session/session' },
                         { label: 'Validation', slug: 'api/validation/validate' },
-                        { label: 'Views & Templates', slug: 'api/view/view' },
+                        { label: 'Views & Templates', slug: 'features/templates' },
                         { label: 'Events', slug: 'api/events/event' },
-                        { label: 'Queue', slug: 'api/queue/queue' },
+                        { label: 'Queue', slug: 'features/queue' },
                         { label: 'CLI Commands', slug: 'api/cli/cli' },
                     ],
                 },
