@@ -580,7 +580,7 @@ class app {
         $req = request::from_globals();
         $res = new response();
 
-        if (request_trace::is_enabled()) {
+        if ($this->debug_mode) {
             request_trace::start(
                 bin2hex(random_bytes(8)),
                 $req->method(),
@@ -593,7 +593,7 @@ class app {
 
         $result = $this->dispatch($req, $res);
 
-        if (request_trace::is_enabled()) {
+        if ($this->debug_mode) {
             $trace = request_trace::finish($result->get_status());
             $this->sys['last_trace'] = $trace;
         } elseif ($result->get_status() >= 500) {
@@ -652,11 +652,15 @@ class app {
 
             $handler = $route['handler'];
             $result = $this->pipeline->run($req, $res, $middlewares, function(request $req, response $res) use ($handler, $route): mixed {
-                if (is_array($handler)) {
+                if (is_array($handler) && $this->debug_mode) {
                     request_trace::event('controller_called', ['class' => $handler[0], 'method' => $handler[1]]);
                 }
                 return $this->call_handler($handler, $req, $res, $route['params'] ?? []);
             });
+
+            if ($this->debug_mode) {
+                $this->pipeline->record_pipeline_trace($req, $middlewares);
+            }
 
             if ($result instanceof response) {
                 return $result;

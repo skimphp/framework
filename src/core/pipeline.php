@@ -50,10 +50,6 @@ class pipeline {
         array    $middlewares,
         callable $core,
     ): mixed {
-        if (\skim\dev\request_trace::is_enabled()) {
-            $this->record_pipeline_trace($req, $middlewares);
-        }
-
         $chain = $this->build($middlewares, $core);
         return $chain($req, $res);
     }
@@ -67,7 +63,7 @@ class pipeline {
      *
      * No-op when request_trace is disabled — never throws.
      */
-    private function record_pipeline_trace(request $req, array $middlewares): void {
+    public function record_pipeline_trace(request $req, array $middlewares): void {
         if (!\skim\dev\request_trace::is_enabled()) {
             return;
         }
