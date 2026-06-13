@@ -175,6 +175,7 @@ $e = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 </div>
 <script>
 (function(){
+    var STORAGE_KEY = 'skim-toolbar-open';
     function skimTab(el,id){
         document.querySelectorAll('#skim-tb .tab').forEach(function(t){t.classList.remove('active')});
         document.querySelectorAll('#skim-tb .panel').forEach(function(p){p.classList.remove('open')});
@@ -182,7 +183,8 @@ $e = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
         var p=document.getElementById('skim-panel-'+id);
         if(p) p.classList.add('open');
     }
-    var _open=true;
+    var _saved = localStorage.getItem(STORAGE_KEY);
+    var _open = _saved === null ? true : _saved === '1';
     function skimClose(){
         var ch=document.querySelector('#skim-tb .tb-close .ti');
         var panels=document.querySelectorAll('#skim-tb .panel');
@@ -190,11 +192,19 @@ $e = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
             panels.forEach(function(p){if(p.classList.contains('open'))p.setAttribute('data-was-open','1');p.classList.remove('open');});
             if(ch){ch.className='ti ti-chevron-up';}
             _open=false;
+            localStorage.setItem(STORAGE_KEY,'0');
         } else {
             document.querySelectorAll('#skim-tb [data-was-open]').forEach(function(p){p.classList.add('open');p.removeAttribute('data-was-open');});
             if(ch){ch.className='ti ti-chevron-down';}
             _open=true;
+            localStorage.setItem(STORAGE_KEY,'1');
         }
+    }
+    // Apply persisted state on load
+    if(!_open){
+        document.querySelectorAll('#skim-tb .panel').forEach(function(p){p.classList.remove('open');});
+        var ch=document.querySelector('#skim-tb .tb-close .ti');
+        if(ch){ch.className='ti ti-chevron-up';}
     }
     function skimToggleQ(i){
         var ex=document.getElementById('skim-ex-'+i);
