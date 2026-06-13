@@ -50,6 +50,8 @@ readonly class extracted_method {
         public array $return_detail = [],
         public array $throws_details = [],
         public array $notes = [],
+        public array $see_also = [],
+        public array $aliases = [],
     ) {}
 
     /**
@@ -90,6 +92,8 @@ readonly class extracted_method {
             'examples'     => $this->examples,
             'lifecycle'    => $this->lifecycle,
             'perf'         => $this->perf,
+            'see_also'     => $this->see_also,
+            'aliases'      => $this->aliases,
         ];
     }
 }

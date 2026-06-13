@@ -5,26 +5,26 @@ namespace skim\dev\docs\commands;
 use skim\cli\command;
 
 /**
- * Launches the PHP stdio MCP server for LLM tool integration. #AI:class
+ * Launches the native skim-mcp binary for LLM tool integration. #AI:class
  *
  * Use when Claude Code, Cursor, or other MCP-capable clients need to query
  * the project's @ai.* annotations at runtime. Requires llm.json to exist —
- * run docs:extract first.
+ * run docs:extract first, and the binary — run mcp:install first.
  *
  * Example:
  *   php skim mcp:serve
  *   # Wire in .claude/mcp_settings.json: "args": ["skim", "mcp:serve"]
  *
- * Testing: Requires llm.json on disk; no static state to reset.
+ * Testing: Requires llm.json on disk and binary installed; no static state.
  *
  * #AI:class
  */
 class mcp_serve_command extends command {
     /**
-     * Starts mcp_server.php as a long-running stdio process. #AI:handle
+     * Starts the skim-mcp binary as a long-running stdio process. #AI:handle
      *
-     * Reads JSON-RPC from stdin, writes responses to stdout.
-     * Returns 1 if llm.json or the server script is missing.
+     * Forwards stdin/stdout directly via passthru. Returns 1 if prerequisites
+     * are missing, otherwise forwards the binary's exit code.
      *
      * @return int Exit code from the child process, or 1 on pre-flight failure.
      */
@@ -36,17 +36,117 @@ class mcp_serve_command extends command {
             return 1;
         }
 
-        $server_path = dirname(__DIR__) . '/mcp/mcp_server.php';
-
-        if (!file_exists($server_path)) {
-            $this->error("MCP server not found at {$server_path}");
+        $cmd = $this->resolveRunner();
+        if ($cmd === null) {
+            $this->error("No MCP runner found. Run one of:\n  php skim mcp:install  (native binary)\n  npm install -g @skim/mcp  (node package)");
             return 1;
         }
 
-        $this->muted('Starting MCP server (stdio)…');
-        $cmd  = PHP_BINARY . ' ' . escapeshellarg($server_path) . ' ' . escapeshellarg($json_path);
         passthru($cmd, $exit);
         return (int) $exit;
+    }
+
+    /**
+     * Resolves the command string to launch the MCP server. #AI:resolveRunner
+     *
+     * Priority: native binary → node bundle → null.
+     */
+    private function resolveRunner(): ?string {
+        $project_dir = escapeshellarg(base_path());
+
+        // 1. Native binary (installed via mcp:install)
+        $native = base_path('.skim/bin/skim-mcp');
+        if (PHP_OS_FAMILY === 'Windows') {
+            $native .= '.exe';
+        }
+        if (file_exists($native) && $this->isNativeRunnable($native)) {
+            return escapeshellarg($native) . ' --project-dir=' . $project_dir;
+        }
+
+        // 2. Node.js bundle (Docker, CI, or dev without native binary)
+        $node = $this->findExecutable('node');
+        if ($node !== null) {
+            $bundle = $this->findBundle();
+            if ($bundle !== null) {
+                return escapeshellarg($node) . ' ' . escapeshellarg($bundle) . ' --project-dir=' . $project_dir;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Finds a JS bundle path — dev or composer-installed. #AI:findBundle
+     */
+    private function findBundle(): ?string {
+        $candidates = [
+            base_path('mcp/dist/index.js'),                       // framework is root
+            base_path('vendor/skim/framework/mcp/dist/index.js'),  // composer dependency
+        ];
+        foreach ($candidates as $path) {
+            if (file_exists($path)) return $path;
+        }
+        return null;
+    }
+
+    /**
+     * Verifies the native binary can actually execute on this platform. #AI:isNativeRunnable
+     *
+     * Prevents macOS binaries from being selected inside Linux Docker.
+     * Uses the `file` command when available; falls back to a quick exec test.
+     */
+    private function isNativeRunnable(string $path): bool {
+        if (!is_executable($path)) return false;
+
+        // Best-effort platform check via `file`
+        $fileOutput = shell_exec('file ' . escapeshellarg($path) . ' 2>/dev/null');
+        if ($fileOutput !== null) {
+            $fileOutput = strtolower($fileOutput);
+            // Shell scripts are cross-platform — skip format check for them
+            if (!str_contains($fileOutput, 'script')) {
+                $family = strtolower(PHP_OS_FAMILY);
+                $platformOk = match ($family) {
+                    'darwin' => str_contains($fileOutput, 'mach-o'),
+                    'linux' => str_contains($fileOutput, 'elf'),
+                    'windows' => str_contains($fileOutput, 'pe32') || str_contains($fileOutput, 'pe32+'),
+                    default => true,
+                };
+                if (!$platformOk) return false;
+            }
+        }
+
+        // Quick exec test — if the binary starts and doesn't die with format error
+        $exit = -1;
+        $proc = @proc_open(
+            [$path, '--project-dir=/dev/null'],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes
+        );
+        if (is_resource($proc)) {
+            foreach ($pipes as $p) fclose($p);
+            $exit = proc_close($proc);
+        }
+        return $exit !== 126 && $exit !== 127;
+    }
+
+    /**
+     * Locates an executable in PATH. #AI:findExecutable
+     */
+    private function findExecutable(string $name): ?string {
+        $paths = explode(PATH_SEPARATOR, getenv('PATH') ?: '');
+        $is_win = PHP_OS_FAMILY === 'Windows';
+        foreach ($paths as $dir) {
+            $candidate = $dir . DIRECTORY_SEPARATOR . $name . ($is_win ? '.exe' : '');
+            if (is_executable($candidate)) return $candidate;
+        }
+        // Also check `which` / `where` via shell
+        $cmd = $is_win ? "where {$name} 2>nul" : "which {$name} 2>/dev/null";
+        $output = shell_exec($cmd);
+        if ($output) {
+            $path = trim($output);
+            if ($path !== '' && file_exists($path)) return $path;
+        }
+        return null;
     }
 }
 
@@ -58,21 +158,21 @@ class mcp_serve_command extends command {
 #AI role: MCP server launcher
 #AI layer: dev
 #AI badges: [cli; mcp; stdio; llm]
-#AI intro: `mcp_serve_command` spawns `mcp_server.php` as a child process communicating over stdio. It validates that llm.json and the server script exist before launching, and forwards the child's exit code.
+#AI intro: `mcp_serve_command` spawns the `skim-mcp` native binary as a child process communicating over stdio. It validates that llm.json and the binary exist before launching, and forwards the child's exit code.
 #AI lifecycle: instantiated by CLI router, runs until stdin closes or Ctrl+C
 #AI fallback: none — returns 1 when prerequisites are missing
 #AI test_seam: instantiate directly; requires llm.json on disk
-#AI invariants: [requires llm.json to exist; requires mcp_server.php to exist; forwards child exit code]
-#AI core_behaviors: [Validates llm.json and server script exist; Spawns mcp_server.php via passthru; Forwards child process exit code]
+#AI invariants: [requires llm.json to exist; requires skim-mcp binary to exist; forwards child exit code]
+#AI core_behaviors: [Validates llm.json and skim-mcp binary exist; Spawns skim-mcp binary via passthru; Forwards child process exit code]
 #AI owns: child process lifecycle
 #AI entry_points: [handle]
 #AI config_reads: [docs.output.json]
 #AI non_goals: [Does not implement MCP protocol logic; Does not generate llm.json]
 #AI side_effects: [spawns long-running child process on stdio]
-#AI flow: handle() -> validate llm.json -> validate mcp_server.php -> passthru(PHP_BINARY mcp_server.php llm.json)
-#AI lifecycle_steps: [handle(); -> check llm.json exists; -> check mcp_server.php exists; -> passthru child process; -> forward exit code]
+#AI flow: handle() -> validate llm.json -> validate skim-mcp binary -> passthru(skim-mcp --project-dir=BASE_PATH)
+#AI lifecycle_steps: [handle(); -> check llm.json exists; -> check skim-mcp binary exists; -> passthru child process; -> forward exit code]
 #AI section_order: [Pipeline; Architecture]
-#AI architectural_notes: Transport-only launcher; all MCP protocol logic lives in mcp_server.php and mcp_tools.
+#AI architectural_notes: Transport-only launcher; all MCP protocol logic lives in the skim-mcp Node binary. The PHP command only validates prerequisites and spawns the binary.
 
 #AI:handle
 #AI group: Pipeline

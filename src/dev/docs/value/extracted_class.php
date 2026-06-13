@@ -57,6 +57,7 @@ readonly class extracted_class {
         public array $section_order = [],
         public string $architectural_notes = '',
         public array $examples = [],
+        public array $see_also = [],
         /** @var extracted_method[] */
         public array  $methods      = [],
     ) {}
@@ -101,6 +102,7 @@ readonly class extracted_class {
             'section_order' => $this->section_order,
             'architectural_notes' => $this->architectural_notes,
             'examples'     => $this->examples,
+            'see_also'     => $this->see_also,
             'methods'      => array_map(fn(extracted_method $m) => $m->to_array(), $this->methods),
             'class_name'   => $this->class_name,
             'namespace'    => $this->namespace,

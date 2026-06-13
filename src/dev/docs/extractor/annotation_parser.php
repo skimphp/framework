@@ -30,6 +30,7 @@ class annotation_parser {
         'fallback', 'test_seam', 'drivers', 'core_behaviors', 'warnings', 'notes',
         'scope_items', 'flow', 'lifecycle_steps', 'section_order', 'architectural_notes',
         'signature', 'param_details', 'return_detail', 'throws_details', 'required',
+        'see_also', 'aliases',
     ];
 
     /**

@@ -196,6 +196,7 @@ class class_visitor extends NodeVisitorAbstract {
             section_order: $this->list_value($tags, 'section_order'),
             architectural_notes: $this->scalar_value($tags, 'architectural_notes'),
             examples:     $class_examples,
+            see_also:     $this->list_value($tags, 'see_also'),
             methods:      $methods,
         );
         return null;
@@ -276,6 +277,8 @@ class class_visitor extends NodeVisitorAbstract {
             return_detail: $this->record_value($tags, 'return_detail'),
             throws_details: $this->list_value($tags, 'throws_details'),
             notes:        $this->list_value($tags, 'notes'),
+            see_also:     $this->list_value($tags, 'see_also'),
+            aliases:      $this->list_value($tags, 'aliases'),
         );
     }
 

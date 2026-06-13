@@ -65,11 +65,16 @@ while (true) {
     $id     = $request['id'] ?? null;
     $method = $request['method'] ?? '';
 
+    // Notifications (no id) — silently consume, no response
+    if ($id === null && str_starts_with($method, 'notifications/')) {
+        continue;
+    }
+
     $result = match ($method) {
         'initialize' => [
             'protocolVersion' => '2024-11-05',
             'serverInfo'      => $server_info,
-            'capabilities'    => ['tools' => []],
+            'capabilities'    => (object) [],
         ],
         'tools/list' => [
             'tools' => $tools->definitions(),

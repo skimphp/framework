@@ -46,8 +46,14 @@ class docs_validate_command extends command {
         $total_methods    = 0;
         $annotated        = 0;
         $missing_rows     = [];
+        $ref_errors       = [];
+
+        $class_index = $this->build_class_index($classes);
 
         foreach ($classes as $class) {
+            foreach ($this->validate_class_references($class, $class_index) as $error) {
+                $ref_errors[] = $error;
+            }
             foreach ($class->methods as $method) {
                 $total_methods++;
                 $has_annotation = $method->contracts    !== []
@@ -63,7 +69,16 @@ class docs_validate_command extends command {
                         'file'   => str_replace(base_path() . '/', '', $class->file),
                     ];
                 }
+                foreach ($this->validate_method_references($class, $method, $class_index) as $error) {
+                    $ref_errors[] = $error;
+                }
             }
+        }
+
+        if ($ref_errors !== []) {
+            $this->warn('Reference validation errors:');
+            \skim\cli\cli::table(['file', 'error'], $ref_errors);
+            $this->line();
         }
 
         if ($missing_rows !== []) {
@@ -79,6 +94,11 @@ class docs_validate_command extends command {
         $this->line("Coverage: {$annotated}/{$total_methods} methods annotated ({$pct}%)");
         $this->line("Threshold: {$threshold_pct}%");
 
+        if ($ref_errors !== []) {
+            $this->error('Reference validation failed — failing build.');
+            return 1;
+        }
+
         if ($coverage < $threshold) {
             $this->error("Coverage {$pct}% is below threshold {$threshold_pct}% — failing build.");
             return 1;
@@ -86,6 +106,79 @@ class docs_validate_command extends command {
 
         $this->success("Coverage {$pct}% meets threshold {$threshold_pct}%.");
         return 0;
+    }
+
+    /**
+     * Builds a lookup index of class names, symbols, and titles. #AI:build_class_index
+     */
+    private function build_class_index(array $classes): array {
+        $index = [];
+        foreach ($classes as $class) {
+            foreach ([$class->class_name, $class->symbol, $class->title] as $key) {
+                $key = strtolower((string) $key);
+                if ($key !== '') {
+                    $index[$key] = $class;
+                }
+            }
+        }
+        return $index;
+    }
+
+    /**
+     * Validates class-level see_also entries. #AI:validate_class_references
+     *
+     * @return array<int, array{file: string, error: string}>
+     */
+    private function validate_class_references(\skim\dev\docs\value\extracted_class $class, array $index): array {
+        $errors = [];
+        foreach ($class->see_also as $ref) {
+            if (!isset($index[strtolower($ref)])) {
+                $errors[] = [
+                    'file'  => str_replace(base_path() . '/', '', $class->file),
+                    'error' => "dangling see_also: {$class->class_name} -> {$ref}",
+                ];
+            }
+        }
+        return $errors;
+    }
+
+    /**
+     * Validates method-level see_also and aliases entries. #AI:validate_method_references
+     *
+     * @return array<int, array{file: string, error: string}>
+     */
+    private function validate_method_references(\skim\dev\docs\value\extracted_class $class, \skim\dev\docs\value\extracted_method $method, array $index): array {
+        $errors = [];
+        $file = str_replace(base_path() . '/', '', $class->file);
+
+        foreach ($method->see_also as $ref) {
+            if (str_contains($ref, '::')) {
+                [$target_class, $target_method] = explode('::', $ref, 2);
+                if (!isset($index[strtolower($target_class)])) {
+                    $errors[] = ['file' => $file, 'error' => "dangling see_also: {$class->class_name}::{$method->name} -> {$ref} (class not found)"];
+                } else {
+                    $target = $index[strtolower($target_class)];
+                    $method_names = array_map(fn(\skim\dev\docs\value\extracted_method $m) => strtolower($m->name), $target->methods);
+                    if (!in_array(strtolower($target_method), $method_names, true)) {
+                        $errors[] = ['file' => $file, 'error' => "dangling see_also: {$class->class_name}::{$method->name} -> {$ref} (method not found)"];
+                    }
+                }
+            } else {
+                $method_names = array_map(fn(\skim\dev\docs\value\extracted_method $m) => strtolower($m->name), $class->methods);
+                if (!in_array(strtolower($ref), $method_names, true)) {
+                    $errors[] = ['file' => $file, 'error' => "dangling see_also: {$class->class_name}::{$method->name} -> {$ref} (method not found)"];
+                }
+            }
+        }
+
+        foreach ($method->aliases as $alias) {
+            $method_names = array_map(fn(\skim\dev\docs\value\extracted_method $m) => strtolower($m->name), $class->methods);
+            if (in_array(strtolower($alias), $method_names, true)) {
+                $errors[] = ['file' => $file, 'error' => "alias collision: {$class->class_name}::{$method->name} aliases '{$alias}' collides with real method name"];
+            }
+        }
+
+        return $errors;
     }
 }
 
