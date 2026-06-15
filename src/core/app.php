@@ -404,7 +404,10 @@ class app {
                     $abstract,
                     ($this->bindings[$abstract])($this),
                 );
-                return $this->resolved[$abstract] = $instance;
+                if (!isset($this->transient[$abstract])) {
+                    $this->resolved[$abstract] = $instance;
+                }
+                return $instance;
             }
 
             // auto-wire via reflection
@@ -413,7 +416,10 @@ class app {
                     $abstract,
                     $this->build($abstract),
                 );
-                return $this->resolved[$abstract] = $instance;
+                if (!isset($this->transient[$abstract])) {
+                    $this->resolved[$abstract] = $instance;
+                }
+                return $instance;
             }
 
             throw new \RuntimeException("No binding registered for '{$abstract}'");
@@ -606,7 +612,7 @@ class app {
     public function end_request(): void {
         $this->user = [];
 
-        foreach ($this->request_scoped as $abstract) {
+        foreach (array_keys($this->request_scoped) as $abstract) {
             unset($this->resolved[$abstract]);
         }
 
