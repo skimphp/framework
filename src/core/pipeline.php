@@ -26,6 +26,18 @@ namespace skim\core;
 class pipeline {
     /** @var array<class-string,middleware> */
     private static array $instance_cache = [];
+    /**
+     * Clears the middleware singleton cache. Called between requests in worker mode.
+     *
+     * Middleware instances should be stateless; clearing the cache prevents
+     * request-scoped state from leaking across requests while still allowing
+     * process-lifetime caching to be rebuilt lazily.
+     *
+     * #AI:reset_instance_cache
+     */
+    public static function reset_instance_cache(): void {
+        self::$instance_cache = [];
+    }
 
     /**
      * Executes the middleware chain and returns the result. #AI:run

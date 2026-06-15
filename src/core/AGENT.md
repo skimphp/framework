@@ -17,6 +17,9 @@ request/response abstractions, middleware pipeline.
 - Named routes via route_entry::name() → route('user.show', ['id' => 5])
 - Groups stack additively: prefixes concat, middleware merges
 - CLI commands dispatched separately via dispatch_command()
+- map() is a Slim/Laravel-style alias for add() — accepts a single method
+  string or an array; prefer get/post/put/patch/delete for single methods
+  and any() for all five
 
 ## request — critical behaviours
 - from_globals() reads superglobals — only called in app::run(), never elsewhere

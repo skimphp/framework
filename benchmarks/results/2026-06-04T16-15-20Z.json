@@ -1,0 +1,76 @@
+{
+    "timestamp": "2026-06-04T16-15-20Z",
+    "git": {
+        "commit": "d2ca225ff61ab6beb320e6d56484174d5c0cf4be",
+        "short": "d2ca225",
+        "branch": "master",
+        "dirty": true,
+        "subject": "eat(dev): error page redesign + IDE picker + request_trace instrumentation New skim\\dev\\ide_link: 10-IDE registry registry (falls back to phpstorm based on app.debug_ide config). New config/app.php key: debug_ide => env('APP_DEBUG_IDE', 'phpstorm'). src/core/pipeline: emits request_trace 'middleware_ran' event. src/core/router: dispatch() returns un-compiled route 'pattern'. src/core/app: emits 'route_matched' (pattern/params/middleware); restored ensureBooted(). src/dev/error_page rewritten: 3-bucket frame split (app/pipeline/framework), Reflection property expansion, request_trace metrics, safe DI container tree build (depth 4, no make() side effects), Levenshtein suggestions for BadMethodCallException. src/dev/views/error_page rewritten: hero section (badge, message, IDE button, 4 actions), 5 sticky tabs (Code/Trace/Container/Env/Request), inline Solutions block. src/dev/views/components/di_node.php: recursive partial. src/dev/dev_theme: --purple tokens, hero/trace/di-tree/solution CSS, sticky tabs (backdrop-blur, z-50), active-tab design, bumped padding, removed panel max-height. tests/dev/ide_link_test.php: 23 tests for supported IDEs, URLs, and icons. tests/dev/error_page_test.php: updated for new tabs, container panel, and property expansion. All 449 existing tests pass + 50 new = 499 / 1 skipped, 0 failed."
+    },
+    "env": {
+        "php_version": "8.5.6",
+        "sapi": "cli",
+        "opcache": true,
+        "uname": "Linux 5.10.104-linuxkit aarch64"
+    },
+    "config": {
+        "total_requests": 1000,
+        "concurrent": 10,
+        "base_url": "http://localhost:8080"
+    },
+    "benchmarks": {
+        "boot_isolation": {
+            "ms": 5.616417,
+            "target_ms": 1,
+            "ok": false,
+            "exit": 1
+        },
+        "cache_hit": {
+            "ms_per_call": 0.0004,
+            "target_ms": 0.05,
+            "ok": true,
+            "exit": 0
+        },
+        "http_warm": {
+            "name": "http_warm",
+            "avg_ms": 20.17,
+            "p95_ms": 36.77,
+            "rps": 272.4,
+            "requests": 1000,
+            "errors": 0,
+            "total_s": 3.670517835,
+            "target_avg_ms": 10,
+            "ok": false,
+            "exit": 1
+        },
+        "http_hello": {
+            "name": "http_hello",
+            "url": "http://localhost:8080/",
+            "requests": 1000,
+            "errors": 0,
+            "total_s": 4.1054,
+            "avg_ms": 22.364,
+            "p95_ms": 42.995,
+            "rps": 243.6,
+            "target_avg_ms": 2,
+            "ok": false,
+            "exit": 1
+        },
+        "http_json": {
+            "name": "http_json",
+            "url": "http://localhost:8080/json",
+            "requests": 1000,
+            "errors": 0,
+            "total_s": 4.1104,
+            "avg_ms": 22.402,
+            "p95_ms": 42.792,
+            "rps": 243.3,
+            "target_avg_ms": 7,
+            "ok": false,
+            "exit": 1
+        }
+    },
+    "summary": {
+        "all_ok": false
+    }
+}

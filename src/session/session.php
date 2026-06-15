@@ -2,6 +2,8 @@
 
 namespace skim\session;
 
+use skim\worker\resettable;
+
 /**
  * Static facade over the configured session driver with flash message support. #AI:class
  *
@@ -18,9 +20,20 @@ namespace skim\session;
  *
  * #AI:class
  */
-final class session {
+final class session implements resettable {
     private static ?session_driver $driver  = null;
     private static bool            $started = false;
+
+    /**
+     * Closes the active session and resets driver state between requests. #AI:reset_request
+     */
+    public static function reset_request(): void {
+        if (self::$started) {
+            session_write_close();
+        }
+        self::$driver  = null;
+        self::$started = false;
+    }
 
     /**
      * Boots the session driver. #AI:start
@@ -293,6 +306,13 @@ final class session {
 #AI signature: public static function reset(): void
 #AI contract: Clears the cached driver and resets to unstarted state. Forces re-resolution from config on next call.
 #AI side_effects: [Clears static driver and started flag]
+
+#AI:reset_request
+#AI group: Testing Hooks
+#AI frequency: internal
+#AI signature: public static function reset_request(): void
+#AI contract: Closes the active session and resets driver state between requests in worker mode.
+#AI side_effects: [Calls session_write_close() if started; clears driver and started flag]
 
 #AI:driver
 #AI group: Architecture

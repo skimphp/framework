@@ -8,146 +8,154 @@ the Docker container — no local PHP install required.
 ## Quick Start
 
 ```bash
-# 1. Build compiled cache (production mode)
-docker compose exec app php bin/skim --agent cache:build
+# 1. Start the dev server (already configured for benchmark mode)
+docker compose up -d
 
-# 2. Run all three benchmarks
-docker compose exec app php benchmarks/boot_isolation.php
-docker compose exec app php benchmarks/cache_hit.php
-docker compose exec app php benchmarks/http_warm.php http://localhost:8080/ 1000 10
+# 2. Run the full suite — all five benchmarks, results saved as JSON
+docker compose exec app php benchmarks/bench_run.php
+
+# Optional: override request count and concurrency
+docker compose exec app php benchmarks/bench_run.php 5000 20
 ```
+
+The runner writes three files into `benchmarks/results/`:
+
+- `latest.json` — most recent run (always overwritten)
+- `<timestamp>.json` — timestamped archive of each run
+- `history.jsonl` — one line per run, perfect for `tail -f` or plotting
+
+Each archive contains the full record: timestamp, git commit (short + full +
+branch + dirty flag), PHP/SAPI/uname, per-benchmark timings, and per-benchmark
+`ok` flag against the target.
 
 ---
 
-## The Three Benchmarks
+## The Five Benchmarks
 
 ### 1. `boot_isolation.php` — `app::instance()` overhead
 
-Measures the time to create the application singleton. With compiled cache
-and OPcache warm, this should be **well under 1 ms on bare metal**.
-In Docker (with bind-mount filesystem overhead) expect 2-3 ms.
+Measures the time to create the application singleton (autoload + container
+construction, no request dispatched). **Target: < 1 ms on bare metal**;
+2-3 ms is expected in Docker with bind-mount filesystem overhead.
 
 ```bash
 docker compose exec app php benchmarks/boot_isolation.php
 ```
-
-**Output:**
-```
-boot_isolation: 2.45 ms
-WARNING: boot time exceeds 1ms target
-```
-
-The WARNING is expected in Docker — it triggers on bare metal.
-
----
 
 ### 2. `cache_hit.php` — `env::get()` + `config::get()` per call
 
 Runs 10,000 iterations of `env::get('APP_NAME')` and `config::get('app.name')`
-with the compiled cache. **Target: < 0.05 ms per call**.
+with the compiled cache. **Target: < 0.05 ms per call**. Pure OPcache memory
+hit once warm.
 
 ```bash
 docker compose exec app php benchmarks/cache_hit.php
 ```
 
-**Output:**
-```
-cache_hit: 0.0004 ms per call (10000 iterations, 2 calls each)
-```
+### 3. `http_warm.php` — HTTP throughput on an unmatched route
 
-That is **~125x faster** than the 0.05 ms target. Pure OPcache memory hit.
-
----
-
-### 3. `http_warm.php` — HTTP request throughput
-
-Uses `curl_multi_exec` to fire concurrent requests at the dev server. No
-external dependencies (no `wrk`, no `ab`). Measures avg latency, p95, RPS.
+Uses `curl_multi_exec` to fire concurrent requests at the dev server on a
+**404 route**. Measures framework overhead without any controller work.
+**Target (php -S with 8 workers):** < 10 ms avg.
 
 ```bash
-# Syntax: php http_warm.php [url] [total_requests] [concurrent]
 docker compose exec app php benchmarks/http_warm.php http://localhost:8080/ 1000 10
 ```
 
-**Output:**
+### 4. `http_hello.php` — full-stack Hello World closure
+
+```php
+$app->router->get('/', function(): void {
+    echo 'Hello World';
+});
 ```
-http_warm: avg: 4.83 ms | p95: 9.33 ms | rps: 1,121.4
-  requests: 1000 ok, 0 errors, 0.89s total
+
+End-to-end: PHP cold boot → autoload → router dispatch → closure → send.
+**Target: < 2 ms avg per request.**
+
+```bash
+docker compose exec app php benchmarks/http_hello.php http://localhost:8080/ 1000 10
 ```
 
-**Target (php -S):** < 10 ms avg, ~50-80 RPS.
-**Actual:** 4-7 ms avg, **1,100-1,500 RPS** (15-20x over target).
+### 5. `http_json.php` — full-stack JSON closure
 
-#### Tuning concurrency
+```php
+$app->router->get('/json', function(): void {
+    header('Content-Type: application/json');
+    echo json_encode(['time' => microtime(true)]);
+});
+```
 
-| Concurrent | Total | Avg | p95 | RPS |
-|------------|-------|-----|-----|-----|
-| 10  | 1000 | 4.83 ms  | 9.33 ms  | 1,121 |
-| 20  | 2000 | 7.21 ms  | 12.54 ms | 1,472 |
-| 50  | 5000 | 16.64 ms | 29.74 ms | 1,513 |
+End-to-end: same as Hello World plus `json_encode` of a float. **Target:
+< 7 ms avg per request.**
 
-Higher concurrency pushes RPS higher but increases tail latency. Pick what
-matches your production traffic profile.
+```bash
+docker compose exec app php benchmarks/http_json.php http://localhost:8080/json 1000 10
+```
+
+The two new benchmarks output a structured `__JSON__` line on stdout when
+`BENCH_JSON=1` is set, which `bench_run.php` uses to capture results.
 
 ---
 
-## Verifying the RPS Claim
+## Realistic Targets in the Docker Dev Environment
 
-The RPS number is measured **inside Docker** against the php-built-in server.
-The same hardware on bare metal will be faster. To reproduce:
+The 2 ms / 7 ms targets are **framework-floor targets**: the cost of running
+the full request lifecycle when every layer (autoload, router, dispatch,
+response) is already warm in OPcache. On bare metal with `php -S` or with
+`php-fpm` in a real web server, SKIM can hit them.
 
-```bash
-# Make sure the dev server is up
-docker compose up -d
+In Docker on macOS with bind-mounted source code, the PHP process boot alone
+takes 3-5 ms (filesystem `stat()` calls on the bind mount dominate). Expect
+the following realistic floors in this environment:
 
-# Build cache
-docker compose exec app php bin/skim --agent cache:build
+| Benchmark        | Bare metal target | Docker dev (realistic) | Bottleneck              |
+|------------------|-------------------|------------------------|-------------------------|
+| boot_isolation   | < 1 ms            | 3-6 ms                 | bind-mount `stat()`     |
+| cache_hit        | < 0.05 ms         | < 0.001 ms             | (passes — pure OPcache) |
+| http_warm        | < 10 ms           | 15-25 ms               | PHP cold boot per req   |
+| http_hello       | < 2 ms            | 5-8 ms (1 concurrent)  | PHP cold boot per req   |
+| http_json        | < 7 ms            | 6-9 ms (1 concurrent)  | PHP cold boot + encode  |
 
-# Run a 1000-request benchmark with 10 concurrent connections
-docker compose exec app php benchmarks/http_warm.php http://localhost:8080/ 1000 10
+To squeeze closer to bare-metal performance in the dev container, the
+included `docker-compose.yml` already sets:
 
-# Expected: avg ~5ms, p95 ~10ms, RPS ~1100-1500
-```
+- `PHP_CLI_SERVER_WORKERS=8` — parallel `php -S` workers (default is single-threaded)
+- `PHP_INI_FLAGS` — `output_buffering=4096` (lets `echo`+`header()` in routes work
+  with `response::send()`), `display_errors=stderr` (no warnings leak into the
+  response body), `implicit_flush=Off`, and `opcache.preload_user=www-data` so
+  `storage/preload.php` warms the framework core into shared memory
+- `storage/preload.php` — preloads `src/core/`, `src/cache/`, `src/db/`, `src/view/`,
+  `src/helpers/`, `src/validation/`, `src/events/`, `src/queue/`, `src/realtime/`,
+  `src/websocket/`, `src/http/`, `src/extension/` into OPcache
 
-**What the number includes:**
-- Cold PHP process boot (per request, in php -S mode)
-- Autoloader resolution
-- `env::get()` + `config::get()` (with compiled cache)
-- Router dispatch
-- Response send
-
-**What the number does NOT include:**
-- Database queries (the test route returns 404 with no DB hit)
-- Real middleware execution (only `cors` global middleware)
-- Network latency to a real client (loopback is ~0.1 ms)
-
-For a "real-world" estimate, multiply by 2-3x to account for typical
-controller work (1 DB query, 1 cache lookup, JSON serialization).
+For real benchmarks, use `php-fpm` behind `nginx` on the host (not in Docker),
+or run `php -S` on bare metal. The framework itself is the bottleneck only when
+the runtime isn't.
 
 ---
 
-## Troubleshooting
+## Reading the Results
 
-**"boot time exceeds 1ms target"** — Expected in Docker. The `realpath()` and
-`stat()` calls on bind-mounted volumes add 1-2 ms. On bare metal with
-OPcache, this is well under 1 ms.
+A single benchmark run produces output like:
 
-**"avg latency exceeds 10ms target"** — Means your controller is doing
-real work (DB, HTTP calls, etc.). The benchmark only tests the framework
-overhead on a 404 route.
-
-**"no successful requests"** — The dev server is not running. Start it:
-```bash
-docker compose up -d
-# Wait ~3 seconds for the PHP server to be ready
+```
+============================================================
+SKIM Benchmark — 2026-06-04T16-15-20Z — commit d2ca225
+============================================================
+FAIL boot_isolation       5.616 ms
+  OK cache_hit            0.000 ms
+FAIL http_warm           20.170 ms    272.4 rps
+FAIL http_hello          22.364 ms    243.6 rps
+FAIL http_json           22.402 ms    243.3 rps
 ```
 
-**Cache hit shows high numbers** — Make sure you built the cache first:
-```bash
-docker compose exec app php bin/skim --agent cache:build
-# Check the file exists:
-docker compose exec app ls -la storage/cache/
-```
+`FAIL` means the run exceeded the target documented above. Numbers are in
+milliseconds; RPS is requests per second for the HTTP benchmarks.
+
+The full machine-readable record is in `benchmarks/results/<timestamp>.json` —
+suitable for diffing across commits, plotting in `gnuplot`/Excel, or piping
+into a regression CI check.
 
 ---
 
@@ -155,8 +163,15 @@ docker compose exec app ls -la storage/cache/
 
 ```
 benchmarks/
-├── use.md               ← this file
-├── boot_isolation.php   ← app::instance() overhead
-├── cache_hit.php        ← env + config read latency
-└── http_warm.php        ← HTTP throughput
+├── use.md                   ← this file
+├── boot_isolation.php       ← app::instance() overhead
+├── cache_hit.php            ← env + config read latency
+├── http_warm.php            ← 404 route HTTP throughput
+├── http_hello.php           ← Hello World closure
+├── http_json.php            ← JSON closure
+├── bench_run.php            ← runs all five, writes results/*.json
+└── results/
+    ├── latest.json
+    ├── <timestamp>.json
+    └── history.jsonl
 ```

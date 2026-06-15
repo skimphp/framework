@@ -22,6 +22,17 @@ namespace skim\cache;
  */
 final class array_driver implements driver {
     private array $store = [];
+    /**
+     * Throws if constructed inside a worker process.
+     *
+     * array_driver stores state in a PHP array, so it leaks across requests
+     * in FrankenPHP worker mode. Use file_driver or redis_driver instead.
+     */
+    public function __construct() {
+        if (defined('WORKER_MODE') && WORKER_MODE) {
+            throw new \RuntimeException('array_driver is not safe for worker mode — use file or redis driver.');
+        }
+    }
 
     /**
      * Retrieves a value by key. #AI:get
@@ -171,6 +182,14 @@ final class array_driver implements driver {
 #AI contract: Removes all keys whose name starts with the given prefix.
 #AI param_details: [{name: $prefix | type: string | required: true | desc: Key prefix to match.}]
 #AI return_detail: {type: bool | desc: Always true.}
+
+#AI:__construct
+#AI group: Lifecycle
+#AI frequency: internal
+#AI signature: public function __construct()
+#AI contract: Throws if constructed inside a worker process. array_driver stores state in a PHP array, so it leaks across requests in FrankenPHP worker mode.
+#AI throws_details: [{type: \RuntimeException | desc: When WORKER_MODE is defined and true.}]
+#AI warnings: [Use file_driver or redis_driver in worker mode instead]
 
 #AI:flush_all
 #AI group: Invalidation

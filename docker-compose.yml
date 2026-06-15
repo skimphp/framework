@@ -26,6 +26,12 @@ services:
       ANALYTICS_DB_PASS: "secret"
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
+      # Dev server: buffer output so route `echo`/`header()` works cleanly with
+      # the framework's response::send(); log warnings to stderr instead of
+      # emitting them into the response body. Workers enable parallel request
+      # handling on `php -S` (single-threaded by default).
+      PHP_INI_FLAGS: "-d output_buffering=4096 -d display_errors=stderr -d implicit_flush=Off -d opcache.revalidate_freq=60 -d opcache.preload_user=www-data"
+      PHP_CLI_SERVER_WORKERS: "8"
     depends_on:
       mysql:
         condition: service_healthy

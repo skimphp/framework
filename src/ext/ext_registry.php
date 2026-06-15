@@ -252,7 +252,11 @@ final class ext_registry {
             }
         }
 
-        $this->installed = require $cache_path;
+        $cache = require $cache_path;
+        if (!is_array($cache)) {
+            return false;
+        }
+        $this->installed = $cache;
         return true;
     }
 

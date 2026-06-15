@@ -190,6 +190,10 @@ class response {
         }
 
         $sse = new \skim\realtime\sse();
+        if (connection_aborted()) {
+            $this->sent = true;
+            return $this;
+        }
         $callback($sse);
         $this->sent = true;
 

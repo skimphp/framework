@@ -80,33 +80,58 @@ class db {
     public static function reset(): void {
         self::$pool = [];
     }
+    /**
+     * Rolls back any open transactions on all pooled connections.
+     *
+     * Safety net for worker mode: if a request exits with an uncommitted
+     * transaction, the next request must not inherit it. Called by
+     * worker_reset::apply() between requests.
+     *
+     * #AI:rollback_all
+     */
+    public static function rollback_all(): void {
+        foreach (self::$pool as $conn) {
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
+        }
+    }
 
     /**
      * Returns the PDO instance for a named connection. #AI:pdo
      *
      * Auto-connects from config/db.php on first access — no manual boot wiring needed.
      *
+     * In worker mode, pooled connections are checked for liveness before reuse.
+     * If the server closed the connection (MySQL codes 2006/2013/HY000), the
+     * pool entry is dropped and a fresh connection is opened once.
+     *
      * @param string $connection Named connection from config/db.php.
      */
     public static function pdo(string $connection = 'default'): \PDO {
+        if (isset(self::$pool[$connection])) {
+            $conn = self::$pool[$connection];
+            try {
+                $conn->query('SELECT 1');
+                return $conn;
+            } catch (\PDOException $e) {
+                if (in_array($e->getCode(), ['2006', '2013', 'HY000'], true)) {
+                    unset(self::$pool[$connection]);
+                }
+            }
+        }
+
         if (!isset(self::$pool[$connection])) {
             $cfg = config("db.{$connection}")
                 ?? throw new \RuntimeException("No DB connection '{$connection}' in config/db.php");
             self::connect($connection, $cfg);
         }
+
         return self::$pool[$connection];
     }
 
-    // --- query execution ---
-
     /**
      * Executes a query_gen SQL template and returns rows or affected count. #AI:query
-     *
-     * %placeholders% are substituted by query_builder. Unused placeholders are
-     * stripped silently. When $debug is true, returns the interpolated SQL
-     * string without executing — use in tests to assert generated SQL.
-     *
-     * Example:
      *   $rows = db::query('SELECT * FROM users %where% %limit%', [
      *       'where' => ['status = :s'], ':s' => 'active', 'limit' => 10,
      *   ]);

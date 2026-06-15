@@ -1,5 +1,5 @@
 .PHONY: up down build rebuild shell test pest migrate migrate-fresh migrate-down \
-        migrate-status cache-clear queue-work logs ps redis-cli mysql-cli pgsql-cli
+        migrate-status cache-clear queue-work logs ps redis-cli mysql-cli pgsql-cli mcp-install
 
 # ── Docker lifecycle ─────────────────────────────────────────────────────────
 
@@ -71,3 +71,8 @@ pgsql-cli:
 
 redis-cli:
 	docker compose exec redis redis-cli
+
+# ── MCP Antigravity install ─────────────────────────────────────────────────
+
+mcp-install:
+	bash scripts/mcp/antigravity/install.sh

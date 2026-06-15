@@ -39,6 +39,8 @@ final class kernel {
         'serve'          => \skim\cli\commands\serve_command::class,
         'ide:generate'   => \skim\cli\commands\ide_command::class,
         'install'        => \skim\cli\commands\install_command::class,
+        'worker:install'   => \skim\cli\commands\worker_install_command::class,
+        'worker:uninstall' => \skim\cli\commands\worker_uninstall_command::class,
     ];
 
     private const DEV_COMMANDS = [

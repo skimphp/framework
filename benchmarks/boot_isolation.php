@@ -1,18 +1,19 @@
 <?php declare(strict_types=1);
 
-define('SKIM_ROOT', dirname(__DIR__));
-require SKIM_ROOT . '/vendor/autoload.php';
+// Measures app::instance() boot time in isolation.
+// Target: < 1ms
 
-\skim\core\env::reset();
-\skim\core\config::reset();
+require __DIR__ . '/../vendor/autoload.php';
 
 $start = hrtime(true);
-$app = \skim\core\app::instance();
-$end = (hrtime(true) - $start) / 1e6;
+$app = skim\core\app::instance();
+$ms = (hrtime(true) - $start) / 1e6;
 
-echo "boot_isolation: {$end} ms\n";
+echo "instance: {$ms} ms\n";
 
-if ($end > 1.0) {
-    echo "WARNING: boot time exceeds 1ms target\n";
+if ($ms > 1.0) {
+    fwrite(STDERR, "FAIL: app::instance() took > 1ms\n");
     exit(1);
 }
+
+echo "OK\n";

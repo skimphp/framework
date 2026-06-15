@@ -80,11 +80,14 @@ class app {
     private ?array $extension_context = null;
     // Discovers, registers, and boots extensions in priority order.
     private ?extension_manager $extension_manager = null;
-    // Idempotent boot guard: prevents extension re-boot on repeated calls.
     private bool $extensions_booted = false;
     // Idempotent boot guard: prevents re-running boot() on repeated calls.
     private bool $booted = false;
     private bool $debug_mode = false;
+    // Tracks abstracts bound with request lifetime so end_request() can clear them.
+    private array $request_scoped = [];
+    // Tracks abstracts bound with transient lifetime so make() skips caching.
+    private array $transient = [];
 
     /**
      * Private constructor enforces singleton access via instance(). #AI:__construct
@@ -294,9 +297,9 @@ class app {
      * effect on the next `make()` call. Higher-priority bindings win conflicts;
      * lower-priority calls are silently ignored.
      *
-     * @param string         $abstract Abstract type or identifier to bind.
+     * @param string          $abstract Abstract type or identifier to bind.
      * @param callable|string $factory  Callable receiving `app`, or class name for auto-wiring.
-     * @param int|null       $priority Binding priority (higher wins). Null uses current extension priority.
+     * @param int|null        $priority Binding priority (higher wins). Null uses current extension priority.
      * @throws \LogicException If called after `freeze()`.
      */
     public function bind(string $abstract, callable|string $factory, ?int $priority = null): void {
@@ -311,6 +314,37 @@ class app {
 
         $this->bindings[$abstract] = $this->normalize_factory($factory);
         $this->binding_priorities[$abstract] = $priority;
+        unset($this->resolved[$abstract], $this->transient[$abstract]);
+    }
+
+    /**
+     * Registers a request-scoped binding. #AI:bind_request
+     *
+     * Behaves like bind() but the resolved singleton is cleared from the
+     * container at the end of each request via end_request().
+     *
+     * @param string          $abstract Abstract type or identifier.
+     * @param callable|string $factory  Callable receiving app, or class name for auto-wiring.
+     * @param int|null        $priority Binding priority (higher wins).
+     */
+    public function bind_request(string $abstract, callable|string $factory, ?int $priority = null): void {
+        $this->bind($abstract, $factory, $priority);
+        $this->request_scoped[$abstract] = true;
+    }
+
+    /**
+     * Registers a transient binding — built fresh on every make() call. #AI:bind_transient
+     *
+     * Transient services are never cached in $resolved, so each make()
+     * returns a new instance.
+     *
+     * @param string          $abstract Abstract type or identifier.
+     * @param callable|string $factory  Callable receiving app, or class name for auto-wiring.
+     * @param int|null        $priority Binding priority (higher wins).
+     */
+    public function bind_transient(string $abstract, callable|string $factory, ?int $priority = null): void {
+        $this->bind($abstract, $factory, $priority);
+        $this->transient[$abstract] = true;
         unset($this->resolved[$abstract]);
     }
 
@@ -341,9 +375,10 @@ class app {
     /**
      * Resolves an abstract to a singleton instance. #AI:make
      *
-     * Returns the cached singleton if already resolved. Otherwise invokes the
-     * registered factory, or falls back to reflection auto-wiring when no binding
-     * exists but the class is loadable. Applies decorators in priority order.
+     * Returns the cached singleton if already resolved (unless the binding is
+     * transient). Otherwise invokes the registered factory, or falls back to
+     * reflection auto-wiring when no binding exists but the class is loadable.
+     * Applies decorators in priority order.
      *
      * Example:
      *   $app->bind(mailer::class, fn($app) => new smtp_mailer($app->get('app.mail')));
@@ -354,13 +389,10 @@ class app {
      * @throws \RuntimeException If no binding exists and the class cannot be auto-wired.
      */
     public function make(string $abstract): mixed {
-        if (isset($this->resolved[$abstract])) {
+        if (isset($this->resolved[$abstract]) && !isset($this->transient[$abstract])) {
             return $this->resolved[$abstract];
         }
 
-        // DI tracing — record the in-flight chain so the error page can render
-        // it when something blows up downstream. Cost: one array_push + one
-        // array_pop per make() call, no-op when $tracing is off (default).
         $tracking = $this->tracing;
         if ($tracking) {
             $this->resolve_stack[] = ['id' => $abstract, 'time' => microtime(true)];
@@ -387,8 +419,6 @@ class app {
             throw new \RuntimeException("No binding registered for '{$abstract}'");
         }
         catch (\Throwable $e) {
-            // Capture for error_page::collect_container() — also clear the stack
-            // so a half-built chain doesn't leak into the next request.
             if ($tracking) {
                 $this->failed_at     = $abstract;
                 $this->partial_args  = $this->current_ctor_params($abstract);
@@ -511,6 +541,13 @@ class app {
     }
 
     /**
+     * Returns whether debug mode is enabled. #AI:is_debug_mode
+     */
+    public function is_debug_mode(): bool {
+        return $this->debug_mode;
+    }
+
+    /**
      * Runs a callback with a temporary extension context for priority resolution. #AI:with_extension_context
      *
      * Sets the active extension name and priority so that `bind()`, `decorate()`,
@@ -537,18 +574,84 @@ class app {
             $this->extension_context = $previous;
         }
     }
+    /**
+     * Begins a request in worker mode — enables profiler and request_trace if debug. #AI:begin_request
+     *
+     * Separated from run() so the worker entrypoint can call it once per request
+     * without re-running the full boot sequence.
+     */
+    public function begin_request(): void {
+        $this->debug_mode = (bool) config::get('app.debug', false);
+
+        if ($this->debug_mode) {
+            profiler::enable();
+            request_trace::enable();
+            request_trace::start(
+                bin2hex(random_bytes(8)),
+                $_SERVER['REQUEST_METHOD'] ?? 'GET',
+                $_SERVER['REQUEST_URI'] ?? '/',
+            );
+            request_trace::set_extensions(
+                array_column($this->get('sys.extensions', []), 'name')
+            );
+        }
+    }
+
+    /**
+     * Ends a request in worker mode — resets per-request state. #AI:end_request
+     *
+     * Clears user scope and request-scoped DI bindings, then runs the global
+     * worker_reset orchestrator to clear static facades and output buffers.
+     */
+    public function end_request(): void {
+        $this->user = [];
+
+        foreach ($this->request_scoped as $abstract) {
+            unset($this->resolved[$abstract]);
+        }
+
+        $this->disable_tracing();
+        \skim\worker\worker_reset::apply();
+    }
+
+    /**
+     * Handles an uncaught exception. Used by the global exception handler. #AI:handle_exception
+     */
+    public function handle_exception(\Throwable $e): void {
+        if ($this->debug_mode) {
+            \skim\dev\error_page::render($e);
+        } else {
+            http_response_code(500);
+            echo 'Internal Server Error';
+        }
+    }
+
+    /**
+     * Emits a controller result through the response object. #AI:emit
+     *
+     * Normalises mixed return values (response, array, string, null, false)
+     * into a proper HTTP response and sends it.
+     *
+     * @param mixed    $result   Controller return value.
+     * @param response $fallback Response object used as fallback for non-response types.
+     */
+    public function emit(mixed $result, response $fallback): void {
+        match (true) {
+            $result instanceof response => $result->send(),
+            is_array($result) || is_object($result) => $fallback->json($result)->send(),
+            is_string($result) => $fallback->set_body($result)->send(),
+            $result === null => $fallback->send(),
+            $result === false => $fallback->status(405)->send(),
+            default => $fallback->send(),
+        };
+    }
 
     /**
      * Dispatches the HTTP request through middleware and sends the response. #AI:run
      *
-     * Calls `ensureBooted()`, enables profiler and request_trace (if debug),
-     * installs a global exception handler (error_page in debug, 500 in production),
-     * boots extensions, freezes the app, builds the request from globals, dispatches
-     * through the middleware pipeline, records request traces, and sends the response.
-     * Called once per request from `public/index.php`.
-     *
-     * WARNING: Not re-entrant. Installs a global exception handler that persists
-     * for the process lifetime.
+     * Runs the full one-shot lifecycle for non-worker deployments. In worker mode,
+     * callers should instead call boot() once, then loop over begin_request(),
+     * dispatch(), and end_request().
      *
      * Example:
      *   // public/index.php
@@ -557,68 +660,35 @@ class app {
      */
     public function run(): void {
         $this->ensureBooted();
-
-        $this->debug_mode = (bool) config::get('app.debug', false);
-
-        if ($this->debug_mode) {
-            profiler::enable();
-            request_trace::enable();
-        }
-
-        set_exception_handler(function(\Throwable $e): void {
-            if ($this->debug_mode) {
-                \skim\dev\error_page::render($e);
-            } else {
-                http_response_code(500);
-                echo 'Internal Server Error';
-            }
-        });
-
         $this->boot_extensions();
         $this->freeze();
 
+        set_exception_handler(function(\Throwable $e): void {
+            $this->handle_exception($e);
+        });
+
+        $this->begin_request();
         $req = request::from_globals();
         $res = new response();
 
-        if ($this->debug_mode) {
-            request_trace::start(
-                bin2hex(random_bytes(8)),
-                $req->method(),
-                $req->path(),
-            );
-            request_trace::set_extensions(
-                array_column($this->get('sys.extensions', []), 'name')
-            );
+        try {
+            $result = $this->dispatch($req, $res);
+
+            if ($this->debug_mode) {
+                $trace = request_trace::finish($result->get_status());
+                $this->sys['last_trace'] = $trace;
+            } elseif ($result->get_status() >= 500) {
+                error_log('[skim][request] ' . $req->method() . ' ' . $req->path() . ' ' . $result->get_status());
+            }
+
+            $this->emit($result, $res);
+        } finally {
+            $this->end_request();
         }
-
-        $result = $this->dispatch($req, $res);
-
-        if ($this->debug_mode) {
-            $trace = request_trace::finish($result->get_status());
-            $this->sys['last_trace'] = $trace;
-        } elseif ($result->get_status() >= 500) {
-            error_log('[skim][request] ' . $req->method() . ' ' . $req->path() . ' ' . $result->get_status());
-        }
-
-        $result->send();
     }
 
     /**
      * Dispatches a request through the router and middleware pipeline. #AI:dispatch
-     *
-     * Returns the response without sending headers or body — suitable for tests
-     * and embedded runtimes. Does not install exception handlers. Temporarily sets
-     * this instance as the global singleton during dispatch and restores the
-     * previous instance in a finally block.
-     *
-     * Example:
-     *   $req = request::make('GET', '/users/42');
-     *   $res = $app->dispatch($req, new response());
-     *   assert($res->get_status() === 200);
-     *
-     * @param request  $req            The request to dispatch.
-     * @param response $res            The response object to populate.
-     * @param bool     $skip_middleware When true, bypasses all middleware (useful for tests).
      * @return response The populated response (404 if no route, 405 if method not allowed).
      */
     public function dispatch(request $req, response $res, bool $skip_middleware = false): response {
@@ -746,19 +816,28 @@ class app {
         }
         return $caps;
     }
-
     /**
      * Boots extensions once via the extension manager. #AI:boot_extensions
      *
      * Idempotent — subsequent calls after the first are no-ops.
      */
-    private function boot_extensions(): void {
+    public function boot_extensions(): void {
         if ($this->extensions_booted) {
             return;
         }
 
         $this->extension_manager?->boot($this);
         $this->extensions_booted = true;
+    }
+
+    /**
+     * Shuts down process-scoped resources before the worker exits. #AI:shutdown
+     *
+     * Closes all pooled database connections and clears the cache facade.
+     */
+    public function shutdown(): void {
+        \skim\db\db::reset();
+        \skim\cache\cache::reset();
     }
 
     /**
@@ -784,7 +863,7 @@ class app {
      * @param string $abstract Fully-qualified class name to instantiate.
      * @throws \RuntimeException If a constructor parameter has no binding and no default.
      */
-    private function build(string $abstract): mixed {
+    public function build(string $abstract): mixed {
         $ref  = new \ReflectionClass($abstract);
         $ctor = $ref->getConstructor();
 
@@ -1028,8 +1107,68 @@ class app {
 #AI:boot_extensions
 #AI group: Extensions
 #AI frequency: internal
-#AI signature: private function boot_extensions(): void
+#AI signature: public function boot_extensions(): void
 #AI contract: Boots extensions once via the extension manager. Idempotent — subsequent calls after the first are no-ops.
+
+#AI:bind_request
+#AI group: DI Container
+#AI frequency: medium
+#AI signature: public function bind_request(string $abstract, callable|string $factory, ?int $priority = null): void
+#AI contract: Registers a request-scoped binding. Behaves like bind() but the resolved singleton is cleared from the container at the end of each request via end_request().
+#AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving app, or class name for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins).}]
+#AI side_effects: [Registers binding and marks it as request-scoped]
+
+#AI:bind_transient
+#AI group: DI Container
+#AI frequency: medium
+#AI signature: public function bind_transient(string $abstract, callable|string $factory, ?int $priority = null): void
+#AI contract: Registers a transient binding — built fresh on every make() call. Never cached in $resolved.
+#AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving app, or class name for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins).}]
+#AI side_effects: [Registers binding and marks it as transient]
+
+#AI:begin_request
+#AI group: Lifecycle
+#AI frequency: internal
+#AI signature: public function begin_request(): void
+#AI contract: Begins a request in worker mode — enables profiler and request_trace if debug. Separated from run() so the worker entrypoint can call it once per request without re-running the full boot sequence.
+#AI side_effects: [Enables profiler and request_trace when app.debug is true]
+
+#AI:end_request
+#AI group: Lifecycle
+#AI frequency: internal
+#AI signature: public function end_request(): void
+#AI contract: Ends a request in worker mode — resets per-request state. Clears user scope and request-scoped DI bindings, then runs the global worker_reset orchestrator.
+#AI side_effects: [Clears user scope; clears request-scoped resolved singletons; disables tracing; runs worker_reset::apply()]
+
+#AI:handle_exception
+#AI group: Lifecycle
+#AI frequency: internal
+#AI signature: public function handle_exception(\Throwable $e): void
+#AI contract: Handles an uncaught exception. Used by the global exception handler installed in run(). Renders debug error page when debug_mode is true, otherwise returns 500.
+#AI param_details: [{name: $e | type: \Throwable | required: true | desc: The uncaught exception to handle.}]
+#AI side_effects: [Renders error_page or sends HTTP 500 response]
+
+#AI:emit
+#AI group: Request Dispatch
+#AI frequency: internal
+#AI signature: public function emit(mixed $result, response $fallback): void
+#AI contract: Emits a controller result through the response object. Normalises mixed return values into a proper HTTP response and sends it.
+#AI param_details: [{name: $result | type: mixed | required: true | desc: Controller return value.}; {name: $fallback | type: response | required: true | desc: Response object used as fallback for non-response types.}]
+#AI side_effects: [Sends HTTP response]
+
+#AI:shutdown
+#AI group: Lifecycle
+#AI frequency: internal
+#AI signature: public function shutdown(): void
+#AI contract: Shuts down process-scoped resources before the worker exits. Closes all pooled database connections and clears the cache facade.
+#AI side_effects: [Resets db connection pool and cache driver]
+
+#AI:is_debug_mode
+#AI group: Lifecycle
+#AI frequency: low
+#AI signature: public function is_debug_mode(): bool
+#AI contract: Returns whether debug mode is enabled.
+#AI return_detail: {type: bool | desc: True when app.debug config is enabled.}
 
 #AI:normalize_factory
 #AI group: DI Container

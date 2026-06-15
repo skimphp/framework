@@ -36,6 +36,9 @@ class sse {
      * @param string|null $id    Optional event ID for client Last-Event-ID tracking.
      */
     public function send(mixed $data, ?string $event = null, ?string $id = null): void {
+        if (connection_aborted()) {
+            return;
+        }
         if ($id !== null) {
             echo "id: {$id}\n";
         }
@@ -57,6 +60,9 @@ class sse {
      * or load balancers with idle timeouts.
      */
     public function ping(): void {
+        if (connection_aborted()) {
+            return;
+        }
         echo ": ping\n\n";
         $this->flush();
     }

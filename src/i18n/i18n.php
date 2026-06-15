@@ -2,6 +2,8 @@
 
 namespace skim\i18n;
 
+use skim\worker\resettable;
+
 /**
  * Minimal i18n facade — PHP array translation files with dot-notation keys.
  *
@@ -18,12 +20,19 @@ namespace skim\i18n;
  *
  * #AI:class
  */
-final class i18n {
+final class i18n implements resettable {
     private static string  $locale      = 'en';
     private static string  $fallback    = 'en';
     private static string  $lang_path   = '';
     private static array   $loaded      = [];
-    private static mixed $loader         = null;
+    private static mixed   $loader      = null;
+
+    /**
+     * Resets the locale to fallback between requests in worker mode. #AI:reset_request
+     */
+    public static function reset_request(): void {
+        self::$locale = self::$fallback;
+    }
 
     /**
      * Sets the active locale for all subsequent t() calls. #AI:locale
@@ -215,3 +224,10 @@ final class i18n {
 #AI signature: public static function reset(): void
 #AI contract: Clears all state: locale, fallback, loaded files, and custom loader. Use in test tearDown().
 #AI side_effects: [Clears all static state]
+
+#AI:reset_request
+#AI group: Testing Hooks
+#AI frequency: internal
+#AI signature: public static function reset_request(): void
+#AI contract: Resets the locale to fallback between requests in worker mode.
+#AI side_effects: [Mutates static $locale to $fallback value]

@@ -2,6 +2,8 @@
 
 namespace skim\events;
 
+use skim\worker\resettable;
+
 /**
  * Synchronous event bus with priority ordering and async dispatch via queue.
  *
@@ -17,9 +19,16 @@ namespace skim\events;
  *
  * #AI:class
  */
-final class event {
+final class event implements resettable {
     /** @var array<string, list<array{fn: callable, once: bool, priority: int}>> */
     private static array $listeners = [];
+
+    /**
+     * Clears the listener registry between requests in worker mode. #AI:reset_request
+     */
+    public static function reset_request(): void {
+        self::$listeners = [];
+    }
 
     /**
      * Registers a listener for the given event. #AI:on
@@ -205,3 +214,10 @@ final class event {
 #AI contract: Returns the number of listeners currently registered for the given event.
 #AI param_details: [{name: $event | type: string | required: true | desc: Event class-string or string name.}]
 #AI return_detail: {type: int | desc: Number of registered listeners.}
+
+#AI:reset_request
+#AI group: Testing Hooks
+#AI frequency: internal
+#AI signature: public static function reset_request(): void
+#AI contract: Clears the listener registry between requests in worker mode.
+#AI side_effects: [Empties the static $listeners array]

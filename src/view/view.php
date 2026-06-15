@@ -3,6 +3,7 @@
 namespace skim\view;
 
 use skim\dev\profiler;
+use skim\worker\resettable;
 
 /**
  * Static facade for rendering PHP templates with fragment extraction. #AI:class
@@ -19,10 +20,17 @@ use skim\dev\profiler;
  *
  * #AI:class
  */
-final class view {
+final class view implements resettable {
     private static string  $views_path     = '';
     private static array   $shared_data    = [];
     private static ?string $default_layout = null;
+
+    /**
+     * Clears shared data between requests in worker mode. #AI:reset_request
+     */
+    public static function reset_request(): void {
+        self::$shared_data = [];
+    }
 
     /**
      * Renders a template, optionally extracting a named fragment. #AI:render
@@ -80,6 +88,14 @@ final class view {
     public static function share(string $key, mixed $value): void {
         self::$shared_data[$key] = $value;
     }
+    /**
+     * Returns a shared data value, or null if not set. #AI:get_shared
+     *
+     * @param string $key Shared variable name.
+     */
+    public static function get_shared(string $key): mixed {
+        return self::$shared_data[$key] ?? null;
+    }
 
     /**
      * Sets the root directory for template resolution. #AI:set_path
@@ -109,8 +125,8 @@ final class view {
      * Call in tearDown() to restore defaults between tests.
      */
     public static function reset(): void {
-        self::$shared_data    = [];
         self::$views_path     = '';
+        self::$shared_data    = [];
         self::$default_layout = null;
     }
 
@@ -226,6 +242,13 @@ final class view {
 #AI signature: public static function reset(): void
 #AI contract: Clears shared data, views path, and default layout. Use in test tearDown().
 #AI side_effects: [Clears all static state]
+
+#AI:reset_request
+#AI group: Testing Hooks
+#AI frequency: internal
+#AI signature: public static function reset_request(): void
+#AI contract: Clears shared data between requests in worker mode.
+#AI side_effects: [Empties static $shared_data array]
 
 #AI:component
 #AI group: Rendering API
