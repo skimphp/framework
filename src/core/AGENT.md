@@ -10,6 +10,8 @@ request/response abstractions, middleware pipeline.
 - SYS scope: write-once after boot — throws on duplicate in production
 - APP scope: reads config/*.php via config::get — read-only after boot
 - USER scope: mutable, per-request
+- bind() is singleton by default; use bind_request()/bind_transient() or pass a
+  lifetime; config('app.strict_di')=true makes an explicit lifetime mandatory.
 
 ## router — critical behaviours
 - @param token syntax: @id → {id:[^/]+}, @id:int → {id:\d+}, @slug:str → {id:[a-zA-Z0-9\-]+}

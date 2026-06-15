@@ -84,6 +84,9 @@ class app {
     // Idempotent boot guard: prevents re-running boot() on repeated calls.
     private bool $booted = false;
     private bool $debug_mode = false;
+    // Snapshot of ob_get_level() at begin_request() so end_request() only closes
+    // buffers opened during the request, leaving PHPUnit/test buffers intact.
+    private int $request_ob_level = 0;
     // Tracks abstracts bound with request lifetime so end_request() can clear them.
     private array $request_scoped = [];
     // Tracks abstracts bound with transient lifetime so make() skips caching.
@@ -146,8 +149,13 @@ class app {
      */
     public static function test_instance(array $config = []): static {
         $inst = new static(dirname(__DIR__, 2));
+        $inst->request_ob_level = ob_get_level();
         foreach ($config as $key => $val) {
-            $inst->app_data[$key] = $val;
+            if (str_starts_with($key, 'app.')) {
+                $inst->app_data[substr($key, 4)] = $val;
+            } else {
+                $inst->app_data[$key] = $val;
+            }
         }
         $inst->router->set_mutation_guard(fn(): bool => !$inst->frozen);
         $inst->set('sys.router', $inst->router);
@@ -297,24 +305,22 @@ class app {
      * effect on the next `make()` call. Higher-priority bindings win conflicts;
      * lower-priority calls are silently ignored.
      *
-     * @param string          $abstract Abstract type or identifier to bind.
-     * @param callable|string $factory  Callable receiving `app`, or class name for auto-wiring.
-     * @param int|null        $priority Binding priority (higher wins). Null uses current extension priority.
-     * @throws \LogicException If called after `freeze()`.
+     * When `app.strict_di` is true, an explicit lifetime is mandatory.
+     *
+     * @param string          $abstract  Abstract type or identifier to bind.
+     * @param callable|string $factory   Callable receiving `app`, or class name for auto-wiring.
+     * @param int|null        $priority  Binding priority (higher wins). Null uses current extension priority.
+     * @param lifetime|null   $lifetime  Lifetime for this binding. Null defaults to singleton; null is rejected when strict_di is enabled.
+     * @throws \LogicException If called after `freeze()` or if strict_di is enabled and no lifetime is provided.
      */
-    public function bind(string $abstract, callable|string $factory, ?int $priority = null): void {
-        $this->assert_mutable('bind services');
-
-        $priority ??= $this->current_extension_priority();
-        $current_priority = $this->binding_priorities[$abstract] ?? PHP_INT_MIN;
-
-        if (isset($this->bindings[$abstract]) && $priority < $current_priority) {
-            return;
+    public function bind(string $abstract, callable|string $factory, ?int $priority = null, ?lifetime $lifetime = null): void {
+        if ($lifetime === null && (bool) config::get('app.strict_di', false)) {
+            throw new \LogicException(
+                "Strict DI is enabled: bind('{$abstract}', ...) must declare an explicit lifetime "
+                . "(lifetime::singleton, lifetime::request or lifetime::transient)."
+            );
         }
-
-        $this->bindings[$abstract] = $this->normalize_factory($factory);
-        $this->binding_priorities[$abstract] = $priority;
-        unset($this->resolved[$abstract], $this->transient[$abstract]);
+        $this->apply_binding($abstract, $factory, $priority, $lifetime ?? lifetime::singleton);
     }
 
     /**
@@ -328,8 +334,7 @@ class app {
      * @param int|null        $priority Binding priority (higher wins).
      */
     public function bind_request(string $abstract, callable|string $factory, ?int $priority = null): void {
-        $this->bind($abstract, $factory, $priority);
-        $this->request_scoped[$abstract] = true;
+        $this->apply_binding($abstract, $factory, $priority, lifetime::request);
     }
 
     /**
@@ -343,9 +348,41 @@ class app {
      * @param int|null        $priority Binding priority (higher wins).
      */
     public function bind_transient(string $abstract, callable|string $factory, ?int $priority = null): void {
-        $this->bind($abstract, $factory, $priority);
-        $this->transient[$abstract] = true;
-        unset($this->resolved[$abstract]);
+        $this->apply_binding($abstract, $factory, $priority, lifetime::transient);
+    }
+
+    /**
+     * Performs the actual binding registration for a given lifetime. #AI:apply_binding
+     *
+     * Shared by bind(), bind_request() and bind_transient(). Kept private and free
+     * of the strict-DI check so the request/transient helpers (which pass an explicit
+     * lifetime) are never blocked by app.strict_di.
+     *
+     * @param string          $abstract Abstract type or identifier to bind.
+     * @param callable|string $factory  Callable receiving app, or class name for auto-wiring.
+     * @param int|null        $priority Binding priority (higher wins). Null uses current extension priority.
+     * @param lifetime        $lifetime Resolved lifetime to apply.
+     * @throws \LogicException If called after freeze().
+     */
+    private function apply_binding(string $abstract, callable|string $factory, ?int $priority, lifetime $lifetime): void {
+        $this->assert_mutable('bind services');
+
+        $priority ??= $this->current_extension_priority();
+        $current_priority = $this->binding_priorities[$abstract] ?? PHP_INT_MIN;
+
+        if (isset($this->bindings[$abstract]) && $priority < $current_priority) {
+            return;
+        }
+
+        $this->bindings[$abstract] = $this->normalize_factory($factory);
+        $this->binding_priorities[$abstract] = $priority;
+        $this->clear_lifetime_meta($abstract);
+
+        if ($lifetime === lifetime::request) {
+            $this->request_scoped[$abstract] = true;
+        } elseif ($lifetime === lifetime::transient) {
+            $this->transient[$abstract] = true;
+        }
     }
 
     /**
@@ -439,6 +476,28 @@ class app {
     }
 
     /**
+     * Resolves a service fresh every time; never caches in $resolved. #AI:make_transient
+     *
+     * Mirrors make() but skips the singleton cache entirely, so the resolved
+     * instance and its constructor-injected dependencies are rebuilt on every
+     * call. Used for class-based controllers in worker mode so request-scoped
+     * state cannot leak across requests served by the same process.
+     *
+     * @param string $abstract Class name or identifier to resolve.
+     * @return mixed A freshly built (and possibly decorated) instance.
+     * @throws \RuntimeException If no binding exists and the class cannot be auto-wired.
+     */
+    public function make_transient(string $abstract): mixed {
+        if (isset($this->bindings[$abstract])) {
+            return $this->apply_decorators($abstract, ($this->bindings[$abstract])($this));
+        }
+        if (class_exists($abstract)) {
+            return $this->apply_decorators($abstract, $this->build($abstract));
+        }
+        throw new \RuntimeException("No binding registered for '{$abstract}'");
+    }
+
+    /**
      * Returns the constructor parameter names of $class for trace context. #AI:current_ctor_params
      *
      * Used by make()'s catch block so error_page can show "this service needed
@@ -506,6 +565,24 @@ class app {
         $names = array_keys($this->resolved);
         sort($names);
         return $names;
+    }
+
+    /**
+     * Returns the list of abstracts registered with request lifetime. #AI:request_scoped_services
+     *
+     * @return string[] Abstract identifiers bound as request-scoped.
+     */
+    public function request_scoped_services(): array {
+        return array_keys($this->request_scoped);
+    }
+
+    /**
+     * Returns true when the user scope contains no keys. #AI:user_scope_empty
+     *
+     * Used by the leak detector to verify end_request() cleared per-request state.
+     */
+    public function user_scope_empty(): bool {
+        return $this->user === [];
     }
 
     /**
@@ -587,7 +664,8 @@ class app {
      * without re-running the full boot sequence.
      */
     public function begin_request(): void {
-        $this->debug_mode = (bool) config::get('app.debug', false);
+        $this->request_ob_level = ob_get_level();
+        $this->debug_mode = (bool) $this->get('app.debug', false);
 
         if ($this->debug_mode) {
             profiler::enable();
@@ -600,6 +678,10 @@ class app {
             request_trace::set_extensions(
                 array_column($this->get('sys.extensions', []), 'name')
             );
+        }
+
+        if (\skim\worker\leak_detector::is_active()) {
+            \skim\worker\leak_detector::begin();
         }
     }
 
@@ -617,7 +699,11 @@ class app {
         }
 
         $this->disable_tracing();
-        \skim\worker\worker_reset::apply();
+        \skim\worker\worker_reset::apply($this->request_ob_level);
+
+        if (\skim\worker\leak_detector::is_active()) {
+            \skim\worker\leak_detector::check($this);
+        }
     }
 
     /**
@@ -756,8 +842,9 @@ class app {
      * Resolves controller handler arguments via DI and route params. #AI:call_handler
      *
      * For closures, passes request/response and route params directly. For class-based
-     * handlers, resolves the controller via `make()` and injects constructor/method
-     * dependencies by type-hint, matching route params by name.
+     * handlers, resolves the controller via `make_transient()` so a fresh instance is
+     * built per request (worker-mode safe — no cross-request state leakage) and injects
+     * constructor/method dependencies by type-hint, matching route params by name.
      */
     private function call_handler(array|callable $handler, request $req, response $res, array $params): mixed {
         if (is_callable($handler) && !is_array($handler)) {
@@ -765,7 +852,7 @@ class app {
         }
 
         [$class, $method] = $handler;
-        $controller = $this->make($class);
+        $controller = $this->make_transient($class);
 
         $ref    = new \ReflectionMethod($controller, $method);
         $args   = [];
@@ -844,6 +931,17 @@ class app {
     public function shutdown(): void {
         \skim\db\db::reset();
         \skim\cache\cache::reset();
+    }
+
+    /**
+     * Clears resolved cache and all lifetime flags for an abstract. #AI:clear_lifetime_meta
+     *
+     * Centralizes the lifetime transition so bind(), bind_request(), and
+     * bind_transient() cannot leave stale request_scoped/transient flags
+     * behind when an abstract is rebound with a different lifetime.
+     */
+    private function clear_lifetime_meta(string $abstract): void {
+        unset($this->resolved[$abstract], $this->request_scoped[$abstract], $this->transient[$abstract]);
     }
 
     /**
@@ -1016,10 +1114,10 @@ class app {
 #AI:bind
 #AI group: DI Container
 #AI frequency: high
-#AI signature: public function bind(string $abstract, callable|string $factory, ?int $priority = null): void
-#AI contract: Registers a factory callable for DI resolution. Clears the resolved singleton cache for the abstract so the new factory takes effect on the next make() call. Higher-priority bindings replace lower ones; calls with lower priority than the current binding are silently ignored.
-#AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind. Typically a fully-qualified class name.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving the app instance, or a class name string for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins). Null uses the current extension context priority (default 100).}]
-#AI throws_details: [{type: \LogicException | desc: If called after freeze().}]
+#AI signature: public function bind(string $abstract, callable|string $factory, ?int $priority = null, ?lifetime $lifetime = null): void
+#AI contract: Registers a factory callable for DI resolution. Clears the resolved singleton cache for the abstract so the new factory takes effect on the next make() call. Higher-priority bindings replace lower ones; calls with lower priority than the current binding are silently ignored. When app.strict_di is true, an explicit lifetime is mandatory.
+#AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind. Typically a fully-qualified class name.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving the app instance, or a class name string for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins). Null uses the current extension context priority (default 100).}; {name: $lifetime | type: ?lifetime | required: false | desc: Binding lifetime. Null defaults to singleton; null is rejected when strict_di is enabled.}]
+#AI throws_details: [{type: \LogicException | desc: If called after freeze().}; {type: \LogicException | desc: If strict_di is enabled and no lifetime is provided.}]
 #AI side_effects: [Clears resolved singleton cache for $abstract; Mutates bindings and binding_priorities arrays]
 
 #AI:decorate

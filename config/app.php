@@ -4,8 +4,10 @@
 // configs can reference env() for 12-factor app compliance.
 return [
     'name'     => env('APP_NAME', 'SKIM App'),
-    'debug'    => env('APP_DEBUG', false),
-    'env'      => env('APP_ENV', 'production'),
+    'debug'     => env('APP_DEBUG', false),
+    'strict_di'      => env('APP_STRICT_DI', false),
+    'leak_detection' => env('APP_LEAK_DETECTION', null),
+    'env'            => env('APP_ENV', 'production'),
     'key'      => env('APP_KEY', ''),
     'timezone' => 'UTC',
 
@@ -37,6 +39,7 @@ return [
             'docs:llm'      => \skim\dev\docs\commands\docs_llm_command::class,
             'docs:site'     => \skim\dev\docs\commands\docs_site_command::class,
             'docs:validate' => \skim\dev\docs\commands\docs_validate_command::class,
+            'mcp:install'   => \skim\cli\commands\mcp_install_command::class,
             'mcp:serve'     => \skim\dev\docs\commands\mcp_serve_command::class,
         ] : []),
     ],
