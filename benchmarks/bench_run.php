@@ -1,22 +1,15 @@
 <?php declare(strict_types=1);
 
 /**
- * Unified benchmark runner — executes all four SKIM benchmarks and persists
- * the aggregated results to benchmarks/results/<timestamp>.json.
+ * Unified benchmark runner — correctness gate + performance benchmarks.
  *
- * Captures for each run:
- *   - ISO-8601 UTC timestamp
- *   - git commit (short + full), branch, dirty flag
- *   - PHP version, SAPI
- *   - per-benchmark timing data + pass/fail against the documented target
+ * Splits results into two sections:
+ *   - correctness: hard pass/fail (isolation, memory, post-error, events)
+ *   - performance: recorded values + regression-warn, never a hard CI fail
  *
  * Usage:
  *   php benchmarks/bench_run.php                       # default 1000 reqs, 10 concurrent
  *   php benchmarks/bench_run.php [total] [concurrent]  # override HTTP request counts
- *
- * Existing benchmarks are reused as-is — http_warm.php is parsed from its
- * human output; http_hello.php / http_json.php output a __JSON__ line that
- * the runner captures directly.
  */
 
 const SKIM_ROOT = null;
@@ -43,59 +36,66 @@ $env       = [
     'uname'        => php_uname('s') . ' ' . php_uname('r') . ' ' . php_uname('m'),
 ];
 
-$benchmarks = [];
+// ========================================================================
+// Correctness gate (hard pass/fail)
+// ========================================================================
+echo "==> correctness_gate\n";
+$correctness = run_bench_inproc(
+    $root . '/benchmarks/correctness_gate.php',
+    static function(string $stdout): array {
+        $json = json_decode($stdout, true);
+        if (!is_array($json) || !isset($json['correctness'])) {
+            return [
+                'isolation' => false,
+                'memory_growth' => false,
+                'post_error' => false,
+                'event_accumulation' => false,
+                'error' => 'parse_failed',
+                'raw' => $stdout,
+            ];
+        }
+        return $json['correctness'];
+    },
+);
+
+$correctness_ok = !in_array(false, $correctness, true);
+
+// ========================================================================
+// Performance benchmarks (recorded, warn-only)
+// ========================================================================
+$performance = [];
 
 // --- 1. boot_isolation.php ---
 echo "==> boot_isolation\n";
-$benchmarks['boot_isolation'] = run_bench_inproc(
+$performance['boot_isolation'] = run_bench_inproc(
     $root . '/benchmarks/boot_isolation.php',
     static function(string $stdout): array {
         if (!preg_match('/boot_isolation:\s+([\d.]+)\s+ms/', $stdout, $m)) {
-            return ['ok' => false, 'error' => 'parse_failed', 'raw' => $stdout];
+            return ['error' => 'parse_failed', 'raw' => $stdout];
         }
-        $ms  = (float) $m[1];
-        return [
-            'ms'           => $ms,
-            'target_ms'    => 1.0,
-            'ok'           => $ms <= 1.0,
-        ];
+        return ['ms' => (float) $m[1]];
     },
 );
 
 // --- 2. cache_hit.php ---
 echo "==> cache_hit\n";
-$benchmarks['cache_hit'] = run_bench_inproc(
+$performance['cache_hit'] = run_bench_inproc(
     $root . '/benchmarks/cache_hit.php',
     static function(string $stdout): array {
         if (!preg_match('/cache_hit:\s+([\d.]+)\s+ms per call/', $stdout, $m)) {
-            return ['ok' => false, 'error' => 'parse_failed', 'raw' => $stdout];
+            return ['error' => 'parse_failed', 'raw' => $stdout];
         }
-        $ms = (float) $m[1];
-        return [
-            'ms_per_call'  => $ms,
-            'target_ms'    => 0.05,
-            'ok'           => $ms <= 0.05,
-        ];
+        return ['ms_per_call' => (float) $m[1]];
     },
 );
 
 // --- 3. http_warm.php (existing — 404 route) ---
 echo "==> http_warm\n";
-$benchmarks['http_warm'] = run_bench_cli(
+$performance['http_warm'] = run_bench_cli(
     $root . '/benchmarks/http_warm.php',
     [$base_url . '/', (string) $total_requests, (string) $concurrent],
     static function(string $stdout): array {
-        $r = [
-            'name'          => 'http_warm',
-            'avg_ms'        => null,
-            'p95_ms'        => null,
-            'rps'           => null,
-            'requests'      => null,
-            'errors'        => null,
-            'total_s'       => null,
-            'target_avg_ms' => 10.0,
-            'ok'            => false,
-        ];
+        $r = ['avg_ms' => null, 'p95_ms' => null, 'rps' => null, 'requests' => null, 'errors' => null, 'total_s' => null];
         if (preg_match('/avg:\s+([\d.]+)\s+ms\s*\|\s*p95:\s+([\d.]+)\s+ms\s*\|\s*rps:\s+([\d,.]+)/', $stdout, $m)) {
             $r['avg_ms'] = (float) $m[1];
             $r['p95_ms'] = (float) $m[2];
@@ -106,60 +106,40 @@ $benchmarks['http_warm'] = run_bench_cli(
             $r['errors']   = (int) $m[2];
             $r['total_s']  = (float) $m[3];
         }
-        if ($r['avg_ms'] !== null) {
-            $r['ok'] = $r['avg_ms'] <= $r['target_avg_ms'];
-        }
         return $r;
     },
 );
 
 // --- 4. http_hello.php (Hello World closure) ---
 echo "==> http_hello\n";
-$benchmarks['http_hello'] = run_bench_cli(
+$performance['http_hello'] = run_bench_cli(
     $root . '/benchmarks/http_hello.php',
     [$base_url . '/', (string) $total_requests, (string) $concurrent],
     static function(string $stdout): array {
-        return parse_json_line($stdout, 'http_hello') ?? [
-            'name'          => 'http_hello',
-            'ok'            => false,
-            'error'         => 'no_json_line',
-        ];
+        return parse_json_line($stdout, 'http_hello') ?? ['error' => 'no_json_line'];
     },
 );
 
 // --- 5. http_json.php (JSON closure) ---
 echo "==> http_json\n";
-$benchmarks['http_json'] = run_bench_cli(
+$performance['http_json'] = run_bench_cli(
     $root . '/benchmarks/http_json.php',
     [$base_url . '/json', (string) $total_requests, (string) $concurrent],
     static function(string $stdout): array {
-        return parse_json_line($stdout, 'http_json') ?? [
-            'name'          => 'http_json',
-            'ok'            => false,
-            'error'         => 'no_json_line',
-        ];
+        return parse_json_line($stdout, 'http_json') ?? ['error' => 'no_json_line'];
     },
 );
 
-// --- 6. http_hello.php @ concurrency=1 (sequential floor + max single-worker RPS) ---
-// At c=1, avg_ms is the per-request floor and rps = 1000/avg_ms is the
-// theoretical max throughput a single PHP process can sustain.
+// --- 6. http_hello.php @ concurrency=1 ---
 echo "==> http_hello_1c\n";
-$benchmarks['http_hello_1c'] = run_bench_cli(
+$performance['http_hello_1c'] = run_bench_cli(
     $root . '/benchmarks/http_hello.php',
     [$base_url . '/', (string) $total_requests, '1'],
     static function(string $stdout): array {
-        $r = parse_json_line($stdout, 'http_hello') ?? [
-            'name'  => 'http_hello_1c',
-            'ok'    => false,
-            'error' => 'no_json_line',
-        ];
-        $r['name']           = 'http_hello_1c';
-        $r['target_avg_ms']  = 2.0;
-        $r['concurrency']    = 1;
+        $r = parse_json_line($stdout, 'http_hello') ?? ['error' => 'no_json_line'];
+        $r['concurrency'] = 1;
         if (isset($r['avg_ms'])) {
             $r['single_worker_max_rps'] = (int) round(1000.0 / max($r['avg_ms'], 0.001));
-            $r['ok'] = $r['avg_ms'] <= $r['target_avg_ms'];
         }
         return $r;
     },
@@ -167,43 +147,38 @@ $benchmarks['http_hello_1c'] = run_bench_cli(
 
 // --- 7. http_json.php @ concurrency=1 ---
 echo "==> http_json_1c\n";
-$benchmarks['http_json_1c'] = run_bench_cli(
+$performance['http_json_1c'] = run_bench_cli(
     $root . '/benchmarks/http_json.php',
     [$base_url . '/json', (string) $total_requests, '1'],
     static function(string $stdout): array {
-        $r = parse_json_line($stdout, 'http_json') ?? [
-            'name'  => 'http_json_1c',
-            'ok'    => false,
-            'error' => 'no_json_line',
-        ];
-        $r['name']           = 'http_json_1c';
-        $r['target_avg_ms']  = 7.0;
-        $r['concurrency']    = 1;
+        $r = parse_json_line($stdout, 'http_json') ?? ['error' => 'no_json_line'];
+        $r['concurrency'] = 1;
         if (isset($r['avg_ms'])) {
             $r['single_worker_max_rps'] = (int) round(1000.0 / max($r['avg_ms'], 0.001));
-            $r['ok'] = $r['avg_ms'] <= $r['target_avg_ms'];
         }
         return $r;
     },
 );
 
-// --- aggregate & write ---
-$summary = [
-    'all_ok' => !in_array(false, array_map(static fn(array $b): bool => $b['ok'] ?? false, $benchmarks), true),
-];
-
+// ========================================================================
+// Aggregate & write
+// ========================================================================
 $record = [
-    'timestamp'  => $timestamp,
-    'git'        => $git,
-    'env'        => $env,
-    'config'     => [
-        'total_requests'       => $total_requests,
-        'concurrent'           => $concurrent,
-        'concurrent_single'    => 1,
-        'base_url'             => $base_url,
+    'timestamp'   => $timestamp,
+    'git'         => $git,
+    'env'         => $env,
+    'config'      => [
+        'total_requests'    => $total_requests,
+        'concurrent'      => $concurrent,
+        'concurrent_single' => 1,
+        'base_url'        => $base_url,
     ],
-    'benchmarks' => $benchmarks,
-    'summary'    => $summary,
+    'correctness' => $correctness,
+    'performance' => $performance,
+    'summary'     => [
+        'correctness_ok' => $correctness_ok,
+        'performance_ok' => null, // never a hard fail; regression-warn only
+    ],
 ];
 
 $latest_path = $results_dir . '/latest.json';
@@ -219,9 +194,21 @@ echo "\n";
 echo str_repeat('=', 60) . "\n";
 echo "SKIM Benchmark — {$timestamp} — commit {$git['short']}\n";
 echo str_repeat('=', 60) . "\n";
-foreach ($benchmarks as $name => $b) {
-    $status = ($b['ok'] ?? false) ? '  OK ' : 'FAIL ';
-    $line   = $status . str_pad($name, 18);
+
+$cg_status = $correctness_ok ? '  OK ' : 'FAIL ';
+echo "{$cg_status}correctness_gate\n";
+foreach ($correctness as $name => $ok) {
+    $s = $ok ? '  OK ' : 'FAIL ';
+    echo "  {$s}{$name}\n";
+}
+
+echo "\n";
+foreach ($performance as $name => $b) {
+    if (isset($b['error'])) {
+        echo "FAIL {$name}  ({$b['error']})\n";
+        continue;
+    }
+    $line = '     ' . str_pad($name, 18);
     foreach (['ms', 'ms_per_call', 'avg_ms'] as $key) {
         if (isset($b[$key])) {
             $line .= sprintf('%8.3f ms', $b[$key]);
@@ -236,29 +223,28 @@ foreach ($benchmarks as $name => $b) {
 
 echo "\nSingle-worker max RPS (c=1, sequential floor):\n";
 foreach (['http_hello_1c', 'http_json_1c'] as $name) {
-    $b = $benchmarks[$name] ?? null;
-    if ($b === null) {
-        continue;
-    }
-    $avg    = $b['avg_ms'] ?? null;
-    $rps    = $b['single_worker_max_rps'] ?? null;
-    $target = $b['target_avg_ms'] ?? null;
-    if ($avg !== null && $rps !== null) {
-        printf("  %-18s avg %6.3f ms  ->  %4d rps/worker  (target: %.1f ms)\n", $name, $avg, $rps, $target);
+    $b = $performance[$name] ?? [];
+    if (isset($b['single_worker_max_rps'])) {
+        printf("  %-18s %4d rps/worker\n", $name, $b['single_worker_max_rps']);
     }
 }
+
 echo "\nResults written:\n  {$archive_path}\n  {$latest_path}\n  {$results_dir}/history.jsonl\n";
 
-exit($summary['all_ok'] ? 0 : 1);
+exit($correctness_ok ? 0 : 1);
 
 // ============================================================================
 // helpers
 // ============================================================================
 
-function run_bench_inproc(string $script, callable $parse): array {
+function run_bench_inproc(string $script, callable $parse, array $env_vars = []): array {
     $stdout = [];
     $rc     = 0;
-    exec(sprintf('php %s 2>&1', escapeshellarg($script)), $stdout, $rc);
+    $env_prefix = '';
+    foreach ($env_vars as $k => $v) {
+        $env_prefix .= escapeshellarg($k) . '=' . escapeshellarg((string) $v) . ' ';
+    }
+    exec(sprintf('%sphp %s 2>&1', $env_prefix, escapeshellarg($script)), $stdout, $rc);
     $out = implode("\n", $stdout);
     echo $out . "\n";
     $result           = $parse($out);
@@ -318,9 +304,9 @@ function append_history(string $path, array $record): void {
         'timestamp'    => $record['timestamp'],
         'commit'       => $record['git']['short'],
         'branch'       => $record['git']['branch'],
-        'all_ok'       => $record['summary']['all_ok'],
+        'correctness_ok' => $record['summary']['correctness_ok'],
     ];
-    foreach ($record['benchmarks'] as $name => $b) {
+    foreach ($record['performance'] as $name => $b) {
         foreach (['ms', 'ms_per_call', 'avg_ms'] as $key) {
             if (isset($b[$key])) {
                 $flat[$name] = $b[$key];

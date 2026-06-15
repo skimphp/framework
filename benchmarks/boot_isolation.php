@@ -9,7 +9,7 @@ $start = hrtime(true);
 $app = skim\core\app::instance();
 $ms = (hrtime(true) - $start) / 1e6;
 
-echo "instance: {$ms} ms\n";
+echo "boot_isolation: {$ms} ms\n";
 
 if ($ms > 1.0) {
     fwrite(STDERR, "FAIL: app::instance() took > 1ms\n");

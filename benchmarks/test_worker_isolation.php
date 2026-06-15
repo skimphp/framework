@@ -50,12 +50,13 @@ while ($received < 20) {
             $buf = substr($rest, $body_len);
             $received++;
 
+            $expected_id = $received;
             $json = json_decode($body, true);
-            if ($json === null || !isset($json['ok']) || $json['ok'] !== true) {
+            if ($json === null || !isset($json['ok']) || $json['ok'] !== true || !isset($json['id']) || $json['id'] != $expected_id) {
                 echo "[{$received}] BAD BODY: {$body}\n";
                 $errors++;
             } else {
-                echo "[{$received}] OK\n";
+                echo "[{$received}] OK (id={$json['id']})\n";
             }
         } else {
             break;
