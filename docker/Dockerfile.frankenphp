@@ -28,7 +28,9 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Install PHP deps
-COPY composer.json composer.lock /app/
+# composer.lock is gitignored, so resolve versions from composer.json only —
+# a clean checkout build must not depend on a locally-generated lockfile.
+COPY composer.json /app/
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
 # Copy app code
