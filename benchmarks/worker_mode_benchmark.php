@@ -21,7 +21,7 @@ $address     = "127.0.0.1:{$port}";
 
 // Boot the app once, just like a worker process would.
 $app = skim\core\app::instance();
-$app->router->get('/bench', fn() => ['ok' => true, 'time' => microtime(true)]);
+$app->router->get('/bench', fn() => ['ok' => true, 'time' => microtime(true), 'id' => $_GET['id'] ?? null]);
 $app->boot();
 $app->boot_extensions();
 $app->freeze();
@@ -80,6 +80,7 @@ while (microtime(true) < $end_time || count($clients) > 0) {
             // Run the full worker request cycle.
             $app->begin_request();
 
+            $original_server = $_SERVER;
             $_SERVER = [
                 'REQUEST_METHOD' => 'GET',
                 'REQUEST_URI'    => '/bench',
@@ -100,11 +101,18 @@ while (microtime(true) < $end_time || count($clients) > 0) {
             } finally {
                 $body = ob_get_clean();
                 $app->end_request();
+                $_SERVER = $original_server;
             }
 
             $status = $result->get_status();
             $length = strlen($body);
-            $headers = "HTTP/1.1 {$status} OK\r\n";
+            $reason = match ($status) {
+                200 => 'OK',
+                404 => 'Not Found',
+                500 => 'Internal Server Error',
+                default => '',
+            };
+            $headers = "HTTP/1.1 {$status} {$reason}\r\n";
             $headers .= "Content-Type: application/json\r\n";
             $headers .= "Content-Length: {$length}\r\n";
             $headers .= "Connection: keep-alive\r\n";
