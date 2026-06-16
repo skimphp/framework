@@ -2,6 +2,8 @@
 
 namespace skim\view;
 
+use skim\worker\resettable;
+
 /**
  * Closure-based part capture for components — no global state. #AI:class
  *
@@ -24,7 +26,7 @@ namespace skim\view;
  *
  * #AI:class
  */
-class component_collector {
+class component_collector implements resettable {
     // Captured output between part() calls (the "main" slot)
     private string $main_part = '';
     // Named parts: name → captured HTML
@@ -123,6 +125,18 @@ class component_collector {
     public static function pop(): void {
         array_pop(self::$stack);
     }
+
+    /**
+     * Clears the static collector stack between requests in worker mode. #AI:reset_request
+     *
+     * Under normal flow capture_main() pushes then pops, so the stack is empty
+     * between renders. If a component closure throws, the matching pop() never
+     * runs and a stale collector lingers in the process — this drops it so the
+     * next request starts with an empty stack.
+     */
+    public static function reset_request(): void {
+        self::$stack = [];
+    }
 }
 
 #AI:class
@@ -140,7 +154,7 @@ class component_collector {
 #AI invariants: [Stack tracks nested components in LIFO order; Each collector has isolated main_part and named_parts; No global mutable state beyond the static stack]
 #AI core_behaviors: [capture_main buffers the closure output as main_part; capture_part buffers closure output into named_parts; Stack enables nested components with independent part resolution]
 #AI warnings: [Calling current() when stack is empty returns null — global helpers must handle this]
-#AI notes: The static stack is the only shared state; it is strictly LIFO and never leaks across requests because each capture pushes then pops.
+#AI notes: The static stack is the only shared state; it is strictly LIFO and is cleared between requests via reset_request() (worker mode) to drop any entry left behind when a component closure throws before its matching pop().
 #AI owns: main_part, named_parts
 #AI entry_points: [capture_main; capture_part; get_main; get_part; has_part; current]
 #AI config_reads: []

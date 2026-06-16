@@ -80,14 +80,31 @@ class db {
     public static function reset(): void {
         self::$pool = [];
     }
+
     /**
-     * Rolls back any open transactions on all pooled connections.
+     * Returns the number of active pooled connections. #AI:connection_count
+     */
+    public static function connection_count(): int {
+        return count(self::$pool);
+    }
+
+    /**
+     * Returns true if any pooled connection has an open transaction. #AI:has_open_transaction
+     */
+    public static function has_open_transaction(): bool {
+        foreach (self::$pool as $conn) {
+            if ($conn->inTransaction()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    /**
+     * Rolls back any open transactions on all pooled connections. #AI:rollback_all
      *
      * Safety net for worker mode: if a request exits with an uncommitted
      * transaction, the next request must not inherit it. Called by
      * worker_reset::apply() between requests.
-     *
-     * #AI:rollback_all
      */
     public static function rollback_all(): void {
         foreach (self::$pool as $conn) {

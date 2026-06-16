@@ -247,7 +247,6 @@ describe('error_page::render()', function(): void {
         app::instance()->make('svc.alpha');
 
         $ref = new \ReflectionMethod(\skim\dev\error_page::class, 'build_di_node');
-        $ref->setAccessible(true);
         $node = $ref->invoke(null, 'svc.alpha', depth: 0, visited: []);
 
         expect($node['cls'])->toBe('svc.alpha');
@@ -262,7 +261,6 @@ describe('error_page::render()', function(): void {
         app::instance()->bind('svc.beta', fn() => 'B');
 
         $ref = new \ReflectionMethod(\skim\dev\error_page::class, 'build_di_node');
-        $ref->setAccessible(true);
         $node = $ref->invoke(null, 'svc.beta', depth: 0, visited: []);
 
         expect($node['resolved'])->toBeFalse();

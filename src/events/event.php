@@ -23,11 +23,33 @@ final class event implements resettable {
     /** @var array<string, list<array{fn: callable, once: bool, priority: int}>> */
     private static array $listeners = [];
 
+    // Snapshot of listeners registered during boot/extension phase. Captured on the
+    // first reset_request() call and restored on every subsequent reset so boot-time
+    // listeners survive across worker requests while request-time listeners are dropped.
+    /** @var array<string, list<array{fn: callable, once: bool, priority: int}>>|null */
+    private static ?array $persistent_listeners = null;
+
     /**
-     * Clears the listener registry between requests in worker mode. #AI:reset_request
+     * Captures the current listener registry as the boot-time snapshot. #AI:capture_boot_snapshot
+     *
+     * Call once after boot/extensions are registered in worker mode. The snapshot
+     * is restored by reset_request() on every subsequent request so boot-time
+     * listeners survive while request-time listeners are dropped.
+     */
+    public static function capture_boot_snapshot(): void {
+        self::$persistent_listeners = self::$listeners;
+    }
+
+    /**
+     * Restores the boot-time listener registry between requests in worker mode. #AI:reset_request
+     *
+     * On the first call (at the end of the first worker request) the current listener
+     * set is captured as the boot snapshot. Every later call resets listeners back to
+     * that snapshot, so listeners registered at boot/extension time persist, while any
+     * listeners registered during a request are dropped.
      */
     public static function reset_request(): void {
-        self::$listeners = [];
+        self::$listeners = self::$persistent_listeners ?? [];
     }
 
     /**
@@ -119,7 +141,9 @@ final class event implements resettable {
     /**
      * Removes all listeners for a specific event, or all listeners if null. #AI:off
      *
-     * Use in tests to isolate event side effects between test cases.
+     * Use in tests to isolate event side effects between test cases. Also clears
+     * the boot-time snapshot so worker-mode reset_request() state cannot leak
+     * between tests.
      *
      * Example:
      *   event::off(user_created_event::class); // Remove listeners for one event
@@ -130,6 +154,7 @@ final class event implements resettable {
     public static function off(?string $event = null): void {
         if ($event === null) {
             self::$listeners = [];
+            self::$persistent_listeners = null;
         } else {
             unset(self::$listeners[$event]);
         }
@@ -142,6 +167,19 @@ final class event implements resettable {
      */
     public static function listener_count(string $event): int {
         return count(self::$listeners[$event] ?? []);
+    }
+
+    /**
+     * Returns the total number of listeners across all events. #AI:total_listener_count
+     *
+     * Used by the leak detector to detect listener accumulation in worker mode.
+     */
+    public static function total_listener_count(): int {
+        $total = 0;
+        foreach (self::$listeners as $listeners) {
+            $total += count($listeners);
+        }
+        return $total;
     }
 }
 

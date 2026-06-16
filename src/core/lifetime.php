@@ -19,3 +19,22 @@ enum lifetime {
     case request;
     case transient;
 }
+
+#AI:enum
+#AI symbol: skim\core\lifetime
+#AI source_path: src/core/lifetime.php
+#AI title: lifetime
+#AI description: DI binding lifetime — controls whether make() caches the resolved instance.
+#AI role: enum
+#AI layer: core
+#AI badges: [di; lifetime; enum]
+#AI intro: `lifetime` is an enum with three cases that control how the DI container caches resolved services. singleton = process-wide cache; request = cleared at end_request(); transient = never cached.
+#AI lifecycle: used during bind() and make() resolution
+#AI test_seam: n/a — pure data enum
+#AI invariants: [singleton is the default when no lifetime is specified; request-scoped bindings are cleared by end_request(); transient bindings skip the resolved cache entirely]
+#AI core_behaviors: [Determines caching strategy in app::make(); Drives clear_lifetime_meta() and end_request() cleanup]
+#AI owns: no mutable state
+#AI entry_points: [singleton; request; transient]
+#AI config_reads: []
+#AI non_goals: [Does not validate binding existence; Does not enforce usage — the container interprets the enum]
+#AI side_effects: [None — pure value enum]

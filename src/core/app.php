@@ -1140,6 +1140,30 @@ class app {
 #AI side_effects: [Caches resolved instance in $resolved array]
 #AI examples: [{label: Basic resolution | code: $app->bind(mailer::class, fn($app) => new smtp_mailer($app->get('app.mail')));\n$mailer = $app->make(mailer::class);}]
 
+#AI:make_transient
+#AI group: DI Container
+#AI frequency: medium
+#AI signature: public function make_transient(string $abstract): mixed
+#AI contract: Resolves a service fresh every time; never caches in $resolved. Mirrors make() but skips the singleton cache entirely, so the resolved instance and its constructor-injected dependencies are rebuilt on every call. Used for class-based controllers in worker mode so request-scoped state cannot leak across requests served by the same process.
+#AI param_details: [{name: $abstract | type: string | required: true | desc: Class name or identifier to resolve.}]
+#AI return_detail: {type: mixed | desc: A freshly built (and possibly decorated) instance.}
+#AI throws_details: [{type: \RuntimeException | desc: If no binding exists and the class cannot be auto-wired.}]
+#AI side_effects: [Never writes to $resolved array]
+
+#AI:request_scoped_services
+#AI group: DI Container
+#AI frequency: low
+#AI signature: public function request_scoped_services(): array
+#AI contract: Returns the list of abstracts registered with request lifetime. Used by the leak detector and tests to verify that request-scoped bindings are correctly tracked.
+#AI return_detail: {type: string[] | desc: Abstract identifiers bound as request-scoped.}
+
+#AI:user_scope_empty
+#AI group: Scoped Store
+#AI frequency: low
+#AI signature: public function user_scope_empty(): bool
+#AI contract: Returns true when the user scope contains no keys. Used by the leak detector to verify end_request() cleared per-request state.
+#AI return_detail: {type: bool | desc: True when $user array is empty.}
+
 #AI:use
 #AI group: Middleware
 #AI frequency: medium
@@ -1229,6 +1253,23 @@ class app {
 #AI contract: Registers a transient binding — built fresh on every make() call. Never cached in $resolved.
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving app, or class name for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins).}]
 #AI side_effects: [Registers binding and marks it as transient]
+
+#AI:apply_binding
+#AI group: DI Container
+#AI frequency: internal
+#AI signature: private function apply_binding(string $abstract, callable|string $factory, ?int $priority, lifetime $lifetime): void
+#AI contract: Performs the actual binding registration for a given lifetime. Shared by bind(), bind_request() and bind_transient(). Keeps the strict-DI check out of the request/transient helpers so they are never blocked by app.strict_di.
+#AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving app, or class name for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins). Null uses current extension priority.}; {name: $lifetime | type: lifetime | required: true | desc: Resolved lifetime to apply.}]
+#AI throws_details: [{type: \LogicException | desc: If called after freeze().}]
+#AI side_effects: [Mutates bindings and binding_priorities arrays; Clears lifetime meta for the abstract]
+
+#AI:clear_lifetime_meta
+#AI group: DI Container
+#AI frequency: internal
+#AI signature: private function clear_lifetime_meta(string $abstract): void
+#AI contract: Clears resolved cache and all lifetime flags for an abstract. Centralizes lifetime transition so bind(), bind_request(), and bind_transient() cannot leave stale request_scoped/transient flags behind when an abstract is rebound with a different lifetime.
+#AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract whose lifetime metadata should be cleared.}]
+#AI side_effects: [Unsets entries in $resolved, $request_scoped, and $transient arrays]
 
 #AI:begin_request
 #AI group: Lifecycle

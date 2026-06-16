@@ -21,12 +21,7 @@ describe('app — request-scoped and transient bindings', function (): void {
         $app->bind_request('svc.req', fn() => new \stdClass());
 
         $before = $app->make('svc.req');
-        $level = ob_get_level();
-        ob_start();
         $app->end_request();
-        while (ob_get_level() > $level) {
-            ob_end_clean();
-        }
         $after = $app->make('svc.req');
 
         expect($after)->not->toBe($before);
@@ -37,12 +32,7 @@ describe('app — request-scoped and transient bindings', function (): void {
         $app->bind('svc.normal', fn() => new \stdClass());
 
         $before = $app->make('svc.normal');
-        $level = ob_get_level();
-        ob_start();
         $app->end_request();
-        while (ob_get_level() > $level) {
-            ob_end_clean();
-        }
         $after = $app->make('svc.normal');
 
         expect($after)->toBe($before);
@@ -76,6 +66,49 @@ describe('app — request-scoped and transient bindings', function (): void {
         $second = $app->make('svc.x');
 
         expect($first)->toBe($second);
+    });
+
+    test('bind_request clears previous transient flag so it caches again', function (): void {
+        $app = app::test_instance();
+        $app->bind_transient('svc.t', fn() => new \stdClass());
+        $app->bind_request('svc.t', fn() => new \stdClass());
+
+        $first  = $app->make('svc.t');
+        $second = $app->make('svc.t');
+
+        expect($first)->toBe($second); // no longer transient → cached
+    });
+
+    test('bind_transient clears previous request-scoped flag', function (): void {
+        $app = app::test_instance();
+        $app->bind_request('svc.r', fn() => new \stdClass());
+        $app->bind_transient('svc.r', fn() => new \stdClass());
+
+        $first  = $app->make('svc.r');
+        $second = $app->make('svc.r');
+
+        expect($first)->not->toBe($second); // now transient → fresh each call
+    });
+
+    test('make_transient always returns a fresh instance', function (): void {
+        $app = app::test_instance();
+        $app->bind('svc.s', fn() => new \stdClass());
+
+        $a = $app->make_transient('svc.s');
+        $b = $app->make_transient('svc.s');
+
+        expect($a)->not->toBe($b);
+        expect($app->resolved_services())->toBe([]); // never cached
+    });
+
+    test('make_transient resolves auto-wired classes without caching', function (): void {
+        $app = app::test_instance();
+
+        $a = $app->make_transient(\stdClass::class);
+        $b = $app->make_transient(\stdClass::class);
+
+        expect($a)->not->toBe($b);
+        expect($app->resolved_services())->toBe([]);
     });
 
 });

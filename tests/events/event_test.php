@@ -89,3 +89,32 @@ describe('event::off()', function(): void {
     });
 
 });
+
+describe('event::reset_request()', function(): void {
+
+    test('capture_boot_snapshot preserves boot-time listeners across resets', function(): void {
+        event::off(); // clear snapshot for a clean slate
+        $bootCalls = 0;
+        event::on('boot.event', function() use (&$bootCalls): void { $bootCalls++; });
+
+        event::capture_boot_snapshot(); // explicit boot snapshot
+
+        // Request-time listener registered after snapshot should NOT survive the next reset.
+        $reqCalls = 0;
+        event::on('req.event', function() use (&$reqCalls): void { $reqCalls++; });
+
+        event::reset_request(); // restore snapshot, drop req.event
+
+        event::emit('boot.event', null);
+        event::emit('req.event', null);
+
+        expect($bootCalls)->toBe(1); // boot-time listener survived
+        expect($reqCalls)->toBe(0);  // request-time listener was cleared
+    });
+
+    test('snapshot is cleared by off() so it does not leak between tests', function(): void {
+        event::off();
+        expect(event::listener_count('boot.event'))->toBe(0);
+    });
+
+});
