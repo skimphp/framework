@@ -13,8 +13,7 @@
     },
     "autoload": {
         "psr-4": {
-            "skim\\": "src/",
-            "app\\": "app/"
+            "skim\\": "src/"
         },
         "files": [
             "src/core/helpers.php"

@@ -3,7 +3,6 @@
 return [
     'scan_paths' => [
         base_path('src'),
-        base_path('app'),
     ],
 
     // When true, prepends vendor/skim/framework/llm.md into the generated llm.md.
