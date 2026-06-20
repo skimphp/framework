@@ -2,115 +2,106 @@
 
 namespace skim\realtime;
 
+use skim\realtime\contract\element_patcher;
+use skim\realtime\contract\signal_patcher;
+use skim\realtime\contract\script_runner;
+
 /**
- * Datastar SSE helpers — higher-level wrappers over raw SSE for DOM patching.
+ * Datastar v1 SSE driver — implements the official v1 wire protocol.
  *
- * Use when pushing server-rendered HTML fragments or reactive signal updates
- * to a Datastar-enabled browser. Extends sse with Datastar protocol events:
- * merge fragments, remove elements, update signals, execute scripts.
+ * Injected with an SSE transport so the same driver can later run over
+ * WebSocket or other transports. Controllers should type-hint the
+ * interfaces (element_patcher, signal_patcher, script_runner), never
+ * this concrete class.
  *
  * Example:
- *   return $res->stream(function(datastar $ds) {
- *       $ds->merge('<div id="status">Active</div>', '#status');
- *       $ds->signal(['loading' => false]);
+ *   return $res->stream(function(element_patcher $ds) {
+ *       $ds->patch('<div id="status">Active</div>', '#status', 'inner');
+ *       $ds->signals(['loading' => false]);
  *   });
- *
- * Testing: Capture output with ob_start() in tests.
  *
  * #AI:class
  */
-class datastar extends sse {
+class datastar implements element_patcher, signal_patcher, script_runner {
+    public function __construct(private sse $transport) {}
+
     /**
-     * Sends an HTML fragment for Datastar to merge into the DOM. #AI:merge
+     * Patches the DOM with an HTML fragment using Datastar v1 protocol. #AI:patch
      *
-     * Example:
-     *   $ds->merge('<p>Updated</p>', '#content', 'inner');
-     *
-     * @param string $html     HTML fragment to merge.
-     * @param string $selector CSS selector of target element (e.g. '#user-card').
-     * @param string $mode     Merge mode: 'morph' (default), 'inner', 'outer', 'prepend', 'append'.
+     * @param string $html     HTML fragment to patch.
+     * @param string $selector CSS selector of target element (e.g. '#content').
+     * @param string $mode     Patch mode: 'morph', 'inner', 'outer', 'prepend', 'append', 'before', 'after', 'replace', 'remove'.
      */
-    public function merge(string $html, string $selector = '', string $mode = 'morph'): void {
-        $lines = "fragments\n";
+    public function patch(string $html, string $selector = '', string $mode = 'morph'): static {
+        $lines = [];
         if ($selector !== '') {
-            $lines .= "selector {$selector}\n";
+            $lines[] = "selector {$selector}";
         }
         if ($mode !== 'morph') {
-            $lines .= "mergeMode {$mode}\n";
+            $lines[] = "mode {$mode}";
         }
-        foreach (explode("\n", trim($html)) as $line) {
-            $lines .= "data {$line}\n";
+        foreach (explode("\n", $html) as $line) {
+            $lines[] = "elements {$line}";
         }
-        $this->raw_event('datastar-merge-fragments', $lines);
+        $this->transport->send(implode("\n", $lines), event: 'datastar-patch-elements');
+        return $this;
     }
 
     /**
-     * Tells Datastar to remove matching elements from the DOM. #AI:remove
+     * Removes elements matching the selector from the DOM. #AI:remove
      *
-     * @param string $selector CSS selector of elements to remove (e.g. '#notification-1').
+     * @param string $selector CSS selector of elements to remove.
      */
-    public function remove(string $selector): void {
-        $this->raw_event('datastar-remove-fragments', "selector {$selector}\n");
+    public function remove(string $selector): static {
+        $this->transport->send("selector {$selector}\nmode remove", event: 'datastar-patch-elements');
+        return $this;
     }
 
     /**
-     * Merges key-value pairs into Datastar reactive signals. #AI:signal
+     * Merges key-value pairs into Datastar reactive signals. #AI:signals
      *
-     * Triggers any computed signals or watchers that depend on the
-     * changed values.
-     *
-     * Example:
-     *   $ds->signal(['count' => 5, 'loading' => false]);
-     *
-     * @param array $signals Key-value pairs to merge into reactive signals.
+     * @param array $signals         Key-value pairs to merge.
+     * @param bool  $only_if_missing When true, only sets signals that do not already exist.
      */
-    public function signal(array $signals): void {
+    public function signals(array $signals, bool $only_if_missing = false): static {
         $json = (string) json_encode($signals, \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES);
-        $this->raw_event('datastar-merge-signals', "data {$json}\n");
-    }
-
-    /**
-     * Executes arbitrary JavaScript in the browser. #AI:script
-     *
-     * WARNING: Use only for actions impossible via signal/merge (e.g. scroll-to-top).
-     * Avoid for business logic — keep JS minimal and server-rendered.
-     *
-     * @param string $js JavaScript code to evaluate in the browser.
-     */
-    public function script(string $js): void {
-        foreach (explode("\n", trim($js)) as $line) {
-            $this->raw_event('datastar-execute-script', "autoRemove true\ndata {$line}\n");
+        $payload = "signals {$json}";
+        if ($only_if_missing) {
+            $payload .= "\nonlyIfMissing true";
         }
+        $this->transport->send($payload, event: 'datastar-patch-signals');
+        return $this;
     }
 
     /**
-     * Renders a view fragment and merges it into the DOM in one call. #AI:view_fragment
+     * Runs JavaScript in the browser by appending a <script> element. #AI:run
      *
-     * Combines view::render_fragment() + merge() for convenience.
+     * WARNING: Use only for actions impossible via signal/patch
+     * (e.g. scroll-to-top). Never pass user input.
      *
-     * Example:
-     *   $ds->view_fragment('users/card', ['user' => $user], 'user-card', '#user-card');
+     * @param string $js JavaScript code to evaluate.
+     */
+    public function run(string $js): static {
+        $lines = ['selector body', 'mode append'];
+        foreach (explode("\n", "<script>{$js}</script>") as $line) {
+            $lines[] = "elements {$line}";
+        }
+        $this->transport->send(implode("\n", $lines), event: 'datastar-patch-elements');
+        return $this;
+    }
+
+    /**
+     * Renders a view fragment and patches it into the DOM in one call. #AI:view_fragment
      *
      * @param string $template Template path relative to views directory.
      * @param array  $data     Variables passed to the template.
      * @param string $fragment Fragment name within the template.
-     * @param string $selector CSS selector for merge target (empty = fragment default).
+     * @param string $selector CSS selector for patch target (empty = fragment default).
      */
-    public function view_fragment(string $template, array $data, string $fragment, string $selector = ''): void {
+    public function view_fragment(string $template, array $data, string $fragment, string $selector = ''): static {
         $html = \skim\view\view::render_fragment($template, $data, $fragment);
-        $this->merge($html, $selector);
-    }
-
-    private function raw_event(string $event_type, string $body): void {
-        echo "event: {$event_type}\n";
-        foreach (explode("\n", rtrim($body)) as $line) {
-            echo $line !== '' ? "{$line}\n" : "\n";
-        }
-        echo "\n";
-        if (ob_get_level() > 0) {
-            ob_flush();
-        }
-        flush();
+        $this->patch($html, $selector);
+        return $this;
     }
 }
 
@@ -118,61 +109,61 @@ class datastar extends sse {
 #AI symbol: skim\realtime\datastar
 #AI source_path: src/realtime/datastar.php
 #AI title: datastar
-#AI description: Datastar SSE helpers for DOM patching, signal updates, and script execution.
-#AI role: Datastar SSE wrapper
+#AI description: Datastar v1 SSE driver implementing element_patcher, signal_patcher, and script_runner.
+#AI role: Datastar v1 driver
 #AI layer: realtime
-#AI badges: [datastar; sse; realtime; dom-patching; signals]
-#AI intro: `datastar` extends `sse` with Datastar protocol v0.20+ event types for merging HTML fragments, removing DOM elements, updating reactive signals, and executing browser JavaScript.
-#AI lifecycle: created per-stream by response::stream() callback; extends sse lifecycle
+#AI badges: [datastar; v1; realtime; dom-patching; signals]
+#AI intro: `datastar` is the official Datastar v1 driver for SKIM. It emits `datastar-patch-elements` and `datastar-patch-signals` events over an injected SSE transport, enabling server-driven UI updates without hand-written JavaScript state.
+#AI lifecycle: created per-stream by response::stream() or container resolution; injected with an sse transport
 #AI test_seam: capture output with ob_start()/ob_get_clean() in tests
-#AI invariants: [Extends sse — inherits send/ping/close; Each method emits a specific Datastar event type; script() auto-removes after execution]
-#AI core_behaviors: [merge() sends datastar-merge-fragments events; remove() sends datastar-remove-fragments; signal() sends datastar-merge-signals; script() sends datastar-execute-script]
-#AI owns: output stream (inherited from sse)
-#AI entry_points: [merge; remove; signal; script; view_fragment]
+#AI invariants: [Implements element_patcher, signal_patcher, script_runner; Uses injected sse transport; Emits v1 event names only]
+#AI core_behaviors: [patch() sends datastar-patch-elements; remove() sends datastar-patch-elements with mode remove; signals() sends datastar-patch-signals; run() appends a script element to body; view_fragment() renders and patches in one call]
+#AI owns: none — delegates to injected sse transport
+#AI entry_points: [patch; remove; signals; run; view_fragment]
 #AI config_reads: []
-#AI non_goals: [Does not manage Datastar client-side setup; Does not handle WebSocket; Does not validate HTML fragments]
-#AI side_effects: [Writes to PHP output buffer; Calls flush()]
-#AI flow: controller -> res->stream(fn($ds) => $ds->merge(...)) -> raw_event() -> echo Datastar SSE format -> flush()
+#AI non_goals: [Does not manage Datastar client setup; Does not handle WebSocket directly; Does not validate HTML fragments]
+#AI side_effects: [Writes to output buffer via injected sse transport]
+#AI flow: controller -> res->stream(fn($ds) => $ds->patch(...)) -> sse::send() -> echo SSE format -> flush()
 #AI section_order: [DOM Operations; Signal Operations; Script Execution; View Integration]
-#AI warnings: [script() executes arbitrary JavaScript in the browser — use sparingly and never with user-supplied input]
+#AI warnings: [run() executes arbitrary JavaScript in the browser — use sparingly and never with user-supplied input]
 
-#AI:merge
+#AI:patch
 #AI group: DOM Operations
 #AI frequency: high
-#AI signature: public function merge(string $html, string $selector = '', string $mode = 'morph'): void
-#AI contract: Sends an HTML fragment as a datastar-merge-fragments event for the client to merge into the DOM at the specified selector.
-#AI param_details: [{name: $html | type: string | required: true | desc: HTML fragment to merge into the DOM.}; {name: $selector | type: string | required: false | desc: CSS selector of target element. Empty uses fragment default.}; {name: $mode | type: string | required: false | desc: Merge mode: morph (default), inner, outer, prepend, append.}]
-#AI side_effects: [Writes SSE event to output buffer and flushes]
+#AI signature: public function patch(string $html, string $selector = '', string $mode = 'morph'): static
+#AI contract: Sends a datastar-patch-elements event with the given HTML fragment, selector, and mode. Each line of HTML is prefixed with 'data: elements' per the v1 protocol.
+#AI param_details: [{name: $html | type: string | required: true | desc: HTML fragment to patch into the DOM.}; {name: $selector | type: string | required: false | desc: CSS selector of target element.}; {name: $mode | type: string | required: false | desc: Patch mode: morph, inner, outer, prepend, append, before, after, replace.}]
+#AI side_effects: [Writes SSE event to output buffer via transport]
 
 #AI:remove
 #AI group: DOM Operations
 #AI frequency: medium
-#AI signature: public function remove(string $selector): void
-#AI contract: Sends a datastar-remove-fragments event telling the client to remove elements matching the CSS selector.
+#AI signature: public function remove(string $selector): static
+#AI contract: Sends a datastar-patch-elements event with mode remove to delete matching elements.
 #AI param_details: [{name: $selector | type: string | required: true | desc: CSS selector of elements to remove.}]
-#AI side_effects: [Writes SSE event to output buffer and flushes]
+#AI side_effects: [Writes SSE event to output buffer via transport]
 
-#AI:signal
+#AI:signals
 #AI group: Signal Operations
 #AI frequency: high
-#AI signature: public function signal(array $signals): void
-#AI contract: Merges key-value pairs into Datastar reactive signals via a datastar-merge-signals event. Triggers dependent computed signals and watchers.
-#AI param_details: [{name: $signals | type: array | required: true | desc: Key-value pairs to merge into reactive signals.}]
-#AI side_effects: [Writes SSE event to output buffer and flushes]
+#AI signature: public function signals(array $signals, bool $only_if_missing = false): static
+#AI contract: Sends a datastar-patch-signals event merging the given key-value pairs into reactive signals.
+#AI param_details: [{name: $signals | type: array | required: true | desc: Key-value pairs to merge.}; {name: $only_if_missing | type: bool | required: false | desc: Only set signals that do not already exist.}]
+#AI side_effects: [Writes SSE event to output buffer via transport]
 
-#AI:script
+#AI:run
 #AI group: Script Execution
 #AI frequency: low
-#AI signature: public function script(string $js): void
-#AI contract: Sends JavaScript for the browser to evaluate via a datastar-execute-script event. Auto-removes after execution.
-#AI param_details: [{name: $js | type: string | required: true | desc: JavaScript code to evaluate in the browser.}]
-#AI warnings: [Executes arbitrary JavaScript in the browser — never pass user-supplied input; Use only for actions impossible via signal/merge]
-#AI side_effects: [Writes SSE event to output buffer and flushes; Executes JS in browser]
+#AI signature: public function run(string $js): static
+#AI contract: Appends a <script> element to the body via datastar-patch-elements. The browser evaluates it and Datastar removes it.
+#AI param_details: [{name: $js | type: string | required: true | desc: JavaScript code to evaluate.}]
+#AI warnings: [Executes arbitrary JavaScript — never pass user input]
+#AI side_effects: [Writes SSE event to output buffer via transport; Executes JS in browser]
 
 #AI:view_fragment
 #AI group: View Integration
 #AI frequency: medium
-#AI signature: public function view_fragment(string $template, array $data, string $fragment, string $selector = ''): void
-#AI contract: Renders a named view fragment and merges it into the DOM in one call. Combines view::render_fragment() with merge().
-#AI param_details: [{name: $template | type: string | required: true | desc: Template path relative to views directory.}; {name: $data | type: array | required: true | desc: Variables passed to the template.}; {name: $fragment | type: string | required: true | desc: Fragment name within the template.}; {name: $selector | type: string | required: false | desc: CSS selector for merge target.}]
-#AI side_effects: [Writes SSE event to output buffer and flushes]
+#AI signature: public function view_fragment(string $template, array $data, string $fragment, string $selector = ''): static
+#AI contract: Renders a named view fragment and patches it into the DOM in one call.
+#AI param_details: [{name: $template | type: string | required: true | desc: Template path.}; {name: $data | type: array | required: true | desc: Template variables.}; {name: $fragment | type: string | required: true | desc: Fragment name.}; {name: $selector | type: string | required: false | desc: CSS selector for patch target.}]
+#AI side_effects: [Renders view; Writes SSE event to output buffer via transport]

@@ -74,7 +74,7 @@ class sse {
         $this->send('close', event: 'close');
     }
 
-    private function flush(): void {
+    protected function flush(): void {
         if (ob_get_level() > 0) {
             ob_flush();
         }

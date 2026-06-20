@@ -28,6 +28,7 @@ final class capability_vocabulary {
         '2fa'                => 'two-factor authentication',
         'queues'             => 'background job queues',
         'broadcasting'       => 'real-time event broadcasting',
+        'hypermedia'         => 'hypermedia / SSE UI driver (datastar, htmx, ...)',
         'file-storage'       => 'file upload and storage',
         'search'             => 'full-text search',
         'payments'           => 'payment processing',

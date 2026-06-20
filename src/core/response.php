@@ -159,8 +159,10 @@ class response {
     /**
      * Streams Server-Sent Events via a callback. #AI:stream
      *
-     * Sends headers immediately, disables output buffering, and passes an SSE
-     * instance to the callback. The callback writes events directly.
+     * Sends headers immediately, disables output buffering, and passes a driver
+     * instance to the callback. By default a plain sse is passed; when a driver
+     * is specified (or configured) the container resolves it over the SSE
+     * transport so controllers can type-hint interfaces (element_patcher, etc.).
      *
      * WARNING: Headers are sent inline — middleware response modifications after
      * this call have no effect.
@@ -170,9 +172,14 @@ class response {
      *       $sse->send('message', 'Hello');
      *   });
      *
-     * @param callable $callback Receives an sse instance to emit events.
+     *   return $res->stream(function(element_patcher $ds) {
+     *       $ds->patch('<div id="status">Active</div>', '#status');
+     *   }, driver: datastar::class);
+     *
+     * @param callable  $callback Receives an sse or resolved driver instance.
+     * @param ?string   $driver   Optional driver class to resolve from the container.
      */
-    public function stream(callable $callback): static {
+    public function stream(callable $callback, ?string $driver = null): static {
         $this->headers['Content-Type']  = 'text/event-stream';
         $this->headers['Cache-Control'] = 'no-cache';
         $this->headers['X-Accel-Buffering'] = 'no';
@@ -189,12 +196,19 @@ class response {
             ob_end_clean();
         }
 
-        $sse = new \skim\realtime\sse();
+        $driver_class = $driver ?? config('realtime.driver');
+        if ($driver_class !== null) {
+            $app = \skim\core\app::instance();
+            $instance = $app->make($driver_class);
+        } else {
+            $instance = new \skim\realtime\sse();
+        }
+
         if (connection_aborted()) {
             $this->sent = true;
             return $this;
         }
-        $callback($sse);
+        $callback($instance);
         $this->sent = true;
 
         return $this;
@@ -419,12 +433,12 @@ class response {
 #AI:stream
 #AI group: Streaming & Downloads
 #AI frequency: medium
-#AI signature: public function stream(callable $callback): static
-#AI contract: Sends SSE headers immediately, disables output buffering, and passes an sse instance to the callback.
-#AI param_details: [{name: $callback | type: callable | required: true | desc: Receives an sse instance to emit events.}]
+#AI signature: public function stream(callable $callback, ?string $driver = null): static
+#AI contract: Sends SSE headers immediately, disables output buffering, and passes an sse or resolved driver instance to the callback. Driver is resolved from the container so apps/extensions can override with one bind().
+#AI param_details: [{name: $callback | type: callable | required: true | desc: Receives an sse or driver instance to emit events.}; {name: $driver | type: ?string | required: false | desc: Optional driver class to resolve from the container. Falls back to config('realtime.driver'). Defaults to plain sse.}]
 #AI return_detail: {type: static | desc: $this for fluent chaining.}
 #AI warnings: [Headers are sent inline — middleware response modifications after this call have no effect]
-#AI side_effects: [Sends HTTP headers immediately; Disables output buffering]
+#AI side_effects: [Sends HTTP headers immediately; Disables output buffering; Resolves driver from container when configured]
 
 #AI:download
 #AI group: Streaming & Downloads
