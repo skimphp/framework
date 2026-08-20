@@ -1,0 +1,108 @@
+{
+    "timestamp": "2026-06-15T14-52-23Z",
+    "git": {
+        "commit": "5b8ad63a6d1692609afa149a80d8559a4137d8a7",
+        "short": "5b8ad63",
+        "branch": "worker_mode",
+        "dirty": true,
+        "subject": "fix(core): transient bindings skip resolved cache, end_request iterates keys correctly"
+    },
+    "env": {
+        "php_version": "8.5.7",
+        "sapi": "cli",
+        "opcache": true,
+        "uname": "Linux 7.0.11-orbstack-00360-gc9bc4d96ac70 aarch64"
+    },
+    "config": {
+        "total_requests": 100,
+        "concurrent": 1,
+        "concurrent_single": 1,
+        "base_url": "http://localhost:8080"
+    },
+    "correctness": {
+        "isolation": true,
+        "memory_growth": true,
+        "post_error": true,
+        "event_accumulation": true,
+        "exit": 0
+    },
+    "performance": {
+        "boot_isolation": {
+            "ms": 1.776888,
+            "exit": 1
+        },
+        "cache_hit": {
+            "ms_per_call": 0.0004,
+            "exit": 0
+        },
+        "http_warm": {
+            "avg_ms": 0.64,
+            "p95_ms": 1.44,
+            "rps": 1456.4,
+            "requests": 100,
+            "errors": 0,
+            "total_s": 0.068660932,
+            "exit": 0
+        },
+        "http_hello": {
+            "name": "http_hello",
+            "url": "http://localhost:8080/",
+            "requests": 100,
+            "errors": 0,
+            "total_s": 0.0659,
+            "avg_ms": 0.597,
+            "p95_ms": 1.03,
+            "rps": 1517.6,
+            "target_avg_ms": 2,
+            "ok": true,
+            "exit": 0
+        },
+        "http_json": {
+            "name": "http_json",
+            "url": "http://localhost:8080/json",
+            "requests": 100,
+            "errors": 0,
+            "total_s": 0.0723,
+            "avg_ms": 0.665,
+            "p95_ms": 1.304,
+            "rps": 1383.2,
+            "target_avg_ms": 7,
+            "ok": true,
+            "exit": 0
+        },
+        "http_hello_1c": {
+            "name": "http_hello",
+            "url": "http://localhost:8080/",
+            "requests": 100,
+            "errors": 0,
+            "total_s": 0.0622,
+            "avg_ms": 0.56,
+            "p95_ms": 0.922,
+            "rps": 1607.7,
+            "target_avg_ms": 2,
+            "ok": true,
+            "concurrency": 1,
+            "single_worker_max_rps": 1786,
+            "exit": 0
+        },
+        "http_json_1c": {
+            "name": "http_json",
+            "url": "http://localhost:8080/json",
+            "requests": 100,
+            "errors": 0,
+            "total_s": 0.0599,
+            "avg_ms": 0.55,
+            "p95_ms": 0.844,
+            "rps": 1668.4,
+            "target_avg_ms": 7,
+            "ok": true,
+            "concurrency": 1,
+            "single_worker_max_rps": 1818,
+            "exit": 0
+        }
+    },
+    "summary": {
+        "correctness_ok": true,
+        "performance_ok": null
+    }
+}
