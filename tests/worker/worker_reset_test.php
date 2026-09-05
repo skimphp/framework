@@ -22,7 +22,7 @@ beforeEach(function (): void {
     \Skim\View\ComponentCollector::resetRequest();
 });
 
-describe('worker_reset::apply()', function (): void {
+describe('WorkerReset::apply()', function (): void {
 
     test('clears event listeners', function (): void {
         \Skim\Events\Event::on('test', fn() => null);
@@ -91,7 +91,7 @@ describe('worker_reset::apply()', function (): void {
         expect(ob_get_level())->toBe($baseline);
     });
 
-    test('clears a component_collector left on the stack by a throwing component', function (): void {
+    test('clears a ComponentCollector left on the stack by a throwing component', function (): void {
         \Skim\View\ComponentCollector::push(new \Skim\View\ComponentCollector());
         expect(\Skim\View\ComponentCollector::current())->not->toBeNull();
 
@@ -128,7 +128,7 @@ describe('resettable contract guard', function (): void {
     // AND implement resettable.
     //
     // Note: profiler and request_trace also hold per-request state but are reset by
-    // explicit calls in worker_reset::apply() (profiler::reset()/request_trace::reset()),
+    // explicit calls in WorkerReset::apply() (profiler::reset()/RequestTrace::reset()),
     // not via the resettable interface — so they are intentionally absent here.
     // Process-scoped state (config, env, db connection pool, persistent caches,
     // model metadata) intentionally stays put and must NOT be listed.

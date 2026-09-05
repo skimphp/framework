@@ -10,7 +10,7 @@ namespace Skim\Session;
  * and secure cookie params. The session directory is auto-created on start().
  *
  * Example:
- *   $driver = new file_session_driver(storage_path('sessions'), 7200);
+ *   $driver = new FileSessionDriver(storagePath('sessions'), 7200);
  *   $driver->start();
  *
  * Testing: Use session_fake instead; this driver touches $_SESSION and headers.
@@ -124,29 +124,29 @@ final class FileSessionDriver implements \Skim\Session\SessionDriver {
 
 #AI:class
 #AI symbol: Skim\Session\FileSessionDriver
-#AI source_path: src/session/file_session_driver.php
-#AI title: file_session_driver
+#AI source_path: src/session/FileSessionDriver.php
+#AI title: FileSessionDriver
 #AI description: Native PHP file-backed session driver for single-server deployments.
 #AI role: session driver (file)
 #AI layer: session
 #AI badges: [session; driver; file; native-php]
-#AI intro: `file_session_driver` wraps PHP's native `session_*` functions with a configured save path and secure cookie parameters. It is the default session driver for single-server setups.
+#AI intro: `FileSessionDriver` wraps PHP's native `session_*` functions with a configured save path and secure cookie parameters. It is the default session driver for single-server setups.
 #AI lifecycle: instantiated by session facade, start() called once per request
 #AI fallback: none — this is itself the fallback driver
-#AI test_seam: use session_fake in tests instead
+#AI test_seam: use SessionFake in tests instead
 #AI invariants: [start() is idempotent; save_path directory is auto-created with 0700 permissions; cookie secure flag is auto-detected from HTTPS]
 #AI core_behaviors: [Delegates all read/write to $_SESSION superglobal; Configures cookie params on every start() call; regenerate() deletes old session file]
 #AI warnings: [flush() destroys all session data irreversibly; Direct $_SESSION access bypasses driver abstraction]
-#AI notes: Not suitable for multi-server deployments — session files are local to one server. Use redis_session_driver for load-balanced setups.
+#AI notes: Not suitable for multi-server deployments — session files are local to one server. Use RedisSessionDriver for load-balanced setups.
 #AI owns: session file on disk
 #AI entry_points: [start; get; set; has; delete; regenerate; flush; id]
 #AI config_reads: []
 #AI non_goals: [Does not support multi-server session sharing; Does not encrypt session data at rest]
 #AI side_effects: [Writes session files to disk; Sets cookie headers via session_start(); Modifies $_SESSION superglobal]
-#AI flow: session::method() -> file_session_driver -> session_* native functions -> $_SESSION
-#AI lifecycle_steps: [session::start(); -> file_session_driver::start(); -> mkdir if needed; -> session_set_cookie_params(); -> session_start(); -> $_SESSION available]
+#AI flow: session::method() -> FileSessionDriver -> session_* native functions -> $_SESSION
+#AI lifecycle_steps: [session::start(); -> FileSessionDriver::start(); -> mkdir if needed; -> session_set_cookie_params(); -> session_start(); -> $_SESSION available]
 #AI section_order: [Session API; Lifecycle; Testing Hooks; Architecture]
-#AI architectural_notes: Wraps PHP native sessions to enable test injection via the session_driver interface.
+#AI architectural_notes: Wraps PHP native sessions to enable test injection via the SessionDriver interface.
 
 #AI:start
 #AI group: Lifecycle

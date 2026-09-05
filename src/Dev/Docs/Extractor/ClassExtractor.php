@@ -14,7 +14,7 @@ use Skim\Dev\Docs\Value\ExtractedClass;
  * Returns null for files with no class or parse errors.
  *
  * Example:
- *   $extractor = new class_extractor();
+ *   $extractor = new ClassExtractor();
  *   $class = $extractor->extract('/path/to/file.php');
  *   if ($class !== null) { ... }
  *
@@ -72,32 +72,32 @@ class ClassExtractor {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Extractor\ClassExtractor
-#AI source_path: src/dev/docs/extractor/class_extractor.php
-#AI title: class_extractor
+#AI source_path: src/dev/docs/extractor/ClassExtractor.php
+#AI title: ClassExtractor
 #AI description: Extracts documentation metadata from a single PHP file via nikic/php-parser AST traversal.
 #AI role: AST-based class extractor
 #AI layer: dev
 #AI badges: [extractor; ast; php-parser; docs]
-#AI intro: `class_extractor` parses a single PHP file using nikic/php-parser, delegates AST traversal to `class_visitor`, and returns an `extracted_class` value object. It silently returns null for non-class files, unreadable files, and parse errors.
-#AI lifecycle: instantiated per-use by project_scanner, parser created once in constructor
+#AI intro: `ClassExtractor` parses a single PHP file using nikic/php-parser, delegates AST traversal to `ClassVisitor`, and returns an `ExtractedClass` value object. It silently returns null for non-class files, unreadable files, and parse errors.
+#AI lifecycle: instantiated per-use by ProjectScanner, parser created once in constructor
 #AI fallback: returns null on any failure (missing file, parse error, no class)
 #AI test_seam: instantiate directly with test file paths
-#AI invariants: [returns null for non-class files; returns null on parse errors; only public methods extracted by default; delegates docblock parsing to annotation_parser]
-#AI core_behaviors: [Parses PHP source via nikic/php-parser; Delegates AST traversal to class_visitor; Silently skips files that cannot be processed]
-#AI owns: PhpParser\Parser, annotation_parser instances
+#AI invariants: [returns null for non-class files; returns null on parse errors; only public methods extracted by default; delegates docblock parsing to AnnotationParser]
+#AI core_behaviors: [Parses PHP source via nikic/php-parser; Delegates AST traversal to ClassVisitor; Silently skips files that cannot be processed]
+#AI owns: PhpParser\Parser, AnnotationParser instances
 #AI entry_points: [extract]
 #AI config_reads: []
 #AI non_goals: [Does not scan directories; Does not write output files; Does not validate annotations]
 #AI side_effects: []
-#AI flow: extract(file) -> file_get_contents -> parser->parse -> class_visitor -> extracted_class
-#AI lifecycle_steps: [extract(); -> is_file/is_readable check; -> file_get_contents; -> parser->parse(); -> class_visitor traversal; -> return visitor->result]
+#AI flow: extract(file) -> file_get_contents -> parser->parse -> ClassVisitor -> ExtractedClass
+#AI lifecycle_steps: [extract(); -> is_file/is_readable check; -> file_get_contents; -> parser->parse(); -> ClassVisitor traversal; -> return visitor->result]
 #AI section_order: [Extraction; Architecture]
 #AI architectural_notes: Uses nikic/php-parser for reliable AST traversal — never regex on source code.
 
 #AI:extract
 #AI group: Extraction
 #AI frequency: high
-#AI signature: public function extract(string $file): extracted_class|null
-#AI contract: Parses a PHP file and extracts documentation metadata into an extracted_class value object. Returns null when the file has no class, cannot be read, or has a parse error.
+#AI signature: public function extract(string $file): ExtractedClass|null
+#AI contract: Parses a PHP file and extracts documentation metadata into an ExtractedClass value object. Returns null when the file has no class, cannot be read, or has a parse error.
 #AI param_details: [{name: $file | type: string | required: true | desc: Absolute path to the PHP file to extract.}]
-#AI return_detail: {type: extracted_class|null | desc: Extracted metadata, or null on skip/failure.}
+#AI return_detail: {type: ExtractedClass|null | desc: Extracted metadata, or null on skip/failure.}

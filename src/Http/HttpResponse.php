@@ -78,32 +78,32 @@ final class HttpResponse {
 
 #AI:class
 #AI symbol: Skim\Http\HttpResponse
-#AI source_path: src/http/http_response.php
-#AI title: http_response
+#AI source_path: src/http/HttpResponse.php
+#AI title: HttpResponse
 #AI description: Immutable value object for HTTP responses with status, body, headers, and JSON parsing.
 #AI role: HTTP response value object
 #AI layer: http
 #AI badges: [value-object; http; immutable]
-#AI intro: `http_response` is an immutable value object returned by all `client` HTTP methods. It wraps status code, body, and headers without throwing on non-2xx responses.
-#AI lifecycle: created by client::send() or from_stream(); immutable after construction
+#AI intro: `HttpResponse` is an immutable value object returned by all `client` HTTP methods. It wraps status code, body, and headers without throwing on non-2xx responses.
+#AI lifecycle: created by client::send() or fromStream(); immutable after construction
 #AI test_seam: construct directly with known values
 #AI invariants: [Never throws on non-2xx status; json() returns empty array on invalid JSON]
 #AI core_behaviors: [Holds status, body, and headers as readonly properties; Provides ok() and json() convenience methods]
 #AI owns: response data
-#AI entry_points: [from_stream; json; ok; header]
+#AI entry_points: [fromStream; json; ok; header]
 #AI config_reads: []
 #AI non_goals: [Does not validate status codes; Does not retry requests; Does not follow redirects]
 #AI side_effects: []
-#AI flow: client::send() -> http_response::fromStream() -> immutable value object
+#AI flow: client::send() -> HttpResponse::fromStream() -> immutable value object
 #AI section_order: [Construction; Accessors]
 
 #AI:fromStream
 #AI group: Construction
 #AI frequency: internal
 #AI signature: public static function fromStream(string $body, array $meta): static
-#AI contract: Parses PHP stream $http_response_header meta array into status code and headers, returns a new http_response.
+#AI contract: Parses PHP stream $http_response_header meta array into status code and headers, returns a new HttpResponse.
 #AI param_details: [{name: $body | type: string | required: true | desc: Raw response body string.}; {name: $meta | type: array | required: true | desc: The $http_response_header array from PHP stream context.}]
-#AI return_detail: {type: static | desc: New http_response with parsed status and headers.}
+#AI return_detail: {type: static | desc: New HttpResponse with parsed status and headers.}
 
 #AI:json
 #AI group: Accessors

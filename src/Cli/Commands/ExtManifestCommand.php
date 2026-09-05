@@ -27,7 +27,7 @@ class ExtManifestCommand extends \Skim\Cli\Command {
      * Generates skim.json from the given extension class. #AI:handle
      *
      * Validates that the argument is a class extending extension, then
-     * delegates to ext_manifest::generate() to write skim.json at base_path.
+     * delegates to ExtManifest::generate() to write skim.json at base_path.
      */
     public function handle(): int {
         $class = $this->arg(0);
@@ -44,31 +44,31 @@ class ExtManifestCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\ExtManifestCommand
-#AI source_path: src/cli/commands/ext_manifest_command.php
-#AI title: ext_manifest_command
+#AI source_path: src/cli/commands/ExtManifestCommand.php
+#AI title: ExtManifestCommand
 #AI description: CLI command that generates skim.json manifest from an extension class for distribution.
 #AI role: CLI manifest generator
 #AI layer: cli
 #AI badges: [cli; command; extension; manifest]
-#AI intro: `ext_manifest_command` implements the `php skim ext:manifest` CLI command. It takes a fully-qualified extension class name, validates it extends `extension`, and generates `skim.json` at the project root via `ext_manifest::generate()`.
+#AI intro: `ExtManifestCommand` implements the `php skim ext:manifest` CLI command. It takes a fully-qualified extension class name, validates it extends `extension`, and generates `skim.json` at the project root via `ExtManifest::generate()`.
 #AI lifecycle: instantiated by kernel, handle() called once per invocation
 #AI fallback: prints usage error when argument is missing or not a valid extension class
-#AI test_seam: instantiate directly, call set_input() with test args, then handle()
-#AI invariants: [argument must be a class extending extension; skim.json is written to base_path()]
-#AI core_behaviors: [Validates class exists and extends extension; Delegates to ext_manifest::generate(); Writes skim.json to project root]
-#AI owns: nothing — delegates to ext_manifest
+#AI test_seam: instantiate directly, call setInput() with test args, then handle()
+#AI invariants: [argument must be a class extending extension; skim.json is written to basePath()]
+#AI core_behaviors: [Validates class exists and extends extension; Delegates to ExtManifest::generate(); Writes skim.json to project root]
+#AI owns: nothing — delegates to ExtManifest
 #AI entry_points: [handle]
 #AI config_reads: []
 #AI non_goals: [Does not validate manifest content; Does not publish to a registry]
-#AI side_effects: [writes skim.json to base_path()]
-#AI flow: ext_manifest_command::handle() -> validate arg(0) is extension subclass -> ext_manifest::generate() -> write skim.json
-#AI lifecycle_steps: [handle(); -> arg(0) class name; -> validate class_exists + is_subclass_of(extension); -> ext_manifest::generate(new $class(), base_path('skim.json')); -> print success]
+#AI side_effects: [writes skim.json to basePath()]
+#AI flow: ExtManifestCommand::handle() -> validate arg(0) is extension subclass -> ExtManifest::generate() -> write skim.json
+#AI lifecycle_steps: [handle(); -> arg(0) class name; -> validate class_exists + is_subclass_of(extension); -> ExtManifest::generate(new $class(), basePath('skim.json')); -> print success]
 #AI section_order: [Command Execution]
-#AI architectural_notes: Thin CLI wrapper over ext_manifest::generate(). All manifest logic lives in ext_manifest.
+#AI architectural_notes: Thin CLI wrapper over ExtManifest::generate(). All manifest logic lives in ExtManifest.
 
 #AI:handle
 #AI group: Command Execution
 #AI frequency: low
 #AI signature: public function handle(): int
-#AI contract: Generates skim.json from the given extension class. Validates the argument is a class extending extension, then delegates to ext_manifest::generate().
+#AI contract: Generates skim.json from the given extension class. Validates the argument is a class extending extension, then delegates to ExtManifest::generate().
 #AI return_detail: {type: int | desc: 0 on success, 1 on invalid argument.}

@@ -2,7 +2,7 @@
 
 use Skim\Cache\ArrayDriver;
 
-describe('array_driver — worker mode safety', function (): void {
+describe('ArrayDriver — worker mode safety', function (): void {
 
     test('constructor checks WORKER_MODE constant before allowing instantiation', function (): void {
         // Cannot redefine a PHP constant in the same process, so we verify

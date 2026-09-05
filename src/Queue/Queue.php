@@ -15,7 +15,7 @@ namespace Skim\Queue;
  *   queue::push(new generate_report_job($id), queue: 'reports');
  *   queue::pushMany([$job1, $job2], 'default');
  *
- * Testing: Use set_redis() to inject a mock Redis instance, flush() to clear queues.
+ * Testing: Use setRedis() to inject a mock Redis instance, flush() to clear queues.
  *
  * #AI:class
  */
@@ -28,7 +28,7 @@ final class Queue {
      * Pushes a job to the queue — LPUSH into Redis list or sorted set for delayed. #AI:push
      *
      * Jobs with delay() > 0 go into a sorted set keyed by execute_at timestamp.
-     * The worker's promote_delayed() moves them to the main list when due.
+     * The worker's promoteDelayed() moves them to the main list when due.
      *
      * @param \Skim\Queue\Job $job Job instance to enqueue. Must be serializable.
      * @param string $queue Queue name for multi-queue support (default: 'default').
@@ -182,19 +182,19 @@ final class Queue {
 #AI role: Redis job queue
 #AI layer: queue
 #AI badges: [queue; redis; static-facade; job-dispatch]
-#AI intro: `queue` is the static facade for the Redis-backed job queue. Jobs are serialized and LPUSHed into Redis lists. Workers dequeue with BRPOP for blocking, latency-free operation. Delayed jobs use a sorted set keyed by execute_at timestamp and are promoted to the main list by the worker.
+#AI intro: `queue` is the static facade for the Redis-backed job queue. Jobs are serialized and LPUSHed into Redis lists. Workers dequeue with BRPOP for blocking, latency-free operation. Delayed jobs use a sorted set keyed by executeAt timestamp and are promoted to the main list by the worker.
 #AI lifecycle: static facade, Redis connection resolved lazily on first use from config
 #AI fallback: none — Redis connection failure throws
-#AI test_seam: set_redis() to inject mock Redis, flush() to clear queues
-#AI invariants: [jobs are serialized via PHP serialize() wrapped in JSON; delayed jobs use sorted set; promote_delayed() moves due jobs to main list]
-#AI core_behaviors: [push() LPUSHes to Redis list or ZADDs to delayed sorted set; push_many() uses pipeline for atomic batch; promote_delayed() scans sorted set for due jobs; size() returns LLEN count; flush() DELetes queue key]
+#AI test_seam: setRedis() to inject mock Redis, flush() to clear queues
+#AI invariants: [jobs are serialized via PHP serialize() wrapped in JSON; delayed jobs use sorted set; promoteDelayed() moves due jobs to main list]
+#AI core_behaviors: [push() LPUSHes to Redis list or ZADDs to delayed sorted set; pushMany() uses pipeline for atomic batch; promoteDelayed() scans sorted set for due jobs; size() returns LLEN count; flush() DELetes queue key]
 #AI owns: Redis connection cache
-#AI entry_points: [push; push_many; promote_delayed; size; flush]
+#AI entry_points: [push; pushMany; promoteDelayed; size; flush]
 #AI config_reads: [cache.redis.host; cache.redis.port; cache.redis.password]
 #AI non_goals: [Does not implement job execution (see worker); Does not manage retry logic (see worker); Does not provide dead-letter queues]
-#AI side_effects: [writes to Redis lists and sorted sets; set_redis() replaces active connection; flush() deletes queue data]
-#AI flow: queue::push(job) -> serialize_job() -> delay > 0 ? ZADD delayed : LPUSH queue -> worker BRPOP -> deserialize -> handle()
-#AI lifecycle_steps: [queue::push(job); -> serialize_job(job, queue); -> job->delay() > 0 ? ZADD delayed_key : LPUSH skim:queue:$queue; -> worker BRPOP; -> deserialize(); -> unserialize payload; -> handle()]
+#AI side_effects: [writes to Redis lists and sorted sets; setRedis() replaces active connection; flush() deletes queue data]
+#AI flow: queue::push(job) -> serializeJob() -> delay > 0 ? ZADD delayed : LPUSH queue -> worker BRPOP -> deserialize -> handle()
+#AI lifecycle_steps: [queue::push(job); -> serializeJob(job, queue); -> job->delay() > 0 ? ZADD delayedKey : LPUSH skim:queue:$queue; -> worker BRPOP; -> deserialize(); -> unserialize payload; -> handle()]
 #AI section_order: [Enqueue; Delayed Jobs; Queue Inspection; Testing Hooks; Architecture]
 #AI architectural_notes: Static facade sharing the Redis connection with the cache subsystem via config. The connection is lazy — not opened until the first queue operation.
 
@@ -268,4 +268,4 @@ final class Queue {
 #AI frequency: internal
 #AI signature: public static function redis(): \Redis
 #AI contract: Returns the cached Redis connection, creating it lazily from config/cache.php on first use.
-#AI notes: Public because worker and queue_command access it directly for restart signals and status.
+#AI notes: Public because worker and QueueCommand access it directly for restart signals and status.

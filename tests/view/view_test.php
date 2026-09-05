@@ -22,7 +22,7 @@ describe('view::render() — full template', function(): void {
                       ->not->toContain('<script>');
     });
 
-    test('throws view_exception when template file not found', function(): void {
+    test('throws ViewException when template file not found', function(): void {
         expect(fn() => \Skim\View\View::render('nonexistent_template', []))
             ->toThrow(\Skim\View\Exceptions\ViewException::class);
     });
@@ -43,7 +43,7 @@ describe('view::render() — fragment extraction', function(): void {
                       ->toContain('Bob');
     });
 
-    test('throws view_exception when fragment name not found', function(): void {
+    test('throws ViewException when fragment name not found', function(): void {
         expect(fn() => \Skim\View\View::render('with_fragment', ['name' => 'X'], 'nonexistent-fragment'))
             ->toThrow(\Skim\View\Exceptions\ViewException::class);
     });

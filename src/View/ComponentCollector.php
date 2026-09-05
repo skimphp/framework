@@ -7,7 +7,7 @@ use Skim\Worker\Resettable;
 /**
  * Closure-based part capture for components — no global state. #AI:class
  *
- * Use inside component_with_parts() to declare named content blocks that
+ * Use inside componentWithParts() to declare named content blocks that
  * the component template can query and render. Each instance is scoped to
  * a single component render; nested components get their own instance.
  *
@@ -17,7 +17,7 @@ use Skim\Worker\Resettable;
  * Throws \LogicException when part() callbacks are nested or unbalanced.
  *
  * Example:
- *   component_with_parts('card', new card_props(title: 'Profile'), function($c) {
+ *   componentWithParts('card', new CardProps(title: 'Profile'), function($c) {
  *       $c->part('header', fn() => '<h2>Profile</h2>');
  *       echo '<p>Main content</p>';
  *   });
@@ -51,7 +51,7 @@ class ComponentCollector implements \Skim\Worker\Resettable {
     }
 
     /**
-     * Alias for capture_part() — concise API matching the global helper. #AI:part
+     * Alias for capturePart() — concise API matching the global helper. #AI:part
      *
      * @param string   $name   Part identifier used by the component template.
      * @param callable $render Closure that outputs the part content.
@@ -101,7 +101,7 @@ class ComponentCollector implements \Skim\Worker\Resettable {
     /**
      * Returns the most recently pushed collector (top of stack). #AI:current
      *
-     * Used by the part()/has_part() global helpers to resolve the active
+     * Used by the part()/hasPart() global helpers to resolve the active
      * collector without global mutable state.
      */
     public static function current(): ?self {
@@ -129,7 +129,7 @@ class ComponentCollector implements \Skim\Worker\Resettable {
     /**
      * Clears the static collector stack between requests in worker mode. #AI:resetRequest
      *
-     * Under normal flow capture_main() pushes then pops, so the stack is empty
+     * Under normal flow captureMain() pushes then pops, so the stack is empty
      * between renders. If a component closure throws, the matching pop() never
      * runs and a stale collector lingers in the process — this drops it so the
      * next request starts with an empty stack.
@@ -141,27 +141,27 @@ class ComponentCollector implements \Skim\Worker\Resettable {
 
 #AI:class
 #AI symbol: Skim\View\ComponentCollector
-#AI source_path: src/view/component_collector.php
-#AI title: component_collector
+#AI source_path: src/view/ComponentCollector.php
+#AI title: ComponentCollector
 #AI description: Closure-based part capture for components with stack-scoped isolation.
 #AI role: part capture engine
 #AI layer: view
 #AI badges: [component; parts; closures; isolation; stack]
-#AI intro: `component_collector` captures named content blocks inside components via closures and output buffering. Each render gets its own instance; a static stack tracks nested components.
-#AI lifecycle: instantiated per component_with_parts() call, pushed onto static stack during capture
-#AI fallback: get_part() returns empty string for missing parts; has_part() returns false
-#AI test_seam: instantiate directly and call capture_main/capture_part; call current() to inspect stack
-#AI invariants: [Stack tracks nested components in LIFO order; Each collector has isolated main_part and named_parts; No global mutable state beyond the static stack]
-#AI core_behaviors: [capture_main buffers the closure output as main_part; capture_part buffers closure output into named_parts; Stack enables nested components with independent part resolution]
+#AI intro: `ComponentCollector` captures named content blocks inside components via closures and output buffering. Each render gets its own instance; a static stack tracks nested components.
+#AI lifecycle: instantiated per componentWithParts() call, pushed onto static stack during capture
+#AI fallback: getPart() returns empty string for missing parts; hasPart() returns false
+#AI test_seam: instantiate directly and call captureMain/capturePart; call current() to inspect stack
+#AI invariants: [Stack tracks nested components in LIFO order; Each collector has isolated mainPart and namedParts; No global mutable state beyond the static stack]
+#AI core_behaviors: [captureMain buffers the closure output as mainPart; capturePart buffers closure output into namedParts; Stack enables nested components with independent part resolution]
 #AI warnings: [Calling current() when stack is empty returns null — global helpers must handle this]
-#AI notes: The static stack is the only shared state; it is strictly LIFO and is cleared between requests via reset_request() (worker mode) to drop any entry left behind when a component closure throws before its matching pop().
-#AI owns: main_part, named_parts
-#AI entry_points: [capture_main; capture_part; get_main; get_part; has_part; current]
+#AI notes: The static stack is the only shared state; it is strictly LIFO and is cleared between requests via resetRequest() (worker mode) to drop any entry left behind when a component closure throws before its matching pop().
+#AI owns: mainPart, namedParts
+#AI entry_points: [captureMain; capturePart; getMain; getPart; hasPart; current]
 #AI config_reads: []
 #AI non_goals: [Does not validate part names against a schema; Does not compile or cache parts; Does not handle layout wrapping]
-#AI side_effects: [Mutates static stack during capture_main; Uses output buffering for all capture methods]
-#AI flow: component_with_parts() -> new component_collector() -> capture_main() -> capture_part() -> get_main()/get_part()/has_part()
-#AI lifecycle_steps: [new component_collector(); -> push onto stack; -> capture_main($render); -> capture_part($name, $render); -> pop from stack; -> component template reads get_main/get_part/has_part]
+#AI side_effects: [Mutates static stack during captureMain; Uses output buffering for all capture methods]
+#AI flow: componentWithParts() -> new ComponentCollector() -> captureMain() -> capturePart() -> getMain()/getPart()/hasPart()
+#AI lifecycle_steps: [new ComponentCollector(); -> push onto stack; -> captureMain($render); -> capturePart($name, $render); -> pop from stack; -> component template reads getMain/getPart/hasPart]
 #AI section_order: [Capture API; Query API; Stack Management]
 #AI architectural_notes: The static stack replaces a scalar global, enabling nested components. Each collector is independent; parts do not leak between siblings or parents.
 
@@ -177,7 +177,7 @@ class ComponentCollector implements \Skim\Worker\Resettable {
 #AI group: Capture API
 #AI frequency: high
 #AI signature: public function part(string $name, callable $render): void
-#AI contract: Alias for capture_part(). Buffers the closure output and stores it under the given part name.
+#AI contract: Alias for capturePart(). Buffers the closure output and stores it under the given part name.
 #AI param_details: [{name: $name | type: string | required: true | desc: Part identifier used by the component template.}; {name: $render | type: callable | required: true | desc: Closure that outputs the part content.}]
 #AI side_effects: [Starts and ends output buffering]
 
@@ -223,7 +223,7 @@ class ComponentCollector implements \Skim\Worker\Resettable {
 #AI group: Stack Management
 #AI frequency: internal
 #AI signature: public static function push(self $collector): void
-#AI contract: Pushes a collector onto the static stack. Used by component_with_parts() to keep the collector active during template rendering.
+#AI contract: Pushes a collector onto the static stack. Used by componentWithParts() to keep the collector active during template rendering.
 #AI param_details: [{name: $collector | type: self | required: true | desc: Collector instance to push.}]
 #AI side_effects: [Adds collector to static stack]
 

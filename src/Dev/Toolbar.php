@@ -393,7 +393,7 @@ final class Toolbar {
 #AI layer: dev
 #AI badges: [dev; debug; toolbar; html; profiler]
 #AI intro: `toolbar` generates a fixed-bottom debug panel with tabbed views for request info, DB queries, cache statistics, timeline breakdown, rendered views, and log entries. It reads all data from profiler::summary() and profiler::events().
-#AI lifecycle: called by toolbar_middleware after controller returns, before response is sent
+#AI lifecycle: called by ToolbarMiddleware after controller returns, before response is sent
 #AI fallback: returns empty string when APP_DEBUG=false
 #AI test_seam: call render() with a mock request after populating profiler
 #AI invariants: [returns empty string when debug is off; all output is HTML-escaped; reads from profiler static state]
@@ -401,12 +401,12 @@ final class Toolbar {
 #AI owns: none — reads from profiler
 #AI entry_points: [render]
 #AI config_reads: [app.debug; cache.driver]
-#AI non_goals: [Does not collect events (profiler does); Does not inject itself (toolbar_middleware does); Does not render for JSON/AJAX responses]
+#AI non_goals: [Does not collect events (profiler does); Does not inject itself (ToolbarMiddleware does); Does not render for JSON/AJAX responses]
 #AI side_effects: [generates large HTML string with inline CSS and JavaScript]
 #AI flow: render(req) -> config debug check -> profiler::summary() + events() -> build_*_rows() -> HTML template
 #AI lifecycle_steps: [render(); -> check app.debug; -> profiler::summary(); -> profiler::events(); -> build panels; -> return HTML]
 #AI section_order: [Rendering; Architecture]
-#AI architectural_notes: Called by toolbar_middleware, not directly. The toolbar includes inline CSS and JavaScript for self-contained rendering.
+#AI architectural_notes: Called by ToolbarMiddleware, not directly. The toolbar includes inline CSS and JavaScript for self-contained rendering.
 
 #AI:render
 #AI group: Rendering

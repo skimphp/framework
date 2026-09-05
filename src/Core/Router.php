@@ -243,7 +243,7 @@ class Router {
     /**
      * Registers a name-to-pattern mapping for URL generation. #AI:registerName
      *
-     * Called automatically by route_entry::name(). Overwrites previous mappings.
+     * Called automatically by RouteEntry::name(). Overwrites previous mappings.
      *
      * @param string $name    Route name.
      * @param string $pattern URL pattern with {param:regex} placeholders.
@@ -438,7 +438,7 @@ class Router {
 #AI owns: routes, named routes, CLI commands, group stack, compiled dispatcher, mutation guard
 #AI entry_points: [get; post; put; patch; delete; any; map; add; group; command; dispatch; url]
 #AI config_reads: []
-#AI non_goals: [Does not handle middleware execution (delegated to pipeline); Does not resolve controller dependencies (delegated to app::call_handler)]
+#AI non_goals: [Does not handle middleware execution (delegated to pipeline); Does not resolve controller dependencies (delegated to app::callHandler)]
 #AI side_effects: [add() invalidates compiled dispatcher; group() pushes/pops group stack; compile() creates fast-route dispatcher]
 #AI flow: register routes -> compile() on first dispatch() -> fast-route regex match -> return handler/params/middleware
 #AI section_order: [Route Registration; HTTP Methods; Groups & Commands; Named Routes; Dispatch; Internals]
@@ -447,58 +447,58 @@ class Router {
 #AI:get
 #AI group: HTTP Methods
 #AI frequency: high
-#AI signature: public function get(string $pattern, array|callable $handler, array $middleware = []): route_entry
+#AI signature: public function get(string $pattern, array|callable $handler, array $middleware = []): RouteEntry
 #AI contract: Registers a GET route. Delegates to add().
 #AI param_details: [{name: $pattern | type: string | required: true | desc: URL pattern with optional @param tokens.}; {name: $handler | type: array|callable | required: true | desc: Controller reference or closure.}; {name: $middleware | type: array | required: false | desc: Route-level middleware classes.}]
-#AI return_detail: {type: route_entry | desc: Fluent route configuration object.}
+#AI return_detail: {type: RouteEntry | desc: Fluent route configuration object.}
 
 #AI:post
 #AI group: HTTP Methods
 #AI frequency: high
-#AI signature: public function post(string $pattern, array|callable $handler, array $middleware = []): route_entry
+#AI signature: public function post(string $pattern, array|callable $handler, array $middleware = []): RouteEntry
 #AI contract: Registers a POST route. Delegates to add().
 #AI param_details: [{name: $pattern | type: string | required: true | desc: URL pattern with optional @param tokens.}; {name: $handler | type: array|callable | required: true | desc: Controller reference or closure.}; {name: $middleware | type: array | required: false | desc: Route-level middleware classes.}]
-#AI return_detail: {type: route_entry | desc: Fluent route configuration object.}
+#AI return_detail: {type: RouteEntry | desc: Fluent route configuration object.}
 
 #AI:put
 #AI group: HTTP Methods
 #AI frequency: medium
-#AI signature: public function put(string $pattern, array|callable $handler, array $middleware = []): route_entry
+#AI signature: public function put(string $pattern, array|callable $handler, array $middleware = []): RouteEntry
 #AI contract: Registers a PUT route. Delegates to add().
 #AI param_details: [{name: $pattern | type: string | required: true | desc: URL pattern.}; {name: $handler | type: array|callable | required: true | desc: Controller reference or closure.}; {name: $middleware | type: array | required: false | desc: Route-level middleware.}]
-#AI return_detail: {type: route_entry | desc: Fluent route configuration object.}
+#AI return_detail: {type: RouteEntry | desc: Fluent route configuration object.}
 
 #AI:patch
 #AI group: HTTP Methods
 #AI frequency: medium
-#AI signature: public function patch(string $pattern, array|callable $handler, array $middleware = []): route_entry
+#AI signature: public function patch(string $pattern, array|callable $handler, array $middleware = []): RouteEntry
 #AI contract: Registers a PATCH route. Delegates to add().
 #AI param_details: [{name: $pattern | type: string | required: true | desc: URL pattern.}; {name: $handler | type: array|callable | required: true | desc: Controller reference or closure.}; {name: $middleware | type: array | required: false | desc: Route-level middleware.}]
-#AI return_detail: {type: route_entry | desc: Fluent route configuration object.}
+#AI return_detail: {type: RouteEntry | desc: Fluent route configuration object.}
 
 #AI:delete
 #AI group: HTTP Methods
 #AI frequency: medium
-#AI signature: public function delete(string $pattern, array|callable $handler, array $middleware = []): route_entry
+#AI signature: public function delete(string $pattern, array|callable $handler, array $middleware = []): RouteEntry
 #AI contract: Registers a DELETE route. Delegates to add().
 #AI param_details: [{name: $pattern | type: string | required: true | desc: URL pattern.}; {name: $handler | type: array|callable | required: true | desc: Controller reference or closure.}; {name: $middleware | type: array | required: false | desc: Route-level middleware.}]
-#AI return_detail: {type: route_entry | desc: Fluent route configuration object.}
+#AI return_detail: {type: RouteEntry | desc: Fluent route configuration object.}
 
 #AI:any
 #AI group: HTTP Methods
 #AI frequency: low
-#AI signature: public function any(string $pattern, array|callable $handler, array $middleware = []): route_entry
+#AI signature: public function any(string $pattern, array|callable $handler, array $middleware = []): RouteEntry
 #AI contract: Registers a route for all HTTP methods (GET, POST, PUT, PATCH, DELETE).
 #AI param_details: [{name: $pattern | type: string | required: true | desc: URL pattern.}; {name: $handler | type: array|callable | required: true | desc: Controller reference or closure.}; {name: $middleware | type: array | required: false | desc: Route-level middleware.}]
-#AI return_detail: {type: route_entry | desc: Fluent route configuration object.}
+#AI return_detail: {type: RouteEntry | desc: Fluent route configuration object.}
 
 #AI:map
 #AI group: HTTP Methods
 #AI frequency: low
-#AI signature: public function map(string|array $methods, string $pattern, array|callable $handler): route_entry
+#AI signature: public function map(string|array $methods, string $pattern, array|callable $handler): RouteEntry
 #AI contract: Registers a route for one or more HTTP methods. Thin alias for add() — provides Slim/Laravel-style map() for compatibility with code that expects that convention.
 #AI param_details: [{name: $methods | type: string|array | required: true | desc: One HTTP method ('GET') or a list (['GET','POST']).}; {name: $pattern | type: string | required: true | desc: URL pattern with optional @param tokens.}; {name: $handler | type: array|callable | required: true | desc: Controller reference or closure.}]
-#AI return_detail: {type: route_entry | desc: Fluent route configuration object.}
+#AI return_detail: {type: RouteEntry | desc: Fluent route configuration object.}
 #AI throws_details: [{type: \LogicException | desc: If the mutation guard blocks the call.}]
 #AI notes: Prefer get()/post()/put()/patch()/delete() for single-method routes and any() for all-method routes. Use map() when the method set is dynamic or when mirroring Slim/Laravel-style code.
 
@@ -512,10 +512,10 @@ class Router {
 #AI:add
 #AI group: Route Registration
 #AI frequency: high
-#AI signature: public function add(string|array $methods, string $pattern, array|callable $handler): route_entry
+#AI signature: public function add(string|array $methods, string $pattern, array|callable $handler): RouteEntry
 #AI contract: Registers a route for one or more HTTP methods. Converts @param tokens, applies group prefix and middleware, invalidates the compiled dispatcher.
 #AI param_details: [{name: $methods | type: string|array | required: true | desc: HTTP method(s).}; {name: $pattern | type: string | required: true | desc: URL pattern with optional @param tokens.}; {name: $handler | type: array|callable | required: true | desc: Controller reference or closure.}]
-#AI return_detail: {type: route_entry | desc: Fluent route configuration object.}
+#AI return_detail: {type: RouteEntry | desc: Fluent route configuration object.}
 #AI throws_details: [{type: \LogicException | desc: If the mutation guard blocks the call.}]
 #AI side_effects: [Invalidates compiled dispatcher; Appends to routes array]
 
@@ -539,7 +539,7 @@ class Router {
 #AI group: Named Routes
 #AI frequency: internal
 #AI signature: public function registerName(string $name, string $pattern): void
-#AI contract: Registers a name-to-pattern mapping for reverse URL generation. Called by route_entry::name().
+#AI contract: Registers a name-to-pattern mapping for reverse URL generation. Called by RouteEntry::name().
 #AI param_details: [{name: $name | type: string | required: true | desc: Route name.}; {name: $pattern | type: string | required: true | desc: URL pattern with placeholders.}]
 #AI throws_details: [{type: \LogicException | desc: If the mutation guard blocks the call.}]
 

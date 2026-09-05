@@ -2,7 +2,7 @@
 
 use Skim\Ext\ExtRegistry;
 
-describe('ext_registry', function(): void {
+describe('ExtRegistry', function(): void {
     $root = '';
     $remove = null;
 

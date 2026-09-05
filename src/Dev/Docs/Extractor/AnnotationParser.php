@@ -10,7 +10,7 @@ namespace Skim\Dev\Docs\Extractor;
  * Unknown tags are silently ignored unless $strict is enabled.
  *
  * Example:
- *   $parser = new annotation_parser();
+ *   $parser = new AnnotationParser();
  *   $tags = $parser->parse($docblock_string);
  *   $inline = $parser->parseInline($source_lines);
  *   $hash = $parser->parseHashAi('#AI role: cache facade');
@@ -503,26 +503,26 @@ class AnnotationParser {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Extractor\AnnotationParser
-#AI source_path: src/dev/docs/extractor/annotation_parser.php
-#AI title: annotation_parser
+#AI source_path: src/dev/docs/extractor/AnnotationParser.php
+#AI title: AnnotationParser
 #AI description: Parses PHPDoc blocks, inline comments, and #AI hash blocks to extract @ai.* tags into typed arrays.
 #AI role: annotation parser
 #AI layer: dev
 #AI badges: [extractor; parser; annotations; no-framework-deps]
-#AI intro: `annotation_parser` is the low-level parsing engine for the docs extraction pipeline. It handles three input formats (PHPDoc, inline //, and #AI hash blocks) and coerces values into PHP types (arrays, records, booleans).
-#AI lifecycle: instantiated per-use by class_visitor, no state retained between calls
+#AI intro: `AnnotationParser` is the low-level parsing engine for the docs extraction pipeline. It handles three input formats (PHPDoc, inline //, and #AI hash blocks) and coerces values into PHP types (arrays, records, booleans).
+#AI lifecycle: instantiated per-use by ClassVisitor, no state retained between calls
 #AI fallback: unknown tags silently ignored unless $strict is true
 #AI test_seam: instantiate directly; set $strict = true for validation testing
 #AI invariants: [unknown tags silently ignored by default; $strict mode throws on unknown keys; continuation lines appended to previous tag; semicolons split top-level items only]
 #AI core_behaviors: [Parses PHPDoc @ai.* tags with continuation line support; Parses inline // comments with summary extraction; Parses #AI hash blocks with nested bracket/brace awareness; Coerces values to PHP types]
 #AI scope_items: [{name: $strict | mutable: true | desc: When true, throws UnexpectedValueException on unknown #AI keys. Default false.}]
 #AI owns: VOCABULARY constant
-#AI entry_points: [parse; parse_inline; parse_hash_ai; parse_bracket_list; parse_record; coerce_value; split_top_level; extract_summary]
+#AI entry_points: [parse; parseInline; parseHashAi; parseBracketList; parseRecord; coerceValue; splitTopLevel; extractSummary]
 #AI config_reads: []
 #AI non_goals: [Does not read files; Does not traverse AST; Does not validate tag semantics]
 #AI side_effects: []
-#AI flow: parse/parse_inline/parse_hash_ai -> split_top_level -> coerce_value -> typed result
-#AI lifecycle_steps: [parse(); -> strip_lines(); -> iterate lines; -> match @ai.* or #AI; -> split_top_level; -> coerce_value; parse_inline(); -> split summary vs tags; -> parse tags; parse_hash_ai(); -> detect __target or key:value; -> split_top_level; -> coerce_value]
+#AI flow: parse/parseInline/parseHashAi -> splitTopLevel -> coerceValue -> typed result
+#AI lifecycle_steps: [parse(); -> stripLines(); -> iterate lines; -> match @ai.* or #AI; -> splitTopLevel; -> coerceValue; parseInline(); -> split summary vs tags; -> parse tags; parseHashAi(); -> detect __target or key:value; -> splitTopLevel; -> coerceValue]
 #AI section_order: [Parsing; Value Coercion; Utilities; Architecture]
 #AI architectural_notes: No framework dependencies — plain PHP only. The VOCABULARY constant defines the known key set for strict mode validation.
 

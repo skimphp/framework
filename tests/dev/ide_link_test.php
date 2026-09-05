@@ -11,7 +11,7 @@ afterEach(function(): void {
     \Skim\Core\Config::reset();
 });
 
-describe('ide_link::supported()', function(): void {
+describe('IdeLink::supported()', function(): void {
 
     test('lists known editors in canonical order', function(): void {
         $ids = \Skim\Dev\IdeLink::supported();
@@ -29,7 +29,7 @@ describe('ide_link::supported()', function(): void {
 
 });
 
-describe('ide_link::name()', function(): void {
+describe('IdeLink::name()', function(): void {
 
     test('returns display name for known IDE', function(): void {
         expect(\Skim\Dev\IdeLink::name('phpstorm'))->toBe('PhpStorm');
@@ -44,7 +44,7 @@ describe('ide_link::name()', function(): void {
 
 });
 
-describe('ide_link::isSupported()', function(): void {
+describe('IdeLink::isSupported()', function(): void {
 
     test('returns true for known IDEs', function(): void {
         expect(\Skim\Dev\IdeLink::isSupported('phpstorm'))->toBeTrue();
@@ -57,7 +57,7 @@ describe('ide_link::isSupported()', function(): void {
 
 });
 
-describe('ide_link::resolve()', function(): void {
+describe('IdeLink::resolve()', function(): void {
 
     test('defaults to phpstorm when no config and no argument', function(): void {
         expect(\Skim\Dev\IdeLink::resolve())->toBe('phpstorm');
@@ -84,7 +84,7 @@ describe('ide_link::resolve()', function(): void {
 
 });
 
-describe('ide_link::url()', function(): void {
+describe('IdeLink::url()', function(): void {
 
     test('builds phpstorm deep-link', function(): void {
         $url = \Skim\Dev\IdeLink::url('/app/src/Foo.php', 42, 1, 'phpstorm');
@@ -132,7 +132,7 @@ describe('ide_link::url()', function(): void {
 
 });
 
-describe('ide_link::icon()', function(): void {
+describe('IdeLink::icon()', function(): void {
 
     test('returns phpstorm icon for jetbrains family', function(): void {
         expect(\Skim\Dev\IdeLink::icon('phpstorm'))->toBe('brand-phpstorm');

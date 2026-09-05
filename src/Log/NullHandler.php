@@ -10,7 +10,7 @@ namespace Skim\Log;
  * still records entries in the debug toolbar even when file output is disabled.
  *
  * Example:
- *   log::setHandler(new null_handler());
+ *   log::setHandler(new NullHandler());
  *   log::error('this goes nowhere'); // profiler still sees it
  *
  * #AI:class
@@ -28,13 +28,13 @@ final class NullHandler implements \Skim\Log\LogHandler {
 
 #AI:class
 #AI symbol: Skim\Log\NullHandler
-#AI source_path: src/log/null_handler.php
-#AI title: null_handler
+#AI source_path: src/log/NullHandler.php
+#AI title: NullHandler
 #AI description: Log handler that discards all entries — used in tests and null-channel config.
 #AI role: null log handler
 #AI layer: log
 #AI badges: [handler; log; null-object; testing]
-#AI intro: `null_handler` implements `log_handler` by discarding every write. It is the fallback when no file handler is configured and the default in test environments.
+#AI intro: `NullHandler` implements `LogHandler` by discarding every write. It is the fallback when no file handler is configured and the default in test environments.
 #AI lifecycle: stateless, no resources opened
 #AI test_seam: inject via log::setHandler()
 #AI invariants: [write() never throws; write() produces no output]

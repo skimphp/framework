@@ -9,7 +9,7 @@ namespace Skim\Dev\Docs\Value;
  * against config defaults. Null values preserve config/docs.php defaults.
  *
  * Example:
- *   $paths = docs_generation_paths::fromFlags($this->flags);
+ *   $paths = DocsGenerationPaths::fromFlags($this->flags);
  *   $json  = $paths->jsonPath();
  *   $scan  = $paths->scanPaths();
  *
@@ -44,7 +44,7 @@ final class DocsGenerationPaths {
     /**
      * Returns explicit source override or config scan_paths. #AI:scanPaths
      *
-     * Relative source paths resolve from base_path().
+     * Relative source paths resolve from basePath().
      *
      * @return string[] Directories to scan.
      */
@@ -125,25 +125,25 @@ final class DocsGenerationPaths {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Value\DocsGenerationPaths
-#AI source_path: src/dev/docs/value/docs_generation_paths.php
-#AI title: docs_generation_paths
+#AI source_path: src/dev/docs/value/DocsGenerationPaths.php
+#AI title: DocsGenerationPaths
 #AI description: Resolves CLI --source and --output flag overrides against config/docs.php defaults for docs generation paths.
 #AI role: path resolver value object
 #AI layer: dev
 #AI badges: [value; docs; paths; cli]
-#AI intro: `docs_generation_paths` encapsulates the resolution logic for docs generation file paths. It merges CLI flag overrides with config/docs.php defaults, handling relative-to-absolute path resolution.
-#AI lifecycle: instantiated per-command via from_flags(), immutable after construction
+#AI intro: `DocsGenerationPaths` encapsulates the resolution logic for docs generation file paths. It merges CLI flag overrides with config/docs.php defaults, handling relative-to-absolute path resolution.
+#AI lifecycle: instantiated per-command via fromFlags(), immutable after construction
 #AI fallback: falls back to config/docs.php values when flags are absent
 #AI test_seam: instantiate directly with constructor args
-#AI invariants: [null flags preserve config defaults; relative paths resolve from base_path(); empty string flags treated as null]
-#AI core_behaviors: [Resolves scan_paths from --source or config; Resolves json_path, llm_md_path, mdx_dir from --output or config; Detects absolute vs relative paths]
-#AI owns: source_dir, output_dir overrides
-#AI entry_points: [from_flags; scan_paths; has_source_override; json_path; llm_md_path; mdx_dir]
+#AI invariants: [null flags preserve config defaults; relative paths resolve from basePath(); empty string flags treated as null]
+#AI core_behaviors: [Resolves scanPaths from --source or config; Resolves json_path, llmMdPath, mdx_dir from --output or config; Detects absolute vs relative paths]
+#AI owns: source_dir, outputDir overrides
+#AI entry_points: [fromFlags; scanPaths; hasSourceOverride; json_path; llmMdPath; mdx_dir]
 #AI config_reads: [docs.scan_paths; docs.output.json; docs.output.llm_md; docs.output.mdx_dir]
 #AI non_goals: [Does not create directories; Does not validate that paths exist on disk]
 #AI side_effects: []
-#AI flow: from_flags(flags) -> new self(source, output) -> scan_paths/json_path/llm_md_path/mdx_dir -> config fallback
-#AI lifecycle_steps: [from_flags(); -> extract source/output from flags; -> construct; -> resolve paths on demand with config fallback]
+#AI flow: fromFlags(flags) -> new self(source, output) -> scanPaths/json_path/llmMdPath/mdx_dir -> config fallback
+#AI lifecycle_steps: [fromFlags(); -> extract source/output from flags; -> construct; -> resolve paths on demand with config fallback]
 #AI section_order: [Construction; Path Resolution; Architecture]
 #AI architectural_notes: Immutable value object — all resolution happens on access, not at construction time.
 
@@ -158,21 +158,21 @@ final class DocsGenerationPaths {
 #AI group: Construction
 #AI frequency: high
 #AI signature: public static function fromFlags(array $flags): self
-#AI contract: Builds a docs_generation_paths from CLI flags, reading 'source' and 'output' keys. Empty strings are treated as null.
+#AI contract: Builds a DocsGenerationPaths from CLI flags, reading 'source' and 'output' keys. Empty strings are treated as null.
 #AI param_details: [{name: $flags | type: array | required: true | desc: CLI flags array from command.}]
 
 #AI:scanPaths
 #AI group: Path Resolution
 #AI frequency: high
 #AI signature: public function scanPaths(): array
-#AI contract: Returns the explicit source override as a single-element array, or falls back to config('docs.scan_paths'). Relative paths resolve from base_path().
+#AI contract: Returns the explicit source override as a single-element array, or falls back to config('docs.scan_paths'). Relative paths resolve from basePath().
 #AI return_detail: {type: string[] | desc: Directories to scan for .php files.}
 
 #AI:hasSourceOverride
 #AI group: Path Resolution
 #AI frequency: medium
 #AI signature: public function hasSourceOverride(): bool
-#AI contract: Returns true when --source was supplied, indicating the caller should use scan_paths() instead of the default config scan.
+#AI contract: Returns true when --source was supplied, indicating the caller should use scanPaths() instead of the default config scan.
 #AI return_detail: {type: bool | desc: True if --source flag was provided.}
 
 #AI:jsonPath

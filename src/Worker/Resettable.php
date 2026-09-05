@@ -8,7 +8,7 @@ namespace Skim\Worker;
  * In worker mode a single PHP process handles many requests, so any static
  * property that carries request-specific data must be reset between requests.
  * Implement this interface and register the class for auto-discovery by
- * worker_reset::apply().
+ * WorkerReset::apply().
  *
  * #AI:interface
  */

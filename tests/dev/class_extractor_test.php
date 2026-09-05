@@ -2,7 +2,7 @@
 
 use Skim\Dev\Docs\Extractor\ClassExtractor;
 
-describe('class_extractor — basic behavior', function(): void {
+describe('ClassExtractor — basic behavior', function(): void {
 
     function writePhpFixture(string $code): string {
         $path = sys_get_temp_dir() . '/skim_extractor_test_' . uniqid() . '.php';
@@ -139,7 +139,7 @@ function findMethod(array $methods, string $name) {
     return null;
 }
 
-describe('class_extractor — fixture: array_driver', function () {
+describe('ClassExtractor — fixture: ArrayDriver', function () {
 
     beforeEach(function () {
         $this->extractor = new \Skim\Dev\Docs\Extractor\ClassExtractor();
@@ -158,7 +158,7 @@ describe('class_extractor — fixture: array_driver', function () {
         unlink($tmp);
     });
 
-    it('extracts class_name and namespace', function () {
+    it('extracts className and namespace', function () {
         $result = $this->extractor->extract($this->fixture);
         expect($result->className)->toBe('ArrayDriver')
             ->and($result->namespace)->toBe('Skim\\Cache');
@@ -195,7 +195,7 @@ describe('class_extractor — fixture: array_driver', function () {
 
 });
 
-describe('class_extractor — fixture: cache facade (full #AI block)', function () {
+describe('ClassExtractor — fixture: cache facade (full #AI block)', function () {
 
     beforeEach(function () {
         $this->extractor = new \Skim\Dev\Docs\Extractor\ClassExtractor();

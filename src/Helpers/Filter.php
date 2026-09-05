@@ -314,7 +314,7 @@ final class Filter {
 #AI notes: Use filter::int() for strict integer validation — it rejects float-like strings. Use validate::make() for form-level validation with error messages.
 #AI scope_items: []
 #AI owns: nothing
-#AI entry_points: [int; int_positive; int_natural; float; bool; date; time; ip; domain; email; url; username; password; slug; regex; in; range; arr_int; arr_int_positive; arr_in]
+#AI entry_points: [int; intPositive; intNatural; float; bool; date; time; ip; domain; email; url; username; password; slug; regex; in; range; arrInt; arrIntPositive; arrIn]
 #AI config_reads: []
 #AI non_goals: [Does not provide error messages — use validate::make() for that; Does not sanitize HTML — use e() for output escaping]
 #AI side_effects: []

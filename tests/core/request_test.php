@@ -85,22 +85,22 @@ describe('request — method and path', function(): void {
 
 describe('request — detection helpers', function(): void {
 
-    test('is_htmx() returns true when HX-Request header present', function(): void {
+    test('isHtmx() returns true when HX-Request header present', function(): void {
         $req = \Skim\Core\Request::make(headers: ['HX-Request' => 'true']);
         expect($req->isHtmx())->toBeTrue();
     });
 
-    test('is_htmx() returns false when header absent', function(): void {
+    test('isHtmx() returns false when header absent', function(): void {
         $req = \Skim\Core\Request::make();
         expect($req->isHtmx())->toBeFalse();
     });
 
-    test('is_json() returns true when Accept contains application/json', function(): void {
+    test('isJson() returns true when Accept contains application/json', function(): void {
         $req = \Skim\Core\Request::make(headers: ['Accept' => 'application/json']);
         expect($req->isJson())->toBeTrue();
     });
 
-    test('is_datastar() returns true when datastar-request header present', function(): void {
+    test('isDatastar() returns true when datastar-request header present', function(): void {
         $req = \Skim\Core\Request::make(headers: ['datastar-request' => '1']);
         expect($req->isDatastar())->toBeTrue();
     });

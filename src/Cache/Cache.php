@@ -12,14 +12,14 @@ use Skim\Dev\Profiler;
  * for the process lifetime. If the primary driver fails, falls back to
  * config('cache.fallback'). All operations are recorded in profiler::cache.
  * Prefix-based invalidation (flush()) requires a non-empty prefix; full backend
- * clears go through flush_all().
+ * clears go through flushAll().
  *
  * Example:
  *   $user = cache::remember("user:{$id}", 3600, fn() => User::find($id));
  *   cache::flush('user:'); // Invalidate all user:* keys
  *   cache::flushAll();    // Wipe everything
  *
- * Testing: Use set_driver() to inject mocks, reset() to clear state.
+ * Testing: Use setDriver() to inject mocks, reset() to clear state.
  */
 final class Cache {
     private static ?\Skim\Cache\Driver $instance = null;
@@ -108,7 +108,7 @@ final class Cache {
     /**
      * Removes keys matching the given prefix. #AI:flush
      *
-     * WARNING: Prefix is required. Use flush_all() to clear the entire backend.
+     * WARNING: Prefix is required. Use flushAll() to clear the entire backend.
      * Calling with an empty string will trigger a PHP ArgumentCountError.
      *
      * Example:
@@ -164,7 +164,7 @@ final class Cache {
      * tearDown() to restore normal behavior.
      *
      * Example:
-     *   cache::setDriver(new array_driver());
+     *   cache::setDriver(new ArrayDriver());
      *   // ... run tests ...
      *   cache::reset();
      *
@@ -178,7 +178,7 @@ final class Cache {
      * Drops the cached driver instance. #AI:reset
      *
      * Forces re-resolution from config on the next cache call. Use in test
-     * tearDown() after set_driver() or when cache config changes at runtime.
+     * tearDown() after setDriver() or when cache config changes at runtime.
      */
     public static function reset(): void {
         self::$instance = null;
@@ -238,7 +238,7 @@ final class Cache {
     /**
      * Returns the configured primary driver name for profiling. #AI:driverName
      *
-     * May differ from the actual active driver after set_driver() or fallback.
+     * May differ from the actual active driver after setDriver() or fallback.
      */
     private static function driverName(): string {
         return \Skim\Core\Config::get('cache.driver', 'array');
@@ -256,22 +256,22 @@ final class Cache {
 #AI intro: Static entry point for cache operations. Resolves the configured driver on first use and reuses it for the process lifetime. Falls back to a secondary driver when the primary cannot be created.
 #AI lifecycle: static facade, driver resolved on first cache call
 #AI fallback: cache.fallback when cache.driver cannot be created
-#AI test_seam: set_driver(), reset()
+#AI test_seam: setDriver(), reset()
 #AI drivers: [array; file; redis]
-#AI invariants: [driver is resolved once and reused until reset() or set_driver(); get() returns default on miss; remember() computes and stores only on miss; tags() requires redis_driver; flush() requires non-empty prefix]
-#AI core_behaviors: [The facade resolves one configured driver and exposes a single cache API; Cache reads, writes, misses, and invalidation are recorded in profiler; Redis tags are available only when active driver is redis_driver]
-#AI warnings: [flush_all() clears the entire active cache backend; flush() requires a non-empty prefix; Prefer prefix-based invalidation such as flush('user:') in production]
+#AI invariants: [driver is resolved once and reused until reset() or setDriver(); get() returns default on miss; remember() computes and stores only on miss; tags() requires RedisDriver; flush() requires non-empty prefix]
+#AI core_behaviors: [The facade resolves one configured driver and exposes a single cache API; Cache reads, writes, misses, and invalidation are recorded in profiler; Redis tags are available only when active driver is RedisDriver]
+#AI warnings: [flushAll() clears the entire active cache backend; flush() requires a non-empty prefix; Prefer prefix-based invalidation such as flush('user:') in production]
 #AI notes: The resolved driver is process-local. If tests change cache config at runtime, call reset() before the next cache operation.
 #AI scope_items: [{name: array | mutable: true | desc: In-memory cache driver. Values exist only for the current process and are not persisted.}; {name: file | mutable: true | desc: Filesystem-backed cache driver. Values are persisted on disk.}; {name: redis | mutable: true | desc: Redis-backed cache driver. Required for tag-scoped cache operations through cache::tags().}]
 #AI owns: driver instance cache
-#AI entry_points: [remember; get; set; has; delete; flush; flush_all; tags]
+#AI entry_points: [remember; get; set; has; delete; flush; flushAll; tags]
 #AI config_reads: [cache.driver; cache.fallback; cache.ttl; cache.redis.*; cache.prefix; cache.file.path]
 #AI non_goals: [Does not expose backend-specific APIs except Redis tags; Does not handle serialization; Fallback protects app availability, not cache consistency guarantees]
-#AI side_effects: [profiler::cache records cache operations; set_driver() replaces active driver; reset() forces re-resolution]
-#AI flow: cache::method() -> driver() -> resolve_driver() [primary -> fallback] -> concrete driver -> profiler
-#AI lifecycle_steps: [cache::remember() / get() / set() / has(); -> driver(); -> cached driver instance?; -> resolve_driver(); -> make_driver(config cache.driver); -> on failure make_driver(config cache.fallback); -> concrete driver operation; -> profiler::cache(...)]
+#AI side_effects: [profiler::cache records cache operations; setDriver() replaces active driver; reset() forces re-resolution]
+#AI flow: cache::method() -> driver() -> resolveDriver() [primary -> fallback] -> concrete driver -> profiler
+#AI lifecycle_steps: [cache::remember() / get() / set() / has(); -> driver(); -> cached driver instance?; -> resolveDriver(); -> makeDriver(config cache.driver); -> on failure makeDriver(config cache.fallback); -> concrete driver operation; -> profiler::cache(...)]
 #AI section_order: [Read API; Write API; Invalidation; Tag Operations; Testing Hooks; Architecture]
-#AI architectural_notes: The facade keeps cache usage stable while backend selection remains in config/cache.php. The flush()/flush_all() split forces callers to explicitly choose between targeted and destructive invalidation.
+#AI architectural_notes: The facade keeps cache usage stable while backend selection remains in config/cache.php. The flush()/flushAll() split forces callers to explicitly choose between targeted and destructive invalidation.
 
 #AI:remember
 #AI group: Read API
@@ -321,17 +321,17 @@ final class Cache {
 #AI group: Invalidation
 #AI frequency: low
 #AI signature: public static function flush(string $prefix): bool
-#AI contract: Removes keys that match the given prefix. The prefix is required — callers who want a full cache wipe must use flush_all().
+#AI contract: Removes keys that match the given prefix. The prefix is required — callers who want a full cache wipe must use flushAll().
 #AI param_details: [{name: $prefix | type: string | required: true | desc: Key prefix to match. Use a non-empty prefix like user: for safer invalidation.}]
 #AI return_detail: {type: bool | desc: True if backend confirmed successful invalidation.}
 #AI side_effects: Mass deletion in cache backend for matching keys.
-#AI warnings: [Prefix is required. Trying to flush with an empty string triggers a PHP ArgumentCountError — use flush_all() instead.]
+#AI warnings: [Prefix is required. Trying to flush with an empty string triggers a PHP ArgumentCountError — use flushAll() instead.]
 
 #AI:flushAll
 #AI group: Invalidation
 #AI frequency: low
 #AI signature: public static function flushAll(): bool
-#AI contract: Unconditionally wipes the entire cache backend by delegating to the driver's flush_all(). Records the operation in profiler.
+#AI contract: Unconditionally wipes the entire cache backend by delegating to the driver's flushAll(). Records the operation in profiler.
 #AI return_detail: {type: bool | desc: True if backend confirmed flush.}
 #AI warnings: [Destroys all cached data across all application contexts sharing this driver; Triggers immediate re-computation on next read; Prefer flush('prefix:') in production]
 #AI side_effects: Mass deletion of all entries in cache backend.
@@ -339,11 +339,11 @@ final class Cache {
 #AI:tags
 #AI group: Tag Operations
 #AI frequency: medium
-#AI signature: public static function tags(array $tags): tagged_redis_driver
-#AI contract: Returns a Redis tag-scoped cache proxy for the given tags. Available only when the active driver is redis_driver.
+#AI signature: public static function tags(array $tags): TaggedRedisDriver
+#AI contract: Returns a Redis tag-scoped cache proxy for the given tags. Available only when the active driver is RedisDriver.
 #AI param_details: [{name: $tags | type: array | required: true | desc: Tag identifiers used to scope subsequent cache operations.}]
-#AI return_detail: {type: tagged_redis_driver | desc: Tag-scoped cache proxy.}
-#AI throws_details: [{type: RuntimeException | desc: Thrown when the active driver is not redis_driver.}]
+#AI return_detail: {type: TaggedRedisDriver | desc: Tag-scoped cache proxy.}
+#AI throws_details: [{type: RuntimeException | desc: Thrown when the active driver is not RedisDriver.}]
 
 #AI:setDriver
 #AI group: Testing Hooks
@@ -385,4 +385,4 @@ final class Cache {
 #AI group: Architecture
 #AI frequency: internal
 #AI signature: private static function driverName(): string
-#AI contract: Returns the configured cache.driver value for profiler metadata. May differ from the actual active driver after set_driver() or fallback.
+#AI contract: Returns the configured cache.driver value for profiler metadata. May differ from the actual active driver after setDriver() or fallback.

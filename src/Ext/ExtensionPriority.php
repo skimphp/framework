@@ -11,7 +11,7 @@ namespace Skim\Ext;
  *
  * Example:
  *   // composer.json extra.skim: { "priority": 10 }
- *   // or in code: extension_priority::CORE
+ *   // or in code: ExtensionPriority::CORE
  *
  * #AI:class
  */
@@ -24,17 +24,17 @@ final class ExtensionPriority {
 
 #AI:class
 #AI symbol: Skim\Ext\ExtensionPriority
-#AI source_path: src/ext/extension_priority.php
-#AI title: extension_priority
+#AI source_path: src/ext/ExtensionPriority.php
+#AI title: ExtensionPriority
 #AI description: Named integer bands controlling extension registration and boot order.
 #AI role: priority constants
 #AI layer: ext
 #AI badges: [constants; extension; ordering]
-#AI intro: `extension_priority` defines four named bands that control when extensions register and boot relative to each other. Lower values execute first.
+#AI intro: `ExtensionPriority` defines four named bands that control when extensions register and boot relative to each other. Lower values execute first.
 #AI lifecycle: stateless constants
 #AI test_seam: none needed
 #AI invariants: [CORE < OFFICIAL < PAID < USER; lower number = earlier execution]
-#AI core_behaviors: [Constants are referenced by ext_registry and extension_manager for sort ordering]
+#AI core_behaviors: [Constants are referenced by ExtRegistry and extensionManager for sort ordering]
 #AI owns: priority band constants
 #AI entry_points: []
 #AI config_reads: []

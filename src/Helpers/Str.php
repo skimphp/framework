@@ -147,12 +147,12 @@ final class Str {
 #AI fallback: none
 #AI test_seam: test directly — no mocking needed
 #AI invariants: [all methods are static and pure; slug() is Unicode-aware via mb_* and \p{L}; random() and uuid() use random_int/random_bytes for cryptographic safety]
-#AI core_behaviors: [slug() lowercases, strips non-alphanumeric, collapses separators; excerpt() respects word boundaries; to_snake() handles consecutive capitals]
+#AI core_behaviors: [slug() lowercases, strips non-alphanumeric, collapses separators; excerpt() respects word boundaries; toSnake() handles consecutive capitals]
 #AI warnings: []
-#AI notes: contains/starts_with/ends_with are thin wrappers over PHP 8.0+ str_* functions for API consistency.
+#AI notes: contains/startsWith/endsWith are thin wrappers over PHP 8.0+ str_* functions for API consistency.
 #AI scope_items: []
 #AI owns: nothing
-#AI entry_points: [slug; excerpt; random; uuid; contains; starts_with; ends_with; to_snake; to_camel]
+#AI entry_points: [slug; excerpt; random; uuid; contains; startsWith; endsWith; toSnake; toCamel]
 #AI config_reads: []
 #AI non_goals: [Does not handle HTML entities; Does not perform locale-aware collation]
 #AI side_effects: []
@@ -173,7 +173,7 @@ final class Str {
 #AI group: Slugs & Truncation
 #AI frequency: medium
 #AI signature: public static function excerpt(string $text, int $length = 100, string $suffix = '...', bool $wordBoundary = true): string
-#AI contract: Truncates text to $length characters. When $word_boundary is true, backs up to the last space to avoid mid-word cuts. Appends $suffix only when truncation occurs.
+#AI contract: Truncates text to $length characters. When $wordBoundary is true, backs up to the last space to avoid mid-word cuts. Appends $suffix only when truncation occurs.
 #AI param_details: [{name: $text | type: string | required: true | desc: Input text to truncate.}; {name: $length | type: int | required: false | desc: Maximum character count before truncation. Default 100.}; {name: $suffix | type: string | required: false | desc: Appended when text is truncated. Default '...'.}; {name: $wordBoundary | type: bool | required: false | desc: When true, avoids cutting mid-word. Default true.}]
 #AI return_detail: {type: string | desc: Truncated text with suffix, or original if within limit.}
 

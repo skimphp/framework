@@ -252,13 +252,13 @@ final class Arr {
 #AI lifecycle: stateless — all methods are pure functions
 #AI fallback: none
 #AI test_seam: test directly — no mocking needed
-#AI invariants: [all methods accept both arrays and objects as items; map_by uses last-write-wins on key collision; map_keys appends (not overwrites) at second level; normalize100 guarantees sum === 100]
-#AI core_behaviors: [find/find_all support both callable predicates and key=>value shorthand; map_by/map_col/map_nested/map_keys work with arrays and objects; pluck wraps array_column]
+#AI invariants: [all methods accept both arrays and objects as items; mapBy uses last-write-wins on key collision; mapKeys appends (not overwrites) at second level; normalize100 guarantees sum === 100]
+#AI core_behaviors: [find/findAll support both callable predicates and key=>value shorthand; mapBy/mapCol/mapNested/mapKeys work with arrays and objects; pluck wraps array_column]
 #AI warnings: []
 #AI notes: find() wraps PHP 8.4 array_find(); first()/last() wrap PHP 8.5 array_first()/array_last().
 #AI scope_items: []
 #AI owns: nothing
-#AI entry_points: [find; find_all; map_by; map_col; pluck; filter_by; first; last; map_nested; map_keys; normalize100; weighted_pick; to_string]
+#AI entry_points: [find; findAll; mapBy; mapCol; pluck; filterBy; first; last; mapNested; mapKeys; normalize100; weightedPick; toString]
 #AI config_reads: []
 #AI non_goals: [Does not provide lazy evaluation; Does not support nested dot-notation keys]
 #AI side_effects: []

@@ -160,64 +160,64 @@ final class FakeClient extends \Skim\Http\Client {
 
 #AI:class
 #AI symbol: Skim\Http\FakeClient
-#AI source_path: src/http/fake_client.php
-#AI title: fake_client
+#AI source_path: src/http/FakeClient.php
+#AI title: FakeClient
 #AI description: Test double for HTTP client that records requests and returns stub responses.
 #AI role: HTTP test fake
 #AI layer: http
 #AI badges: [testing; http; fake; stub]
-#AI intro: `fake_client` extends `client` to intercept all HTTP requests in tests. It records every request for later assertion and returns configurable stub responses without making real network calls.
+#AI intro: `FakeClient` extends `client` to intercept all HTTP requests in tests. It records every request for later assertion and returns configurable stub responses without making real network calls.
 #AI lifecycle: created via client::fake(); lives for the test case duration
-#AI test_seam: client::fake($stubs) factory; assert_sent/assert_nothing_sent for verification
+#AI test_seam: client::fake($stubs) factory; assertSent/assertNothingSent for verification
 #AI invariants: [No real HTTP calls are made; Unstubbed requests return 200 with empty JSON body; Stub matching priority: METHOD+URL > URL > METHOD]
 #AI core_behaviors: [Records all requests with method, URL, and body; Matches stubs by key priority; Provides assertion methods for test verification]
 #AI owns: recorded request log
-#AI entry_points: [get; post; put; patch; delete; assert_sent; assert_nothing_sent; recorded]
+#AI entry_points: [get; post; put; patch; delete; assertSent; assertNothingSent; recorded]
 #AI config_reads: []
 #AI non_goals: [Does not simulate network failures; Does not validate request format; Does not follow redirects]
 #AI side_effects: [Records requests in memory]
-#AI flow: client::fake($stubs) -> fake_client -> method() -> fake_send() -> record + match stub -> http_response
+#AI flow: client::fake($stubs) -> FakeClient -> method() -> fakeSend() -> record + match stub -> HttpResponse
 #AI section_order: [HTTP Methods; Assertions; Inspection]
 
 #AI:get
 #AI group: HTTP Methods
 #AI frequency: high
-#AI signature: public function get(string $url, array $query = [], array $headers = []): http_response
+#AI signature: public function get(string $url, array $query = [], array $headers = []): HttpResponse
 #AI contract: Records a GET request and returns the matching stub response. Query params are not appended to the URL in the fake.
 #AI param_details: [{name: $url | type: string | required: true | desc: Target URL.}; {name: $query | type: array | required: false | desc: Query params (ignored in fake).}; {name: $headers | type: array | required: false | desc: Request headers (recorded but not sent).}]
-#AI return_detail: {type: http_response | desc: Stub response or default 200 empty JSON.}
+#AI return_detail: {type: HttpResponse | desc: Stub response or default 200 empty JSON.}
 
 #AI:post
 #AI group: HTTP Methods
 #AI frequency: high
-#AI signature: public function post(string $url, array $data = [], array $headers = []): http_response
+#AI signature: public function post(string $url, array $data = [], array $headers = []): HttpResponse
 #AI contract: Records a POST request with body data and returns the matching stub response.
 #AI param_details: [{name: $url | type: string | required: true | desc: Target URL.}; {name: $data | type: array | required: false | desc: Request body data (recorded).}; {name: $headers | type: array | required: false | desc: Request headers (recorded but not sent).}]
-#AI return_detail: {type: http_response | desc: Stub response or default 200 empty JSON.}
+#AI return_detail: {type: HttpResponse | desc: Stub response or default 200 empty JSON.}
 
 #AI:put
 #AI group: HTTP Methods
 #AI frequency: medium
-#AI signature: public function put(string $url, array $data = [], array $headers = []): http_response
+#AI signature: public function put(string $url, array $data = [], array $headers = []): HttpResponse
 #AI contract: Records a PUT request with body data and returns the matching stub response.
 #AI param_details: [{name: $url | type: string | required: true | desc: Target URL.}; {name: $data | type: array | required: false | desc: Request body data (recorded).}; {name: $headers | type: array | required: false | desc: Request headers (recorded but not sent).}]
-#AI return_detail: {type: http_response | desc: Stub response or default 200 empty JSON.}
+#AI return_detail: {type: HttpResponse | desc: Stub response or default 200 empty JSON.}
 
 #AI:patch
 #AI group: HTTP Methods
 #AI frequency: medium
-#AI signature: public function patch(string $url, array $data = [], array $headers = []): http_response
+#AI signature: public function patch(string $url, array $data = [], array $headers = []): HttpResponse
 #AI contract: Records a PATCH request with body data and returns the matching stub response.
 #AI param_details: [{name: $url | type: string | required: true | desc: Target URL.}; {name: $data | type: array | required: false | desc: Request body data (recorded).}; {name: $headers | type: array | required: false | desc: Request headers (recorded but not sent).}]
-#AI return_detail: {type: http_response | desc: Stub response or default 200 empty JSON.}
+#AI return_detail: {type: HttpResponse | desc: Stub response or default 200 empty JSON.}
 
 #AI:delete
 #AI group: HTTP Methods
 #AI frequency: medium
-#AI signature: public function delete(string $url, array $data = [], array $headers = []): http_response
+#AI signature: public function delete(string $url, array $data = [], array $headers = []): HttpResponse
 #AI contract: Records a DELETE request with optional body data and returns the matching stub response.
 #AI param_details: [{name: $url | type: string | required: true | desc: Target URL.}; {name: $data | type: array | required: false | desc: Request body data (recorded).}; {name: $headers | type: array | required: false | desc: Request headers (recorded but not sent).}]
-#AI return_detail: {type: http_response | desc: Stub response or default 200 empty JSON.}
+#AI return_detail: {type: HttpResponse | desc: Stub response or default 200 empty JSON.}
 
 #AI:assertSent
 #AI group: Assertions

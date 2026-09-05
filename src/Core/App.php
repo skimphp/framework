@@ -15,7 +15,7 @@ use Skim\Ext\ExtensionManager;
  *
  * Example:
  *   $app = app::instance();
- *   $app->router->get('/', [home_controller::class, 'index']);
+ *   $app->router->get('/', [HomeController::class, 'index']);
  *   $app->run();
  *
  * Testing: Use `app::testInstance(['db.driver' => 'memory'])` for isolated containers without env/config loading.
@@ -42,7 +42,7 @@ class App {
     private array $resolved = [];
 
     // DI tracing — exposes in-flight resolution chain to error_page.
-    // Populated by make() when $tracing is on; read by error_page::collectContainer()
+    // Populated by make() when $tracing is on; read by ErrorPage::collectContainer()
     // after a binding fails so the panel can show the exact stack that was being built.
     //
     //   $resolve_stack — chronological list of ['id' => string, 'time' => float]
@@ -84,10 +84,10 @@ class App {
     // Idempotent boot guard: prevents re-running boot() on repeated calls.
     private bool $booted = false;
     private bool $debugMode = false;
-    // Snapshot of ob_get_level() at begin_request() so end_request() only closes
+    // Snapshot of ob_get_level() at beginRequest() so endRequest() only closes
     // buffers opened during the request, leaving PHPUnit/test buffers intact.
     private int $requestObLevel = 0;
-    // Tracks abstracts bound with request lifetime so end_request() can clear them.
+    // Tracks abstracts bound with request lifetime so endRequest() can clear them.
     private array $requestScoped = [];
     // Tracks abstracts bound with transient lifetime so make() skips caching.
     private array $transient = [];
@@ -192,7 +192,7 @@ class App {
     /**
      * Returns a metadata array of every currently-registered binding. #AI:snapshot_bindings
      *
-     * Used by error_page::collectContainer() to render the "registered services"
+     * Used by ErrorPage::collectContainer() to render the "registered services"
      * list in the Container panel. Captures [abstract, factory_kind, priority]
      * triples; never the factory closure itself (closures don't survive var_export
      * and would leak memory in the error page).
@@ -327,7 +327,7 @@ class App {
      * Registers a request-scoped binding. #AI:bindRequest
      *
      * Behaves like bind() but the resolved singleton is cleared from the
-     * container at the end of each request via end_request().
+     * container at the end of each request via endRequest().
      *
      * @param string          $abstract Abstract type or identifier.
      * @param callable|string $factory  Callable receiving app, or class name for auto-wiring.
@@ -354,7 +354,7 @@ class App {
     /**
      * Performs the actual binding registration for a given lifetime. #AI:applyBinding
      *
-     * Shared by bind(), bind_request() and bind_transient(). Kept private and free
+     * Shared by bind(), bindRequest() and bindTransient(). Kept private and free
      * of the strict-DI check so the request/transient helpers (which pass an explicit
      * lifetime) are never blocked by app.strict_di.
      *
@@ -579,7 +579,7 @@ class App {
     /**
      * Returns true when the user scope contains no keys. #AI:userScopeEmpty
      *
-     * Used by the leak detector to verify end_request() cleared per-request state.
+     * Used by the leak detector to verify endRequest() cleared per-request state.
      */
     public function userScopeEmpty(): bool {
         return $this->user === [];
@@ -742,8 +742,8 @@ class App {
      * Dispatches the HTTP request through middleware and sends the response. #AI:run
      *
      * Runs the full one-shot lifecycle for non-worker deployments. In worker mode,
-     * callers should instead call boot() once, then loop over begin_request(),
-     * dispatch(), and end_request().
+     * callers should instead call boot() once, then loop over beginRequest(),
+     * dispatch(), and endRequest().
      *
      * Example:
      *   // public/index.php
@@ -842,7 +842,7 @@ class App {
      * Resolves controller handler arguments via DI and route params. #AI:callHandler
      *
      * For closures, passes request/response and route params directly. For class-based
-     * handlers, resolves the controller via `make_transient()` so a fresh instance is
+     * handlers, resolves the controller via `makeTransient()` so a fresh instance is
      * built per request (worker-mode safe — no cross-request state leakage) and injects
      * constructor/method dependencies by type-hint, matching route params by name.
      */
@@ -936,8 +936,8 @@ class App {
     /**
      * Clears resolved cache and all lifetime flags for an abstract. #AI:clearLifetimeMeta
      *
-     * Centralizes the lifetime transition so bind(), bind_request(), and
-     * bind_transient() cannot leave stale request_scoped/transient flags
+     * Centralizes the lifetime transition so bind(), bindRequest(), and
+     * bindTransient() cannot leave stale request_scoped/transient flags
      * behind when an abstract is rebound with a different lifetime.
      */
     private function clearLifetimeMeta(string $abstract): void {
@@ -1045,24 +1045,24 @@ class App {
 #AI role: application kernel and service container
 #AI layer: core
 #AI badges: [singleton; container; kernel; di; middleware; scoped-store]
-#AI intro: `Skim\Core\App` is the central application kernel. It combines three responsibilities in one singleton: a scoped key-value store (sys/app/user), a dependency injection container with factory bindings and reflection auto-wiring, and an HTTP kernel with a middleware pipeline. Extensions register services and middleware through `with_extension_context()` during the boot phase.
+#AI intro: `Skim\Core\App` is the central application kernel. It combines three responsibilities in one singleton: a scoped key-value store (sys/app/user), a dependency injection container with factory bindings and reflection auto-wiring, and an HTTP kernel with a middleware pipeline. Extensions register services and middleware through `withExtensionContext()` during the boot phase.
 #AI lifecycle: singleton, created on first `instance()` call, booted lazily via `ensureBooted()` in `run()` or `dispatch()`, frozen before request dispatch
 #AI fallback: none — app is the root; subsystems fall back to their own defaults
-#AI test_seam: test_instance() for isolated containers without env/config loading
+#AI test_seam: testInstance() for isolated containers without env/config loading
 #AI invariants: [instance() returns the same object for the process lifetime; sys.* keys are write-once in production; bind/decorate/use throw after freeze(); make() caches singletons until the container is cloned]
 #AI core_behaviors: [Three scopes (sys, app, user) isolate framework internals from config and per-request state; DI resolution caches singletons and falls back to reflection auto-wiring; Middleware runs in registration order before route handlers; Extensions register services with priority-based conflict resolution]
 #AI warnings: [`run()` installs a global exception handler and is not re-entrant; `freeze()` is irreversible for the instance lifetime; sys.* writes throw LogicException in production after first set]
-#AI notes: The constructor is private — always use `instance()` or `test_instance()`. Cloning resets resolved singletons and user scope but preserves bindings and sys/app data.
-#AI scope_items: [{name: sys | mutable: false | desc: Framework internals (router, extensions). Write-once in production, mutable in debug.}; {name: app | mutable: true | desc: Config values from config/*.php or test_instance(). Falls back to config::get on read.}; {name: user | mutable: true | desc: Per-request mutable state. Cleared on clone.}]
+#AI notes: The constructor is private — always use `instance()` or `testInstance()`. Cloning resets resolved singletons and user scope but preserves bindings and sys/app data.
+#AI scope_items: [{name: sys | mutable: false | desc: Framework internals (router, extensions). Write-once in production, mutable in debug.}; {name: app | mutable: true | desc: Config values from config/*.php or testInstance(). Falls back to config::get on read.}; {name: user | mutable: true | desc: Per-request mutable state. Cleared on clone.}]
 #AI owns: singleton instance, DI bindings, resolved singletons, scoped store, middleware stack, router, pipeline, extension context
-#AI entry_points: [instance; test_instance; run; dispatch]
+#AI entry_points: [instance; testInstance; run; dispatch]
 #AI config_reads: [app.debug; app.view.default_layout; app.*]
 #AI non_goals: [Does not handle HTTP transport (delegates to request/response); Does not manage database connections directly; Does not serialize or persist state across requests]
 #AI side_effects: [run() installs global exception handler and sends HTTP response; freeze() permanently locks mutation; set() may throw on sys.* overwrite in production; boot() initialises router, pipeline, and extensions once]
-#AI flow: app::instance() -> run() -> ensureBooted() -> boot() [router -> extensions] -> profiler/request_trace -> boot_extensions() -> freeze() -> dispatch() -> pipeline -> call_handler() -> response
-#AI lifecycle_steps: [app::instance(); -> run(); -> ensureBooted(); -> boot() [view layout + router + pipeline + extension_manager::discover + register]; -> profiler/request_trace enable (if debug); -> boot_extensions(); -> freeze(); -> request::fromGlobals(); -> dispatch(); -> pipeline::run(); -> call_handler(); -> response::send()]
+#AI flow: app::instance() -> run() -> ensureBooted() -> boot() [router -> extensions] -> profiler/RequestTrace -> bootExtensions() -> freeze() -> dispatch() -> pipeline -> callHandler() -> response
+#AI lifecycle_steps: [app::instance(); -> run(); -> ensureBooted(); -> boot() [view layout + router + pipeline + extensionManager::discover + register]; -> profiler/RequestTrace enable (if debug); -> bootExtensions(); -> freeze(); -> request::fromGlobals(); -> dispatch(); -> pipeline::run(); -> callHandler(); -> response::send()]
 #AI section_order: [Lifecycle; Scoped Store; DI Container; Middleware; Request Dispatch; Extensions; Testing]
-#AI architectural_notes: The app class is intentionally a god object combining container, kernel, and store. This keeps the framework surface area small — one class to learn, one singleton to pass around. Extensions interact with app exclusively through `with_extension_context()` during boot, then the app freezes to prevent further mutation.
+#AI architectural_notes: The app class is intentionally a god object combining container, kernel, and store. This keeps the framework surface area small — one class to learn, one singleton to pass around. Extensions interact with app exclusively through `withExtensionContext()` during boot, then the app freezes to prevent further mutation.
 
 #AI:instance
 #AI group: Lifecycle
@@ -1085,8 +1085,8 @@ class App {
 #AI group: Lifecycle
 #AI frequency: medium
 #AI signature: public function boot(): void
-#AI contract: Initializes framework subsystems in strict dependency order: view layout → router → pipeline → extension discovery and registration. Idempotent — subsequent calls after the first are no-ops. Profiler and request_trace are NOT enabled here; they are enabled in run(). env and config are lazy-loaded on first access.
-#AI side_effects: [Sets $booted = true; initialises router, pipeline, extension_manager; registers extensions]
+#AI contract: Initializes framework subsystems in strict dependency order: view layout → router → pipeline → extension discovery and registration. Idempotent — subsequent calls after the first are no-ops. Profiler and RequestTrace are NOT enabled here; they are enabled in run(). env and config are lazy-loaded on first access.
+#AI side_effects: [Sets $booted = true; initialises router, pipeline, extensionManager; registers extensions]
 
 #AI:ensureBooted
 #AI group: Lifecycle
@@ -1118,7 +1118,7 @@ class App {
 #AI contract: Registers a factory callable for DI resolution. Clears the resolved singleton cache for the abstract so the new factory takes effect on the next make() call. Higher-priority bindings replace lower ones; calls with lower priority than the current binding are silently ignored. When app.strict_di is true, an explicit lifetime is mandatory.
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind. Typically a fully-qualified class name.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving the app instance, or a class name string for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins). Null uses the current extension context priority (default 100).}; {name: $lifetime | type: ?lifetime | required: false | desc: Binding lifetime. Null defaults to singleton; null is rejected when strict_di is enabled.}]
 #AI throws_details: [{type: \LogicException | desc: If called after freeze().}; {type: \LogicException | desc: If strict_di is enabled and no lifetime is provided.}]
-#AI side_effects: [Clears resolved singleton cache for $abstract; Mutates bindings and binding_priorities arrays]
+#AI side_effects: [Clears resolved singleton cache for $abstract; Mutates bindings and bindingPriorities arrays]
 
 #AI:decorate
 #AI group: DI Container
@@ -1161,7 +1161,7 @@ class App {
 #AI group: Scoped Store
 #AI frequency: low
 #AI signature: public function userScopeEmpty(): bool
-#AI contract: Returns true when the user scope contains no keys. Used by the leak detector to verify end_request() cleared per-request state.
+#AI contract: Returns true when the user scope contains no keys. Used by the leak detector to verify endRequest() cleared per-request state.
 #AI return_detail: {type: bool | desc: True when $user array is empty.}
 
 #AI:use
@@ -1171,7 +1171,7 @@ class App {
 #AI contract: Registers a global middleware class applied to every HTTP request in registration order. Must be called before run() or freeze().
 #AI param_details: [{name: $class | type: string | required: true | desc: Middleware class name implementing the middleware interface.}; {name: $args | type: mixed | required: false | desc: Constructor arguments passed to the middleware when instantiated.}]
 #AI throws_details: [{type: \LogicException | desc: If called after freeze().}]
-#AI side_effects: [Appends to global_middleware stack]
+#AI side_effects: [Appends to globalMiddleware stack]
 
 #AI:freeze
 #AI group: Middleware
@@ -1193,18 +1193,18 @@ class App {
 #AI frequency: medium
 #AI signature: public function withExtensionContext(string $name, int $priority, callable $callback): mixed
 #AI contract: Temporarily sets the active extension name and priority so that bind(), decorate(), and similar calls inside $callback inherit the correct priority. The previous extension context is restored in a finally block, even if the callback throws.
-#AI param_details: [{name: $name | type: string | required: true | desc: Extension identifier used for diagnostics and assert_mutable error messages.}; {name: $priority | type: int | required: true | desc: Priority applied to registrations (bind, decorate) inside the callback.}; {name: $callback | type: callable | required: true | desc: Executed with the extension context active. Return value is passed through.}]
+#AI param_details: [{name: $name | type: string | required: true | desc: Extension identifier used for diagnostics and assertMutable error messages.}; {name: $priority | type: int | required: true | desc: Priority applied to registrations (bind, decorate) inside the callback.}; {name: $callback | type: callable | required: true | desc: Executed with the extension context active. Return value is passed through.}]
 #AI return_detail: {type: mixed | desc: Whatever the callback returns.}
-#AI side_effects: [Temporarily mutates extension_context; restored in finally block]
+#AI side_effects: [Temporarily mutates extensionContext; restored in finally block]
 #AI examples: [{label: Extension registration | code: $app->withExtensionContext('auth', 50, function() use ($app) {\n    $app->bind(auth_service::class, fn() => new jwt_auth());\n});}]
 
 #AI:run
 #AI group: Lifecycle
 #AI frequency: low
 #AI signature: public function run(): void
-#AI contract: Executes the full HTTP request cycle: calls ensureBooted(), enables profiler and request_trace (if debug), installs a global exception handler, boots extensions, freezes the app, builds the request from PHP globals, dispatches through the middleware pipeline, records request traces, and sends the response. Called once per request from public/index.php.
+#AI contract: Executes the full HTTP request cycle: calls ensureBooted(), enables profiler and RequestTrace (if debug), installs a global exception handler, boots extensions, freezes the app, builds the request from PHP globals, dispatches through the middleware pipeline, records request traces, and sends the response. Called once per request from public/index.php.
 #AI warnings: [Not re-entrant; Installs a global exception handler that persists for the process lifetime; In production, 500 errors return a bare 'Internal Server Error' string]
-#AI side_effects: [Calls ensureBooted(); Enables profiler and request_trace (if debug); Installs global exception handler; Boots extensions; Freezes the app; Sends HTTP response headers and body; Records request trace or error log]
+#AI side_effects: [Calls ensureBooted(); Enables profiler and RequestTrace (if debug); Installs global exception handler; Boots extensions; Freezes the app; Sends HTTP response headers and body; Records request trace or error log]
 #AI examples: [{label: Entry point | code: // public/index.php\nrequire __DIR__ . '/../vendor/autoload.php';\napp::instance()->run();}]
 
 #AI:dispatch
@@ -1215,7 +1215,7 @@ class App {
 #AI param_details: [{name: $req | type: request | required: true | desc: The request to dispatch.}; {name: $res | type: response | required: true | desc: The response object to populate.}; {name: $skipMiddleware | type: bool | required: false | desc: When true, bypasses all global and route middleware. Useful for unit tests.}]
 #AI return_detail: {type: response | desc: The populated response. Status 404 if no route matches, 405 if path matches but method does not.}
 #AI side_effects: [Temporarily replaces self::$instance during dispatch]
-#AI examples: [{label: Test dispatch | code: $req = request::make('GET', '/users/42');\n$res = $app->dispatch($req, new response(), skip_middleware: true);\nassert($res->getStatus() === 200);}]
+#AI examples: [{label: Test dispatch | code: $req = request::make('GET', '/users/42');\n$res = $app->dispatch($req, new response(), skipMiddleware: true);\nassert($res->getStatus() === 200);}]
 
 #AI:callHandler
 #AI group: Request Dispatch
@@ -1242,7 +1242,7 @@ class App {
 #AI group: DI Container
 #AI frequency: medium
 #AI signature: public function bindRequest(string $abstract, callable|string $factory, ?int $priority = null): void
-#AI contract: Registers a request-scoped binding. Behaves like bind() but the resolved singleton is cleared from the container at the end of each request via end_request().
+#AI contract: Registers a request-scoped binding. Behaves like bind() but the resolved singleton is cleared from the container at the end of each request via endRequest().
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving app, or class name for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins).}]
 #AI side_effects: [Registers binding and marks it as request-scoped]
 
@@ -1258,40 +1258,40 @@ class App {
 #AI group: DI Container
 #AI frequency: internal
 #AI signature: private function applyBinding(string $abstract, callable|string $factory, ?int $priority, lifetime $lifetime): void
-#AI contract: Performs the actual binding registration for a given lifetime. Shared by bind(), bind_request() and bind_transient(). Keeps the strict-DI check out of the request/transient helpers so they are never blocked by app.strict_di.
+#AI contract: Performs the actual binding registration for a given lifetime. Shared by bind(), bindRequest() and bindTransient(). Keeps the strict-DI check out of the request/transient helpers so they are never blocked by app.strict_di.
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving app, or class name for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins). Null uses current extension priority.}; {name: $lifetime | type: lifetime | required: true | desc: Resolved lifetime to apply.}]
 #AI throws_details: [{type: \LogicException | desc: If called after freeze().}]
-#AI side_effects: [Mutates bindings and binding_priorities arrays; Clears lifetime meta for the abstract]
+#AI side_effects: [Mutates bindings and bindingPriorities arrays; Clears lifetime meta for the abstract]
 
 #AI:clearLifetimeMeta
 #AI group: DI Container
 #AI frequency: internal
 #AI signature: private function clearLifetimeMeta(string $abstract): void
-#AI contract: Clears resolved cache and all lifetime flags for an abstract. Centralizes lifetime transition so bind(), bind_request(), and bind_transient() cannot leave stale request_scoped/transient flags behind when an abstract is rebound with a different lifetime.
+#AI contract: Clears resolved cache and all lifetime flags for an abstract. Centralizes lifetime transition so bind(), bindRequest(), and bindTransient() cannot leave stale requestScoped/transient flags behind when an abstract is rebound with a different lifetime.
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract whose lifetime metadata should be cleared.}]
-#AI side_effects: [Unsets entries in $resolved, $request_scoped, and $transient arrays]
+#AI side_effects: [Unsets entries in $resolved, $requestScoped, and $transient arrays]
 
 #AI:beginRequest
 #AI group: Lifecycle
 #AI frequency: internal
 #AI signature: public function beginRequest(): void
-#AI contract: Begins a request in worker mode — enables profiler and request_trace if debug. Separated from run() so the worker entrypoint can call it once per request without re-running the full boot sequence.
-#AI side_effects: [Enables profiler and request_trace when app.debug is true]
+#AI contract: Begins a request in worker mode — enables profiler and RequestTrace if debug. Separated from run() so the worker entrypoint can call it once per request without re-running the full boot sequence.
+#AI side_effects: [Enables profiler and RequestTrace when app.debug is true]
 
 #AI:endRequest
 #AI group: Lifecycle
 #AI frequency: internal
 #AI signature: public function endRequest(): void
-#AI contract: Ends a request in worker mode — resets per-request state. Clears user scope and request-scoped DI bindings, then runs the global worker_reset orchestrator.
-#AI side_effects: [Clears user scope; clears request-scoped resolved singletons; disables tracing; runs worker_reset::apply()]
+#AI contract: Ends a request in worker mode — resets per-request state. Clears user scope and request-scoped DI bindings, then runs the global WorkerReset orchestrator.
+#AI side_effects: [Clears user scope; clears request-scoped resolved singletons; disables tracing; runs WorkerReset::apply()]
 
 #AI:handleException
 #AI group: Lifecycle
 #AI frequency: internal
 #AI signature: public function handleException(\Throwable $e): void
-#AI contract: Handles an uncaught exception. Used by the global exception handler installed in run(). Renders debug error page when debug_mode is true, otherwise returns 500.
+#AI contract: Handles an uncaught exception. Used by the global exception handler installed in run(). Renders debug error page when debugMode is true, otherwise returns 500.
 #AI param_details: [{name: $e | type: \Throwable | required: true | desc: The uncaught exception to handle.}]
-#AI side_effects: [Renders error_page or sends HTTP 500 response]
+#AI side_effects: [Renders ErrorPage or sends HTTP 500 response]
 
 #AI:emit
 #AI group: Request Dispatch
@@ -1343,7 +1343,7 @@ class App {
 #AI group: Extensions
 #AI frequency: internal
 #AI signature: private function currentExtensionPriority(): int
-#AI contract: Returns the priority from the active extension context set by with_extension_context(). Defaults to 100 when no context is active.
+#AI contract: Returns the priority from the active extension context set by withExtensionContext(). Defaults to 100 when no context is active.
 
 #AI:assertMutable
 #AI group: Lifecycle

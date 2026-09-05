@@ -10,7 +10,7 @@ namespace Skim\Cli;
  * and ANSI-styled rendering. Falls back to null (quit) when not connected to a TTY.
  *
  * Example:
- *   $menu = new interactive_menu($groups);
+ *   $menu = new InteractiveMenu($groups);
  *   $selected = $menu->run(); // returns command name or null
  *
  * Testing: Not designed for automated testing — requires interactive TTY with raw mode.
@@ -423,13 +423,13 @@ final class InteractiveMenu {
 
 #AI:class
 #AI symbol: Skim\Cli\InteractiveMenu
-#AI source_path: src/cli/interactive_menu.php
-#AI title: interactive_menu
+#AI source_path: src/cli/InteractiveMenu.php
+#AI title: InteractiveMenu
 #AI description: Full-screen interactive terminal menu for CLI command discovery with keyboard navigation and live search.
 #AI role: CLI interactive command browser
 #AI layer: cli
 #AI badges: [cli; interactive; tui; keyboard-driven; ansi]
-#AI intro: `interactive_menu` provides a full-screen, keyboard-driven terminal UI for browsing and selecting CLI commands. It supports collapsible command groups, live search with / or :, and ANSI-styled rendering. Returns null when not on a TTY.
+#AI intro: `InteractiveMenu` provides a full-screen, keyboard-driven terminal UI for browsing and selecting CLI commands. It supports collapsible command groups, live search with / or :, and ANSI-styled rendering. Returns null when not on a TTY.
 #AI lifecycle: instantiated by kernel with command groups, run() enters event loop, returns selected command or null
 #AI fallback: returns null immediately when not connected to a TTY
 #AI test_seam: not designed for automated testing — requires interactive TTY with raw mode
@@ -440,8 +440,8 @@ final class InteractiveMenu {
 #AI config_reads: []
 #AI non_goals: [Does not execute commands (returns name to caller); Does not support mouse input; Does not support scrolling beyond terminal height]
 #AI side_effects: [modifies TTY settings (restored on exit); writes ANSI escape sequences to stdout; registers SIGINT handler]
-#AI flow: interactive_menu::run() -> setup_tty() -> render loop: read_key() -> decode_key() -> handle_key() -> render() -> return command or null
-#AI lifecycle_steps: [run(); -> is_tty() check; -> setup_tty() raw mode; -> register SIGINT handler; -> render() initial frame; -> loop: read_key() -> decode_key() -> handle_key() -> render(); -> on quit: clear_menu() -> restore_tty(); -> return command name or null]
+#AI flow: InteractiveMenu::run() -> setupTty() -> render loop: readKey() -> decodeKey() -> handleKey() -> render() -> return command or null
+#AI lifecycle_steps: [run(); -> isTty() check; -> setupTty() raw mode; -> register SIGINT handler; -> render() initial frame; -> loop: readKey() -> decodeKey() -> handleKey() -> render(); -> on quit: clearMenu() -> restoreTty(); -> return command name or null]
 #AI section_order: [Menu Execution; Key Handling; Rendering; TTY Management; Architecture]
 #AI architectural_notes: The menu takes full control of the terminal in raw mode. TTY settings are saved and restored in a finally block to prevent terminal corruption even on exceptions.
 

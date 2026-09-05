@@ -13,7 +13,7 @@ namespace Skim\Assets;
  *   <?= assets::js('js/app.js') ?>
  *   <?= assets::css('css/app.css') ?>
  *
- * Testing: Use set_manifest() to inject a fake manifest, reset() in tearDown().
+ * Testing: Use setManifest() to inject a fake manifest, reset() in tearDown().
  *
  * #AI:class
  */
@@ -139,7 +139,7 @@ final class Assets {
 #AI intro: `assets` resolves asset paths to Vite-built URLs. In dev mode (APP_DEBUG=true), it proxies through Vite's HMR dev server at localhost:5173. In production, it reads the Vite manifest.json to return cache-busted hashed filenames.
 #AI lifecycle: static facade, manifest loaded and cached on first production url() call
 #AI fallback: checks .vite/manifest.json then build/manifest.json for older Vite versions
-#AI test_seam: set_manifest(), set_vite_url(), reset()
+#AI test_seam: setManifest(), setViteUrl(), reset()
 #AI invariants: [dev mode always proxies to Vite URL; production requires manifest.json; css() returns empty string in dev mode (Vite injects via HMR)]
 #AI core_behaviors: [Manifest is loaded lazily on first production url() call and cached; url() output is HTML-escaped via e() in js()/css() tags]
 #AI warnings: [Production throws RuntimeException if manifest.json is missing — run npm run build first]
@@ -150,8 +150,8 @@ final class Assets {
 #AI config_reads: [app.debug; assets.build_path]
 #AI non_goals: [Does not run Vite build; Does not handle image/font assets; Does not support multiple Vite projects]
 #AI side_effects: [Reads manifest.json from disk on first production call]
-#AI flow: assets::url(path) -> debug? vite_url/path : manifest()[path] -> build_path/file
-#AI lifecycle_steps: [assets::url/js/css(); -> debug check; -> dev: vite_url + path; -> prod: manifest() loads from disk; -> manifest[path].file; -> build_path + hashed filename]
+#AI flow: assets::url(path) -> debug? viteUrl/path : manifest()[path] -> buildPath/file
+#AI lifecycle_steps: [assets::url/js/css(); -> debug check; -> dev: viteUrl + path; -> prod: manifest() loads from disk; -> manifest[path].file; -> buildPath + hashed filename]
 #AI section_order: [Asset Resolution; Tag Generation; Testing Hooks]
 #AI architectural_notes: Thin integration layer — all intelligence is in Vite's manifest format. The facade exists to provide a single API for templates.
 

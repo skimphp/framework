@@ -25,7 +25,7 @@ class ExtListCommand extends \Skim\Cli\Command {
     /**
      * Accepts optional registry for tests. #AI:__construct
      *
-     * @param \Skim\Ext\ExtRegistry|null $registry Test double; defaults to scanning base_path()/vendor.
+     * @param \Skim\Ext\ExtRegistry|null $registry Test double; defaults to scanning basePath()/vendor.
      */
     public function __construct(
         private readonly ?\Skim\Ext\ExtRegistry $registry = null,
@@ -88,34 +88,34 @@ class ExtListCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\ExtListCommand
-#AI source_path: src/cli/commands/ext_list_command.php
-#AI title: ext_list_command
+#AI source_path: src/cli/commands/ExtListCommand.php
+#AI title: ExtListCommand
 #AI description: CLI command that lists installed SKIM extensions from local Composer metadata with capability and conflict reporting.
 #AI role: CLI extension lister
 #AI layer: cli
 #AI badges: [cli; command; extension; read-only]
-#AI intro: `ext_list_command` implements the `php skim ext:list` CLI command. It scans local Composer vendor metadata to list installed SKIM extensions, their capabilities, and any inter-extension conflicts. No network access is required.
+#AI intro: `ExtListCommand` implements the `php skim ext:list` CLI command. It scans local Composer vendor metadata to list installed SKIM extensions, their capabilities, and any inter-extension conflicts. No network access is required.
 #AI lifecycle: instantiated by kernel, handle() called once per invocation
 #AI fallback: prints informational message when no extensions are installed
-#AI test_seam: constructor accepts ext_registry test double
+#AI test_seam: constructor accepts ExtRegistry test double
 #AI invariants: [reads only from local Composer metadata; no network access; warns on unknown capabilities and conflicts]
-#AI core_behaviors: [Lists extensions from ext_registry->installed(); Prints capabilities per extension; Warns on unknown capabilities via capability_vocabulary; Reports conflicts from ext_registry->conflicts()]
-#AI owns: nothing — delegates to ext_registry
+#AI core_behaviors: [Lists extensions from ExtRegistry->installed(); Prints capabilities per extension; Warns on unknown capabilities via CapabilityVocabulary; Reports conflicts from ExtRegistry->conflicts()]
+#AI owns: nothing — delegates to ExtRegistry
 #AI entry_points: [handle]
 #AI config_reads: []
 #AI non_goals: [Does not install or remove extensions; Does not check for updates; Does not validate extension compatibility]
 #AI side_effects: [prints to stdout]
-#AI flow: ext_list_command::handle() -> registry()->installed() -> print each extension -> check capabilities -> registry()->conflicts() -> print warnings
+#AI flow: ExtListCommand::handle() -> registry()->installed() -> print each extension -> check capabilities -> registry()->conflicts() -> print warnings
 #AI lifecycle_steps: [handle(); -> registry()->installed(); -> for each extension: print name/version/description; -> print capabilities; -> warn on unknown capabilities; -> registry()->conflicts(); -> print conflict warnings]
 #AI section_order: [Command Execution; Architecture]
-#AI architectural_notes: Constructor injection of ext_registry enables test isolation without filesystem access.
+#AI architectural_notes: Constructor injection of ExtRegistry enables test isolation without filesystem access.
 
 #AI:__construct
 #AI group: Architecture
 #AI frequency: low
-#AI signature: public function __construct(?ext_registry $registry = null)
-#AI contract: Accepts optional registry test double. Defaults to scanning base_path()/vendor.
-#AI param_details: [{name: $registry | type: ?ext_registry | required: false | desc: Test double for extension registry. Null uses default.}]
+#AI signature: public function __construct(?ExtRegistry $registry = null)
+#AI contract: Accepts optional registry test double. Defaults to scanning basePath()/vendor.
+#AI param_details: [{name: $registry | type: ?ExtRegistry | required: false | desc: Test double for extension registry. Null uses default.}]
 
 #AI:handle
 #AI group: Command Execution
@@ -127,5 +127,5 @@ class ExtListCommand extends \Skim\Cli\Command {
 #AI:registry
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private function registry(): ext_registry
+#AI signature: private function registry(): ExtRegistry
 #AI contract: Returns the injected or default extension registry.

@@ -14,7 +14,7 @@ afterEach(function(): void {
 });
 
 /**
- * Captures output of error_page::render() without sending headers.
+ * Captures output of ErrorPage::render() without sending headers.
  *
  * The real render() calls http_response_code() and header() which fail
  * in CLI test context. This wrapper catches those and just returns HTML.
@@ -29,7 +29,7 @@ function captureErrorPage(\Throwable $e): string {
     return (string) ob_get_clean();
 }
 
-describe('error_page::render()', function(): void {
+describe('ErrorPage::render()', function(): void {
 
     test('produces valid HTML starting with <!DOCTYPE', function(): void {
         $html = captureErrorPage(new \RuntimeException('test error'));
@@ -140,11 +140,11 @@ describe('error_page::render()', function(): void {
         expect($arg['object_id'])->toStartWith('#');
         expect($arg['props'])->toBeArray();
         expect($arg['props'][0]['key'])->toBe('id');
-        // prop_value() returns formatted strings (e.g. "42", '"Alice"', "true")
+        // propValue() returns formatted strings (e.g. "42", '"Alice"', "true")
         expect($arg['props'][0]['value'])->toBe('42');
     });
 
-    test('all_props() reads private and protected properties via Closure::bind', function(): void {
+    test('allProps() reads private and protected properties via Closure::bind', function(): void {
         // Use a controlled fixture with all three visibilities — \Closure::bind
         // should give us access to private/protected state without ever calling
         // any setter or instantiating anything.
@@ -164,7 +164,7 @@ describe('error_page::render()', function(): void {
         expect($keys)->toContain('privateC (p)');
     });
 
-    test('all_props() respects the 8-row cap with _more hint', function(): void {
+    test('allProps() respects the 8-row cap with _more hint', function(): void {
         $obj = new class {
             public int $a = 1; public int $b = 2; public int $c = 3; public int $d = 4;
             public int $e = 5; public int $f = 6; public int $g = 7; public int $h = 8;
@@ -180,7 +180,7 @@ describe('error_page::render()', function(): void {
         expect($rows[8]['value'])->toBe('…');
     });
 
-    test('all_props() returns empty for unreflectable objects', function(): void {
+    test('allProps() returns empty for unreflectable objects', function(): void {
         // stdClass is an internal class — Closure::bind can't bind to its scope,
         // so the method falls back to get_object_vars() for dynamic properties.
         // A stdClass with no dynamic properties returns [].
@@ -191,7 +191,7 @@ describe('error_page::render()', function(): void {
         expect($rows)->toBe([]);
     });
 
-    test('all_props() falls back to get_object_vars() for stdClass dynamic properties', function(): void {
+    test('allProps() falls back to get_object_vars() for stdClass dynamic properties', function(): void {
         // stdClass can't be ReflectionObject-ed via Closure::bind (internal class)
         // — the method must use get_object_vars() as a fallback for dynamic props.
         $obj = new \stdClass();
@@ -211,7 +211,7 @@ describe('error_page::render()', function(): void {
         $method = $ref->getMethod('describeArg');
         $arg = $method->invoke(null, 42, 0);
         expect($arg['type'])->toBe('int');
-        // arg_value() returns string form for safe HTML rendering
+        // argValue() returns string form for safe HTML rendering
         expect($arg['value'])->toBe('42');
         expect($arg['object_id'] ?? null)->toBeNull();
         // props is an empty array for non-objects (the template just renders it as-is)
@@ -239,7 +239,7 @@ describe('error_page::render()', function(): void {
     });
 
     test('DI tree marks resolved services with the green checkmark', function(): void {
-        // Verify build_di_node() produces the `resolved` flag for services
+        // Verify buildDiNode() produces the `resolved` flag for services
         // that appear in app::resolvedServices() — the di_node component
         // renders the green ✓ marker when this flag is true.
         \Skim\Core\App::testInstance();
@@ -314,7 +314,7 @@ describe('error_page::render()', function(): void {
 
 });
 
-describe('error_page noise detection', function(): void {
+describe('ErrorPage noise detection', function(): void {
 
     test('marks /vendor/ file as framework noise', function(): void {
         $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
@@ -369,7 +369,7 @@ describe('error_page noise detection', function(): void {
 
     test('middleware classes are classified as `pipeline` (not noise, not app, not framework)', function(): void {
         // In the redesigned error page, middleware gets its own 'pipeline' section
-        // in the trace — the test is_classify_frame() instead of is_noise() to
+        // in the trace — the test is_classify_frame() instead of isNoise() to
         // reflect this new three-bucket split.
         $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('classifyFrame');

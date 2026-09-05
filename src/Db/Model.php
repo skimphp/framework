@@ -437,18 +437,18 @@ abstract class Model {
 #AI lifecycle: instantiated via find/create/new, persisted via save(), schema cached per table for 1 hour
 #AI fallback: none
 #AI test_seam: test_db() for SQLite :memory:, models work directly against it
-#AI invariants: [find() returns null on missing — never throws; find_or_fail() throws not_found_exception; save() is INSERT when no PK, UPDATE only dirty columns when PK set; guarded columns silently skipped in fill() and INSERT; schema cached for 1 hour with key schema:{table}:{connection}]
-#AI core_behaviors: [dirty tracking via set_attribute() records changed columns; hydrate_one() uses set_raw() to bypass dirty tracking; casts apply on both set and hydrate; query_scope provides fluent WHERE/ORDER/LIMIT chaining]
-#AI warnings: [all() defaults to limit 1000 — always paginate large tables; delete_where() has no limit — deletes ALL matching rows]
+#AI invariants: [find() returns null on missing — never throws; findOrFail() throws NotFoundException; save() is INSERT when no PK, UPDATE only dirty columns when PK set; guarded columns silently skipped in fill() and INSERT; schema cached for 1 hour with key schema:{table}:{connection}]
+#AI core_behaviors: [dirty tracking via setAttribute() records changed columns; hydrateOne() uses setRaw() to bypass dirty tracking; casts apply on both set and hydrate; QueryScope provides fluent WHERE/ORDER/LIMIT chaining]
+#AI warnings: [all() defaults to limit 1000 — always paginate large tables; deleteWhere() has no limit — deletes ALL matching rows]
 #AI notes: Subclasses should use PHP 8.4 property hooks for normalization and asymmetric visibility for id/timestamps.
 #AI scope_items: [{name: $table | mutable: false | desc: Database table name.}; {name: $connection | mutable: false | desc: Named DB connection from config/db.php.}; {name: $primary | mutable: false | desc: Primary key column name.}; {name: $guarded | mutable: false | desc: Columns excluded from mass-assignment.}; {name: $casts | mutable: false | desc: Column type casting rules.}]
-#AI owns: attributes array, dirty_cols tracking
-#AI entry_points: [find; find_or_fail; find_by; where; all; count; create; raw; delete_where; save; delete; fill; to_array; hydrate_one; hydrate_many; schema; column_names]
+#AI owns: attributes array, dirtyCols tracking
+#AI entry_points: [find; findOrFail; findBy; where; all; count; create; raw; deleteWhere; save; delete; fill; toArray; hydrateOne; hydrateMany; schema; columnNames]
 #AI config_reads: [db.*.connection]
-#AI non_goals: [Does not support relations — use merry_model; Does not provide query builder — use query_scope via where(); Does not handle validation — use validate::make()]
+#AI non_goals: [Does not support relations — use MerryModel; Does not provide query builder — use QueryScope via where(); Does not handle validation — use validate::make()]
 #AI side_effects: [save() executes INSERT or UPDATE; delete() executes DELETE; schema() reads and caches DB schema]
-#AI flow: model::find(id) -> db::row() -> hydrate_one() -> model instance; model->save() -> do_insert()/do_update() -> db::query()
-#AI lifecycle_steps: [model::find/create/new; -> hydration or fill(); -> attribute assignment with dirty tracking; -> save() checks PK presence; -> do_insert() or do_update(); -> db::query() with %values% or %set%; -> dirty_cols reset]
+#AI flow: model::find(id) -> db::row() -> hydrateOne() -> model instance; model->save() -> doInsert()/doUpdate() -> db::query()
+#AI lifecycle_steps: [model::find/create/new; -> hydration or fill(); -> attribute assignment with dirty tracking; -> save() checks PK presence; -> doInsert() or doUpdate(); -> db::query() with %values% or %set%; -> dirtyCols reset]
 #AI section_order: [Finders; Query Building; Creation; Persistence; Deletion; Mass Assignment; Hydration; Schema; Accessors]
 #AI architectural_notes: Active record pattern with dirty tracking for efficient updates. Schema caching avoids repeated DESCRIBE calls. Guarded columns protect against mass-assignment vulnerabilities.
 
@@ -464,10 +464,10 @@ abstract class Model {
 #AI group: Finders
 #AI frequency: high
 #AI signature: public static function findOrFail(int|string $id): static
-#AI contract: Finds a record by primary key. Throws not_found_exception if missing — use in controllers for 404 responses.
+#AI contract: Finds a record by primary key. Throws NotFoundException if missing — use in controllers for 404 responses.
 #AI param_details: [{name: $id | type: int|string | required: true | desc: Primary key value.}]
 #AI return_detail: {type: static | desc: Hydrated model instance.}
-#AI throws_details: [{type: not_found_exception | desc: When no record matches the primary key.}]
+#AI throws_details: [{type: NotFoundException | desc: When no record matches the primary key.}]
 
 #AI:findBy
 #AI group: Finders
@@ -481,10 +481,10 @@ abstract class Model {
 #AI:where
 #AI group: Query Building
 #AI frequency: high
-#AI signature: public static function where(string|array $conditions, array $params = []): query_scope
-#AI contract: Returns a query_scope for building filtered queries. Chain order/limit/paginate before terminal methods.
+#AI signature: public static function where(string|array $conditions, array $params = []): QueryScope
+#AI contract: Returns a QueryScope for building filtered queries. Chain order/limit/paginate before terminal methods.
 #AI param_details: [{name: $conditions | type: string|array | required: true | desc: SQL fragment or column=>value pairs.}; {name: $params | type: array | required: false | desc: PDO params when conditions is a string.}]
-#AI return_detail: {type: query_scope | desc: Fluent query builder scoped to this model.}
+#AI return_detail: {type: QueryScope | desc: Fluent query builder scoped to this model.}
 #AI notes: #[\NoDiscard] — always capture or chain the return value.
 
 #AI:all

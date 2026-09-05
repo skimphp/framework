@@ -49,7 +49,7 @@ describe('log facade', function(): void {
         expect($levels)->toBe(['debug', 'notice', 'warning', 'critical', 'alert', 'emergency']);
     });
 
-    test('null_handler discards all writes silently', function(): void {
+    test('NullHandler discards all writes silently', function(): void {
         \Skim\Log\Log::setHandler(new \Skim\Log\NullHandler());
         \Skim\Log\Log::error('should be discarded');
         expect(true)->toBeTrue();   // no exception thrown

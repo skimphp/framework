@@ -9,7 +9,7 @@ namespace Skim\Dev\Docs\Value;
  * Created once by class_visitor, never mutated. No framework dependencies.
  *
  * Example:
- *   // Accessed via extracted_class->methods
+ *   // Accessed via ExtractedClass->methods
  *   foreach ($class->methods as $method) {
  *       $array = $method->toArray();
  *   }
@@ -100,25 +100,25 @@ readonly class ExtractedMethod {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Value\ExtractedMethod
-#AI source_path: src/dev/docs/value/extracted_method.php
-#AI title: extracted_method
+#AI source_path: src/dev/docs/value/ExtractedMethod.php
+#AI title: ExtractedMethod
 #AI description: Readonly value object representing a single extracted public method with all annotation metadata.
 #AI role: data carrier
 #AI layer: dev
 #AI badges: [value; readonly; docs; no-framework-deps]
-#AI intro: `extracted_method` is the method-level data carrier within `extracted_class`. It holds every annotation field extracted from a single method's PHPDoc, inline comments, and detached #AI blocks.
-#AI lifecycle: created once by class_visitor, held inside extracted_class, serialized by emitters
-#AI fallback: to_array() falls back to contracts[0] for contract; converts legacy throws to throws_details
+#AI intro: `ExtractedMethod` is the method-level data carrier within `ExtractedClass`. It holds every annotation field extracted from a single method's PHPDoc, inline comments, and detached #AI blocks.
+#AI lifecycle: created once by ClassVisitor, held inside ExtractedClass, serialized by emitters
+#AI fallback: toArray() falls back to contracts[0] for contract; converts legacy throws to throws_details
 #AI test_seam: instantiate directly with test data
-#AI invariants: [readonly — never mutated after construction; all array fields default to empty; to_array() is JSON-safe]
-#AI core_behaviors: [Holds all annotation fields from method-level tags; Serializes to JSON-safe array via to_array(); Backward-compatible with legacy contracts/throws fields]
+#AI invariants: [readonly — never mutated after construction; all array fields default to empty; toArray() is JSON-safe]
+#AI core_behaviors: [Holds all annotation fields from method-level tags; Serializes to JSON-safe array via toArray(); Backward-compatible with legacy contracts/throws fields]
 #AI owns: none — pure value object
-#AI entry_points: [to_array]
+#AI entry_points: [toArray]
 #AI config_reads: []
 #AI non_goals: [Does not extract itself; Does not validate annotations]
 #AI side_effects: []
-#AI flow: class_visitor -> new extracted_method(...) -> extracted_class.methods -> to_array()
-#AI lifecycle_steps: [constructed by class_visitor; -> held in extracted_class.methods; -> serialized by to_array()]
+#AI flow: ClassVisitor -> new ExtractedMethod(...) -> ExtractedClass.methods -> toArray()
+#AI lifecycle_steps: [constructed by ClassVisitor; -> held in ExtractedClass.methods; -> serialized by toArray()]
 #AI section_order: [Construction; Serialization; Architecture]
 #AI architectural_notes: No framework dependencies — plain PHP only.
 

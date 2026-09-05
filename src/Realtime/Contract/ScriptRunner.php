@@ -24,8 +24,8 @@ interface ScriptRunner {
 
 #AI:interface
 #AI symbol: Skim\Realtime\Contract\ScriptRunner
-#AI source_path: src/realtime/contract/script_runner.php
-#AI title: script_runner
+#AI source_path: src/realtime/contract/ScriptRunner.php
+#AI title: ScriptRunner
 #AI role: realtime contract
 #AI layer: realtime
 #AI badges: [realtime; contract; hypermedia; script]

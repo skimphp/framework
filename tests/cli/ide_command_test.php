@@ -3,7 +3,7 @@
 use Skim\Db\Db;
 use Skim\Cli\Commands\IdeCommand;
 
-describe('ide_command schema generation with SQLite', function(): void {
+describe('IdeCommand schema generation with SQLite', function(): void {
     $modelsDir = basePath('app/models');
     $modelFile = $modelsDir . '/post.php';
     $helperFile = storagePath('ide-helper.php');

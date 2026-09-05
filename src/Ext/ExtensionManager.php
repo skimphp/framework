@@ -12,7 +12,7 @@ use Skim\Core\App;
  * register()/boot() hooks in the correct order.
  *
  * Example:
- *   $manager = extension_manager::discover(base_path(), $app);
+ *   $manager = extensionManager::discover(basePath(), $app);
  *   $manager->register($app);
  *   $manager->boot($app);
  *
@@ -24,7 +24,7 @@ final class ExtensionManager {
     /**
      * Accepts normalized extension metadata arrays from ext_registry. #AI:__construct
      *
-     * @param array $extensions Extension metadata arrays from ext_registry::installed().
+     * @param array $extensions Extension metadata arrays from ExtRegistry::installed().
      */
     public function __construct(
         private readonly array $extensions,
@@ -38,7 +38,7 @@ final class ExtensionManager {
      * the result in sys.extensions and sys.extension_conflicts.
      *
      * Example:
-     *   $manager = extension_manager::discover(base_path(), $app);
+     *   $manager = extensionManager::discover(basePath(), $app);
      *
      * @param string $root Project root directory containing vendor/.
      * @param \Skim\Core\App $app Application container to store extension metadata.
@@ -214,31 +214,31 @@ final class ExtensionManager {
 
 #AI:class
 #AI symbol: Skim\Ext\ExtensionManager
-#AI source_path: src/ext/extension_manager.php
-#AI title: extension_manager
+#AI source_path: src/ext/extensionManager.php
+#AI title: extensionManager
 #AI description: Coordinates extension discovery, dependency validation, topological sorting, and lifecycle hooks.
 #AI role: extension lifecycle coordinator
 #AI layer: ext
 #AI badges: [extension; lifecycle; discovery; dependency-graph]
-#AI intro: `extension_manager` discovers extensions from Composer packages, validates their dependency requirements, topologically sorts them, and invokes register()/boot() hooks in the correct order during app boot.
+#AI intro: `extensionManager` discovers extensions from Composer packages, validates their dependency requirements, topologically sorts them, and invokes register()/boot() hooks in the correct order during app boot.
 #AI lifecycle: created by discover() during app boot; register() then boot() called sequentially
 #AI test_seam: construct with mock extension metadata arrays; test with empty extensions list
 #AI invariants: [register() runs before boot(); dependencies are validated before sorting; circular dependencies throw; replacement extensions must declare conflicts]
-#AI core_behaviors: [Discovers via ext_registry; Validates requires against provides+capabilities; Topological sort ensures dependency order; Calls register/boot within extension context for profiler]
+#AI core_behaviors: [Discovers via ExtRegistry; Validates requires against provides+capabilities; Topological sort ensures dependency order; Calls register/boot within extension context for profiler]
 #AI owns: extension instances cache
 #AI entry_points: [discover; register; boot]
 #AI config_reads: []
 #AI non_goals: [Does not install or download extensions; Does not resolve version conflicts; Does not hot-reload extensions at runtime]
 #AI side_effects: [Stores sys.extensions and sys.extension_conflicts in app container; Instantiates extension classes; Calls register() and boot() hooks]
-#AI flow: discover() -> ext_registry::installed() -> validate_dependencies() -> topological_sort() -> store in app; register() -> foreach: instance()->register(app); boot() -> foreach: instance()->boot(app)
+#AI flow: discover() -> ExtRegistry::installed() -> validateDependencies() -> topologicalSort() -> store in app; register() -> foreach: instance()->register(app); boot() -> foreach: instance()->boot(app)
 #AI section_order: [Discovery; Lifecycle Hooks; Architecture]
 
 #AI:__construct
 #AI group: Architecture
 #AI frequency: internal
 #AI signature: public function __construct(array $extensions)
-#AI contract: Accepts normalized extension metadata arrays from ext_registry::installed().
-#AI param_details: [{name: $extensions | type: array | required: true | desc: Extension metadata arrays from ext_registry.}]
+#AI contract: Accepts normalized extension metadata arrays from ExtRegistry::installed().
+#AI param_details: [{name: $extensions | type: array | required: true | desc: Extension metadata arrays from ExtRegistry.}]
 
 #AI:discover
 #AI group: Discovery
@@ -246,7 +246,7 @@ final class ExtensionManager {
 #AI signature: public static function discover(string $root, app $app): self
 #AI contract: Scans Composer packages for extensions, validates dependencies, topologically sorts them, and stores metadata in the app container.
 #AI param_details: [{name: $root | type: string | required: true | desc: Project root directory containing vendor/.}; {name: $app | type: app | required: true | desc: Application container to store extension metadata.}]
-#AI return_detail: {type: self | desc: Configured extension_manager ready for register()/boot().}
+#AI return_detail: {type: self | desc: Configured extensionManager ready for register()/boot().}
 #AI throws_details: [{type: \RuntimeException | desc: On missing dependency or circular dependency.}]
 #AI side_effects: [Stores sys.extensions and sys.extension_conflicts in app container]
 

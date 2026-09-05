@@ -15,7 +15,7 @@ use Skim\Dev\Profiler;
  *   log::error('Payment failed', ['order_id' => $id, 'reason' => $e->getMessage()]);
  *   log::info('User logged in', ['user_id' => $user->id]);
  *
- * Testing: Use set_handler() to inject a spy, reset() in tearDown().
+ * Testing: Use setHandler() to inject a spy, reset() in tearDown().
  *
  * #AI:class
  */
@@ -92,7 +92,7 @@ final class Log {
      * Use in tests to inject a spy or in production to swap in Monolog.
      *
      * Example:
-     *   log::setHandler(new null_handler());
+     *   log::setHandler(new NullHandler());
      *
      * @param \Skim\Log\LogHandler $handler Custom handler implementation.
      */
@@ -103,7 +103,7 @@ final class Log {
     /**
      * Clears the cached handler, forcing re-resolution on next write. #AI:reset
      *
-     * Use in test tearDown() after set_handler() to restore default behavior.
+     * Use in test tearDown() after setHandler() to restore default behavior.
      */
     public static function reset(): void {
         self::$handler = null;
@@ -147,17 +147,17 @@ final class Log {
 #AI badges: [facade; log; profiler; lazy]
 #AI intro: `log` is the static entry point for all application logging. It resolves the configured handler on first write and records every entry in the profiler for the debug toolbar.
 #AI lifecycle: static facade, handler resolved on first log call
-#AI fallback: null_handler when channel is unrecognized
-#AI test_seam: set_handler(), reset()
-#AI invariants: [handler is resolved once and reused until reset() or set_handler(); every write records in profiler::log; unknown channels fall back to null_handler]
+#AI fallback: NullHandler when channel is unrecognized
+#AI test_seam: setHandler(), reset()
+#AI invariants: [handler is resolved once and reused until reset() or setHandler(); every write records in profiler::log; unknown channels fall back to NullHandler]
 #AI core_behaviors: [Eight level-specific methods delegate to write(); write() captures caller file/line via backtrace; profiler::log receives every entry]
 #AI owns: handler instance cache
 #AI entry_points: [debug; info; notice; warning; error; critical; alert; emergency]
 #AI config_reads: [app.log.channel; app.log.path; app.log.level; app.log.days]
 #AI non_goals: [Does not support channels or named loggers; Does not format messages beyond sprintf; Does not send to external services directly]
-#AI side_effects: [profiler::log records every entry; set_handler() replaces active handler; reset() forces re-resolution]
+#AI side_effects: [profiler::log records every entry; setHandler() replaces active handler; reset() forces re-resolution]
 #AI flow: log::level() -> write() -> profiler::log() -> handler()->write()
-#AI lifecycle_steps: [log::error() / info() / etc.; -> write(); -> debug_backtrace for caller; -> profiler::log(); -> handler(); -> resolve_handler() if null; -> handler->write()]
+#AI lifecycle_steps: [log::error() / info() / etc.; -> write(); -> debug_backtrace for caller; -> profiler::log(); -> handler(); -> resolveHandler() if null; -> handler->write()]
 #AI section_order: [Log Levels; Testing Hooks; Architecture]
 
 #AI:debug
@@ -219,9 +219,9 @@ final class Log {
 #AI:setHandler
 #AI group: Testing Hooks
 #AI frequency: low
-#AI signature: public static function setHandler(log_handler $handler): void
+#AI signature: public static function setHandler(LogHandler $handler): void
 #AI contract: Replaces the active handler. Use in tests or to swap in Monolog for production channels.
-#AI param_details: [{name: $handler | type: log_handler | required: true | desc: Custom handler implementation.}]
+#AI param_details: [{name: $handler | type: LogHandler | required: true | desc: Custom handler implementation.}]
 #AI side_effects: [Mutates static handler state]
 
 #AI:reset

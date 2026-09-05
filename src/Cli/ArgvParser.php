@@ -11,7 +11,7 @@ namespace Skim\Cli;
  * the sub-part is prepended to args so commands can detect it via arg(0).
  *
  * Example:
- *   $parsed = argv_parser::parse(['skim', 'migrate:down', '--steps=2']);
+ *   $parsed = ArgvParser::parse(['skim', 'migrate:down', '--steps=2']);
  *   // $parsed->command === 'migrate:down', $parsed->args === ['down'], $parsed->flags === ['steps' => '2']
  *
  * Testing: Pure value object with no side-effects — instantiate directly in tests.
@@ -38,7 +38,7 @@ final class ArgvParser {
      * can detect it via arg(0) without extra wiring.
      *
      * Example:
-     *   $parsed = argv_parser::parse(['skim', 'cache:clear', 'user:', '--force']);
+     *   $parsed = ArgvParser::parse(['skim', 'cache:clear', 'user:', '--force']);
      *   // command='cache:clear', args=['clear','user:'], flags=['force'=>true]
      *
      * @param array $argv Raw $argv as received by PHP (argv[0] is script name).
@@ -97,25 +97,25 @@ final class ArgvParser {
 
 #AI:class
 #AI symbol: Skim\Cli\ArgvParser
-#AI source_path: src/cli/argv_parser.php
-#AI title: argv_parser
+#AI source_path: src/cli/ArgvParser.php
+#AI title: ArgvParser
 #AI description: Pure value object that parses $argv into command name, positional args, and flags.
 #AI role: CLI argument parser
 #AI layer: cli
 #AI badges: [value-object; cli; parser; immutable]
-#AI intro: `argv_parser` is a pure, immutable value object that transforms the raw PHP `$argv` array into structured command, args, and flags. It handles `--flag=value`, `--flag`, `-f` short flags, and positional arguments. Colon-commands like `migrate:down` automatically inject the sub-part as the first positional arg.
+#AI intro: `ArgvParser` is a pure, immutable value object that transforms the raw PHP `$argv` array into structured command, args, and flags. It handles `--flag=value`, `--flag`, `-f` short flags, and positional arguments. Colon-commands like `migrate:down` automatically inject the sub-part as the first positional arg.
 #AI lifecycle: instantiated once per CLI invocation via parse()
 #AI fallback: defaults to 'help' command when no command token is found
 #AI test_seam: pure value object — instantiate directly in tests with known $argv arrays
 #AI invariants: [argv[0] is always stripped; first non-flag token becomes the command; colon-commands inject sub-part into args[0]; flags may appear before or after the command token]
 #AI core_behaviors: [Parses --flag=value into flags['flag']='value'; Parses --flag into flags['flag']=true; Parses -f into flags['f']=true; All remaining non-flag tokens after the command become positional args]
 #AI owns: parsed command, args, and flags
-#AI entry_points: [parse; has_flag]
+#AI entry_points: [parse; hasFlag]
 #AI config_reads: []
 #AI non_goals: [Does not validate command names against a registry; Does not handle quoted strings with spaces; Does not support --flag value (space-separated) syntax]
 #AI side_effects: []
-#AI flow: argv_parser::parse($argv) -> strip argv[0] -> tokenize flags/args/command -> inject colon sub-part -> return immutable value object
-#AI lifecycle_steps: [argv_parser::parse($argv); -> strip argv[0]; -> iterate tokens; -> classify as flag/command/arg; -> inject colon sub-part; -> return new self(...)]
+#AI flow: ArgvParser::parse($argv) -> strip argv[0] -> tokenize flags/args/command -> inject colon sub-part -> return immutable value object
+#AI lifecycle_steps: [ArgvParser::parse($argv); -> strip argv[0]; -> iterate tokens; -> classify as flag/command/arg; -> inject colon sub-part; -> return new self(...)]
 #AI section_order: [Parsing; Flag Access]
 #AI architectural_notes: Pure value object with no I/O or side-effects. Safe to test directly without mocks.
 

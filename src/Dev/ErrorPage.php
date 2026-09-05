@@ -11,7 +11,7 @@ namespace Skim\Dev;
  *
  * Example:
  *   // Registered by app::run() when APP_DEBUG=true:
- *   set_exception_handler(fn(\Throwable $e) => error_page::render($e));
+ *   set_exception_handler(fn(\Throwable $e) => ErrorPage::render($e));
  *
  * Testing: Call render() directly with a test Throwable; output goes to stdout.
  *
@@ -212,7 +212,7 @@ final class ErrorPage {
     /**
      * Classifies a frame into app / pipeline / framework. #AI:classify_frame
      *
-     * Uses the same heuristics as is_noise() but maps them to three labels
+     * Uses the same heuristics as isNoise() but maps them to three labels
      * instead of a boolean. Middleware classes go to 'pipeline'; everything
      * inside the framework goes to 'framework'; everything else is 'app'.
      */
@@ -268,7 +268,7 @@ final class ErrorPage {
 
         if (is_object($arg)) {
             $out['object_id'] = '#' . spl_object_id($arg);
-            // all_props() reads public + protected + private via \Closure::bind.
+            // allProps() reads public + protected + private via \Closure::bind.
             // Cheaper than the DI tree call because it never calls make(), but
             // gives the same visual fidelity.
             $out['props']     = self::allProps($arg);
@@ -325,10 +325,10 @@ final class ErrorPage {
      *
      * VarDumper-style introspection: uses \Closure::bind to read private and
      * protected state without ever calling setters or instantiating anything.
-     * Capped at 8 rows for the same reason as public_props() — deeply nested
+     * Capped at 8 rows for the same reason as publicProps() — deeply nested
      * objects get truncated with an "_n_more" hint.
      *
-     * Same return shape as public_props(); protected/private rows are tagged
+     * Same return shape as publicProps(); protected/private rows are tagged
      * with 'class' => 'muted' so the template can dim them visually.
      */
     private static function allProps(object $obj): array {

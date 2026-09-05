@@ -16,7 +16,7 @@ use Skim\Core\Response;
  * Example:
  *   $app->router->group('/api', function(router $r) {
  *       $r->get('/data', [api_controller::class, 'index']);
- *   }, middleware: [new rate_limit(limit: 100, window: 60)]);
+ *   }, middleware: [new RateLimit(limit: 100, window: 60)]);
  *
  * #AI:class
  */
@@ -86,13 +86,13 @@ class RateLimit implements \Skim\Core\Middleware {
 
 #AI:class
 #AI symbol: Skim\Middleware\RateLimit
-#AI source_path: src/middleware/rate_limit.php
-#AI title: rate_limit
+#AI source_path: src/middleware/RateLimit.php
+#AI title: RateLimit
 #AI description: Redis-backed sliding window rate limiter with fail-open fallback.
 #AI role: rate limiting middleware
 #AI layer: middleware
 #AI badges: [middleware; rate-limit; redis; fail-open]
-#AI intro: `rate_limit` uses a Redis sorted set sliding window to count requests per IP. When the limit is exceeded, it returns 429. When Redis is unavailable, it fails open and passes all requests through.
+#AI intro: `RateLimit` uses a Redis sorted set sliding window to count requests per IP. When the limit is exceeded, it returns 429. When Redis is unavailable, it fails open and passes all requests through.
 #AI lifecycle: registered per-route or per-group; creates a Redis connection per request
 #AI fallback: passthrough (no rate limiting) when Redis is unreachable
 #AI test_seam: mock Redis or test with Redis available; verify X-RateLimit-* headers

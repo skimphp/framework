@@ -49,7 +49,7 @@ describe('model::findOrFail()', function(): void {
         setupTestDb();
     });
 
-    test('throws not_found_exception when record missing', function(): void {
+    test('throws NotFoundException when record missing', function(): void {
         expect(fn() => TestUser::findOrFail(999))
             ->toThrow(\Skim\Db\Exceptions\NotFoundException::class);
     });
@@ -126,7 +126,7 @@ describe('model::schema() — schema fetch', function(): void {
         setupTestDb();
     });
 
-    test('column_names() returns all column names from the table', function(): void {
+    test('columnNames() returns all column names from the table', function(): void {
         $cols = TestUser::columnNames();
         expect($cols)->toContain('id')
                      ->toContain('name')

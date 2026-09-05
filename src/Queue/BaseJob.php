@@ -57,13 +57,13 @@ abstract class BaseJob implements \Skim\Queue\Job {
 
 #AI:class
 #AI symbol: Skim\Queue\BaseJob
-#AI source_path: src/queue/base_job.php
-#AI title: base_job
+#AI source_path: src/queue/BaseJob.php
+#AI title: BaseJob
 #AI description: Convenience base class for queue jobs with default retry count, delay, and error logging.
 #AI role: queue job base class
 #AI layer: queue
 #AI badges: [queue; job; abstract; base-class; defaults]
-#AI intro: `base_job` is a convenience abstract class that implements the `job` interface with sensible defaults: 3 retry attempts, 0-second delay, and error_log on permanent failure. Most job classes extend this and override only `handle()`.
+#AI intro: `BaseJob` is a convenience abstract class that implements the `job` interface with sensible defaults: 3 retry attempts, 0-second delay, and error_log on permanent failure. Most job classes extend this and override only `handle()`.
 #AI lifecycle: instantiated by worker via unserialize, handle() called, failed() called on exhaustion
 #AI fallback: failed() logs to error_log by default — override for custom failure handling
 #AI test_seam: extend in test job classes, override failed() to capture errors
@@ -75,7 +75,7 @@ abstract class BaseJob implements \Skim\Queue\Job {
 #AI non_goals: [Does not implement handle() — subclasses must; Does not provide dead-letter queue; Does not implement retry back-off (handled by worker)]
 #AI side_effects: [failed() writes to error_log]
 #AI flow: worker unserializes job -> handle() -> on exception: retry or failed()
-#AI lifecycle_steps: [worker unserializes base_job subclass; -> handle() called; -> on exception: worker retries up to tries() times; -> on exhaustion: failed($e) called]
+#AI lifecycle_steps: [worker unserializes BaseJob subclass; -> handle() called; -> on exception: worker retries up to tries() times; -> on exhaustion: failed($e) called]
 #AI section_order: [Job Configuration; Failure Handling]
 #AI architectural_notes: Abstract class implementing the job interface. Subclasses must implement handle() and may override tries(), delay(), and failed().
 

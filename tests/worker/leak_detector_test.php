@@ -46,7 +46,7 @@ function leakRunOnce(\Skim\Core\App $app, string $uri): void {
     }
 }
 
-describe('leak_detector — hard invariants', function (): void {
+describe('LeakDetector — hard invariants', function (): void {
 
     test('clean app produces zero findings after N requests', function (): void {
         $app = bootWorkerAppWithLeakDetection('strict');
@@ -118,7 +118,7 @@ describe('leak_detector — hard invariants', function (): void {
 
 });
 
-describe('leak_detector — modes', function (): void {
+describe('LeakDetector — modes', function (): void {
 
     test('off mode produces no findings', function (): void {
         $app = bootWorkerAppWithLeakDetection('off');

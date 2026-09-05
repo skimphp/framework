@@ -14,7 +14,7 @@ namespace Skim\Websocket;
  *   $conn->send(['type' => 'message', 'text' => 'Hello']);
  *   connection::broadcast('chat:general', ['type' => 'notification'], except_id: $conn->id());
  *
- * Testing: Use reset_rooms() in tearDown() to clear room state.
+ * Testing: Use resetRooms() in tearDown() to clear room state.
  *
  * #AI:class
  */
@@ -134,13 +134,13 @@ class Connection {
 #AI intro: `connection` wraps an underlying amphp WebSocket connection and adds room-based grouping. Rooms are stored in a static process-scoped array — use Redis pub/sub for multi-process fanout.
 #AI lifecycle: created per WebSocket handshake by the server, destroyed on disconnect
 #AI fallback: n/a — wraps real connection
-#AI test_seam: reset_rooms() clears room state between tests
+#AI test_seam: resetRooms() clears room state between tests
 #AI invariants: [Rooms are process-scoped static arrays; broadcast() skips the excluded connection ID; leave() cleans up empty rooms; send() auto-JSON-encodes arrays]
 #AI core_behaviors: [Room management via join/leave; Broadcasting to room members with optional sender exclusion; JSON auto-encoding for array messages]
 #AI warnings: [Rooms are process-local — connections in different PHP workers cannot see each other's rooms; Use Redis pub/sub for multi-process room fanout]
 #AI notes: The raw connection is duck-typed (method_exists checks) to support both real amphp connections and test mocks.
 #AI owns: static rooms array, raw connection reference
-#AI entry_points: [id; send; close; join; leave; broadcast; room_ids; reset_rooms]
+#AI entry_points: [id; send; close; join; leave; broadcast; roomIds; resetRooms]
 #AI config_reads: []
 #AI non_goals: [Does not handle WebSocket handshake; Does not manage connection lifecycle beyond close(); Does not provide cross-process room synchronization]
 #AI side_effects: [send() writes to the WebSocket; close() terminates the connection; join/leave mutate the static rooms array; broadcast() sends to multiple connections]

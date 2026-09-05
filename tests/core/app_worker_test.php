@@ -6,7 +6,7 @@ use Skim\Core\Response;
 
 describe('app — request-scoped and transient bindings', function (): void {
 
-    test('bind_request marks service as request-scoped', function (): void {
+    test('bindRequest marks service as request-scoped', function (): void {
         $app = \Skim\Core\App::testInstance();
         $app->bindRequest('svc.req', fn() => new \stdClass());
 
@@ -16,7 +16,7 @@ describe('app — request-scoped and transient bindings', function (): void {
         expect($first)->toBe($second);
     });
 
-    test('end_request clears request-scoped resolved singletons', function (): void {
+    test('endRequest clears request-scoped resolved singletons', function (): void {
         $app = \Skim\Core\App::testInstance();
         $app->bindRequest('svc.req', fn() => new \stdClass());
 
@@ -27,7 +27,7 @@ describe('app — request-scoped and transient bindings', function (): void {
         expect($after)->not->toBe($before);
     });
 
-    test('end_request leaves non-request-scoped bindings intact', function (): void {
+    test('endRequest leaves non-request-scoped bindings intact', function (): void {
         $app = \Skim\Core\App::testInstance();
         $app->bind('svc.normal', fn() => new \stdClass());
 
@@ -38,7 +38,7 @@ describe('app — request-scoped and transient bindings', function (): void {
         expect($after)->toBe($before);
     });
 
-    test('bind_transient returns a new instance on every make()', function (): void {
+    test('bindTransient returns a new instance on every make()', function (): void {
         $app = \Skim\Core\App::testInstance();
         $app->bindTransient('svc.tr', fn() => new \stdClass());
 
@@ -68,7 +68,7 @@ describe('app — request-scoped and transient bindings', function (): void {
         expect($first)->toBe($second);
     });
 
-    test('bind_request clears previous transient flag so it caches again', function (): void {
+    test('bindRequest clears previous transient flag so it caches again', function (): void {
         $app = \Skim\Core\App::testInstance();
         $app->bindTransient('svc.t', fn() => new \stdClass());
         $app->bindRequest('svc.t', fn() => new \stdClass());
@@ -79,7 +79,7 @@ describe('app — request-scoped and transient bindings', function (): void {
         expect($first)->toBe($second); // no longer transient → cached
     });
 
-    test('bind_transient clears previous request-scoped flag', function (): void {
+    test('bindTransient clears previous request-scoped flag', function (): void {
         $app = \Skim\Core\App::testInstance();
         $app->bindRequest('svc.r', fn() => new \stdClass());
         $app->bindTransient('svc.r', fn() => new \stdClass());
@@ -90,7 +90,7 @@ describe('app — request-scoped and transient bindings', function (): void {
         expect($first)->not->toBe($second); // now transient → fresh each call
     });
 
-    test('make_transient always returns a fresh instance', function (): void {
+    test('makeTransient always returns a fresh instance', function (): void {
         $app = \Skim\Core\App::testInstance();
         $app->bind('svc.s', fn() => new \stdClass());
 
@@ -101,7 +101,7 @@ describe('app — request-scoped and transient bindings', function (): void {
         expect($app->resolvedServices())->toBe([]); // never cached
     });
 
-    test('make_transient resolves auto-wired classes without caching', function (): void {
+    test('makeTransient resolves auto-wired classes without caching', function (): void {
         $app = \Skim\Core\App::testInstance();
 
         $a = $app->makeTransient(\stdClass::class);
@@ -173,9 +173,9 @@ describe('app — emit()', function (): void {
 
 });
 
-describe('app — boot_extensions()', function (): void {
+describe('app — bootExtensions()', function (): void {
 
-    test('boot_extensions is idempotent', function (): void {
+    test('bootExtensions is idempotent', function (): void {
         $app = \Skim\Core\App::testInstance();
         $app->bootExtensions();
         $app->bootExtensions();
@@ -183,7 +183,7 @@ describe('app — boot_extensions()', function (): void {
         expect($app)->toBeInstanceOf(\Skim\Core\App::class);
     });
 
-    test('boot_extensions returns early when already booted', function (): void {
+    test('bootExtensions returns early when already booted', function (): void {
         $app = \Skim\Core\App::testInstance();
         $app->bootExtensions();
         // second call must not throw
@@ -192,7 +192,7 @@ describe('app — boot_extensions()', function (): void {
 
 });
 
-describe('app — is_debug_mode()', function (): void {
+describe('app — isDebugMode()', function (): void {
 
     test('returns false when app.debug is not set', function (): void {
         $app = \Skim\Core\App::testInstance();
@@ -207,7 +207,7 @@ describe('app — is_debug_mode()', function (): void {
 
 });
 
-describe('app — handle_exception()', function (): void {
+describe('app — handleException()', function (): void {
 
     test('renders error page in debug mode', function (): void {
         $app = \Skim\Core\App::testInstance(['app.debug' => true]);

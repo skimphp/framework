@@ -12,7 +12,7 @@ namespace Skim\Cache;
  * get() returns the default value.
  *
  * Example:
- *   $driver = new file_driver(path: sys_get_temp_dir() . '/skim_cache');
+ *   $driver = new FileDriver(path: sys_get_temp_dir() . '/skim_cache');
  *   $driver->set('user:1', $userData, 3600);
  *
  * Testing: prefer array_driver for tests — file_driver is slower and touches disk.
@@ -138,8 +138,8 @@ final class FileDriver implements \Skim\Cache\Driver {
 
 #AI:class
 #AI symbol: Skim\Cache\FileDriver
-#AI source_path: src/cache/file_driver.php
-#AI title: file_driver
+#AI source_path: src/cache/FileDriver.php
+#AI title: FileDriver
 #AI description: Filesystem cache driver storing each key as a serialized file with TTL-based expiry.
 #AI role: filesystem cache driver
 #AI layer: cache
@@ -148,7 +148,7 @@ final class FileDriver implements \Skim\Cache\Driver {
 #AI lifecycle: persistent across requests, TTL enforced on read
 #AI fallback: default cache driver when Redis is unreachable
 #AI invariants: [set() uses LOCK_EX for atomic writes; get() deletes expired files on read; has() delegates to get() with sentinel; keys are base64-encoded for safe filenames; flush() scans glob and decodes filenames]
-#AI warnings: [flush_all() deletes every .cache file in the configured path; Not suitable for high-throughput production workloads — prefer Redis]
+#AI warnings: [flushAll() deletes every .cache file in the configured path; Not suitable for high-throughput production workloads — prefer Redis]
 #AI notes: TTL tracked via serialized expiry timestamp, not file mtime (mtime unreliable on some filesystems). Falls back gracefully when directory is not writable.
 #AI section_order: [Read API; Write API; Invalidation]
 #AI architectural_notes: Each key maps to one file: base64(key).cache containing serialize([$expires, $value]). The driver is the default fallback when Redis is unavailable.

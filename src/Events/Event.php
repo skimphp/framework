@@ -8,7 +8,7 @@ use Skim\Worker\Resettable;
  * Synchronous event bus with priority ordering and async dispatch via queue.
  *
  * Use for decoupling side effects from request handlers. Listeners run
- * inline before the response returns. Use emit_async() for slow side
+ * inline before the response returns. Use emitAsync() for slow side
  * effects (email, reports) that should not delay the response.
  *
  * Example:
@@ -24,7 +24,7 @@ final class Event implements \Skim\Worker\Resettable {
     private static array $listeners = [];
 
     // Snapshot of listeners registered during boot/extension phase. Captured on the
-    // first reset_request() call and restored on every subsequent reset so boot-time
+    // first resetRequest() call and restored on every subsequent reset so boot-time
     // listeners survive across worker requests while request-time listeners are dropped.
     /** @var array<string, list<array{fn: callable, once: bool, priority: int}>>|null */
     private static ?array $persistentListeners = null;
@@ -33,7 +33,7 @@ final class Event implements \Skim\Worker\Resettable {
      * Captures the current listener registry as the boot-time snapshot. #AI:capture_boot_snapshot
      *
      * Call once after boot/extensions are registered in worker mode. The snapshot
-     * is restored by reset_request() on every subsequent request so boot-time
+     * is restored by resetRequest() on every subsequent request so boot-time
      * listeners survive while request-time listeners are dropped.
      */
     public static function captureBootSnapshot(): void {
@@ -142,7 +142,7 @@ final class Event implements \Skim\Worker\Resettable {
      * Removes all listeners for a specific event, or all listeners if null. #AI:off
      *
      * Use in tests to isolate event side effects between test cases. Also clears
-     * the boot-time snapshot so worker-mode reset_request() state cannot leak
+     * the boot-time snapshot so worker-mode resetRequest() state cannot leak
      * between tests.
      *
      * Example:
@@ -191,16 +191,16 @@ final class Event implements \Skim\Worker\Resettable {
 #AI role: static event bus
 #AI layer: events
 #AI badges: [facade; events; pubsub; async; priority]
-#AI intro: `event` is the static event bus for decoupling side effects. Listeners run synchronously in priority order during emit(). Async dispatch via emit_async() delegates to the queue worker.
+#AI intro: `event` is the static event bus for decoupling side effects. Listeners run synchronously in priority order during emit(). Async dispatch via emitAsync() delegates to the queue worker.
 #AI lifecycle: static, listeners registered during boot phase; global per-process
-#AI test_seam: off() to clear listeners; listener_count() for assertions
+#AI test_seam: off() to clear listeners; listenerCount() for assertions
 #AI invariants: [Listeners run in priority order (higher first); once() listeners are removed after first call; emit() is synchronous — all listeners complete before returning]
 #AI core_behaviors: [Typed event classes dispatch by class name; String events dispatch by name; Priority sorting on registration; One-time listener cleanup after dispatch]
 #AI owns: listener registry
-#AI entry_points: [on; once; emit; emit_async; off; listener_count]
+#AI entry_points: [on; once; emit; emitAsync; off; listenerCount]
 #AI config_reads: []
-#AI non_goals: [Does not support wildcard event patterns; Does not persist events; Does not guarantee delivery for emit_async — depends on queue worker]
-#AI side_effects: [emit() runs listeners inline; emit_async() pushes to queue]
+#AI non_goals: [Does not support wildcard event patterns; Does not persist events; Does not guarantee delivery for emitAsync — depends on queue worker]
+#AI side_effects: [emit() runs listeners inline; emitAsync() pushes to queue]
 #AI flow: event::on(class, fn) -> register; event::emit(obj) -> get_class -> iterate listeners by priority -> call each
 #AI section_order: [Registration; Dispatch; Testing Hooks]
 

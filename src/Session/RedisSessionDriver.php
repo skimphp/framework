@@ -10,7 +10,7 @@ namespace Skim\Session;
  * The Redis connection is opened lazily on first access and reused.
  *
  * Example:
- *   $driver = new redis_session_driver('redis', 6379, null, 'sess_', 7200);
+ *   $driver = new RedisSessionDriver('redis', 6379, null, 'sess_', 7200);
  *   $driver->start();
  *
  * Testing: Use session_fake instead; this driver opens a real Redis connection.
@@ -172,16 +172,16 @@ final class RedisSessionDriver implements \Skim\Session\SessionDriver {
 
 #AI:class
 #AI symbol: Skim\Session\RedisSessionDriver
-#AI source_path: src/session/redis_session_driver.php
-#AI title: redis_session_driver
+#AI source_path: src/session/RedisSessionDriver.php
+#AI title: RedisSessionDriver
 #AI description: Redis-backed session driver for multi-server and load-balanced deployments.
 #AI role: session driver (redis)
 #AI layer: session
 #AI badges: [session; driver; redis; multi-server]
-#AI intro: `redis_session_driver` stores each session as a single serialized JSON blob in Redis, keyed by a configurable prefix plus the session ID. It is required for load-balanced deployments where file-based sessions would not be shared across workers.
+#AI intro: `RedisSessionDriver` stores each session as a single serialized JSON blob in Redis, keyed by a configurable prefix plus the session ID. It is required for load-balanced deployments where file-based sessions would not be shared across workers.
 #AI lifecycle: instantiated by session facade, start() called once per request, Redis connection opened lazily
-#AI fallback: none — use file_session_driver when Redis is unavailable
-#AI test_seam: use session_fake in tests instead
+#AI fallback: none — use FileSessionDriver when Redis is unavailable
+#AI test_seam: use SessionFake in tests instead
 #AI invariants: [start() is idempotent; Redis connection is opened lazily and reused; every write re-serializes the full session as JSON; TTL is renewed on each start()]
 #AI core_behaviors: [Session data is stored as a single JSON blob per session ID; Cookie is sent only for new sessions; regenerate() migrates data to a new Redis key]
 #AI warnings: [flush() deletes session data from Redis irreversibly; Each write re-serializes the full session — avoid storing large payloads]
@@ -191,8 +191,8 @@ final class RedisSessionDriver implements \Skim\Session\SessionDriver {
 #AI config_reads: []
 #AI non_goals: [Does not support session locking; Does not encrypt session data; Not suitable for very large session payloads]
 #AI side_effects: [Opens Redis connection on first use; Writes JSON blobs to Redis; Sets cookie headers for new sessions]
-#AI flow: session::method() -> redis_session_driver -> Redis SETEX/GET/DEL
-#AI lifecycle_steps: [session::start(); -> redis_session_driver::start(); -> read PHPSESSID cookie or generate_id(); -> Redis GET; -> json_decode; -> Redis EXPIRE; -> setcookie if new]
+#AI flow: session::method() -> RedisSessionDriver -> Redis SETEX/GET/DEL
+#AI lifecycle_steps: [session::start(); -> RedisSessionDriver::start(); -> read PHPSESSID cookie or generateId(); -> Redis GET; -> json_decode; -> Redis EXPIRE; -> setcookie if new]
 #AI section_order: [Session API; Lifecycle; Testing Hooks; Architecture]
 #AI architectural_notes: Stores session as a single JSON blob rather than individual keys — simpler but means every write is O(session_size).
 

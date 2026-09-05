@@ -39,7 +39,7 @@ final class LeakDetector {
     }
 
     /**
-     * Called at the END of end_request(), AFTER worker_reset::apply().
+     * Called at the END of endRequest(), AFTER WorkerReset::apply().
      */
     public static function check(\Skim\Core\App $app): void {
         if (self::$mode === 'off') return;

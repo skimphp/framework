@@ -7,11 +7,11 @@ namespace Skim\Ext;
  *
  * Use when validating or displaying capability strings declared by extensions.
  * The TERMS constant is the single source of truth for recognized capability
- * names; unknown capabilities are not rejected but flagged by is_known().
+ * names; unknown capabilities are not rejected but flagged by isKnown().
  *
  * Example:
- *   capability_vocabulary::isKnown('auth');        // true
- *   capability_vocabulary::TERMS['rate-limiting'];  // 'request rate limiting'
+ *   CapabilityVocabulary::isKnown('auth');        // true
+ *   CapabilityVocabulary::TERMS['rate-limiting'];  // 'request rate limiting'
  *
  * #AI:class
  */
@@ -47,23 +47,23 @@ final class CapabilityVocabulary {
 
 #AI:class
 #AI symbol: Skim\Ext\CapabilityVocabulary
-#AI source_path: src/ext/capability_vocabulary.php
-#AI title: capability_vocabulary
+#AI source_path: src/ext/CapabilityVocabulary.php
+#AI title: CapabilityVocabulary
 #AI description: Canonical map of recognized extension capability slugs to human-readable descriptions.
 #AI role: capability vocabulary
 #AI layer: ext
 #AI badges: [vocabulary; extension; static]
-#AI intro: `capability_vocabulary` defines the canonical set of capability slugs that SKIM extensions can declare. It provides a lookup method and a constant map for display or validation purposes.
+#AI intro: `CapabilityVocabulary` defines the canonical set of capability slugs that SKIM extensions can declare. It provides a lookup method and a constant map for display or validation purposes.
 #AI lifecycle: stateless, all data in class constant
 #AI test_seam: none needed — pure constant lookup
-#AI invariants: [TERMS is immutable; is_known() never throws]
-#AI core_behaviors: [is_known() checks slug existence against TERMS constant]
+#AI invariants: [TERMS is immutable; isKnown() never throws]
+#AI core_behaviors: [isKnown() checks slug existence against TERMS constant]
 #AI owns: TERMS constant
-#AI entry_points: [is_known]
+#AI entry_points: [isKnown]
 #AI config_reads: []
 #AI non_goals: [Does not enforce capability validity; Does not resolve capability providers]
 #AI side_effects: []
-#AI flow: is_known($slug) -> array_key_exists($slug, TERMS)
+#AI flow: isKnown($slug) -> array_key_exists($slug, TERMS)
 #AI section_order: [Lookup API]
 
 #AI:isKnown

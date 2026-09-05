@@ -18,7 +18,7 @@ use Skim\View\Exceptions\ViewException;
  * @fragment, or missing fragment name.
  *
  * Example:
- *   fragment_extractor::extract($html, 'stats_widget');
+ *   FragmentExtractor::extract($html, 'stats_widget');
  *
  * Testing: Pass raw HTML strings — no file system or template engine needed.
  *
@@ -121,27 +121,27 @@ class FragmentExtractor {
 
 #AI:class
 #AI symbol: Skim\View\FragmentExtractor
-#AI source_path: src/view/fragment_extractor.php
-#AI title: fragment_extractor
+#AI source_path: src/view/FragmentExtractor.php
+#AI title: FragmentExtractor
 #AI description: State-machine fragment parser replacing regex extraction with tokenized validation.
 #AI role: fragment parser
 #AI layer: view
 #AI badges: [fragment; parser; state-machine; validation]
-#AI intro: `fragment_extractor` tokenizes HTML comment markers, validates structural constraints (flat only, balanced pairs), and extracts named fragment content. More robust than the previous regex approach.
+#AI intro: `FragmentExtractor` tokenizes HTML comment markers, validates structural constraints (flat only, balanced pairs), and extracts named fragment content. More robust than the previous regex approach.
 #AI lifecycle: stateless static class, invoked per fragment extraction
 #AI fallback: n/a — stateless
 #AI test_seam: pass raw HTML strings directly, no file system needed
 #AI invariants: [Fragments are flat — nesting is forbidden; @fragment must be paired with @end; HTML comments inside fragments do not break parsing; Extraction is deterministic and order-preserving]
 #AI core_behaviors: [Tokenizes <!-- @fragment name --> and <!-- @end --> markers; Validates flat structure and balanced markers; Extracts named block by offset arithmetic; Trims surrounding whitespace]
-#AI warnings: [Nested fragments throw view_exception; Unmatched @end throws view_exception; Missing fragment name throws view_exception]
+#AI warnings: [Nested fragments throw ViewException; Unmatched @end throws ViewException; Missing fragment name throws ViewException]
 #AI notes: The parser intentionally limits fragments to one level. This prevents complex nesting bugs and keeps the mental model simple.
 #AI owns: nothing
 #AI entry_points: [extract]
 #AI config_reads: []
 #AI non_goals: [Does not support nested fragments; Does not validate HTML structure; Does not cache tokenized results]
 #AI side_effects: [none — pure functions]
-#AI flow: extract() -> tokenize() -> validate_no_nesting() -> extract_by_name() -> return trimmed content
-#AI lifecycle_steps: [extract($html, $name); -> tokenize($html); -> validate_no_nesting($tokens); -> extract_by_name($html, $tokens, $name); -> return trim(substr(...))]
+#AI flow: extract() -> tokenize() -> validateNoNesting() -> extractByName() -> return trimmed content
+#AI lifecycle_steps: [extract($html, $name); -> tokenize($html); -> validateNoNesting($tokens); -> extractByName($html, $tokens, $name); -> return trim(substr(...))]
 #AI section_order: [Extraction API; Tokenization; Validation]
 #AI architectural_notes: Replaced the regex-based extractor to avoid backtracking issues and to provide meaningful error messages for malformed fragment markup.
 
@@ -152,7 +152,7 @@ class FragmentExtractor {
 #AI contract: Tokenizes fragment markers, validates structure, and returns trimmed content for the named fragment.
 #AI param_details: [{name: $html | type: string | required: true | desc: Rendered HTML containing fragment markers.}; {name: $name | type: string | required: true | desc: Fragment identifier to extract.}]
 #AI return_detail: {type: string | desc: Trimmed fragment content.}
-#AI throws_details: [{type: view_exception | desc: On nested fragments, unmatched @end, unclosed @fragment, or missing name.}]
+#AI throws_details: [{type: ViewException | desc: On nested fragments, unmatched @end, unclosed @fragment, or missing name.}]
 
 #AI:tokenize
 #AI group: Tokenization
@@ -168,7 +168,7 @@ class FragmentExtractor {
 #AI signature: private static function validateNoNesting(array $tokens): void
 #AI contract: Validates that fragments are flat (depth <= 1) and all markers are balanced.
 #AI param_details: [{name: $tokens | type: array | required: true | desc: Token list from tokenize().}]
-#AI throws_details: [{type: view_exception | desc: On nested fragments, unmatched @end, or unclosed @fragment.}]
+#AI throws_details: [{type: ViewException | desc: On nested fragments, unmatched @end, or unclosed @fragment.}]
 
 #AI:extractByName
 #AI group: Extraction API
@@ -177,4 +177,4 @@ class FragmentExtractor {
 #AI contract: Locates the named @fragment token and returns the substring between it and the following @end token.
 #AI param_details: [{name: $html | type: string | required: true | desc: Original HTML string.}; {name: $tokens | type: array | required: true | desc: Validated token list.}; {name: $name | type: string | required: true | desc: Fragment identifier to extract.}]
 #AI return_detail: {type: string | desc: Trimmed fragment content.}
-#AI throws_details: [{type: view_exception | desc: When the named fragment is not found.}]
+#AI throws_details: [{type: ViewException | desc: When the named fragment is not found.}]

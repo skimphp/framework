@@ -6,7 +6,7 @@ use Skim\Dev\Docs\Extractor\AnnotationParser;
 // annotation_parser — legacy @ai- / @ai. style
 // ---------------------------------------------------------------------------
 
-describe('annotation_parser::parse — legacy @ai- style', function () {
+describe('AnnotationParser::parse — legacy @ai- style', function () {
 
     it('extracts single @ai-contract tag', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
@@ -108,7 +108,7 @@ describe('annotation_parser::parse — legacy @ai- style', function () {
 // annotation_parser — new #AI style (better-commenting-v3)
 // ---------------------------------------------------------------------------
 
-describe('annotation_parser::parse_hash_ai — #AI semicolon style', function () {
+describe('AnnotationParser::parseHashAi — #AI semicolon style', function () {
 
     it('parses single-line #AI with multiple key:value pairs', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
@@ -151,10 +151,10 @@ describe('annotation_parser::parse_hash_ai — #AI semicolon style', function ()
 });
 
 // ---------------------------------------------------------------------------
-// annotation_parser::parse_bracket_list
+// AnnotationParser::parseBracketList
 // ---------------------------------------------------------------------------
 
-describe('annotation_parser::parse_bracket_list', function () {
+describe('AnnotationParser::parseBracketList', function () {
 
     it('splits [a,b,c] into trimmed array', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
@@ -186,7 +186,7 @@ describe('annotation_parser::parse_bracket_list', function () {
 // annotation_parser — #AI lines embedded inside /** */ docblock
 // ---------------------------------------------------------------------------
 
-describe('annotation_parser::parse — #AI lines inside /** */ docblock', function () {
+describe('AnnotationParser::parse — #AI lines inside /** */ docblock', function () {
 
     it('extracts #AI contract inside docblock', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
@@ -221,10 +221,10 @@ describe('annotation_parser::parse — #AI lines inside /** */ docblock', functi
 });
 
 // ---------------------------------------------------------------------------
-// annotation_parser::parse_inline — inline // comment style
+// AnnotationParser::parseInline — inline // comment style
 // ---------------------------------------------------------------------------
 
-describe('annotation_parser::parse_inline', function () {
+describe('AnnotationParser::parseInline', function () {
 
     it('extracts summary from lines before @ai tags', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();

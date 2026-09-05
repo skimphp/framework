@@ -3,14 +3,14 @@
 namespace Skim\Db;
 
 /**
- * Immutable value object returned by query_scope::paginate(). #AI:class
+ * Immutable value object returned by QueryScope::paginate(). #AI:class
  *
  * Use when rendering paginated lists — provides items, total count, page
  * navigation booleans, and computed page count via property hooks.
  *
  * Example:
  *   $page = user::where(['status' => 'active'])->paginate(page: 2, per_page: 20);
- *   // $page->items, $page->total, $page->pages, $page->has_next, $page->has_prev
+ *   // $page->items, $page->total, $page->pages, $page->hasNext, $page->hasPrev
  *
  * Testing: Construct directly — new pagination(items: [], total: 0, per_page: 20, current: 1).
  *
@@ -54,22 +54,22 @@ final class Pagination {
 #AI role: pagination value object
 #AI layer: db
 #AI badges: [value-object; pagination; immutable]
-#AI intro: `pagination` is an immutable value object returned by `query_scope::paginate()`. It holds the current page of hydrated model instances, total count, and provides computed navigation properties via PHP 8.4 property hooks.
-#AI lifecycle: created by query_scope::paginate(), consumed by controllers and views
+#AI intro: `pagination` is an immutable value object returned by `QueryScope::paginate()`. It holds the current page of hydrated model instances, total count, and provides computed navigation properties via PHP 8.4 property hooks.
+#AI lifecycle: created by QueryScope::paginate(), consumed by controllers and views
 #AI fallback: none
 #AI test_seam: construct directly with known values
-#AI invariants: [all constructor properties are readonly; pages/has_next/has_prev are computed, not stored; per_page is clamped to min 1 for division safety]
-#AI core_behaviors: [Property hooks compute pages, has_next, has_prev on each access]
+#AI invariants: [all constructor properties are readonly; pages/hasNext/hasPrev are computed, not stored; per_page is clamped to min 1 for division safety]
+#AI core_behaviors: [Property hooks compute pages, hasNext, hasPrev on each access]
 #AI warnings: []
 #AI notes: PHP 8.5 clone-with syntax can create modified copies if needed.
 #AI scope_items: []
 #AI owns: items array
 #AI entry_points: [__construct]
 #AI config_reads: []
-#AI non_goals: [Does not execute queries — query_scope handles that; Does not render HTML pagination controls]
+#AI non_goals: [Does not execute queries — QueryScope handles that; Does not render HTML pagination controls]
 #AI side_effects: []
-#AI flow: query_scope::paginate() -> count() + all() -> new pagination(items, total, per_page, current)
-#AI lifecycle_steps: [query_scope::paginate(page, per_page); -> count() for total; -> limit/per_page + offset calculation; -> all() for items; -> new pagination(...)]
+#AI flow: QueryScope::paginate() -> count() + all() -> new pagination(items, total, per_page, current)
+#AI lifecycle_steps: [QueryScope::paginate(page, per_page); -> count() for total; -> limit/per_page + offset calculation; -> all() for items; -> new pagination(...)]
 #AI section_order: [Constructor; Computed Properties]
 #AI architectural_notes: Pure value object — no DB access, no side effects. Property hooks keep the API clean without storing redundant computed fields.
 
@@ -87,14 +87,14 @@ final class Pagination {
 #AI contract: Returns total page count, computed as ceil(total / per_page). Clamps per_page to min 1 to avoid division by zero.
 #AI return_detail: {type: int | desc: Total number of pages.}
 
-#AI:has_next
+#AI:hasNext
 #AI group: Computed Properties
 #AI frequency: high
 #AI signature: public bool $hasNext { get }
 #AI contract: Returns true when the current page is less than the total page count.
 #AI return_detail: {type: bool | desc: True if a next page exists.}
 
-#AI:has_prev
+#AI:hasPrev
 #AI group: Computed Properties
 #AI frequency: high
 #AI signature: public bool $hasPrev { get }

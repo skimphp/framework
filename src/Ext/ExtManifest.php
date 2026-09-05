@@ -10,7 +10,7 @@ namespace Skim\Ext;
  * Writes a pretty-printed JSON file to the specified output path.
  *
  * Example:
- *   ext_manifest::generate($extension, __DIR__ . '/skim.json');
+ *   ExtManifest::generate($extension, __DIR__ . '/skim.json');
  *
  * #AI:class
  */
@@ -23,7 +23,7 @@ final class ExtManifest {
      * file at the output path.
      *
      * Example:
-     *   ext_manifest::generate($ext, '/path/to/vendor/acme/auth/skim.json');
+     *   ExtManifest::generate($ext, '/path/to/vendor/acme/auth/skim.json');
      *
      * @param \Skim\Ext\Extension $ext Instantiated extension to extract metadata from.
      * @param string    $outputPath Absolute file path for the JSON output.
@@ -50,22 +50,22 @@ final class ExtManifest {
 
 #AI:class
 #AI symbol: Skim\Ext\ExtManifest
-#AI source_path: src/ext/ext_manifest.php
-#AI title: ext_manifest
+#AI source_path: src/ext/ExtManifest.php
+#AI title: ExtManifest
 #AI description: Generates a JSON manifest snapshot from an extension's runtime metadata.
 #AI role: manifest generator
 #AI layer: ext
 #AI badges: [extension; manifest; json; generator]
-#AI intro: `ext_manifest` serializes an extension instance's metadata into a pretty-printed JSON file. The generated skim.json allows ext_registry to read extension data without class instantiation.
+#AI intro: `ExtManifest` serializes an extension instance's metadata into a pretty-printed JSON file. The generated skim.json allows ExtRegistry to read extension data without class instantiation.
 #AI lifecycle: stateless, one-shot file write
 #AI test_seam: pass a mock extension and temp path
-#AI invariants: [Overwrites existing file at output_path; JSON is pretty-printed]
+#AI invariants: [Overwrites existing file at outputPath; JSON is pretty-printed]
 #AI core_behaviors: [Extracts all public metadata from extension instance and writes JSON]
 #AI owns: nothing
 #AI entry_points: [generate]
 #AI config_reads: []
 #AI non_goals: [Does not validate metadata; Does not read existing manifests]
-#AI side_effects: [Writes file to disk at output_path]
+#AI side_effects: [Writes file to disk at outputPath]
 #AI section_order: [Generation]
 
 #AI:generate

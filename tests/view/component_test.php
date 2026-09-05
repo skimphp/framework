@@ -23,7 +23,7 @@ describe('component rendering', function(): void {
                       ->toContain('alert-danger');
     });
 
-    test('throws view_exception when props object is not a *_props class', function(): void {
+    test('throws ViewException when props object is not a *_props class', function(): void {
         expect(fn() => \Skim\View\View::component('alert', new stdClass()))
             ->toThrow(\Skim\View\Exceptions\ViewException::class, '*Props');
     });
@@ -37,7 +37,7 @@ describe('component rendering', function(): void {
             ->not->toThrow(\Error::class);
     });
 
-    test('throws view_exception when component file is missing', function(): void {
+    test('throws ViewException when component file is missing', function(): void {
         expect(fn() => \Skim\View\View::component('nonexistent_component', []))
             ->toThrow(\Skim\View\Exceptions\ViewException::class);
     });

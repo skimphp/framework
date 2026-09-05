@@ -3,7 +3,7 @@
 use Skim\Dev\Docs\Value\ExtractedMethod;
 use Skim\Dev\Docs\Value\ExtractedClass;
 
-describe('extracted_class::to_array', function () {
+describe('ExtractedClass::toArray', function () {
 
     it('includes all new fields in serialized output', function () {
         $cls = new \Skim\Dev\Docs\Value\ExtractedClass(
@@ -31,28 +31,28 @@ describe('extracted_class::to_array', function () {
             ->and($arr['entry_points'])->toContain('remember');
     });
 
-    it('annotated_method_count counts methods with at least one annotation', function () {
+    it('annotatedMethodCount counts methods with at least one annotation', function () {
         $m1 = new \Skim\Dev\Docs\Value\ExtractedMethod('get', 'public function get(): mixed', 'ns\\cls', contracts: ['returns value']);
         $m2 = new \Skim\Dev\Docs\Value\ExtractedMethod('noop', 'public function noop(): void', 'ns\\cls');
         $cls = new \Skim\Dev\Docs\Value\ExtractedClass('cls', 'ns', '/f.php', methods: [$m1, $m2]);
         expect($cls->annotatedMethodCount())->toBe(1);
     });
 
-    it('annotated_method_count() returns 0 when no methods annotated', function(): void {
+    it('annotatedMethodCount() returns 0 when no methods annotated', function(): void {
         $m1    = new \Skim\Dev\Docs\Value\ExtractedMethod(name: 'a', signature: '', owner: '');
         $m2    = new \Skim\Dev\Docs\Value\ExtractedMethod(name: 'b', signature: '', owner: '');
         $class = new \Skim\Dev\Docs\Value\ExtractedClass('cls', '', '', methods: [$m1, $m2]);
         expect($class->annotatedMethodCount())->toBe(0);
     });
 
-    it('annotated_method_count() returns 0 for class with no methods', function(): void {
+    it('annotatedMethodCount() returns 0 for class with no methods', function(): void {
         $class = new \Skim\Dev\Docs\Value\ExtractedClass('cls', '', '');
         expect($class->annotatedMethodCount())->toBe(0);
     });
 
 });
 
-describe('extracted_method::to_array', function () {
+describe('ExtractedMethod::toArray', function () {
 
     it('includes all new fields in serialized output', function () {
         $m = new \Skim\Dev\Docs\Value\ExtractedMethod(

@@ -42,8 +42,8 @@ class WorkerUninstallCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\WorkerUninstallCommand
-#AI source_path: src/cli/commands/worker_uninstall_command.php
-#AI title: worker_uninstall_command
+#AI source_path: src/cli/commands/WorkerUninstallCommand.php
+#AI title: WorkerUninstallCommand
 #AI description: CLI command that removes FrankenPHP worker mode files.
 #AI role: CLI worker uninstall command
 #AI layer: cli

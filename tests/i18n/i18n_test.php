@@ -61,7 +61,7 @@ describe('i18n — locale switching', function(): void {
         expect(\Skim\I18n\I18n::t('welcome'))->toBe('Welcome');
     });
 
-    test('current_locale() returns active locale', function(): void {
+    test('currentLocale() returns active locale', function(): void {
         \Skim\I18n\I18n::locale('de');
         expect(\Skim\I18n\I18n::currentLocale())->toBe('de');
     });

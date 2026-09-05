@@ -63,7 +63,7 @@ describe('router — dynamic @param tokens', function(): void {
 
 describe('router — named routes', function(): void {
 
-    test('build_url generates correct path from named route', function(): void {
+    test('buildUrl generates correct path from named route', function(): void {
         $r = new \Skim\Core\Router();
         $r->add('GET', '/users/@id:int', fn() => null)->name('user.show');
 
@@ -71,12 +71,12 @@ describe('router — named routes', function(): void {
         expect($url)->toBe('/users/5');
     });
 
-    test('build_url throws when name not registered', function(): void {
+    test('buildUrl throws when name not registered', function(): void {
         $r = new \Skim\Core\Router();
         expect(fn() => $r->buildUrl('nonexistent'))->toThrow(\InvalidArgumentException::class);
     });
 
-    test('build_url throws when required param missing', function(): void {
+    test('buildUrl throws when required param missing', function(): void {
         $r = new \Skim\Core\Router();
         $r->add('GET', '/users/@id', fn() => null)->name('user.show');
 

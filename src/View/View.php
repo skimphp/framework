@@ -16,7 +16,7 @@ use Skim\Worker\Resettable;
  *   $html = view::render('users/show', ['user' => $user]);
  *   $fragment = view::render('users/show', ['user' => $user], 'user-card');
  *
- * Testing: Use set_path() to point to test fixtures, reset() in tearDown().
+ * Testing: Use setPath() to point to test fixtures, reset() in tearDown().
  *
  * #AI:class
  */
@@ -133,13 +133,13 @@ final class View implements \Skim\Worker\Resettable {
     /**
      * Renders an isolated component with strict props. #AI:component
      *
-     * Delegates to component_renderer::render(). Supports both array props
+     * Delegates to ComponentRenderer::render(). Supports both array props
      * (legacy) and *_props readonly objects (new). Components render in clean
      * scope with no parent data leakage.
      *
      * Example:
      *   view::component('alert', ['message' => 'test']);
-     *   view::component('alert', new alert_props(message: 'test'));
+     *   view::component('alert', new AlertProps(message: 'test'));
      *
      * @param string $name Component name (maps to views/components/{$name}.php).
      * @param array|object $props Props array or *_props readonly object.
@@ -181,18 +181,18 @@ final class View implements \Skim\Worker\Resettable {
 #AI intro: `view` is the static entry point for template rendering. It supports full page rendering, named fragment extraction for htmx/datastar, shared data injection, and configurable layout defaults.
 #AI lifecycle: static facade, state persists for the current request
 #AI fallback: defaults to SKIM_ROOT/app/views when path is not set
-#AI test_seam: set_path() for test fixtures, reset() in tearDown()
+#AI test_seam: setPath() for test fixtures, reset() in tearDown()
 #AI invariants: [Shared data is merged with per-render data; Fragment extraction uses state-machine parser on rendered HTML; Profiler records every render call; Default layout is overridden by template-level layout() calls]
 #AI core_behaviors: [Full page rendering via template context; Fragment extraction via HTML comment markers; Shared data injection for cross-cutting concerns; Profiler integration for render timing]
 #AI warnings: [Fragment extraction renders the full template first, then extracts — layout bypass optimization reduces this cost for HTMX requests]
 #AI notes: Fragment syntax uses HTML comments (<!-- @fragment name -->...<!-- @end -->) which produce zero bytes in browser output and no DOM changes.
-#AI owns: views_path, shared_data, default_layout
-#AI entry_points: [render; render_fragment; share; set_path; set_default_layout; reset; views_path; component]
+#AI owns: viewsPath, sharedData, defaultLayout
+#AI entry_points: [render; renderFragment; share; setPath; setDefaultLayout; reset; viewsPath; component]
 #AI config_reads: []
 #AI non_goals: [Does not compile or cache templates; Does not escape output; Does not handle asset bundling]
-#AI side_effects: [Records render timing in profiler::view(); share() mutates static shared_data]
+#AI side_effects: [Records render timing in profiler::view(); share() mutates static sharedData]
 #AI flow: view::render() -> template::renderFile() -> layout system -> fragment extraction? -> profiler::view()
-#AI lifecycle_steps: [view::render($template, $data, $fragment); -> resolve views_path; -> new template(path, merged_data, default_layout); -> template::renderFile(); -> fragment? -> extract_fragment(); -> profiler::view(); -> return HTML]
+#AI lifecycle_steps: [view::render($template, $data, $fragment); -> resolve viewsPath; -> new template(path, merged_data, defaultLayout); -> template::renderFile(); -> fragment? -> extractFragment(); -> profiler::view(); -> return HTML]
 #AI section_order: [Rendering API; Configuration; Testing Hooks; Architecture]
 #AI architectural_notes: Uses native PHP templates for real stack traces and opcache performance. Fragment extraction is a post-render state-machine pass — the full template always renders first.
 
@@ -203,7 +203,7 @@ final class View implements \Skim\Worker\Resettable {
 #AI contract: Renders a template with shared data merged in. When $fragment is set, bypasses layout and extracts only the named fragment block. Records timing in profiler.
 #AI param_details: [{name: $template | type: string | required: true | desc: Template path relative to views root.}; {name: $data | type: array | required: false | desc: Data merged with shared data for this render.}; {name: $fragment | type: ?string | required: false | desc: Named fragment to extract, or null for full page.}]
 #AI return_detail: {type: string | desc: Rendered HTML or extracted fragment.}
-#AI throws_details: [{type: view_exception | desc: If template file or fragment name is not found.}]
+#AI throws_details: [{type: ViewException | desc: If template file or fragment name is not found.}]
 #AI side_effects: [Records render timing in profiler::view()]
 
 #AI:renderFragment
@@ -220,7 +220,7 @@ final class View implements \Skim\Worker\Resettable {
 #AI signature: public static function share(string $key, mixed $value): void
 #AI contract: Injects a key-value pair into every subsequent template render for this request.
 #AI param_details: [{name: $key | type: string | required: true | desc: Shared variable name available in all templates.}; {name: $value | type: mixed | required: true | desc: Shared variable value.}]
-#AI side_effects: [Mutates static shared_data array]
+#AI side_effects: [Mutates static sharedData array]
 
 #AI:setPath
 #AI group: Configuration
@@ -248,13 +248,13 @@ final class View implements \Skim\Worker\Resettable {
 #AI frequency: internal
 #AI signature: public static function resetRequest(): void
 #AI contract: Clears shared data between requests in worker mode.
-#AI side_effects: [Empties static $shared_data array]
+#AI side_effects: [Empties static $sharedData array]
 
 #AI:component
 #AI group: Rendering API
 #AI frequency: high
 #AI signature: public static function component(string $name, array|object $props = []): string
-#AI contract: Renders an isolated component with strict props. Delegates to component_renderer::render(). Supports both array props (legacy) and *_props readonly objects (new).
+#AI contract: Renders an isolated component with strict props. Delegates to ComponentRenderer::render(). Supports both array props (legacy) and *_props readonly objects (new).
 #AI param_details: [{name: $name | type: string | required: true | desc: Component name (maps to views/components/{$name}.php).}; {name: $props | type: array|object | required: false | desc: Props array or *_props readonly object.}]
 #AI return_detail: {type: string | desc: Rendered component HTML.}
-#AI throws_details: [{type: view_exception | desc: If props object is not a *_props class or component file is not found.}]
+#AI throws_details: [{type: ViewException | desc: If props object is not a *_props class or component file is not found.}]

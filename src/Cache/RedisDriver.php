@@ -11,7 +11,7 @@ namespace Skim\Cache;
  * the Redis event loop. Tags are supported via Redis sets through tags().
  *
  * Example:
- *   $driver = new redis_driver(host: '127.0.0.1', port: 6379, prefix: 'skim_');
+ *   $driver = new RedisDriver(host: '127.0.0.1', port: 6379, prefix: 'skim_');
  *   $driver->set('user:1', $data, 3600);
  *
  * Testing: prefer array_driver for unit tests — redis_driver requires a live Redis.
@@ -160,17 +160,17 @@ final class RedisDriver implements \Skim\Cache\Driver {
 
 #AI:class
 #AI symbol: Skim\Cache\RedisDriver
-#AI source_path: src/cache/redis_driver.php
-#AI title: redis_driver
+#AI source_path: src/cache/RedisDriver.php
+#AI title: RedisDriver
 #AI description: Redis cache driver using php-redis extension with lazy connection, SCAN-based flush, and tag support.
 #AI role: primary cache driver
 #AI layer: cache
 #AI badges: [driver; cache; redis; lazy-connection; tag-support]
 #AI intro: `Skim\Cache\RedisDriver` is the production cache backend. It uses the php-redis extension (not Predis) for 5-10x better performance. Connection is lazy — the socket opens on first operation. Prefix-based flush uses SCAN to avoid blocking Redis. Tags are supported via Redis sets through `tags()`.
 #AI lifecycle: lazy connection on first operation, reused for process lifetime
-#AI fallback: file_driver when Redis is unreachable
-#AI invariants: [connection is lazy — no socket opened until first operation; flush() uses SCAN not KEYS; values are serialized via PHP serialize(); tags use Redis sets; flush_all() issues FLUSHDB on selected database]
-#AI warnings: [flush_all() issues FLUSHDB which destroys ALL data in the selected Redis database, not just cache keys; Prefer flush('prefix:') in production]
+#AI fallback: FileDriver when Redis is unreachable
+#AI invariants: [connection is lazy — no socket opened until first operation; flush() uses SCAN not KEYS; values are serialized via PHP serialize(); tags use Redis sets; flushAll() issues FLUSHDB on selected database]
+#AI warnings: [flushAll() issues FLUSHDB which destroys ALL data in the selected Redis database, not just cache keys; Prefer flush('prefix:') in production]
 #AI notes: Why php-redis over Predis: extension is 5-10x faster, no Composer dependency. Tags use Redis sets: tag→[key1, key2, ...] — flush by tag deletes all member keys.
 #AI section_order: [Read API; Write API; Invalidation; Tag Operations; Architecture]
 #AI architectural_notes: The driver prefixes all keys with the configured prefix (default 'skim_') to namespace cache entries within a shared Redis instance. SCAN-based flush avoids the KEYS command which blocks the Redis event loop on large datasets.
@@ -226,7 +226,7 @@ final class RedisDriver implements \Skim\Cache\Driver {
 #AI:tags
 #AI group: Tag Operations
 #AI frequency: medium
-#AI signature: public function tags(array $tags): tagged_redis_driver
+#AI signature: public function tags(array $tags): TaggedRedisDriver
 #AI contract: Returns a tag-scoped proxy that tracks key membership in Redis sets and supports grouped invalidation.
 #AI param_details: [{name: $tags | type: array | required: true | desc: Tag identifiers for grouped operations.}]
-#AI return_detail: {type: tagged_redis_driver | desc: Tag-scoped cache proxy.}
+#AI return_detail: {type: TaggedRedisDriver | desc: Tag-scoped cache proxy.}

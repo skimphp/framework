@@ -162,25 +162,25 @@ readonly class ExtractedClass {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Value\ExtractedClass
-#AI source_path: src/dev/docs/value/extracted_class.php
-#AI title: extracted_class
+#AI source_path: src/dev/docs/value/ExtractedClass.php
+#AI title: ExtractedClass
 #AI description: Readonly value object representing a single extracted class with all annotation metadata from @ai.* tags.
 #AI role: data carrier
 #AI layer: dev
 #AI badges: [value; readonly; docs; no-framework-deps]
-#AI intro: `extracted_class` is the immutable data carrier between the AST extraction pipeline and all downstream emitters. It holds every annotation field extracted from a single PHP class file.
-#AI lifecycle: created once by class_extractor, never mutated, serialized by emitters
-#AI fallback: to_array() falls back to namespace\class_name for symbol, class_name for title
+#AI intro: `ExtractedClass` is the immutable data carrier between the AST extraction pipeline and all downstream emitters. It holds every annotation field extracted from a single PHP class file.
+#AI lifecycle: created once by ClassExtractor, never mutated, serialized by emitters
+#AI fallback: toArray() falls back to namespace\className for symbol, className for title
 #AI test_seam: instantiate directly with test data
-#AI invariants: [readonly — never mutated after construction; methods array contains extracted_method instances; to_array() is JSON-safe]
-#AI core_behaviors: [Holds all annotation fields from class-level and method-level tags; Serializes to JSON-safe array via to_array(); Derives source_path from file path when not explicitly set]
-#AI owns: methods (extracted_method[])
-#AI entry_points: [to_array; annotated_method_count]
+#AI invariants: [readonly — never mutated after construction; methods array contains ExtractedMethod instances; toArray() is JSON-safe]
+#AI core_behaviors: [Holds all annotation fields from class-level and method-level tags; Serializes to JSON-safe array via toArray(); Derives source_path from file path when not explicitly set]
+#AI owns: methods (ExtractedMethod[])
+#AI entry_points: [toArray; annotatedMethodCount]
 #AI config_reads: []
 #AI non_goals: [Does not extract itself; Does not validate annotations; Does not write output]
 #AI side_effects: []
-#AI flow: class_extractor -> new extracted_class(...) -> to_array() -> json_emitter
-#AI lifecycle_steps: [constructed by class_extractor; -> held by project_scanner; -> serialized by json_emitter.to_array()]
+#AI flow: ClassExtractor -> new ExtractedClass(...) -> toArray() -> JsonEmitter
+#AI lifecycle_steps: [constructed by ClassExtractor; -> held by ProjectScanner; -> serialized by JsonEmitter.to_array()]
 #AI section_order: [Construction; Serialization; Architecture]
 #AI architectural_notes: No framework dependencies — plain PHP only.
 
@@ -188,7 +188,7 @@ readonly class ExtractedClass {
 #AI group: Construction
 #AI frequency: high
 #AI signature: public function __construct(string $className, string $namespace, string $file, ...)
-#AI contract: Creates an immutable value object with all extracted annotation fields. All fields except class_name, namespace, and file default to empty strings or empty arrays.
+#AI contract: Creates an immutable value object with all extracted annotation fields. All fields except className, namespace, and file default to empty strings or empty arrays.
 
 #AI:toArray
 #AI group: Serialization

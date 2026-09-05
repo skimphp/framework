@@ -41,7 +41,7 @@ function sampleMdxData(): array {
     ];
 }
 
-describe('mdx_emitter', function(): void {
+describe('MdxEmitter', function(): void {
 
     test('creates one MDX file per class', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_test_' . uniqid();

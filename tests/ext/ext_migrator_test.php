@@ -3,7 +3,7 @@
 use Skim\Db\Db;
 use Skim\Ext\ExtMigrator;
 
-describe('ext_migrator', function(): void {
+describe('ExtMigrator', function(): void {
     $root = '';
     $migrations = '';
     $remove = null;
@@ -64,7 +64,7 @@ PHP);
         expect($migrator->run('skim/auth', $migrations))->toBe([]);
     });
 
-    test('rollback_session reverses only migrations from the current session', function() use (&$migrations): void {
+    test('rollbackSession reverses only migrations from the current session', function() use (&$migrations): void {
         file_put_contents($migrations . '/001_create_ext_items.php', <<<'PHP'
 <?php declare(strict_types=1);
 

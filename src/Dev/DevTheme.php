@@ -15,7 +15,7 @@ namespace Skim\Dev;
  *
  * Example:
  *   // Inside a dev tool template:
- *   <style><?= dev_theme::css() ?></style>
+ *   <style><?= DevTheme::css() ?></style>
  *
  * Testing: Pure string output — assert css() contains expected selectors.
  *
@@ -26,7 +26,7 @@ final class DevTheme {
      * Returns the complete shared CSS for full-page dev tools (error page). #AI:css
      *
      * Includes CSS custom properties, base reset, scrollbar styling, and
-     * shared component classes. Toolbar uses toolbar_css() instead because
+     * shared component classes. Toolbar uses toolbarCss() instead because
      * it needs scoped selectors to avoid conflicts with the host page.
      */
     public static function css(): string {
@@ -412,24 +412,24 @@ CSS;
 
 #AI:class
 #AI symbol: Skim\Dev\DevTheme
-#AI source_path: src/dev/dev_theme.php
-#AI title: dev_theme
+#AI source_path: src/dev/DevTheme.php
+#AI title: DevTheme
 #AI description: Shared CSS design system for dev tool HTML output — dark theme tokens, component classes, and toolbar styles.
 #AI role: CSS design system provider
 #AI layer: dev
 #AI badges: [dev; debug; css; theme; design-system]
-#AI intro: `dev_theme` provides the shared CSS design system used by all dev tool renderers (error page, toolbar, future debug panels). It returns CSS strings for embedding in `<style>` blocks — no external .css files needed.
+#AI intro: `DevTheme` provides the shared CSS design system used by all dev tool renderers (error page, toolbar, future debug panels). It returns CSS strings for embedding in `<style>` blocks — no external .css files needed.
 #AI lifecycle: stateless — returns static CSS strings on each call
 #AI fallback: none — pure string output
-#AI test_seam: assert css() and toolbar_css() contain expected selectors and custom properties
-#AI invariants: [css() returns unprefixed selectors for standalone pages; toolbar_css() returns #skim-tb-scoped selectors; both use the same color palette]
+#AI test_seam: assert css() and toolbarCss() contain expected selectors and custom properties
+#AI invariants: [css() returns unprefixed selectors for standalone pages; toolbarCss() returns #skim-tb-scoped selectors; both use the same color palette]
 #AI core_behaviors: [Provides CSS custom properties for colors, typography, and spacing; Provides shared component classes (kv-grid, badges, buttons, code-box, tabs, toast); Provides toolbar-scoped CSS that avoids host page conflicts]
 #AI owns: none — stateless
-#AI entry_points: [css; toolbar_css; icon_font]
+#AI entry_points: [css; toolbarCss; iconFont]
 #AI config_reads: []
 #AI non_goals: [Does not load external CSS files; Does not integrate with the Vite asset pipeline; Does not compile or minify CSS]
 #AI side_effects: []
-#AI flow: dev_theme::css() → CSS string; dev_theme::toolbarCss() → scoped CSS string
+#AI flow: DevTheme::css() → CSS string; DevTheme::toolbarCss() → scoped CSS string
 #AI lifecycle_steps: [called by templates; returns static CSS string; embedded in <style> block]
 #AI section_order: [CSS Providers; Utilities]
 #AI architectural_notes: Keeps CSS co-located with PHP dev tools for zero-config deployment. The toolbar uses --tb- prefixed variables to avoid conflicts with user page CSS.

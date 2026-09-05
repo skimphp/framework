@@ -82,8 +82,8 @@ abstract class Extension {
 #AI role: extension base class
 #AI layer: ext
 #AI badges: [abstract; extension; lifecycle]
-#AI intro: `extension` is the abstract base class that all SKIM extension packages extend. It defines metadata properties (name, version, capabilities) and two lifecycle hooks (register, boot) that extension_manager calls during app boot.
-#AI lifecycle: instantiated by extension_manager::instance() after discovery; register() called before boot()
+#AI intro: `extension` is the abstract base class that all SKIM extension packages extend. It defines metadata properties (name, version, capabilities) and two lifecycle hooks (register, boot) that extensionManager calls during app boot.
+#AI lifecycle: instantiated by extensionManager::instance() after discovery; register() called before boot()
 #AI test_seam: extend and override methods in test fixtures
 #AI invariants: [register() runs before boot(); manifest() returns empty array by default; all metadata properties default to empty]
 #AI core_behaviors: [Declares metadata via public properties; Contributes config, commands, migrations, env keys, and post-install steps; Lifecycle hooks receive the app container]
@@ -92,7 +92,7 @@ abstract class Extension {
 #AI config_reads: []
 #AI non_goals: [Does not auto-discover itself; Does not validate its own metadata; Does not resolve dependencies]
 #AI side_effects: [register() and boot() may mutate the app container]
-#AI flow: extension_manager::discover() -> instance() -> register(app) -> boot(app)
+#AI flow: extensionManager::discover() -> instance() -> register(app) -> boot(app)
 #AI section_order: [Lifecycle Hooks; Metadata Accessors; Static Metadata]
 
 #AI:register
@@ -148,6 +148,6 @@ abstract class Extension {
 #AI group: Static Metadata
 #AI frequency: low
 #AI signature: public static function manifest(): array
-#AI contract: Returns static metadata without instantiation. An empty array signals ext_registry to fall back to instance properties. The capabilities key may be a flat list or an associative map.
+#AI contract: Returns static metadata without instantiation. An empty array signals ExtRegistry to fall back to instance properties. The capabilities key may be a flat list or an associative map.
 #AI return_detail: {type: array | desc: Metadata array or empty array for fallback.}
 #AI notes: Override in subclasses to avoid class instantiation during discovery.

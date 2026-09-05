@@ -65,13 +65,13 @@ class CacheBuildCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\CacheBuildCommand
-#AI source_path: src/cli/commands/cache_build_command.php
-#AI title: cache_build_command
+#AI source_path: src/cli/commands/CacheBuildCommand.php
+#AI title: CacheBuildCommand
 #AI description: CLI command that pre-compiles env, config, and extensions into pure PHP array cache files for OPcache.
 #AI role: CLI cache build command
 #AI layer: cli
 #AI badges: [cli; command; cache; build; opcache]
-#AI intro: `cache_build_command` provides the `php skim cache:build` CLI entry point. It generates compiled PHP array files in `storage/config_cache/` for env, config, and extensions, enabling OPcache shared-memory hits with zero parse overhead on subsequent requests.
+#AI intro: `CacheBuildCommand` provides the `php skim cache:build` CLI entry point. It generates compiled PHP array files in `storage/config_cache/` for env, config, and extensions, enabling OPcache shared-memory hits with zero parse overhead on subsequent requests.
 #AI lifecycle: instantiated by CLI kernel, handle() called once per invocation
 #AI fallback: creates storage/config_cache/ directory if missing
 #AI test_seam: run against temp directory, verify generated files are valid PHP arrays
@@ -83,8 +83,8 @@ class CacheBuildCommand extends \Skim\Cli\Command {
 #AI config_reads: []
 #AI non_goals: [Does not clear existing cache files before building; Does not validate generated files]
 #AI side_effects: [Writes env.php, config.php, extensions.php to storage/config_cache/; Creates storage/config_cache/ directory]
-#AI flow: cache_build_command::handle() -> mkdir storage/config_cache -> env::reset + load + write -> config::reset + load + write -> app extensions write -> success
-#AI lifecycle_steps: [kernel dispatches cache_build_command; -> handle(); -> mkdir storage/config_cache; -> env::reset(); -> env::load(.env); -> write env.php; -> config::reset(); -> config::load(config/); -> write config.php; -> app::instance(); -> write extensions.php; -> success]
+#AI flow: CacheBuildCommand::handle() -> mkdir storage/config_cache -> env::reset + load + write -> config::reset + load + write -> app extensions write -> success
+#AI lifecycle_steps: [kernel dispatches CacheBuildCommand; -> handle(); -> mkdir storage/config_cache; -> env::reset(); -> env::load(.env); -> write env.php; -> config::reset(); -> config::load(config/); -> write config.php; -> app::instance(); -> write extensions.php; -> success]
 #AI section_order: [Command Execution]
 #AI architectural_notes: Thin CLI wrapper that delegates to env, config, and app facades. The generated files are consumed by env::loadCompiledCache() and config::loadCompiledCache().
 

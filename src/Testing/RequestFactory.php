@@ -12,7 +12,7 @@ use Skim\Core\Request;
  * special cases automatically.
  *
  * Example:
- *   $req = request_factory::make('POST', '/api/users', headers: ['Accept' => 'application/json']);
+ *   $req = RequestFactory::make('POST', '/api/users', headers: ['Accept' => 'application/json']);
  *
  * Testing: This class IS the test infrastructure — used internally by pending_request.
  *
@@ -27,7 +27,7 @@ class RequestFactory {
      * have sensible defaults for GET requests.
      *
      * Example:
-     *   $req = request_factory::make(
+     *   $req = RequestFactory::make(
      *       method: 'POST',
      *       path: '/api/users',
      *       json: [],
@@ -78,14 +78,14 @@ class RequestFactory {
 
 #AI:class
 #AI symbol: Skim\Testing\RequestFactory
-#AI source_path: src/testing/request_factory.php
-#AI title: request_factory
+#AI source_path: src/testing/RequestFactory.php
+#AI title: RequestFactory
 #AI description: Factory that builds request objects from raw parameters with proper $_SERVER header mapping.
 #AI role: test request factory
 #AI layer: testing
 #AI badges: [testing; factory; request; infrastructure]
-#AI intro: `request_factory` constructs `Skim\Core\Request` instances from raw parameters, handling the mapping from human-readable header names to PHP's `$_SERVER`-style keys.
-#AI lifecycle: called per-request by pending_request::send()
+#AI intro: `RequestFactory` constructs `Skim\Core\Request` instances from raw parameters, handling the mapping from human-readable header names to PHP's `$_SERVER`-style keys.
+#AI lifecycle: called per-request by PendingRequest::send()
 #AI fallback: n/a — test-only class
 #AI test_seam: static factory, call directly to build custom requests
 #AI invariants: [Content-Type and Content-Length map without HTTP_ prefix; All other headers get HTTP_ prefix with uppercased underscores; Method is always uppercased]
@@ -96,10 +96,10 @@ class RequestFactory {
 #AI config_reads: []
 #AI non_goals: [Does not validate request data; Does not run middleware or routing]
 #AI side_effects: []
-#AI flow: pending_request::send() -> request_factory::make() -> new request(...)
-#AI lifecycle_steps: [pending_request builds headers/method/path; -> request_factory::make(); -> header mapping; -> new request(query, post, server, cookies, files, raw_body)]
+#AI flow: PendingRequest::send() -> RequestFactory::make() -> new request(...)
+#AI lifecycle_steps: [PendingRequest builds headers/method/path; -> RequestFactory::make(); -> header mapping; -> new request(query, post, server, cookies, files, rawBody)]
 #AI section_order: [Factory; Architecture]
-#AI architectural_notes: Isolates the $_SERVER header mapping logic so pending_request stays focused on dispatch configuration.
+#AI architectural_notes: Isolates the $_SERVER header mapping logic so PendingRequest stays focused on dispatch configuration.
 
 #AI:make
 #AI group: Factory

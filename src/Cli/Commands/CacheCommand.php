@@ -49,16 +49,16 @@ class CacheCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\CacheCommand
-#AI source_path: src/cli/commands/cache_command.php
-#AI title: cache_command
+#AI source_path: src/cli/commands/CacheCommand.php
+#AI title: CacheCommand
 #AI description: CLI command for cache invalidation by prefix or full backend flush.
 #AI role: CLI cache invalidation command
 #AI layer: cli
 #AI badges: [cli; command; cache; destructive]
-#AI intro: `cache_command` provides the `php skim cache:clear` and `php skim cache:flush` CLI entry points. It delegates to `cache::flush($prefix)` for prefix-scoped invalidation or `cache::flushAll()` when no prefix is supplied.
+#AI intro: `CacheCommand` provides the `php skim cache:clear` and `php skim cache:flush` CLI entry points. It delegates to `cache::flush($prefix)` for prefix-scoped invalidation or `cache::flushAll()` when no prefix is supplied.
 #AI lifecycle: instantiated by CLI kernel, handle() called once per invocation
 #AI fallback: none — unknown sub-commands print an error and return exit code 1
-#AI test_seam: cache::setDriver() to inject array_driver, cache::reset() in tearDown
+#AI test_seam: cache::setDriver() to inject ArrayDriver, cache::reset() in tearDown
 #AI invariants: [clear and flush sub-commands are treated identically; empty prefix triggers full backend flush]
 #AI core_behaviors: [Delegates prefix flush to cache::flush(); Delegates full flush to cache::flushAll(); Prints success or error message to stdout]
 #AI warnings: [Running `php skim cache:clear` without a prefix calls cache::flushAll() which clears the entire cache backend]
@@ -67,8 +67,8 @@ class CacheCommand extends \Skim\Cli\Command {
 #AI config_reads: []
 #AI non_goals: [Does not support tag-based invalidation; Does not list cached keys]
 #AI side_effects: [cache::flush() or cache::flushAll() mutates the active cache backend]
-#AI flow: cache_command::handle() -> arg(0) sub-command -> cache::flush(prefix) or cache::flushAll() -> print result
-#AI lifecycle_steps: [kernel dispatches cache_command; -> handle(); -> read sub-command from arg(0); -> read prefix from arg(1); -> cache::flush(prefix) or cache::flushAll(); -> print success/error]
+#AI flow: CacheCommand::handle() -> arg(0) sub-command -> cache::flush(prefix) or cache::flushAll() -> print result
+#AI lifecycle_steps: [kernel dispatches CacheCommand; -> handle(); -> read sub-command from arg(0); -> read prefix from arg(1); -> cache::flush(prefix) or cache::flushAll(); -> print success/error]
 #AI section_order: [Command Execution]
 #AI architectural_notes: Thin CLI wrapper over the cache facade. All cache logic lives in cache.php.
 

@@ -18,7 +18,7 @@ namespace Skim\Cli;
  *       }
  *   }
  *
- * Testing: Instantiate the command, call set_input() with test args/flags, then handle().
+ * Testing: Instantiate the command, call setInput() with test args/flags, then handle().
  *
  * #AI:class
  */
@@ -203,18 +203,18 @@ abstract class Command {
 #AI layer: cli
 #AI badges: [cli; command; abstract; base-class]
 #AI intro: `command` is the abstract base class that all SKIM CLI commands extend. It provides positional arg access, flag access, output helper proxies (info, success, warn, error), and auto-configuration of name/group/description/usage from the registered command name.
-#AI lifecycle: instantiated by kernel, set_input() called with parsed argv, then handle() invoked
-#AI fallback: configure_for_name() provides default descriptions and usage strings for built-in commands
-#AI test_seam: instantiate subclass, call set_input() with test data, then handle()
-#AI invariants: [handle() must return POSIX exit code; args and flags are set by kernel before handle(); configure_for_name() preserves subclass overrides]
-#AI core_behaviors: [arg() and flag() provide safe access with defaults; configure_for_name() auto-fills metadata from command name; output helpers delegate to cli:: static methods]
+#AI lifecycle: instantiated by kernel, setInput() called with parsed argv, then handle() invoked
+#AI fallback: configureForName() provides default descriptions and usage strings for built-in commands
+#AI test_seam: instantiate subclass, call setInput() with test data, then handle()
+#AI invariants: [handle() must return POSIX exit code; args and flags are set by kernel before handle(); configureForName() preserves subclass overrides]
+#AI core_behaviors: [arg() and flag() provide safe access with defaults; configureForName() auto-fills metadata from command name; output helpers delegate to cli:: static methods]
 #AI owns: args, flags, name, description, group, usage
-#AI entry_points: [handle; set_input; arg; flag; help]
+#AI entry_points: [handle; setInput; arg; flag; help]
 #AI config_reads: []
-#AI non_goals: [Does not parse argv (see argv_parser); Does not register commands (see kernel); Does not handle process signals]
+#AI non_goals: [Does not parse argv (see ArgvParser); Does not register commands (see kernel); Does not handle process signals]
 #AI side_effects: [Output helpers write to STDOUT/STDERR via cli::]
-#AI flow: kernel -> new Command() -> configure_for_name() -> set_input(args, flags) -> handle() -> exit code
-#AI lifecycle_steps: [kernel resolves command class; -> new $class(); -> configure_for_name($name); -> set_input($args, $flags); -> handle(); -> return exit code]
+#AI flow: kernel -> new Command() -> configureForName() -> setInput(args, flags) -> handle() -> exit code
+#AI lifecycle_steps: [kernel resolves command class; -> new $class(); -> configureForName($name); -> setInput($args, $flags); -> handle(); -> return exit code]
 #AI section_order: [Metadata Access; Configuration; Command Execution; Input Access; Output Helpers]
 #AI architectural_notes: Abstract base class — never instantiated directly. Subclasses implement handle() and optionally override $name, $description, $group, $usage properties.
 
@@ -222,7 +222,7 @@ abstract class Command {
 #AI group: Metadata Access
 #AI frequency: low
 #AI signature: public function getName(): string
-#AI contract: Returns the registered command name as set by configure_for_name().
+#AI contract: Returns the registered command name as set by configureForName().
 #AI return_detail: {type: string | desc: Command name (e.g. 'migrate:down').}
 
 #AI:getDescription

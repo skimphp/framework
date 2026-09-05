@@ -10,7 +10,7 @@ namespace Skim\Testing;
  * pending_request binds into the container.
  *
  * Example:
- *   $fake = new session_fake();
+ *   $fake = new SessionFake();
  *   $fake->set('user_id', 42);
  *   $app->bind('session', fn() => $fake);
  *
@@ -57,28 +57,28 @@ class SessionFake {
 
 #AI:class
 #AI symbol: Skim\Testing\SessionFake
-#AI source_path: src/testing/session_fake.php
-#AI title: session_fake
+#AI source_path: src/testing/SessionFake.php
+#AI title: SessionFake
 #AI description: In-memory session double for tests with no cookies, headers, or persistence.
 #AI role: test double (session)
 #AI layer: testing
 #AI badges: [testing; fake; session; in-memory]
-#AI intro: `session_fake` provides a minimal in-memory session implementation for tests. It stores data in a plain array with no side effects — no cookies, no headers, no Redis.
+#AI intro: `SessionFake` provides a minimal in-memory session implementation for tests. It stores data in a plain array with no side effects — no cookies, no headers, no Redis.
 #AI lifecycle: instantiated per-test, bound into the container via app::bind()
 #AI fallback: n/a — test-only class
-#AI test_seam: bind into container via $app->bind('session', fn() => new session_fake())
+#AI test_seam: bind into container via $app->bind('session', fn() => new SessionFake())
 #AI invariants: [Data exists only in memory for the lifetime of the object; flush() clears all data; all() returns the full data array]
 #AI core_behaviors: [Plain array storage; Implements the session read/write/has/flush contract]
-#AI notes: Does not implement session_driver interface — it provides only the methods pending_request needs. Use session::setDriver() with a proper driver for full interface compliance.
+#AI notes: Does not implement SessionDriver interface — it provides only the methods PendingRequest needs. Use session::setDriver() with a proper driver for full interface compliance.
 #AI owns: in-memory data array
 #AI entry_points: [set; get; has; flush; all]
 #AI config_reads: []
-#AI non_goals: [Does not implement session_driver interface; Does not handle flash messages; Does not persist data]
+#AI non_goals: [Does not implement SessionDriver interface; Does not handle flash messages; Does not persist data]
 #AI side_effects: []
-#AI flow: test -> session_fake::set/get/has/flush -> in-memory array
-#AI lifecycle_steps: [new session_fake(); -> bind to container; -> controller calls session::get() -> session_fake::get()]
+#AI flow: test -> SessionFake::set/get/has/flush -> in-memory array
+#AI lifecycle_steps: [new SessionFake(); -> bind to container; -> controller calls session::get() -> SessionFake::get()]
 #AI section_order: [Session API; Architecture]
-#AI architectural_notes: Intentionally minimal — only the methods needed by pending_request for session injection during tests.
+#AI architectural_notes: Intentionally minimal — only the methods needed by PendingRequest for session injection during tests.
 
 #AI:set
 #AI group: Session API

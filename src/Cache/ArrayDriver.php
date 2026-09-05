@@ -11,7 +11,7 @@ namespace Skim\Cache;
  * because state diverges across PHP-FPM workers (same reason APCu is banned).
  *
  * Example:
- *   cache::setDriver(new array_driver());
+ *   cache::setDriver(new ArrayDriver());
  *   cache::set('key', 'value', 60);
  *   // ... run tests ...
  *   cache::reset();
@@ -128,18 +128,18 @@ final class ArrayDriver implements \Skim\Cache\Driver {
 
 #AI:class
 #AI symbol: Skim\Cache\ArrayDriver
-#AI source_path: src/cache/array_driver.php
-#AI title: array_driver
+#AI source_path: src/cache/ArrayDriver.php
+#AI title: ArrayDriver
 #AI description: In-memory cache driver for tests with process-scoped storage and lazy TTL expiry.
 #AI role: test cache driver
 #AI layer: cache
 #AI badges: [driver; cache; in-memory; test-only]
 #AI intro: `Skim\Cache\ArrayDriver` stores cache entries in a PHP array. Values exist only for the current process and are never persisted. TTL is enforced via microtime expiry checked lazily on read. This is the default driver for Pest/PHPUnit tests.
 #AI lifecycle: process-scoped, resets naturally between requests
-#AI test_seam: inject via cache::setDriver(new array_driver())
-#AI invariants: [all operations return true; expired keys are lazily removed on has()/get(); flush_all() clears the entire store]
+#AI test_seam: inject via cache::setDriver(new ArrayDriver())
+#AI invariants: [all operations return true; expired keys are lazily removed on has()/get(); flushAll() clears the entire store]
 #AI warnings: [Not suitable for production — state diverges across PHP-FPM workers]
-#AI notes: Why not APCu: APCu state is per-process, inconsistent under PHP-FPM multi-worker. array_driver is the safe alternative for tests.
+#AI notes: Why not APCu: APCu state is per-process, inconsistent under PHP-FPM multi-worker. ArrayDriver is the safe alternative for tests.
 #AI section_order: [Read API; Write API; Invalidation]
 #AI architectural_notes: Each entry is stored as ['value' => mixed, 'expires' => ?float]. The driver is intentionally minimal — it exists to make tests fast and isolated.
 
@@ -187,9 +187,9 @@ final class ArrayDriver implements \Skim\Cache\Driver {
 #AI group: Lifecycle
 #AI frequency: internal
 #AI signature: public function __construct()
-#AI contract: Throws if constructed inside a worker process. array_driver stores state in a PHP array, so it leaks across requests in FrankenPHP worker mode.
+#AI contract: Throws if constructed inside a worker process. ArrayDriver stores state in a PHP array, so it leaks across requests in FrankenPHP worker mode.
 #AI throws_details: [{type: \RuntimeException | desc: When WORKER_MODE is defined and true.}]
-#AI warnings: [Use file_driver or redis_driver in worker mode instead]
+#AI warnings: [Use FileDriver or RedisDriver in worker mode instead]
 
 #AI:flushAll
 #AI group: Invalidation

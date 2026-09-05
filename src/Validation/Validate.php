@@ -116,7 +116,7 @@ class Validate {
                     continue;
                 }
 
-                // String rule — existing apply_rule() path
+                // String rule — existing applyRule() path
                 $error = $this->applyRule((string) $ruleItem, $field, $value, $data);
                 if ($error !== null) {
                     $errors[$field][] = $error;
@@ -223,13 +223,13 @@ class Validate {
 #AI core_behaviors: [Built-in rules: required, email, url, int, float, bool, slug, min, max, in, regex, same, nullable; Custom rules via extend() with fluent return; Rule objects implementing rule interface; Inline callables in rule arrays; Pipe-delimited or array rule syntax; Typed validated() values via cast()]
 #AI warnings: [Unknown rule names silently pass — typos in rule names go undetected]
 #AI notes: Rules accept both array syntax `['required', 'email']` and pipe syntax `'required|email'`. The `:field` placeholder in custom rule messages is replaced with the actual field name. Custom rules are instance-scoped — register via extend() on the validator instance.
-#AI owns: custom_rules instance property
+#AI owns: customRules instance property
 #AI entry_points: [make; check; extend]
 #AI config_reads: []
 #AI non_goals: [Does not sanitize input; Does not handle file upload validation; Does not provide localized error messages]
 #AI side_effects: []
-#AI flow: validate::make($rules) -> extend() (optional) -> check($data) -> apply_rule() per field per rule -> new result($errors, $validated)
-#AI lifecycle_steps: [validate::make([...]); -> extend() for custom rules; -> check($req->post()); -> foreach field -> foreach rule -> apply_rule(); -> new result(errors, validated); -> controller branches on ok]
+#AI flow: validate::make($rules) -> extend() (optional) -> check($data) -> applyRule() per field per rule -> new result($errors, $validated)
+#AI lifecycle_steps: [validate::make([...]); -> extend() for custom rules; -> check($req->post()); -> foreach field -> foreach rule -> applyRule(); -> new result(errors, validated); -> controller branches on ok]
 #AI section_order: [Validation API; Custom Rules; Architecture]
 #AI architectural_notes: Own implementation with zero external dependencies. Uses Skim\Helpers\Filter for type checking. Custom rules are instance-scoped via extend() — safe for long-lived FrankenPHP processes.
 

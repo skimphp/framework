@@ -14,7 +14,7 @@ namespace Skim\Core;
  *   return $res->view('users/show', ['user' => $user]);
  *   return $res->redirect('/login');
  *
- * Testing: inspect via get_status(), get_body(), get_headers(), get_json().
+ * Testing: inspect via getStatus(), getBody(), getHeaders(), getJson().
  *
  * #AI:class
  */
@@ -353,12 +353,12 @@ class Response {
 #AI badges: [response; http; fluent; builder]
 #AI intro: `Skim\Core\Response` builds the HTTP response through fluent method chaining. Controllers return the response object; the framework calls send() after all middleware completes. Supports JSON, HTML views, fragments, redirects, SSE streaming, and file downloads.
 #AI lifecycle: created fresh per request by app::run(), populated by controller, sent after middleware
-#AI test_seam: inspect via get_status(), get_body(), get_headers(), get_json() without calling send()
+#AI test_seam: inspect via getStatus(), getBody(), getHeaders(), getJson() without calling send()
 #AI invariants: [send() is idempotent — no-op if already sent; stream() sends headers immediately; download() uses sentinel body detected by send(); status() returns $this for chaining; json() uses JSON_UNESCAPED_UNICODE]
 #AI warnings: [stream() sends headers inline — middleware response modifications after stream() have no effect; Never echo or die in controllers — always return $res->...]
 #AI notes: Most methods return $this for fluent chaining. The #[\NoDiscard] attribute on status() prevents silently losing the status code.
-#AI owns: status_code, headers, body, sent flag
-#AI entry_points: [status; json; view; fragment; smart_view; redirect; stream; download; send]
+#AI owns: statusCode, headers, body, sent flag
+#AI entry_points: [status; json; view; fragment; smartView; redirect; stream; download; send]
 #AI non_goals: [Does not handle HTTP transport (PHP sends headers); Does not compress output; Does not manage cookies directly]
 #AI side_effects: [send() writes headers and body to output buffer; stream() sends headers immediately and disables output buffering]
 #AI flow: controller -> $res->status()->json()/view()/redirect() -> return $res -> middleware post-processing -> send()
@@ -447,7 +447,7 @@ class Response {
 #AI contract: Sets Content-Disposition: attachment headers. File is read and sent by send().
 #AI param_details: [{name: $filePath | type: string | required: true | desc: Absolute path to the file on disk.}; {name: $filename | type: string | required: false | desc: Suggested save name. Defaults to basename.}]
 #AI return_detail: {type: static | desc: $this for fluent chaining.}
-#AI throws_details: [{type: \RuntimeException | desc: If file_path does not exist.}]
+#AI throws_details: [{type: \RuntimeException | desc: If filePath does not exist.}]
 
 #AI:withHeader
 #AI group: Headers & Body

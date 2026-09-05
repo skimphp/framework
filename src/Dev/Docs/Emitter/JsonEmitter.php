@@ -11,8 +11,8 @@ use Skim\Dev\Docs\Value\ExtractedClass;
  * MCP server consume. No framework dependencies — plain PHP only.
  *
  * Example:
- *   (new json_emitter())->emit($classes, 'llm.json', $capability_map, $extensions);
- *   $data = (new json_emitter())->load('llm.json');
+ *   (new JsonEmitter())->emit($classes, 'llm.json', $capabilityMap, $extensions);
+ *   $data = (new JsonEmitter())->load('llm.json');
  *
  * Testing: Instantiate directly; operates on filesystem paths.
  *
@@ -27,7 +27,7 @@ class JsonEmitter {
      * When $installed_extensions is non-empty, written under "extensions.installed".
      *
      * Example:
-     *   (new json_emitter())->emit($classes, 'build/llm.json');
+     *   (new JsonEmitter())->emit($classes, 'build/llm.json');
      *
      * @param \Skim\Dev\Docs\Value\ExtractedClass[] $classes Extracted class records to serialize.
      * @param string            $outputPath          Absolute or relative path for the JSON file.
@@ -91,18 +91,18 @@ class JsonEmitter {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Emitter\JsonEmitter
-#AI source_path: src/dev/docs/emitter/json_emitter.php
-#AI title: json_emitter
+#AI source_path: src/dev/docs/emitter/JsonEmitter.php
+#AI title: JsonEmitter
 #AI description: Serializes extracted class metadata to llm.json and loads it back — the single source of truth for all doc outputs.
 #AI role: JSON serialization layer
 #AI layer: dev
 #AI badges: [emitter; json; docs; no-framework-deps]
-#AI intro: `json_emitter` is the serialization boundary between the AST extraction pipeline and all downstream consumers (llm_md_emitter, mdx_emitter, mcp_server). It writes pretty-printed JSON with optional extension capability enrichment.
+#AI intro: `JsonEmitter` is the serialization boundary between the AST extraction pipeline and all downstream consumers (LlmMdEmitter, MdxEmitter, mcp_server). It writes pretty-printed JSON with optional extension capability enrichment.
 #AI lifecycle: instantiated per-use by commands, no state retained
 #AI fallback: none — throws on write/read failure
 #AI test_seam: instantiate directly with temp file paths
 #AI invariants: [emit() creates parent directories; load() throws when file is missing or JSON is invalid; JSON is pretty-printed with unescaped slashes and unicode]
-#AI core_behaviors: [Serializes extracted_class[] to structured JSON; Optionally enriches with extension capabilities; Loads and validates llm.json for downstream consumers]
+#AI core_behaviors: [Serializes ExtractedClass[] to structured JSON; Optionally enriches with extension capabilities; Loads and validates llm.json for downstream consumers]
 #AI owns: none — stateless
 #AI entry_points: [emit; load]
 #AI config_reads: []
@@ -117,8 +117,8 @@ class JsonEmitter {
 #AI group: Serialization
 #AI frequency: high
 #AI signature: public function emit(array $classes, string $outputPath, array $capabilityMap = [], array $installedExtensions = []): void
-#AI contract: Serializes extracted_class[] to pretty-printed JSON at the given path. Creates parent directories if needed. Optionally includes extension capability data and installed extension names as top-level sections.
-#AI param_details: [{name: $classes | type: extracted_class[] | required: true | desc: Class records to serialize.}; {name: $outputPath | type: string | required: true | desc: Filesystem path for the output JSON file.}; {name: $capabilityMap | type: array | required: false | desc: Extension capability details written as top-level "capabilities" section when non-empty.}; {name: $installedExtensions | type: string[] | required: false | desc: Installed extension names written under "extensions.installed" when non-empty.}]
+#AI contract: Serializes ExtractedClass[] to pretty-printed JSON at the given path. Creates parent directories if needed. Optionally includes extension capability data and installed extension names as top-level sections.
+#AI param_details: [{name: $classes | type: ExtractedClass[] | required: true | desc: Class records to serialize.}; {name: $outputPath | type: string | required: true | desc: Filesystem path for the output JSON file.}; {name: $capabilityMap | type: array | required: false | desc: Extension capability details written as top-level "capabilities" section when non-empty.}; {name: $installedExtensions | type: string[] | required: false | desc: Installed extension names written under "extensions.installed" when non-empty.}]
 #AI throws_details: [{type: \RuntimeException | desc: When json_encode fails or the file cannot be written.}]
 #AI side_effects: [writes JSON file to disk; creates parent directories]
 

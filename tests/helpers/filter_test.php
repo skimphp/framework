@@ -24,13 +24,13 @@ describe('filter::int()', function(): void {
         expect(\Skim\Helpers\Filter::int('50', min: 1, max: 100))->toBe(50);
     });
 
-    test('int_positive rejects zero and negative', function(): void {
+    test('intPositive rejects zero and negative', function(): void {
         expect(\Skim\Helpers\Filter::intPositive('0'))->toBeFalse();
         expect(\Skim\Helpers\Filter::intPositive('-1'))->toBeFalse();
         expect(\Skim\Helpers\Filter::intPositive('1'))->toBe(1);
     });
 
-    test('int_natural accepts zero', function(): void {
+    test('intNatural accepts zero', function(): void {
         expect(\Skim\Helpers\Filter::intNatural('0'))->toBe(0);
         expect(\Skim\Helpers\Filter::intNatural('-1'))->toBeFalse();
     });
@@ -137,7 +137,7 @@ describe('filter::arrInt()', function(): void {
         expect(\Skim\Helpers\Filter::arrInt([1, 'x', '3', null, 0]))->toBe([1, 3, 0]);
     });
 
-    test('arr_int_positive filters out zero and negative', function(): void {
+    test('arrIntPositive filters out zero and negative', function(): void {
         expect(\Skim\Helpers\Filter::arrIntPositive([0, 1, -1, 2]))->toBe([1, 2]);
     });
 

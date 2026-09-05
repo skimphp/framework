@@ -3,9 +3,9 @@
 use Skim\Core\Config;
 use Skim\Dev\Docs\Value\DocsGenerationPaths;
 
-describe('docs_generation_paths', function(): void {
+describe('DocsGenerationPaths', function(): void {
 
-    test('resolves source and output flags relative to base_path', function(): void {
+    test('resolves source and output flags relative to basePath', function(): void {
         $paths = \Skim\Dev\Docs\Value\DocsGenerationPaths::fromFlags([
             'source' => '.agents/skills/better-commenting/test/5',
             'output' => '.agents/skills/better-commenting/test/5/res_mdx',

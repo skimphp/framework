@@ -9,7 +9,7 @@ beforeEach(function(): void {
     \Skim\View\View::setPath(dirname(__DIR__) . '/Fixtures/Views');
 });
 
-describe('fragment_extractor', function(): void {
+describe('FragmentExtractor', function(): void {
 
     test('extracts simple fragment content', function(): void {
         $html = '<!-- @fragment widget --><div>Hello</div><!-- @end -->';

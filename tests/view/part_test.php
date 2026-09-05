@@ -33,7 +33,7 @@ describe('component parts system', function(): void {
                       ->toContain('Close');
     });
 
-    test('has_part returns false when part is not defined', function(): void {
+    test('hasPart returns false when part is not defined', function(): void {
         $html = componentWithParts('card', new \Tests\Fixtures\Props\CardProps(title: 'No Parts'), function($c) {
             echo '<p>Just body</p>';
         });
@@ -66,7 +66,7 @@ describe('component parts system', function(): void {
         expect(part('test', 'fallback'))->toBe('fallback');
     });
 
-    test('has_part() global helper returns false when no component is active', function(): void {
+    test('hasPart() global helper returns false when no component is active', function(): void {
         expect(hasPart('test'))->toBeFalse();
     });
 

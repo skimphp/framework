@@ -11,7 +11,7 @@ namespace Skim\Db;
  * atomic rollback targeting.
  *
  * Example:
- *   $m = new migrator(base_path('migrations'));
+ *   $m = new migrator(basePath('migrations'));
  *   $ran = $m->run();          // ['2024_01_01_create_users.php', ...]
  *   $m->down();                // rollback last batch
  *   $m->status();              // [['filename' => ..., 'batch' => ..., 'status' => 'applied'], ...]
@@ -265,7 +265,7 @@ final class Migrator {
 #AI fallback: none
 #AI test_seam: use test_db() SQLite :memory: — migrator creates its own tracking table
 #AI invariants: [migrations run in filename-sorted order; each run() call creates one batch; each migration runs inside a transaction; fresh() is destructive — drops all tables]
-#AI core_behaviors: [ensure_table() creates _migrations with driver-specific DDL; execute_sql() splits on semicolons for multi-statement support; down() rolls back last batch by default, or N steps if specified]
+#AI core_behaviors: [ensureTable() creates _migrations with driver-specific DDL; executeSql() splits on semicolons for multi-statement support; down() rolls back last batch by default, or N steps if specified]
 #AI warnings: [fresh() drops ALL tables and re-runs everything — dev environments only]
 #AI notes: The _migrations table is auto-created on first run/down/status call.
 #AI scope_items: []
@@ -275,7 +275,7 @@ final class Migrator {
 #AI non_goals: [Does not generate migration files; Does not validate SQL syntax; Does not support per-connection migration tracking]
 #AI side_effects: [Creates _migrations table; Executes DDL and DML; Modifies database schema]
 #AI flow: CLI command -> new migrator(dir) -> run()/down()/fresh()/status() -> db::transaction -> migration::up()/down()
-#AI lifecycle_steps: [new migrator(dir, connection); -> run()/down()/fresh()/status(); -> ensure_table(); -> load_all() reads files; -> compare with applied; -> execute pending in transactions; -> record in _migrations]
+#AI lifecycle_steps: [new migrator(dir, connection); -> run()/down()/fresh()/status(); -> ensureTable(); -> loadAll() reads files; -> compare with applied; -> execute pending in transactions; -> record in _migrations]
 #AI section_order: [Migration Commands; Architecture]
 #AI architectural_notes: Batch-based rollback means all migrations run in a single `migrate` call are rolled back together by `migrate:down`. This prevents partial-schema states.
 

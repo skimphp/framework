@@ -62,25 +62,25 @@ class DocsLlmCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Commands\DocsLlmCommand
-#AI source_path: src/dev/docs/commands/docs_llm_command.php
-#AI title: docs_llm_command
+#AI source_path: src/dev/docs/commands/DocsLlmCommand.php
+#AI title: DocsLlmCommand
 #AI description: CLI command that reads llm.json and writes a compact llm.md Markdown file for LLM context windows.
 #AI role: CLI markdown emitter
 #AI layer: dev
 #AI badges: [cli; docs; markdown; llm]
-#AI intro: `docs_llm_command` converts the structured llm.json into a single grouped Markdown file (llm.md) that fits within LLM context windows. Optionally prepends the framework-level llm.md for full API context.
-#AI lifecycle: instantiated by CLI router or docs_command, runs synchronously
+#AI intro: `DocsLlmCommand` converts the structured llm.json into a single grouped Markdown file (llm.md) that fits within LLM context windows. Optionally prepends the framework-level llm.md for full API context.
+#AI lifecycle: instantiated by CLI router or DocsCommand, runs synchronously
 #AI fallback: none — returns 1 when llm.json is missing or write fails
-#AI test_seam: instantiate directly with set_input() to inject flags
+#AI test_seam: instantiate directly with setInput() to inject flags
 #AI invariants: [fails with clear message when llm.json does not exist; framework context prepended only when config flag is true]
-#AI core_behaviors: [Loads llm.json via json_emitter; Delegates Markdown rendering to llm_md_emitter; Optionally prepends framework llm.md]
-#AI owns: json_emitter, llm_md_emitter instances
+#AI core_behaviors: [Loads llm.json via JsonEmitter; Delegates Markdown rendering to LlmMdEmitter; Optionally prepends framework llm.md]
+#AI owns: JsonEmitter, LlmMdEmitter instances
 #AI entry_points: [handle]
 #AI config_reads: [docs.output.json; docs.output.llm_md; docs.include_framework_context]
 #AI non_goals: [Does not generate MDX; Does not run extraction]
 #AI side_effects: [writes llm.md to configured or overridden output path]
-#AI flow: handle() -> json_emitter.load() -> llm_md_emitter.emit() -> llm.md
-#AI lifecycle_steps: [handle(); -> resolve paths; -> json_emitter.load(llm.json); -> optionally load framework llm.md; -> llm_md_emitter.emit(); -> llm.md written]
+#AI flow: handle() -> JsonEmitter.load() -> LlmMdEmitter.emit() -> llm.md
+#AI lifecycle_steps: [handle(); -> resolve paths; -> JsonEmitter.load(llm.json); -> optionally load framework llm.md; -> LlmMdEmitter.emit(); -> llm.md written]
 #AI section_order: [Pipeline; Architecture]
 #AI architectural_notes: Requires docs:extract to have been run first; does not invoke it automatically.
 

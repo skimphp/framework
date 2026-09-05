@@ -30,7 +30,7 @@ describe('DI lifetime — explicit lifetime enum', function (): void {
         expect($first)->not->toBe($second);
     });
 
-    test('bind with lifetime::Request is cleared after end_request', function (): void {
+    test('bind with lifetime::Request is cleared after endRequest', function (): void {
         $app = \Skim\Core\App::testInstance();
         $app->bind('svc.r', fn() => new \stdClass(), lifetime: \Skim\Core\Lifetime::Request);
 

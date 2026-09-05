@@ -11,16 +11,16 @@ namespace Skim\Websocket;
  *
  * Example:
  *   class chat_handler implements handler {
- *       public function on_open(connection $conn): void {
+ *       public function onOpen(connection $conn): void {
  *           $conn->join('chat:general');
  *       }
- *       public function on_message(connection $conn, string $message): void {
+ *       public function onMessage(connection $conn, string $message): void {
  *           connection::broadcast('chat:general', $message, except_id: $conn->id());
  *       }
- *       public function on_close(connection $conn): void {
+ *       public function onClose(connection $conn): void {
  *           $conn->leave('chat:general');
  *       }
- *       public function on_error(connection $conn, \Throwable $e): void {
+ *       public function onError(connection $conn, \Throwable $e): void {
  *           log::error("WS error: " . $e->getMessage());
  *       }
  *   }
@@ -82,16 +82,16 @@ interface Handler {
 #AI lifecycle: one implementation per WebSocket route, methods called by the amphp server on events
 #AI fallback: n/a — interface only
 #AI test_seam: mock connection objects and call handler methods directly
-#AI invariants: [on_error must never rethrow — the event loop would crash; on_close is called for both orderly and error disconnects; $message in on_message is always a raw string]
+#AI invariants: [onError must never rethrow — the event loop would crash; onClose is called for both orderly and error disconnects; $message in onMessage is always a raw string]
 #AI core_behaviors: [Four lifecycle callbacks: open, message, close, error; Connection object passed to every callback for room management and messaging]
-#AI warnings: [on_error must never rethrow exceptions — doing so crashes the Revolt event loop and kills all connections]
+#AI warnings: [onError must never rethrow exceptions — doing so crashes the Revolt event loop and kills all connections]
 #AI notes: The server uses amphp/websocket-server with the Revolt event loop. PHP 8.5 Fibers are native, making Revolt the de-facto async loop.
 #AI owns: nothing — contract only
-#AI entry_points: [on_open; on_message; on_close; on_error]
+#AI entry_points: [onOpen; onMessage; onClose; onError]
 #AI config_reads: []
 #AI non_goals: [Does not manage the WebSocket server; Does not handle HTTP upgrade; Does not provide authentication]
 #AI side_effects: [Handler implementations typically call connection::send/broadcast/join/leave]
-#AI flow: amphp server -> handler::on_open/on_message/on_close/on_error -> connection API
+#AI flow: amphp server -> handler::onOpen/onMessage/onClose/onError -> connection API
 #AI lifecycle_steps: [WebSocket handshake -> handler::onOpen($conn); -> client message -> handler::onMessage($conn, $msg); -> disconnect -> handler::onClose($conn); -> exception -> handler::onError($conn, $e)]
 #AI section_order: [Handler API; Architecture]
 #AI architectural_notes: Interface kept minimal — four callbacks covering the full WebSocket lifecycle. The amphp server handles connection management, framing, and the event loop.
@@ -121,6 +121,6 @@ interface Handler {
 #AI group: Handler API
 #AI frequency: low
 #AI signature: public function onError(connection $conn, \Throwable $e): void
-#AI contract: Called on unhandled exception in on_message or on_open. Log and optionally close. Never rethrow.
+#AI contract: Called on unhandled exception in onMessage or onOpen. Log and optionally close. Never rethrow.
 #AI param_details: [{name: $conn | type: connection | required: true | desc: The connection that caused the error.}; {name: $e | type: \Throwable | required: true | desc: The unhandled exception.}]
 #AI warnings: [Never rethrow — the Revolt event loop would crash and kill all connections]

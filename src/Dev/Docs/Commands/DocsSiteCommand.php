@@ -55,25 +55,25 @@ class DocsSiteCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Commands\DocsSiteCommand
-#AI source_path: src/dev/docs/commands/docs_site_command.php
-#AI title: docs_site_command
+#AI source_path: src/dev/docs/commands/DocsSiteCommand.php
+#AI title: DocsSiteCommand
 #AI description: CLI command that reads llm.json and generates one MDX file per class for the Starlight documentation site.
 #AI role: CLI MDX generator
 #AI layer: dev
 #AI badges: [cli; docs; mdx; starlight]
-#AI intro: `docs_site_command` converts the structured llm.json into component-style MDX files suitable for a Starlight/Astro documentation site. Each class becomes one .mdx file; duplicate class names receive a source-file suffix.
-#AI lifecycle: instantiated by CLI router or docs_command, runs synchronously
+#AI intro: `DocsSiteCommand` converts the structured llm.json into component-style MDX files suitable for a Starlight/Astro documentation site. Each class becomes one .mdx file; duplicate class names receive a source-file suffix.
+#AI lifecycle: instantiated by CLI router or DocsCommand, runs synchronously
 #AI fallback: none — returns 1 when llm.json is missing or write fails
-#AI test_seam: instantiate directly with set_input() to inject flags
+#AI test_seam: instantiate directly with setInput() to inject flags
 #AI invariants: [fails when llm.json does not exist; duplicate class names get suffixed filenames]
-#AI core_behaviors: [Loads llm.json via json_emitter; Delegates MDX generation to mdx_emitter; Reports count of files written]
-#AI owns: json_emitter, mdx_emitter instances
+#AI core_behaviors: [Loads llm.json via JsonEmitter; Delegates MDX generation to MdxEmitter; Reports count of files written]
+#AI owns: JsonEmitter, MdxEmitter instances
 #AI entry_points: [handle]
 #AI config_reads: [docs.output.json; docs.output.mdx_dir]
 #AI non_goals: [Does not generate llm.md; Does not run extraction]
 #AI side_effects: [writes MDX files to configured or overridden output directory]
-#AI flow: handle() -> json_emitter.load() -> mdx_emitter.emit() -> *.mdx files
-#AI lifecycle_steps: [handle(); -> resolve paths; -> json_emitter.load(llm.json); -> mdx_emitter.emit(); -> MDX files written]
+#AI flow: handle() -> JsonEmitter.load() -> MdxEmitter.emit() -> *.mdx files
+#AI lifecycle_steps: [handle(); -> resolve paths; -> JsonEmitter.load(llm.json); -> MdxEmitter.emit(); -> MDX files written]
 #AI section_order: [Pipeline; Architecture]
 #AI architectural_notes: Requires docs:extract to have been run first; does not invoke it automatically.
 

@@ -104,7 +104,7 @@ class Db {
      *
      * Safety net for worker mode: if a request exits with an uncommitted
      * transaction, the next request must not inherit it. Called by
-     * worker_reset::apply() between requests.
+     * WorkerReset::apply() between requests.
      */
     public static function rollbackAll(): void {
         foreach (self::$pool as $conn) {
@@ -306,24 +306,24 @@ class Db {
 #AI role: static database facade
 #AI layer: db
 #AI badges: [facade; db; query_gen; lazy-connect; profiler]
-#AI intro: `db` is the static entry point for all raw SQL operations. It uses query_gen `%placeholder%` templates processed by `query_builder` (internal). Connections are lazy — PDO is created on first query, not on config load. All queries are recorded in the profiler when APP_DEBUG is enabled.
+#AI intro: `db` is the static entry point for all raw SQL operations. It uses query_gen `%placeholder%` templates processed by `QueryBuilder` (internal). Connections are lazy — PDO is created on first query, not on config load. All queries are recorded in the profiler when APP_DEBUG is enabled.
 #AI lifecycle: static facade, connections resolved lazily on first query per named connection
 #AI fallback: none — missing connection config throws RuntimeException
 #AI test_seam: test_db() for SQLite :memory:, reset() to clear connection pool
 #AI invariants: [connections are lazy — PDO created on first query; query() returns rows for SELECT, rowCount for DML; val() returns null on no match; row() returns null on no match; all() returns empty array on no match; transaction() auto-rolls back on any Throwable]
-#AI core_behaviors: [query_gen %placeholders% are substituted by query_builder; unused placeholders stripped silently; debug:true returns interpolated SQL without executing; profiler records every query with timing]
+#AI core_behaviors: [query_gen %placeholders% are substituted by QueryBuilder; unused placeholders stripped silently; debug:true returns interpolated SQL without executing; profiler records every query with timing]
 #AI warnings: [Always use transaction() for multi-table writes; Always use limit on large tables with all()]
 #AI notes: The connection pool is process-local. Call reset() in test tearDown() to clear connections.
 #AI scope_items: []
 #AI owns: PDO connection pool
 #AI entry_points: [query; val; row; all; transaction; null; pdo; connect; reset]
 #AI config_reads: [db.default; db.*.driver; db.*.host; db.*.port; db.*.database; db.*.charset; db.*.user; db.*.password]
-#AI non_goals: [Does not provide an ORM — use model for active record; Does not handle migrations — use migrator; query_builder is internal, not public API]
+#AI non_goals: [Does not provide an ORM — use model for active record; Does not handle migrations — use migrator; QueryBuilder is internal, not public API]
 #AI side_effects: [profiler::db records every query; connect() opens PDO connections; reset() closes all pooled connections]
-#AI flow: db::method() -> query_builder::build() -> PDO prepare/execute -> profiler::db()
-#AI lifecycle_steps: [db::query/val/row/all(); -> query_builder::build(sql, params); -> pdo(connection) auto-connects if needed; -> PDO prepare + execute; -> profiler::db() records timing; -> return rows/scalar/count]
+#AI flow: db::method() -> QueryBuilder::build() -> PDO prepare/execute -> profiler::db()
+#AI lifecycle_steps: [db::query/val/row/all(); -> QueryBuilder::build(sql, params); -> pdo(connection) auto-connects if needed; -> PDO prepare + execute; -> profiler::db() records timing; -> return rows/scalar/count]
 #AI section_order: [Connection Management; Query Execution; Transactions; Utilities; Testing Hooks]
-#AI architectural_notes: The facade keeps raw SQL as the primary interface. query_builder handles %placeholder% substitution internally — it is not part of the public API.
+#AI architectural_notes: The facade keeps raw SQL as the primary interface. QueryBuilder handles %placeholder% substitution internally — it is not part of the public API.
 
 #AI:connect
 #AI group: Connection Management
@@ -398,6 +398,6 @@ class Db {
 #AI:null
 #AI group: Utilities
 #AI frequency: medium
-#AI signature: public static function null(): null_marker
-#AI contract: Returns a null_marker sentinel for use in %set% to force SET col = NULL. Plain null skips the column.
-#AI return_detail: {type: null_marker | desc: Sentinel that query_builder translates to literal NULL.}
+#AI signature: public static function null(): NullMarker
+#AI contract: Returns a NullMarker sentinel for use in %set% to force SET col = NULL. Plain null skips the column.
+#AI return_detail: {type: NullMarker | desc: Sentinel that QueryBuilder translates to literal NULL.}

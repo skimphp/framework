@@ -10,8 +10,8 @@ namespace Skim\Dev\Docs\Emitter;
  * prepends framework-level llm.md for full API context.
  *
  * Example:
- *   $data = (new json_emitter())->load('llm.json');
- *   (new llm_md_emitter())->emit($data, 'llm.md', framework_llm_md: 'vendor/skim/framework/llm.md');
+ *   $data = (new JsonEmitter())->load('llm.json');
+ *   (new LlmMdEmitter())->emit($data, 'llm.md', frameworkLlmMd: 'vendor/skim/framework/llm.md');
  *
  * Testing: Instantiate directly; operates on filesystem paths.
  *
@@ -230,14 +230,14 @@ class LlmMdEmitter {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Emitter\LlmMdEmitter
-#AI source_path: src/dev/docs/emitter/llm_md_emitter.php
-#AI title: llm_md_emitter
+#AI source_path: src/dev/docs/emitter/LlmMdEmitter.php
+#AI title: LlmMdEmitter
 #AI description: Converts decoded llm.json data into compact grouped Markdown optimized for LLM context windows.
 #AI role: Markdown emitter for LLM consumption
 #AI layer: dev
 #AI badges: [emitter; markdown; llm; docs]
-#AI intro: `llm_md_emitter` transforms the structured llm.json array into a single Markdown file with class sections grouped by section_order. It renders compact signatures, param tables, and warning annotations in a format that fits within LLM context windows.
-#AI lifecycle: instantiated per-use by docs_llm_command, no state retained
+#AI intro: `LlmMdEmitter` transforms the structured llm.json array into a single Markdown file with class sections grouped by section_order. It renders compact signatures, param tables, and warning annotations in a format that fits within LLM context windows.
+#AI lifecycle: instantiated per-use by DocsLlmCommand, no state retained
 #AI fallback: none — throws on write failure
 #AI test_seam: instantiate directly with temp file paths
 #AI invariants: [methods grouped by section_order; compact signatures strip types from params; #AI markers stripped from output text]
@@ -247,8 +247,8 @@ class LlmMdEmitter {
 #AI config_reads: []
 #AI non_goals: [Does not generate MDX; Does not extract or load llm.json]
 #AI side_effects: [writes Markdown file to disk; creates parent directories]
-#AI flow: emit(data, path) -> render_class[] -> render_method[] -> group_methods -> write
-#AI lifecycle_steps: [emit(); -> build header lines; -> optionally prepend framework llm.md; -> iterate classes; -> render_class(); -> group_methods(); -> render_method(); -> write()]
+#AI flow: emit(data, path) -> renderClass[] -> renderMethod[] -> groupMethods -> write
+#AI lifecycle_steps: [emit(); -> build header lines; -> optionally prepend framework llm.md; -> iterate classes; -> renderClass(); -> groupMethods(); -> renderMethod(); -> write()]
 #AI section_order: [Emit; Architecture]
 #AI architectural_notes: Produces a single-file Markdown output designed for paste-into-LLM usage, not for human browsing.
 

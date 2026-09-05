@@ -349,35 +349,35 @@ class ExtInstallCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\ExtInstallCommand
-#AI source_path: src/cli/commands/ext_install_command.php
-#AI title: ext_install_command
+#AI source_path: src/cli/commands/ExtInstallCommand.php
+#AI title: ExtInstallCommand
 #AI description: CLI command that installs a SKIM extension package with composer, config publishing, and atomic migrations.
 #AI role: CLI extension installer
 #AI layer: cli
 #AI badges: [cli; command; extension; installer; atomic-migrations]
-#AI intro: `ext_install_command` implements the `php skim ext:install` CLI command. It runs the full installation pipeline: preflight DB check, composer require, extension discovery, config publishing, atomic migration execution (with rollback on failure), and post-install hints.
+#AI intro: `ExtInstallCommand` implements the `php skim ext:install` CLI command. It runs the full installation pipeline: preflight DB check, composer require, extension discovery, config publishing, atomic migration execution (with rollback on failure), and post-install hints.
 #AI lifecycle: instantiated by kernel, handle() called once per invocation
 #AI fallback: migration failure triggers automatic rollback of all migrations applied in this session
-#AI test_seam: constructor accepts ext_registry and ext_migrator test doubles
+#AI test_seam: constructor accepts ExtRegistry and ExtMigrator test doubles
 #AI invariants: [short package names are prefixed with skim/; migrations are atomic — all or nothing; config is not overwritten if it already exists]
-#AI core_behaviors: [Preflight checks PHP version and DB connectivity; Composer require runs as subprocess with optional TTY streaming; Extension discovery via ext_registry after composer install; Config publishing copies to project config dir; Migrations run atomically with rollback on failure]
+#AI core_behaviors: [Preflight checks PHP version and DB connectivity; Composer require runs as subprocess with optional TTY streaming; Extension discovery via ExtRegistry after composer install; Config publishing copies to project config dir; Migrations run atomically with rollback on failure]
 #AI warnings: [Migration failure rolls back all migrations applied in this session; composer require modifies vendor/ and composer.json]
-#AI owns: nothing — delegates to ext_registry and ext_migrator
+#AI owns: nothing — delegates to ExtRegistry and ExtMigrator
 #AI entry_points: [handle]
 #AI config_reads: []
 #AI non_goals: [Does not manage extension updates; Does not uninstall extensions; Does not validate extension compatibility]
 #AI side_effects: [Runs composer require subprocess; Copies config files; Runs database migrations; Writes to .env hints on stdout]
-#AI flow: ext_install_command::handle() -> resolve_package() -> preflight() -> composer_require() -> registry->refresh() -> registry->find() -> publish_config() -> migrator->run() -> print hints
-#AI lifecycle_steps: [handle(); -> resolve_package(arg(0)); -> preflight() checks PHP+DB; -> composer_require(package); -> registry->refresh(); -> registry->find(package); -> publish_config(extension); -> table_prefix(); -> write_table_prefix(); -> migrator->run(); -> on failure: rollback_session(); -> print_env_additions(); -> print_post_install()]
+#AI flow: ExtInstallCommand::handle() -> resolvePackage() -> preflight() -> composerRequire() -> registry->refresh() -> registry->find() -> publishConfig() -> migrator->run() -> print hints
+#AI lifecycle_steps: [handle(); -> resolvePackage(arg(0)); -> preflight() checks PHP+DB; -> composerRequire(package); -> registry->refresh(); -> registry->find(package); -> publishConfig(extension); -> tablePrefix(); -> writeTablePrefix(); -> migrator->run(); -> on failure: rollbackSession(); -> printEnvAdditions(); -> printPostInstall()]
 #AI section_order: [Command Execution; Installation Pipeline; Configuration; Architecture]
-#AI architectural_notes: Constructor injection of ext_registry and ext_migrator enables full test isolation without filesystem or database side-effects.
+#AI architectural_notes: Constructor injection of ExtRegistry and ExtMigrator enables full test isolation without filesystem or database side-effects.
 
 #AI:__construct
 #AI group: Architecture
 #AI frequency: low
-#AI signature: public function __construct(?ext_registry $registry = null, ?ext_migrator $migrator = null)
+#AI signature: public function __construct(?ExtRegistry $registry = null, ?ExtMigrator $migrator = null)
 #AI contract: Accepts optional test doubles for extension registry and migration executor. Defaults are created lazily.
-#AI param_details: [{name: $registry | type: ?ext_registry | required: false | desc: Test double for extension registry. Null uses default.}; {name: $migrator | type: ?ext_migrator | required: false | desc: Test double for migration executor. Null uses default.}]
+#AI param_details: [{name: $registry | type: ?ExtRegistry | required: false | desc: Test double for extension registry. Null uses default.}; {name: $migrator | type: ?ExtMigrator | required: false | desc: Test double for migration executor. Null uses default.}]
 
 #AI:handle
 #AI group: Command Execution
@@ -456,11 +456,11 @@ class ExtInstallCommand extends \Skim\Cli\Command {
 #AI:registry
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private function registry(): ext_registry
+#AI signature: private function registry(): ExtRegistry
 #AI contract: Returns the injected or default extension registry.
 
 #AI:migrator
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private function migrator(): ext_migrator
+#AI signature: private function migrator(): ExtMigrator
 #AI contract: Returns the injected or default extension migrator.

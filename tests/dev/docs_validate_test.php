@@ -3,7 +3,7 @@
 use Skim\Dev\Docs\Commands\DocsValidateCommand;
 use Skim\Cli\Cli;
 
-describe('docs_validate_command reference validation', function(): void {
+describe('DocsValidateCommand reference validation', function(): void {
     $tempDir = '';
 
     beforeEach(function() use (&$tempDir): void {

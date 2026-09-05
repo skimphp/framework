@@ -91,19 +91,19 @@ class RouteEntry {
 
 #AI:class
 #AI symbol: Skim\Core\RouteEntry
-#AI source_path: src/core/route_entry.php
-#AI title: route_entry
+#AI source_path: src/core/RouteEntry.php
+#AI title: RouteEntry
 #AI description: Fluent route configuration object returned by router registration methods.
 #AI role: route configuration builder
 #AI layer: core
 #AI badges: [fluent; route; middleware; named-route]
 #AI intro: `Skim\Core\RouteEntry` is the return value of every `router::add()` and `app::get()/post()/put()/patch()/delete()` call. It exposes two fluent configuration methods — `name()` and `middleware()` — and two read-only accessors consumed internally by the router during dispatch.
-#AI flow: router::add() -> new route_entry -> name() registers reverse URL -> middleware() appends to stack -> dispatch reads get_name() and get_middleware()
+#AI flow: router::add() -> new RouteEntry -> name() registers reverse URL -> middleware() appends to stack -> dispatch reads getName() and getMiddleware()
 #AI lifecycle: Created fresh per route registration. Passed around by reference (object, not copy) until consumed by router::dispatch().
-#AI test_seam: Instantiate with a router mock; assert name() calls register_name() on the router; assert get_middleware() returns accumulated classes.
-#AI invariants: [name() overwrites duplicate names silently; middleware() is additive, never replacing; get_name() returns null when name() was never called]
+#AI test_seam: Instantiate with a router mock; assert name() calls registerName() on the router; assert getMiddleware() returns accumulated classes.
+#AI invariants: [name() overwrites duplicate names silently; middleware() is additive, never replacing; getName() returns null when name() was never called]
 #AI section_order: [Configuration; Accessors]
-#AI architectural_notes: route_entry is intentionally minimal — it captures only what needs to be set after route registration. The method, pattern, and handler are constructor-promoted readonly properties; configuration happens via chained methods; state is consumed by the router at dispatch time.
+#AI architectural_notes: RouteEntry is intentionally minimal — it captures only what needs to be set after route registration. The method, pattern, and handler are constructor-promoted readonly properties; configuration happens via chained methods; state is consumed by the router at dispatch time.
 
 #AI:name
 #AI group: Configuration

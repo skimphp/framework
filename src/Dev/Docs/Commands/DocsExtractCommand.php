@@ -84,25 +84,25 @@ class DocsExtractCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Commands\DocsExtractCommand
-#AI source_path: src/dev/docs/commands/docs_extract_command.php
-#AI title: docs_extract_command
+#AI source_path: src/dev/docs/commands/DocsExtractCommand.php
+#AI title: DocsExtractCommand
 #AI description: CLI command that scans PHP source files, extracts @ai.* annotations via AST, and writes llm.json.
 #AI role: CLI extraction command
 #AI layer: dev
 #AI badges: [cli; docs; extraction; ast]
-#AI intro: `docs_extract_command` is the first step in the docs pipeline. It uses `project_scanner` to walk source paths, runs `class_extractor` on each .php file, enriches the result with extension capability data from `ext_registry`, and writes the output to llm.json via `json_emitter`.
-#AI lifecycle: instantiated by CLI router or docs_command, runs synchronously
+#AI intro: `DocsExtractCommand` is the first step in the docs pipeline. It uses `ProjectScanner` to walk source paths, runs `ClassExtractor` on each .php file, enriches the result with extension capability data from `ExtRegistry`, and writes the output to llm.json via `JsonEmitter`.
+#AI lifecycle: instantiated by CLI router or DocsCommand, runs synchronously
 #AI fallback: none — returns 1 on scan or write failure
-#AI test_seam: instantiate directly with set_input() to inject flags
+#AI test_seam: instantiate directly with setInput() to inject flags
 #AI invariants: [scan failure returns 1 with error message; write failure returns 1; null classes are silently discarded by scanner]
-#AI core_behaviors: [Scans configured or overridden source paths for .php files; Extracts annotations via AST using class_extractor; Enriches output with extension capabilities from ext_registry]
-#AI owns: project_scanner, json_emitter instances
+#AI core_behaviors: [Scans configured or overridden source paths for .php files; Extracts annotations via AST using ClassExtractor; Enriches output with extension capabilities from ExtRegistry]
+#AI owns: ProjectScanner, JsonEmitter instances
 #AI entry_points: [handle]
 #AI config_reads: [docs.scan_paths; docs.output.json]
 #AI non_goals: [Does not generate MDX or Markdown; Does not validate annotation coverage]
 #AI side_effects: [writes llm.json to configured or overridden output path]
-#AI flow: handle() -> docs_generation_paths -> project_scanner -> ext_registry -> json_emitter -> llm.json
-#AI lifecycle_steps: [handle(); -> resolve paths from flags/config; -> project_scanner.scan(); -> ext_registry.installed(); -> json_emitter.emit(); -> llm.json written]
+#AI flow: handle() -> DocsGenerationPaths -> ProjectScanner -> ExtRegistry -> JsonEmitter -> llm.json
+#AI lifecycle_steps: [handle(); -> resolve paths from flags/config; -> ProjectScanner.scan(); -> ExtRegistry.installed(); -> JsonEmitter.emit(); -> llm.json written]
 #AI section_order: [Pipeline; Architecture]
 #AI architectural_notes: Separates scanning, enrichment, and writing into distinct steps for clear error reporting.
 

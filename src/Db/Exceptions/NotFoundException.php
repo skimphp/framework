@@ -3,7 +3,7 @@
 namespace Skim\Db\Exceptions;
 
 /**
- * Thrown by find_or_fail() when no record matches the primary key. #AI:class
+ * Thrown by findOrFail() when no record matches the primary key. #AI:class
  *
  * Use in controllers to produce typed 404 responses. Always catch
  * not_found_exception specifically — never catch generic \Exception.
@@ -12,7 +12,7 @@ namespace Skim\Db\Exceptions;
  *   $user = user::findOrFail($id); // throws not_found_exception if missing
  *   // In error handler: catch → $res->status(404)->json(['error' => $e->getMessage()])
  *
- * Testing: Assert thrown with expect(fn() => user::findOrFail(999))->toThrow(not_found_exception::class).
+ * Testing: Assert thrown with expect(fn() => user::findOrFail(999))->toThrow(NotFoundException::class).
  *
  * #AI:class
  */
@@ -30,28 +30,28 @@ class NotFoundException extends \RuntimeException {
 
 #AI:class
 #AI symbol: Skim\Db\Exceptions\NotFoundException
-#AI source_path: src/db/exceptions/not_found_exception.php
-#AI title: not_found_exception
+#AI source_path: src/db/exceptions/NotFoundException.php
+#AI title: NotFoundException
 #AI description: RuntimeException thrown by model::findOrFail() when a record is missing.
 #AI role: 404 model exception
 #AI layer: db
 #AI badges: [exception; orm; 404]
-#AI intro: `not_found_exception` is thrown by `model::findOrFail()` when no record matches the given primary key. Controllers catch it to return structured 404 responses.
-#AI lifecycle: thrown by find_or_fail(), caught by controller or global error handler
+#AI intro: `NotFoundException` is thrown by `model::findOrFail()` when no record matches the given primary key. Controllers catch it to return structured 404 responses.
+#AI lifecycle: thrown by findOrFail(), caught by controller or global error handler
 #AI fallback: none
-#AI test_seam: expect(fn() => model::findOrFail(999))->toThrow(not_found_exception::class)
+#AI test_seam: expect(fn() => model::findOrFail(999))->toThrow(NotFoundException::class)
 #AI invariants: [message includes model class name and searched id; extends RuntimeException]
 #AI core_behaviors: [Provides a human-readable error message identifying the model and missing id]
 #AI warnings: []
-#AI notes: Prefer `find()` returning null when absence is expected. Use `find_or_fail()` only when missing is exceptional.
+#AI notes: Prefer `find()` returning null when absence is expected. Use `findOrFail()` only when missing is exceptional.
 #AI scope_items: []
 #AI owns: nothing
 #AI entry_points: [__construct]
 #AI config_reads: []
 #AI non_goals: [Does not handle HTTP status codes — that is the controller's job]
 #AI side_effects: []
-#AI flow: model::findOrFail() -> find() returns null -> throw new not_found_exception(class, id)
-#AI lifecycle_steps: [model::findOrFail($id); -> find($id) returns null; -> throw new not_found_exception(static::class, $id)]
+#AI flow: model::findOrFail() -> find() returns null -> throw new NotFoundException(class, id)
+#AI lifecycle_steps: [model::findOrFail($id); -> find($id) returns null; -> throw new NotFoundException(static::class, $id)]
 #AI section_order: [Constructor]
 #AI architectural_notes: Keeps the ORM layer HTTP-agnostic — the exception carries model context, the controller decides the HTTP response.
 

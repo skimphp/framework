@@ -63,8 +63,8 @@ class Cors implements \Skim\Core\Middleware {
 #AI badges: [middleware; cors; http; security]
 #AI intro: `cors` adds Access-Control-Allow-* headers to every response and short-circuits OPTIONS preflight requests with a 204. It must run before auth middleware since browsers send preflight without credentials.
 #AI lifecycle: registered as global middleware; runs on every request
-#AI test_seam: construct with custom allow_origin for per-test configuration
-#AI invariants: [OPTIONS requests never reach $next; All responses receive CORS headers; Default allow_origin is wildcard '*']
+#AI test_seam: construct with custom allowOrigin for per-test configuration
+#AI invariants: [OPTIONS requests never reach $next; All responses receive CORS headers; Default allowOrigin is wildcard '*']
 #AI core_behaviors: [Adds Allow-Origin, Allow-Methods, Allow-Headers, Max-Age headers; Short-circuits OPTIONS with 204 empty response]
 #AI owns: nothing
 #AI entry_points: [handle]

@@ -15,8 +15,8 @@ use Skim\Core\Config;
  * in the error page and toolbar; the OS launches the registered protocol handler.
  *
  * Example:
- *   <a href="<?= ide_link::url('/app/src/Foo.php', 42) ?>">Open in IDE</a>
- *   <a href="<?= ide_link::url('/app/src/Foo.php', 42, ide: 'vscode') ?>">VS Code</a>
+ *   <a href="<?= IdeLink::url('/app/src/Foo.php', 42) ?>">Open in IDE</a>
+ *   <a href="<?= IdeLink::url('/app/src/Foo.php', 42, ide: 'vscode') ?>">VS Code</a>
  *
  * Testing: pure string output — assert url() format and name() for known/unknown IDEs.
  *
@@ -52,7 +52,7 @@ final class IdeLink {
      * Returns the list of supported IDE identifiers. #AI:supported
      *
      * Order matches the canonical display order. Use this to populate config
-     * pickers, documentation, or `ide_link::isSupported()` validation.
+     * pickers, documentation, or `IdeLink::isSupported()` validation.
      *
      * @return string[] IDE identifier keys (e.g. ['phpstorm', 'vscode', ...]).
      */
@@ -143,20 +143,20 @@ final class IdeLink {
 
 #AI:class
 #AI symbol: Skim\Dev\IdeLink
-#AI source_path: src/dev/ide_link.php
-#AI title: ide_link
+#AI source_path: src/dev/IdeLink.php
+#AI title: IdeLink
 #AI description: Builds deep-link URLs that open a file:line in the developer's editor — phpstorm (default), vscode, cursor, sublime, idea, webstorm, textmate, emacs, macvim, atom.
 #AI role: editor deep-link provider
 #AI layer: dev
 #AI badges: [dev; debug; ide; deep-link; protocol-handler; config]
-#AI intro: `ide_link` is a single source of truth for editor deep-links. It owns the registry of supported IDEs and the URL scheme each one uses, so the error page and toolbar never hard-code `phpstorm://` directly. The active IDE is read from `app.debug_ide` config (default: `phpstorm`); unknown values fall back silently to phpstorm.
+#AI intro: `IdeLink` is a single source of truth for editor deep-links. It owns the registry of supported IDEs and the URL scheme each one uses, so the error page and toolbar never hard-code `phpstorm://` directly. The active IDE is read from `app.debug_ide` config (default: `phpstorm`); unknown values fall back silently to phpstorm.
 #AI lifecycle: stateless — pure string lookups
 #AI fallback: unknown IDE identifiers in config or arguments fall back to 'phpstorm' to keep the error page functional
-#AI test_seam: assert url() format per IDE, supported() list, resolve() fallback, is_supported()
+#AI test_seam: assert url() format per IDE, supported() list, resolve() fallback, isSupported()
 #AI invariants: [NAMES keys are the canonical supported IDE list; url() always returns a non-empty string; resolve() never throws; column defaults to 1 for VS Code/Cursor schemes that require it]
 #AI core_behaviors: [Maps IDE identifier → display name and URL builder; Reads active IDE from app.debug_ide config; Builds JetBrains, VS Code, Sublime, TextMate, Emacs, MacVim, Atom URL schemes; Maps each IDE to a tabler-icons icon name]
 #AI owns: IDE registry (identifier, name, URL scheme)
-#AI entry_points: [supported; name; is_supported; resolve; url; icon]
+#AI entry_points: [supported; name; isSupported; resolve; url; icon]
 #AI config_reads: [app.debug_ide]
 #AI non_goals: [Does not check whether the IDE is installed locally; Does not launch the IDE — only generates the URL the OS protocol handler consumes; Does not support custom user-defined schemes (extension point lives in app code, not the framework)]
 #AI side_effects: [none — pure string output]

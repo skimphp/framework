@@ -7,7 +7,7 @@ namespace Skim\Cli;
  *
  * Use when any CLI command or worker needs styled terminal output.
  * Escape codes are emitted only when stdout is a real TTY — piped output
- * (grep, CI logs, file redirects) stays plain text. Call force_plain(true)
+ * (grep, CI logs, file redirects) stays plain text. Call forcePlain(true)
  * to suppress colors unconditionally (e.g. --no-ansi flag).
  *
  * Example:
@@ -429,19 +429,19 @@ final class Cli {
 #AI role: CLI output and interaction helper
 #AI layer: cli
 #AI badges: [cli; output; ansi; tty-aware; interactive]
-#AI intro: `cli` is the central terminal output helper for the SKIM CLI. It provides colored output methods, interactive prompts (ask, confirm, choice), ASCII tables, progress bars, and styled error boxes. All ANSI escape codes are suppressed when stdout is not a TTY or when force_plain(true) is set.
+#AI intro: `cli` is the central terminal output helper for the SKIM CLI. It provides colored output methods, interactive prompts (ask, confirm, choice), ASCII tables, progress bars, and styled error boxes. All ANSI escape codes are suppressed when stdout is not a TTY or when forcePlain(true) is set.
 #AI lifecycle: static utility — no instantiation needed, methods called directly
 #AI fallback: all output degrades gracefully to plain text when not connected to a TTY
-#AI test_seam: force_plain(true) to suppress ANSI codes for deterministic test assertions
-#AI invariants: [ANSI codes emitted only on TTY; force_plain(true) overrides TTY detection; error() writes to STDERR; all other methods write to STDOUT]
+#AI test_seam: forcePlain(true) to suppress ANSI codes for deterministic test assertions
+#AI invariants: [ANSI codes emitted only on TTY; forcePlain(true) overrides TTY detection; error() writes to STDERR; all other methods write to STDOUT]
 #AI core_behaviors: [TTY detection via stream_isatty/posix_isatty; Colored output with automatic reset; Interactive prompts read from STDIN; ASCII tables with auto-fitted column widths; Error boxes with Unicode or plain borders]
-#AI owns: static force_plain flag
-#AI entry_points: [line; info; success; warn; error; muted; bold; ask; confirm; choice; table; header; error_box; did_you_mean]
+#AI owns: static forcePlain flag
+#AI entry_points: [line; info; success; warn; error; muted; bold; ask; confirm; choice; table; header; errorBox; didYouMean]
 #AI config_reads: []
-#AI non_goals: [Does not handle input parsing (see argv_parser); Does not manage process lifecycle (see kernel); Does not provide full-screen TUI (see interactive_menu)]
-#AI side_effects: [Writes to STDOUT or STDERR; Reads from STDIN for interactive prompts; force_plain() mutates static state]
-#AI flow: cli::method() -> is_tty() check -> color() wraps text -> echo/fwrite output
-#AI lifecycle_steps: [caller invokes cli::method(); -> is_tty() checks stdout; -> color() applies ANSI if TTY; -> echo or fwrite outputs text]
+#AI non_goals: [Does not handle input parsing (see ArgvParser); Does not manage process lifecycle (see kernel); Does not provide full-screen TUI (see InteractiveMenu)]
+#AI side_effects: [Writes to STDOUT or STDERR; Reads from STDIN for interactive prompts; forcePlain() mutates static state]
+#AI flow: cli::method() -> isTty() check -> color() wraps text -> echo/fwrite output
+#AI lifecycle_steps: [caller invokes cli::method(); -> isTty() checks stdout; -> color() applies ANSI if TTY; -> echo or fwrite outputs text]
 #AI section_order: [Output; Interactive Prompts; Progress and Tables; Display Components; Architecture]
 #AI architectural_notes: Static utility class with no dependencies on framework config or container. TTY detection ensures CI logs and piped output remain clean plain text.
 
@@ -451,7 +451,7 @@ final class Cli {
 #AI signature: public static function forcePlain(bool $plain): void
 #AI contract: Forces plain-text output regardless of TTY detection. Used by --no-ansi flag and in tests.
 #AI param_details: [{name: $plain | type: bool | required: true | desc: True to suppress all ANSI escape codes.}]
-#AI side_effects: Mutates static force_plain flag.
+#AI side_effects: Mutates static forcePlain flag.
 
 #AI:line
 #AI group: Output
@@ -530,10 +530,10 @@ final class Cli {
 #AI:progressBar
 #AI group: Progress and Tables
 #AI frequency: medium
-#AI signature: public static function progressBar(int $total = 0, string $label = ''): progress_bar
+#AI signature: public static function progressBar(int $total = 0, string $label = ''): ProgressBar
 #AI contract: Creates a progress bar instance. Pass total=0 for indeterminate spinner mode.
 #AI param_details: [{name: $total | type: int | required: false | desc: Total steps. 0 for indeterminate spinner mode.}; {name: $label | type: string | required: false | desc: Text displayed alongside the bar.}]
-#AI return_detail: {type: progress_bar | desc: Progress bar instance to call advance() and finish() on.}
+#AI return_detail: {type: ProgressBar | desc: Progress bar instance to call advance() and finish() on.}
 
 #AI:table
 #AI group: Progress and Tables
@@ -609,4 +609,4 @@ final class Cli {
 #AI frequency: internal
 #AI signature: public static function isTty(): bool
 #AI contract: Returns true when stdout is connected to an interactive terminal. Uses stream_isatty with posix_isatty fallback.
-#AI notes: Public because other CLI classes (interactive_menu, progress_bar) need TTY detection.
+#AI notes: Public because other CLI classes (InteractiveMenu, ProgressBar) need TTY detection.

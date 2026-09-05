@@ -36,7 +36,7 @@ abstract class MerryModel extends \Skim\Db\Model {
      * Returns the same $models array with relations populated.
      *
      * Example:
-     *   $users = merry_model::with(user::all(), 'posts', 'posts.comments');
+     *   $users = MerryModel::with(user::all(), 'posts', 'posts.comments');
      *   // 3 queries max regardless of user/post count
      *
      * @param array  $models    Collection of model instances to load relations onto.
@@ -287,18 +287,18 @@ abstract class MerryModel extends \Skim\Db\Model {
 
 #AI:class
 #AI symbol: Skim\Db\MerryModel
-#AI source_path: src/db/merry_model.php
-#AI title: merry_model
+#AI source_path: src/db/MerryModel.php
+#AI title: MerryModel
 #AI description: ORM layer extending model with eager/lazy relation loading and many-to-many pivot operations.
 #AI role: relational ORM
 #AI layer: db
 #AI badges: [orm; relations; eager-loading; pivot; n+1-safe]
-#AI intro: `merry_model` extends `model` with relation declarations (has_many, has_one, belongs_to, many_to_many) and eager/lazy loading. Relations are declared as static arrays for IDE navigation and explicit contracts. Eager loading via `with()` uses IN queries to prevent N+1 automatically.
+#AI intro: `MerryModel` extends `model` with relation declarations (hasMany, hasOne, belongsTo, manyToMany) and eager/lazy loading. Relations are declared as static arrays for IDE navigation and explicit contracts. Eager loading via `with()` uses IN queries to prevent N+1 automatically.
 #AI lifecycle: extends model lifecycle — relations cached per instance after first load
 #AI fallback: none
 #AI test_seam: use test_db() SQLite :memory: with real relation tables
 #AI invariants: [relations declared as static arrays, not annotations; eager loading uses IN queries — max N+1 queries where N = relation depth; lazy loading fires on first load() call and caches; pivot operations use INSERT IGNORE for idempotent attach]
-#AI core_behaviors: [with() eager-loads using IN queries to prevent N+1; load() lazy-loads on first access and caches; attach/detach/sync manage many_to_many pivot tables; dot-notation supports nested eager loading]
+#AI core_behaviors: [with() eager-loads using IN queries to prevent N+1; load() lazy-loads on first access and caches; attach/detach/sync manage manyToMany pivot tables; dot-notation supports nested eager loading]
 #AI warnings: [detach() with empty $ids removes ALL pivot rows for this model; sync() detaches everything before re-attaching]
 #AI notes: PHP 8.5 pipe operator recommended for relation chains.
 #AI scope_items: []
@@ -307,8 +307,8 @@ abstract class MerryModel extends \Skim\Db\Model {
 #AI config_reads: []
 #AI non_goals: [Does not support polymorphic relations; Does not support through-relations; Does not auto-delete related records on parent delete]
 #AI side_effects: [attach/detach/sync modify pivot tables; load() and with() execute SELECT queries]
-#AI flow: model::with(collection, 'relation') -> eager_load() -> IN query -> map results to models
-#AI lifecycle_steps: [model::with(models, ...relations); -> for each relation: eager_load(); -> determine relation type; -> IN query with all PKs; -> map results by FK; -> assign to model.relations; -> nested: recurse on loaded related models]
+#AI flow: model::with(collection, 'relation') -> eagerLoad() -> IN query -> map results to models
+#AI lifecycle_steps: [model::with(models, ...relations); -> for each relation: eagerLoad(); -> determine relation type; -> IN query with all PKs; -> map results by FK; -> assign to model.relations; -> nested: recurse on loaded related models]
 #AI section_order: [Eager Loading; Lazy Access; Pivot Operations]
 #AI architectural_notes: Static array declarations keep relations IDE-navigable and avoid reflection magic. Eager loading uses a single IN query per relation regardless of collection size.
 
@@ -335,8 +335,8 @@ abstract class MerryModel extends \Skim\Db\Model {
 #AI frequency: medium
 #AI signature: public function attach(string $relation, array $ids): void
 #AI contract: Inserts pivot rows for the given IDs. INSERT IGNORE skips duplicates silently.
-#AI param_details: [{name: $relation | type: string | required: true | desc: many_to_many relation name.}; {name: $ids | type: array | required: true | desc: Related model IDs to attach.}]
-#AI throws_details: [{type: \InvalidArgumentException | desc: If relation is not declared as many_to_many.}]
+#AI param_details: [{name: $relation | type: string | required: true | desc: manyToMany relation name.}; {name: $ids | type: array | required: true | desc: Related model IDs to attach.}]
+#AI throws_details: [{type: \InvalidArgumentException | desc: If relation is not declared as manyToMany.}]
 #AI side_effects: Inserts rows into the pivot table.
 
 #AI:detach
@@ -344,8 +344,8 @@ abstract class MerryModel extends \Skim\Db\Model {
 #AI frequency: medium
 #AI signature: public function detach(string $relation, array $ids = []): void
 #AI contract: Deletes pivot rows for the given IDs. Empty $ids removes ALL pivot rows for this model.
-#AI param_details: [{name: $relation | type: string | required: true | desc: many_to_many relation name.}; {name: $ids | type: array | required: false | desc: Specific IDs to detach. Empty = detach all.}]
-#AI throws_details: [{type: \InvalidArgumentException | desc: If relation is not declared as many_to_many.}]
+#AI param_details: [{name: $relation | type: string | required: true | desc: manyToMany relation name.}; {name: $ids | type: array | required: false | desc: Specific IDs to detach. Empty = detach all.}]
+#AI throws_details: [{type: \InvalidArgumentException | desc: If relation is not declared as manyToMany.}]
 #AI warnings: [Empty $ids removes ALL pivot rows for this model's foreign key]
 #AI side_effects: Deletes rows from the pivot table.
 
@@ -354,6 +354,6 @@ abstract class MerryModel extends \Skim\Db\Model {
 #AI frequency: medium
 #AI signature: public function sync(string $relation, array $ids): void
 #AI contract: Detaches all existing pivot rows, then attaches the given IDs. Result: pivot matches exactly $ids.
-#AI param_details: [{name: $relation | type: string | required: true | desc: many_to_many relation name.}; {name: $ids | type: array | required: true | desc: Exact set of related IDs to maintain.}]
+#AI param_details: [{name: $relation | type: string | required: true | desc: manyToMany relation name.}; {name: $ids | type: array | required: true | desc: Exact set of related IDs to maintain.}]
 #AI warnings: [Detaches ALL existing pivot rows before re-attaching]
 #AI side_effects: Deletes and inserts rows in the pivot table.

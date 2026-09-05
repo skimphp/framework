@@ -10,7 +10,7 @@ namespace Skim\Testing;
  * through as-is — no database lookup.
  *
  * Example:
- *   $fake = new auth_fake(user::find(1));
+ *   $fake = new AuthFake(user::find(1));
  *   $app->bind('auth', fn() => $fake);
  *
  * Testing: This class IS the test double — no setup/teardown needed.
@@ -43,16 +43,16 @@ class AuthFake {
 
 #AI:class
 #AI symbol: Skim\Testing\AuthFake
-#AI source_path: src/testing/auth_fake.php
-#AI title: auth_fake
+#AI source_path: src/testing/AuthFake.php
+#AI title: AuthFake
 #AI description: In-memory auth double that always reports authenticated with a given user object.
 #AI role: test double (auth)
 #AI layer: testing
 #AI badges: [testing; fake; auth; double]
-#AI intro: `auth_fake` is a minimal test double for the auth service. It always reports the user as authenticated and returns the injected user object directly.
+#AI intro: `AuthFake` is a minimal test double for the auth service. It always reports the user as authenticated and returns the injected user object directly.
 #AI lifecycle: instantiated per-test, bound into the container via app::bind()
 #AI fallback: n/a — test-only class
-#AI test_seam: bind into container via $app->bind('auth', fn() => new auth_fake($user))
+#AI test_seam: bind into container via $app->bind('auth', fn() => new AuthFake($user))
 #AI invariants: [check() always returns true; guest() always returns false; user() returns the injected object]
 #AI core_behaviors: [Provides a deterministic authenticated state without database or session dependencies]
 #AI notes: The user object must have an `id` property for id() to return non-null.
@@ -61,8 +61,8 @@ class AuthFake {
 #AI config_reads: []
 #AI non_goals: [Does not validate credentials; Does not interact with session or database]
 #AI side_effects: []
-#AI flow: test -> auth_fake::check() -> true; auth_fake::user() -> injected object
-#AI lifecycle_steps: [new auth_fake($user); -> bind to container; -> controller calls auth::check() -> true]
+#AI flow: test -> AuthFake::check() -> true; AuthFake::user() -> injected object
+#AI lifecycle_steps: [new AuthFake($user); -> bind to container; -> controller calls auth::check() -> true]
 #AI section_order: [Auth API; Architecture]
 #AI architectural_notes: Intentionally minimal — only the methods the auth middleware and controllers call.
 

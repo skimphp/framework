@@ -14,7 +14,7 @@ use Skim\Session\Session;
  * Dispatches through app::dispatch() with optional middleware skipping.
  *
  * Example:
- *   $req = new pending_request($app);
+ *   $req = new PendingRequest($app);
  *   $req->actingAs($user)
  *       ->withHeaders(['Accept' => 'application/json'])
  *       ->post('/api/posts', json: ['title' => 'Test'])
@@ -183,34 +183,34 @@ class PendingRequest {
 
 #AI:class
 #AI symbol: Skim\Testing\PendingRequest
-#AI source_path: src/testing/pending_request.php
-#AI title: pending_request
+#AI source_path: src/testing/PendingRequest.php
+#AI title: PendingRequest
 #AI description: Immutable request builder that dispatches through the app with auth, session, and header injection.
 #AI role: test request builder
 #AI layer: testing
 #AI badges: [testing; http; immutable; builder]
-#AI intro: `pending_request` is an immutable builder that configures and dispatches in-process HTTP requests. Each configuration method returns a clone, preventing state leakage between test assertions.
-#AI lifecycle: created per-request by http_client, cloned on each configuration call, consumed on HTTP method call
+#AI intro: `PendingRequest` is an immutable builder that configures and dispatches in-process HTTP requests. Each configuration method returns a clone, preventing state leakage between test assertions.
+#AI lifecycle: created per-request by HttpClient, cloned on each configuration call, consumed on HTTP method call
 #AI fallback: n/a — test-only class
-#AI test_seam: use via http_client or instantiate directly with an app instance
+#AI test_seam: use via HttpClient or instantiate directly with an app instance
 #AI invariants: [Configuration methods return clones — original is never mutated; Auth and session are bound to a cloned app, not the original; Redirect following recurses via get()]
-#AI core_behaviors: [Builds a request via request_factory; Clones the app and binds auth/session fakes; Dispatches through app::dispatch()]
+#AI core_behaviors: [Builds a request via RequestFactory; Clones the app and binds auth/session fakes; Dispatches through app::dispatch()]
 #AI notes: When $json is non-empty on post(), Content-Type is automatically set to application/json.
 #AI owns: configuration state (user, headers, session, cookies, flags)
-#AI entry_points: [acting_as; with_headers; with_session; with_cookies; following_redirects; without_middleware; get; post; put; delete]
+#AI entry_points: [actingAs; withHeaders; withSession; withCookies; followingRedirects; withoutMiddleware; get; post; put; delete]
 #AI config_reads: []
 #AI non_goals: [Does not open real network connections; Does not test WebSocket or SSE endpoints]
 #AI side_effects: [Clones app instance; Binds auth/session fakes into cloned container; Dispatches through router pipeline]
-#AI flow: pending_request::config() -> clone -> HTTP method -> send() -> request_factory::make() -> app::dispatch() -> http_response
-#AI lifecycle_steps: [http_client::method() -> new pending_request($app); -> acting_as/with_headers/etc() -> clone; -> get/post/etc() -> send(); -> request_factory::make(); -> clone app; -> bind fakes; -> app::dispatch(); -> http_response]
+#AI flow: PendingRequest::config() -> clone -> HTTP method -> send() -> RequestFactory::make() -> app::dispatch() -> HttpResponse
+#AI lifecycle_steps: [HttpClient::method() -> new PendingRequest($app); -> actingAs/withHeaders/etc() -> clone; -> get/post/etc() -> send(); -> RequestFactory::make(); -> clone app; -> bind fakes; -> app::dispatch(); -> HttpResponse]
 #AI section_order: [Configuration; HTTP Methods; Architecture]
-#AI architectural_notes: Immutable builder pattern — each configuration call returns a clone, making it safe to reuse a base pending_request across multiple assertions.
+#AI architectural_notes: Immutable builder pattern — each configuration call returns a clone, making it safe to reuse a base PendingRequest across multiple assertions.
 
 #AI:actingAs
 #AI group: Configuration
 #AI frequency: high
 #AI signature: public function actingAs(object $user): static
-#AI contract: Returns a clone configured to authenticate as the given user via auth_fake.
+#AI contract: Returns a clone configured to authenticate as the given user via AuthFake.
 #AI param_details: [{name: $user | type: object | required: true | desc: User object bound to auth_service in the cloned container.}]
 #AI return_detail: {type: static | desc: New clone with user configured.}
 
@@ -226,7 +226,7 @@ class PendingRequest {
 #AI group: Configuration
 #AI frequency: medium
 #AI signature: public function withSession(array $data): static
-#AI contract: Returns a clone with pre-populated session data bound via session_fake.
+#AI contract: Returns a clone with pre-populated session data bound via SessionFake.
 #AI param_details: [{name: $data | type: array | required: true | desc: Key-value session pairs.}]
 #AI return_detail: {type: static | desc: New clone with session data merged.}
 
@@ -255,31 +255,31 @@ class PendingRequest {
 #AI:get
 #AI group: HTTP Methods
 #AI frequency: high
-#AI signature: public function get(string $path, array $query = []): http_response
+#AI signature: public function get(string $path, array $query = []): HttpResponse
 #AI contract: Dispatches a GET request through the app.
 #AI param_details: [{name: $path | type: string | required: true | desc: Request URI path.}; {name: $query | type: array | required: false | desc: Query string parameters.}]
-#AI return_detail: {type: http_response | desc: Test response with assertion methods.}
+#AI return_detail: {type: HttpResponse | desc: Test response with assertion methods.}
 
 #AI:post
 #AI group: HTTP Methods
 #AI frequency: high
-#AI signature: public function post(string $path, array $post = [], array $json = []): http_response
+#AI signature: public function post(string $path, array $post = [], array $json = []): HttpResponse
 #AI contract: Dispatches a POST request. Sets Content-Type to application/json when $json is non-empty.
 #AI param_details: [{name: $path | type: string | required: true | desc: Request URI path.}; {name: $post | type: array | required: false | desc: Form-encoded POST data.}; {name: $json | type: array | required: false | desc: JSON body data.}]
-#AI return_detail: {type: http_response | desc: Test response with assertion methods.}
+#AI return_detail: {type: HttpResponse | desc: Test response with assertion methods.}
 
 #AI:put
 #AI group: HTTP Methods
 #AI frequency: medium
-#AI signature: public function put(string $path, array $post = []): http_response
+#AI signature: public function put(string $path, array $post = []): HttpResponse
 #AI contract: Dispatches a PUT request with form-encoded body data.
 #AI param_details: [{name: $path | type: string | required: true | desc: Request URI path.}; {name: $post | type: array | required: false | desc: Form-encoded body data.}]
-#AI return_detail: {type: http_response | desc: Test response with assertion methods.}
+#AI return_detail: {type: HttpResponse | desc: Test response with assertion methods.}
 
 #AI:delete
 #AI group: HTTP Methods
 #AI frequency: medium
-#AI signature: public function delete(string $path): http_response
+#AI signature: public function delete(string $path): HttpResponse
 #AI contract: Dispatches a DELETE request.
 #AI param_details: [{name: $path | type: string | required: true | desc: Request URI path.}]
-#AI return_detail: {type: http_response | desc: Test response with assertion methods.}
+#AI return_detail: {type: HttpResponse | desc: Test response with assertion methods.}

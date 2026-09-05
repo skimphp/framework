@@ -151,26 +151,26 @@ class HttpResponse {
 
 #AI:class
 #AI symbol: Skim\Testing\HttpResponse
-#AI source_path: src/testing/http_response.php
-#AI title: http_response
+#AI source_path: src/testing/HttpResponse.php
+#AI title: HttpResponse
 #AI description: Fluent assertion wrapper for HTTP test responses with status, JSON, header, and body assertions.
 #AI role: test assertion wrapper
 #AI layer: testing
 #AI badges: [testing; assertions; http; fluent]
-#AI intro: `http_response` wraps a `Skim\Core\Response` and provides fluent assertion methods powered by Pest's `expect()`. All `assert_*` methods return `$this` for chaining.
-#AI lifecycle: returned by pending_request/http_client HTTP methods, used inline in test cases
+#AI intro: `HttpResponse` wraps a `Skim\Core\Response` and provides fluent assertion methods powered by Pest's `expect()`. All `assert_*` methods return `$this` for chaining.
+#AI lifecycle: returned by PendingRequest/HttpClient HTTP methods, used inline in test cases
 #AI fallback: n/a — test-only class
-#AI test_seam: instantiate directly or receive from http_client methods
-#AI invariants: [assert_* methods throw on failure via Pest expect(); All assert_* methods return $this; is_redirect() covers 301, 302, 303, 307, 308]
+#AI test_seam: instantiate directly or receive from HttpClient methods
+#AI invariants: [assert_* methods throw on failure via Pest expect(); All assert_* methods return $this; isRedirect() covers 301, 302, 303, 307, 308]
 #AI core_behaviors: [Wraps core response for test assertions; Uses Pest expect() for failure reporting; Provides both assertion and accessor methods]
-#AI notes: assert_json() uses subset matching (toMatchArray), not exact equality.
+#AI notes: assertJson() uses subset matching (toMatchArray), not exact equality.
 #AI owns: core response reference
-#AI entry_points: [assert_status; assert_ok; assert_created; assert_json; assert_redirect; assert_contains; status; json; body; header]
+#AI entry_points: [assertStatus; assertOk; assertCreated; assertJson; assertRedirect; assertContains; status; json; body; header]
 #AI config_reads: []
 #AI non_goals: [Does not make HTTP requests; Does not mock external services]
 #AI side_effects: [dump() and dd() produce output; assert_* methods throw on failure]
-#AI flow: http_client::get/post/etc() -> http_response -> assert_*() -> Pest expect()
-#AI lifecycle_steps: [pending_request::send() -> new http_response($res); -> test calls assert_ok()->assertJson([...])]
+#AI flow: HttpClient::get/post/etc() -> HttpResponse -> assert_*() -> Pest expect()
+#AI lifecycle_steps: [PendingRequest::send() -> new HttpResponse($res); -> test calls assertOk()->assertJson([...])]
 #AI section_order: [Status Assertions; Content Assertions; Accessors; Debug; Architecture]
 #AI architectural_notes: Thin wrapper over core response — adds test assertion ergonomics without modifying response behavior.
 

@@ -70,16 +70,16 @@ interface SessionDriver {
 
 #AI:class
 #AI symbol: Skim\Session\SessionDriver
-#AI source_path: src/session/session_driver.php
-#AI title: session_driver
+#AI source_path: src/session/SessionDriver.php
+#AI title: SessionDriver
 #AI description: Interface contract for session storage backends.
 #AI role: session driver interface
 #AI layer: session
 #AI badges: [interface; session; contract]
-#AI intro: `session_driver` defines the contract that all session backends must implement. The session facade resolves one concrete driver per request based on config.
+#AI intro: `SessionDriver` defines the contract that all session backends must implement. The session facade resolves one concrete driver per request based on config.
 #AI lifecycle: one implementation resolved per request by session facade
 #AI fallback: n/a — interface only
-#AI test_seam: session_fake implements this interface for tests
+#AI test_seam: SessionFake implements this interface for tests
 #AI invariants: [start() must be idempotent; get() returns $default on missing key; flush() destroys all session data]
 #AI core_behaviors: [Defines the minimal API for session read/write/lifecycle operations]
 #AI notes: Implement this interface to add custom session backends (database, DynamoDB, etc.).
@@ -88,7 +88,7 @@ interface SessionDriver {
 #AI config_reads: []
 #AI non_goals: [Does not prescribe storage mechanism; Does not handle encryption or serialization format]
 #AI side_effects: []
-#AI flow: session facade -> session_driver implementation -> backend storage
+#AI flow: session facade -> SessionDriver implementation -> backend storage
 #AI lifecycle_steps: [session::start() -> driver::start(); session::get() -> driver::get(); etc.]
 #AI section_order: [Session API; Lifecycle; Architecture]
 #AI architectural_notes: Kept minimal — only the operations the session facade needs. Custom drivers may add internal methods.

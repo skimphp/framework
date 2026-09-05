@@ -14,7 +14,7 @@ namespace Skim\Dev;
  * variables. The $this variable inside templates is the dev_view instance.
  *
  * Example:
- *   echo dev_view::render('error_page', [
+ *   echo DevView::render('error_page', [
  *       'exception' => $e,
  *       'context'   => $code_lines,
  *   ]);
@@ -184,26 +184,26 @@ final class DevView {
 
 #AI:class
 #AI symbol: Skim\Dev\DevView
-#AI source_path: src/dev/dev_view.php
-#AI title: dev_view
+#AI source_path: src/dev/DevView.php
+#AI title: DevView
 #AI description: Standalone template renderer for dev tools — zero framework dependencies, supports layouts, slots, and partial includes.
 #AI role: standalone template renderer
 #AI layer: dev
 #AI badges: [dev; debug; template; renderer; standalone]
-#AI intro: `dev_view` is a minimal, self-contained template renderer for dev tool HTML output. It supports layouts, named slots, and partial includes with the same API patterns as `Skim\View\Template`, but has zero dependencies on any framework module — ensuring it works even when the view system, config, or profiler is broken.
+#AI intro: `DevView` is a minimal, self-contained template renderer for dev tool HTML output. It supports layouts, named slots, and partial includes with the same API patterns as `Skim\View\Template`, but has zero dependencies on any framework module — ensuring it works even when the view system, config, or profiler is broken.
 #AI lifecycle: instantiated per render() call, stateless between calls
 #AI fallback: throws RuntimeException when template file is missing
 #AI test_seam: call render() with data arrays, assert HTML output
 #AI invariants: [render() is the only static entry point; templates live in src/dev/views/; data is extracted as local variables; layout() must be called before output; start()/end() must be paired; include() does not inherit parent layout]
 #AI core_behaviors: [Two-pass layout: child renders first capturing slots, then layout renders with slot() access; Non-slot output auto-captured as content slot; Partials via include() with isolated data context]
-#AI warnings: [Throws RuntimeException if template file not found — error_page::render() must catch this and fall back to inline HTML]
-#AI owns: views_path, data, layout_name, slots, active_slot
+#AI warnings: [Throws RuntimeException if template file not found — ErrorPage::render() must catch this and fall back to inline HTML]
+#AI owns: viewsPath, data, layoutName, slots, activeSlot
 #AI entry_points: [render; include; layout; start; end; slot]
 #AI config_reads: []
 #AI non_goals: [Does not integrate with profiler; Does not support fragment extraction; Does not compile or cache templates; Does not escape output]
 #AI side_effects: [uses ob_start/ob_get_clean for rendering and slot capture; extract() creates local variables]
-#AI flow: dev_view::render($template, $data) → new dev_view() → render_file() → layout? → render layout → return HTML
-#AI lifecycle_steps: [render($template, $data); → new dev_view(path, data); → render_file($template); → resolve .php; → extract data; → ob_start + include; → layout declared? → capture content slot; → render layout file; → return HTML]
+#AI flow: DevView::render($template, $data) → new DevView() → renderFile() → layout? → render layout → return HTML
+#AI lifecycle_steps: [render($template, $data); → new DevView(path, data); → renderFile($template); → resolve .php; → extract data; → ob_start + include; → layout declared? → capture content slot; → render layout file; → return HTML]
 #AI section_order: [Rendering; Template API; Layout System]
 #AI architectural_notes: Deliberately duplicates ~60 lines from Skim\View\Template to eliminate any dependency on the framework's view system. This ensures the error page renders even when the view system itself throws.
 

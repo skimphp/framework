@@ -22,13 +22,13 @@ class ViewException extends \RuntimeException {}
 
 #AI:class
 #AI symbol: Skim\View\Exceptions\ViewException
-#AI source_path: src/view/exceptions/view_exception.php
-#AI title: view_exception
+#AI source_path: src/view/exceptions/ViewException.php
+#AI title: ViewException
 #AI description: Exception thrown when a template file is not found or a named fragment is missing.
 #AI role: view error type
 #AI layer: view
 #AI badges: [exception; view; error]
-#AI intro: `view_exception` is thrown by the view system when a template file cannot be resolved or a requested fragment name does not exist in the rendered output.
+#AI intro: `ViewException` is thrown by the view system when a template file cannot be resolved or a requested fragment name does not exist in the rendered output.
 #AI lifecycle: thrown during view::render() or template::renderFile()
 #AI fallback: n/a — exception type
 #AI test_seam: expect this exception in Pest tests for missing templates
@@ -40,7 +40,7 @@ class ViewException extends \RuntimeException {}
 #AI config_reads: []
 #AI non_goals: [Does not handle rendering logic; Does not provide recovery mechanisms]
 #AI side_effects: []
-#AI flow: view::render() -> template not found or fragment missing -> throw view_exception
-#AI lifecycle_steps: [view::render() or template::renderFile(); -> file/fragment not found; -> throw new view_exception(...)]
+#AI flow: view::render() -> template not found or fragment missing -> throw ViewException
+#AI lifecycle_steps: [view::render() or template::renderFile(); -> file/fragment not found; -> throw new ViewException(...)]
 #AI section_order: [Architecture]
 #AI architectural_notes: Simple RuntimeException subclass — exists solely for type-specific catching.

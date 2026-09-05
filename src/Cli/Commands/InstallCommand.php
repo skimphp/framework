@@ -160,26 +160,26 @@ class InstallCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\InstallCommand
-#AI source_path: src/cli/commands/install_command.php
-#AI title: install_command
+#AI source_path: src/cli/commands/InstallCommand.php
+#AI title: InstallCommand
 #AI description: Interactive CLI installer that generates .env from prompts and optionally runs migrations.
 #AI role: CLI interactive installer
 #AI layer: cli
 #AI badges: [cli; command; installer; interactive; setup]
-#AI intro: `install_command` implements the `php skim install` CLI command. It provides an interactive wizard that prompts for application, database, cache, and logging configuration, writes the results to `.env`, reloads env/config, and optionally runs migrations.
+#AI intro: `InstallCommand` implements the `php skim install` CLI command. It provides an interactive wizard that prompts for application, database, cache, and logging configuration, writes the results to `.env`, reloads env/config, and optionally runs migrations.
 #AI lifecycle: instantiated by kernel, handle() called once per invocation
 #AI fallback: existing .env is preserved unless --force or user confirms overwrite
 #AI test_seam: not designed for automated testing due to interactive STDIN prompts
 #AI invariants: [APP_KEY is always freshly generated; debug defaults to true for local env; migrations run with newly written config after env reload]
-#AI core_behaviors: [Interactive prompts via cli::ask/confirm/choice; Generates cryptographic APP_KEY; Writes .env file; Reloads env and config after writing; Optionally delegates to migrate_command]
+#AI core_behaviors: [Interactive prompts via cli::ask/confirm/choice; Generates cryptographic APP_KEY; Writes .env file; Reloads env and config after writing; Optionally delegates to MigrateCommand]
 #AI warnings: [Overwrites .env when --force is passed or user confirms; DB password is shown in plain text during prompt]
 #AI owns: nothing — writes .env file and delegates migrations
 #AI entry_points: [handle]
 #AI config_reads: []
 #AI non_goals: [Does not install composer dependencies; Does not create database; Does not configure Docker]
-#AI side_effects: [writes .env file; reloads env and config; optionally runs migrations via migrate_command]
-#AI flow: install_command::handle() -> prompt app/db/cache/log config -> build_env() -> file_put_contents(.env) -> env::reset/load -> config::reset/load -> optionally migrate_command::handle()
-#AI lifecycle_steps: [handle(); -> check existing .env; -> prompt application config; -> prompt database config; -> prompt cache config; -> prompt logging config; -> build_env(); -> file_put_contents(.env); -> env::reset() + env::load(); -> config::reset() + config::load(); -> optionally migrate_command::handle()]
+#AI side_effects: [writes .env file; reloads env and config; optionally runs migrations via MigrateCommand]
+#AI flow: InstallCommand::handle() -> prompt app/db/cache/log config -> buildEnv() -> file_put_contents(.env) -> env::reset/load -> config::reset/load -> optionally MigrateCommand::handle()
+#AI lifecycle_steps: [handle(); -> check existing .env; -> prompt application config; -> prompt database config; -> prompt cache config; -> prompt logging config; -> buildEnv(); -> file_put_contents(.env); -> env::reset() + env::load(); -> config::reset() + config::load(); -> optionally MigrateCommand::handle()]
 #AI section_order: [Command Execution; Key Generation; Environment Building]
 #AI architectural_notes: After writing .env, the command reloads env and config so that subsequent migration runs use the newly written configuration values.
 

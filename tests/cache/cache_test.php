@@ -107,7 +107,7 @@ describe('cache::flush()', function(): void {
         expect(\Skim\Cache\Cache::has('post:1'))->toBeTrue();
     });
 
-    test('flush_all() removes all keys', function(): void {
+    test('flushAll() removes all keys', function(): void {
         \Skim\Cache\Cache::set('a', 1);
         \Skim\Cache\Cache::set('b', 2);
         \Skim\Cache\Cache::flushAll();
@@ -117,7 +117,7 @@ describe('cache::flush()', function(): void {
 
 });
 
-describe('file_driver', function(): void {
+describe('FileDriver', function(): void {
 
     test('stores and retrieves a value on filesystem', function(): void {
         $dir    = sys_get_temp_dir() . '/skim_cache_test_' . uniqid();

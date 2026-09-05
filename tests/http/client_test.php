@@ -4,7 +4,7 @@ use Skim\Http\Client;
 use Skim\Http\FakeClient;
 use Skim\Http\HttpResponse;
 
-describe('http_response', function(): void {
+describe('HttpResponse', function(): void {
 
     test('ok() returns true for 2xx status', function(): void {
         $r = new \Skim\Http\HttpResponse(200, '{}', []);
@@ -36,7 +36,7 @@ describe('http_response', function(): void {
         expect($r->header('X-Missing'))->toBeNull();
     });
 
-    test('from_stream() parses status from HTTP response header', function(): void {
+    test('fromStream() parses status from HTTP response header', function(): void {
         $meta = ['HTTP/1.1 201 Created', 'Content-Type: application/json'];
         $r    = \Skim\Http\HttpResponse::fromStream('{"ok":true}', $meta);
         expect($r->status)->toBe(201);
@@ -45,7 +45,7 @@ describe('http_response', function(): void {
 
 });
 
-describe('fake_client — record and assert', function(): void {
+describe('FakeClient — record and assert', function(): void {
 
     test('records GET requests', function(): void {
         $http = \Skim\Http\Client::fake();
@@ -76,19 +76,19 @@ describe('fake_client — record and assert', function(): void {
         expect($resp->status)->toBe(200);
     });
 
-    test('assert_nothing_sent() passes when no requests made', function(): void {
+    test('assertNothingSent() passes when no requests made', function(): void {
         $http = \Skim\Http\Client::fake();
         $http->assertNothingSent();
         expect(true)->toBeTrue();
     });
 
-    test('assert_sent() throws when request was not made', function(): void {
+    test('assertSent() throws when request was not made', function(): void {
         $http = \Skim\Http\Client::fake();
         expect(fn() => $http->assertSent('GET', 'not-called'))
             ->toThrow(\RuntimeException::class);
     });
 
-    test('assert_nothing_sent() throws when requests were made', function(): void {
+    test('assertNothingSent() throws when requests were made', function(): void {
         $http = \Skim\Http\Client::fake();
         $http->get('https://api.example.com/ping');
         expect(fn() => $http->assertNothingSent())

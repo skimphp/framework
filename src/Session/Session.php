@@ -16,7 +16,7 @@ use Skim\Worker\Resettable;
  *   session::flash('notice', 'Profile updated');
  *   session::regenerate(); // after login
  *
- * Testing: Use set_driver() to inject session_fake, reset() to clear state.
+ * Testing: Use setDriver() to inject session_fake, reset() to clear state.
  *
  * #AI:class
  */
@@ -154,7 +154,7 @@ final class Session implements \Skim\Worker\Resettable {
      * in tearDown() to restore normal behavior.
      *
      * Example:
-     *   session::setDriver(new session_fake());
+     *   session::setDriver(new SessionFake());
      *   // ... run tests ...
      *   session::reset();
      *
@@ -209,8 +209,8 @@ final class Session implements \Skim\Worker\Resettable {
 #AI badges: [facade; session; flash; driver-backed]
 #AI intro: `session` is the static entry point for session operations. It resolves the configured session driver on first use and adds flash message support on top of the raw driver API.
 #AI lifecycle: static facade, driver resolved on first session call
-#AI fallback: file_session_driver when app.session.driver is not 'redis'
-#AI test_seam: set_driver(), reset()
+#AI fallback: FileSessionDriver when app.session.driver is not 'redis'
+#AI test_seam: setDriver(), reset()
 #AI drivers: [file; redis]
 #AI invariants: [start() is idempotent; flash values are auto-deleted on first get(); has() checks both regular and flash keys; driver is resolved once and reused until reset()]
 #AI core_behaviors: [Flash values use __flash__ prefix internally; get() consumes flash values on read; Auto-starts session on any read/write operation]
@@ -220,9 +220,9 @@ final class Session implements \Skim\Worker\Resettable {
 #AI entry_points: [start; get; set; has; delete; flash; regenerate; flush; id]
 #AI config_reads: [app.session.driver; app.session.prefix; app.session.lifetime; cache.redis.host; cache.redis.port; cache.redis.password]
 #AI non_goals: [Does not encrypt session data; Does not handle session locking; Flash is single-read only, not queued]
-#AI side_effects: [Auto-starts session on first get/set/has/delete; set_driver() replaces active driver; reset() forces re-resolution]
-#AI flow: session::method() -> start() -> driver() -> resolve_driver() -> concrete driver
-#AI lifecycle_steps: [session::get/set/has/delete(); -> start(); -> started?; -> driver(); -> resolve_driver(); -> match config app.session.driver; -> file_session_driver or redis_session_driver]
+#AI side_effects: [Auto-starts session on first get/set/has/delete; setDriver() replaces active driver; reset() forces re-resolution]
+#AI flow: session::method() -> start() -> driver() -> resolveDriver() -> concrete driver
+#AI lifecycle_steps: [session::get/set/has/delete(); -> start(); -> started?; -> driver(); -> resolveDriver(); -> match config app.session.driver; -> FileSessionDriver or RedisSessionDriver]
 #AI section_order: [Read API; Write API; Flash Messages; Lifecycle; Testing Hooks; Architecture]
 #AI architectural_notes: Wraps native session drivers to enable test injection and add flash message semantics.
 
@@ -295,9 +295,9 @@ final class Session implements \Skim\Worker\Resettable {
 #AI:setDriver
 #AI group: Testing Hooks
 #AI frequency: low
-#AI signature: public static function setDriver(session_driver $driver): void
+#AI signature: public static function setDriver(SessionDriver $driver): void
 #AI contract: Replaces the active driver instance. Use in tests to bypass config-based resolution.
-#AI param_details: [{name: $driver | type: session_driver | required: true | desc: Mock or fake driver for testing.}]
+#AI param_details: [{name: $driver | type: SessionDriver | required: true | desc: Mock or fake driver for testing.}]
 #AI side_effects: [Replaces static driver; Resets started flag]
 
 #AI:reset
@@ -317,11 +317,11 @@ final class Session implements \Skim\Worker\Resettable {
 #AI:driver
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private static function driver(): session_driver
+#AI signature: private static function driver(): SessionDriver
 #AI contract: Returns the cached driver instance, resolving lazily if null.
 
 #AI:resolveDriver
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private static function resolveDriver(): session_driver
-#AI contract: Maps config('app.session.driver') to a concrete driver instance. Defaults to file_session_driver.
+#AI signature: private static function resolveDriver(): SessionDriver
+#AI contract: Maps config('app.session.driver') to a concrete driver instance. Defaults to FileSessionDriver.

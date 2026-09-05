@@ -32,7 +32,7 @@ function sampleLlmData(): array {
     ];
 }
 
-describe('llm_md_emitter', function(): void {
+describe('LlmMdEmitter', function(): void {
 
     test('writes llm.md file to the specified path', function(): void {
         $path = sys_get_temp_dir() . '/skim_llm_md_' . uniqid() . '.md';

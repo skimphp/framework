@@ -154,64 +154,64 @@ class Client {
 #AI role: HTTP client
 #AI layer: http
 #AI badges: [http; client; streams; zero-dep; testable]
-#AI intro: `client` wraps PHP's native `file_get_contents` + `stream_context_create` for outbound HTTP. It returns immutable `http_response` objects and never throws on non-2xx status codes.
+#AI intro: `client` wraps PHP's native `file_get_contents` + `stream_context_create` for outbound HTTP. It returns immutable `HttpResponse` objects and never throws on non-2xx status codes.
 #AI lifecycle: instantiated per-service or per-request; no persistent connections
-#AI test_seam: client::fake() returns a fake_client that records requests and returns stubs
-#AI invariants: [Never throws on non-2xx status; All responses are http_response value objects; JSON Content-Type by default]
-#AI core_behaviors: [Sends HTTP via PHP streams; JSON-encodes request bodies; Merges default and per-request headers; Supports base_url prefixing]
+#AI test_seam: client::fake() returns a FakeClient that records requests and returns stubs
+#AI invariants: [Never throws on non-2xx status; All responses are HttpResponse value objects; JSON Content-Type by default]
+#AI core_behaviors: [Sends HTTP via PHP streams; JSON-encodes request bodies; Merges default and per-request headers; Supports baseUrl prefixing]
 #AI owns: nothing
 #AI entry_points: [get; post; put; patch; delete; fake]
 #AI config_reads: []
 #AI non_goals: [Does not support async/concurrent requests; Does not follow redirects; Does not retry on failure; No Guzzle dependency]
 #AI side_effects: [Makes outbound HTTP requests]
-#AI flow: client::method() -> send() -> stream_context_create() -> file_get_contents() -> http_response::fromStream()
+#AI flow: client::method() -> send() -> stream_context_create() -> file_get_contents() -> HttpResponse::fromStream()
 #AI section_order: [HTTP Methods; Testing; Architecture]
 
 #AI:get
 #AI group: HTTP Methods
 #AI frequency: high
-#AI signature: public function get(string $url, array $query = [], array $headers = []): http_response
+#AI signature: public function get(string $url, array $query = [], array $headers = []): HttpResponse
 #AI contract: Sends a GET request. The $query array is appended as URL query parameters.
-#AI param_details: [{name: $url | type: string | required: true | desc: Target URL or path (prepended with base_url if set).}; {name: $query | type: array | required: false | desc: Query params appended as ?key=val URL string.}; {name: $headers | type: array | required: false | desc: Additional headers merged with defaults.}]
-#AI return_detail: {type: http_response | desc: Immutable response value object.}
+#AI param_details: [{name: $url | type: string | required: true | desc: Target URL or path (prepended with baseUrl if set).}; {name: $query | type: array | required: false | desc: Query params appended as ?key=val URL string.}; {name: $headers | type: array | required: false | desc: Additional headers merged with defaults.}]
+#AI return_detail: {type: HttpResponse | desc: Immutable response value object.}
 
 #AI:post
 #AI group: HTTP Methods
 #AI frequency: high
-#AI signature: public function post(string $url, array $data = [], array $headers = []): http_response
+#AI signature: public function post(string $url, array $data = [], array $headers = []): HttpResponse
 #AI contract: Sends a POST request with JSON-encoded body.
 #AI param_details: [{name: $url | type: string | required: true | desc: Target URL or path.}; {name: $data | type: array | required: false | desc: Request body, JSON-encoded.}; {name: $headers | type: array | required: false | desc: Additional headers merged with defaults.}]
-#AI return_detail: {type: http_response | desc: Immutable response value object.}
+#AI return_detail: {type: HttpResponse | desc: Immutable response value object.}
 
 #AI:put
 #AI group: HTTP Methods
 #AI frequency: medium
-#AI signature: public function put(string $url, array $data = [], array $headers = []): http_response
+#AI signature: public function put(string $url, array $data = [], array $headers = []): HttpResponse
 #AI contract: Sends a PUT request with JSON-encoded body.
 #AI param_details: [{name: $url | type: string | required: true | desc: Target URL or path.}; {name: $data | type: array | required: false | desc: Request body, JSON-encoded.}; {name: $headers | type: array | required: false | desc: Additional headers merged with defaults.}]
-#AI return_detail: {type: http_response | desc: Immutable response value object.}
+#AI return_detail: {type: HttpResponse | desc: Immutable response value object.}
 
 #AI:patch
 #AI group: HTTP Methods
 #AI frequency: medium
-#AI signature: public function patch(string $url, array $data = [], array $headers = []): http_response
+#AI signature: public function patch(string $url, array $data = [], array $headers = []): HttpResponse
 #AI contract: Sends a PATCH request with JSON-encoded body.
 #AI param_details: [{name: $url | type: string | required: true | desc: Target URL or path.}; {name: $data | type: array | required: false | desc: Request body, JSON-encoded.}; {name: $headers | type: array | required: false | desc: Additional headers merged with defaults.}]
-#AI return_detail: {type: http_response | desc: Immutable response value object.}
+#AI return_detail: {type: HttpResponse | desc: Immutable response value object.}
 
 #AI:delete
 #AI group: HTTP Methods
 #AI frequency: medium
-#AI signature: public function delete(string $url, array $data = [], array $headers = []): http_response
+#AI signature: public function delete(string $url, array $data = [], array $headers = []): HttpResponse
 #AI contract: Sends a DELETE request with optional JSON body. Body is omitted when $data is empty.
 #AI param_details: [{name: $url | type: string | required: true | desc: Target URL or path.}; {name: $data | type: array | required: false | desc: Optional request body, JSON-encoded when non-empty.}; {name: $headers | type: array | required: false | desc: Additional headers merged with defaults.}]
-#AI return_detail: {type: http_response | desc: Immutable response value object.}
+#AI return_detail: {type: HttpResponse | desc: Immutable response value object.}
 
 #AI:fake
 #AI group: Testing
 #AI frequency: high
-#AI signature: public static function fake(array $stubs = []): fake_client
-#AI contract: Returns a fake_client that intercepts all HTTP requests, records them, and returns stub responses.
-#AI param_details: [{name: $stubs | type: array | required: false | desc: Map of 'METHOD URL' => response stub arrays or http_response objects.}]
-#AI return_detail: {type: fake_client | desc: Test double that records requests and returns stubs.}
+#AI signature: public static function fake(array $stubs = []): FakeClient
+#AI contract: Returns a FakeClient that intercepts all HTTP requests, records them, and returns stub responses.
+#AI param_details: [{name: $stubs | type: array | required: false | desc: Map of 'METHOD URL' => response stub arrays or HttpResponse objects.}]
+#AI return_detail: {type: FakeClient | desc: Test double that records requests and returns stubs.}
 #AI examples: [{label: Basic stub | code: $http = client::fake(['GET https://api.example.com/users' => ['status' => 200, 'body' => []]]);}]

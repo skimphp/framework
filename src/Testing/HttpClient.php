@@ -12,7 +12,7 @@ use Skim\Core\App;
  * headers, session) does not leak between calls.
  *
  * Example:
- *   $client = new http_client($app);
+ *   $client = new HttpClient($app);
  *   $client->actingAs($user)->post('/api/posts', json: ['title' => 'Hello']);
  *   $client->get('/api/posts')->assertOk()->assertJson([...]);
  *
@@ -107,95 +107,95 @@ class HttpClient {
 
 #AI:class
 #AI symbol: Skim\Testing\HttpClient
-#AI source_path: src/testing/http_client.php
-#AI title: http_client
+#AI source_path: src/testing/HttpClient.php
+#AI title: HttpClient
 #AI description: In-process HTTP test client that dispatches requests through the app without a real server.
 #AI role: test HTTP client
 #AI layer: testing
 #AI badges: [testing; http; client; in-process]
-#AI intro: `http_client` provides a fluent API for testing HTTP endpoints in-process. Each method creates a fresh `pending_request`, so configuration does not leak between calls.
+#AI intro: `HttpClient` provides a fluent API for testing HTTP endpoints in-process. Each method creates a fresh `PendingRequest`, so configuration does not leak between calls.
 #AI lifecycle: instantiated per-test, wraps an app instance
 #AI fallback: n/a — test-only class
 #AI test_seam: instantiate directly in test cases with the app under test
-#AI invariants: [Each method creates a fresh pending_request; Configuration does not leak between calls]
-#AI core_behaviors: [Delegates all configuration and dispatch to pending_request; Provides a convenience layer for common test patterns]
-#AI notes: Use acting_as() for authenticated routes, with_session() for session-dependent routes, without_middleware() to isolate controller logic.
+#AI invariants: [Each method creates a fresh PendingRequest; Configuration does not leak between calls]
+#AI core_behaviors: [Delegates all configuration and dispatch to PendingRequest; Provides a convenience layer for common test patterns]
+#AI notes: Use actingAs() for authenticated routes, withSession() for session-dependent routes, withoutMiddleware() to isolate controller logic.
 #AI owns: app instance reference
-#AI entry_points: [acting_as; with_headers; with_session; following_redirects; without_middleware; get; post; put; delete]
+#AI entry_points: [actingAs; withHeaders; withSession; followingRedirects; withoutMiddleware; get; post; put; delete]
 #AI config_reads: []
 #AI non_goals: [Does not open real network connections; Does not test CORS or real HTTP headers]
 #AI side_effects: [Dispatches through app::dispatch() which runs the full router pipeline]
-#AI flow: test -> http_client::method() -> pending_request -> app::dispatch() -> http_response
-#AI lifecycle_steps: [new http_client($app); -> http_client::get/post/etc(); -> new pending_request($app); -> pending_request::send(); -> app::dispatch(); -> http_response]
+#AI flow: test -> HttpClient::method() -> PendingRequest -> app::dispatch() -> HttpResponse
+#AI lifecycle_steps: [new HttpClient($app); -> HttpClient::get/post/etc(); -> new PendingRequest($app); -> PendingRequest::send(); -> app::dispatch(); -> HttpResponse]
 #AI section_order: [Configuration; HTTP Methods; Architecture]
-#AI architectural_notes: Thin convenience layer over pending_request — each call creates a fresh instance to prevent state leakage.
+#AI architectural_notes: Thin convenience layer over PendingRequest — each call creates a fresh instance to prevent state leakage.
 
 #AI:actingAs
 #AI group: Configuration
 #AI frequency: high
-#AI signature: public function actingAs(object $user): pending_request
+#AI signature: public function actingAs(object $user): PendingRequest
 #AI contract: Creates a pending request authenticated as the given user.
 #AI param_details: [{name: $user | type: object | required: true | desc: User object injected into the auth service.}]
-#AI return_detail: {type: pending_request | desc: Configured pending request ready for HTTP method calls.}
+#AI return_detail: {type: PendingRequest | desc: Configured pending request ready for HTTP method calls.}
 
 #AI:withHeaders
 #AI group: Configuration
 #AI frequency: medium
-#AI signature: public function withHeaders(array $headers): pending_request
+#AI signature: public function withHeaders(array $headers): PendingRequest
 #AI contract: Creates a pending request with custom headers.
 #AI param_details: [{name: $headers | type: array | required: true | desc: Key-value header pairs.}]
-#AI return_detail: {type: pending_request | desc: Configured pending request.}
+#AI return_detail: {type: PendingRequest | desc: Configured pending request.}
 
 #AI:withSession
 #AI group: Configuration
 #AI frequency: medium
-#AI signature: public function withSession(array $data): pending_request
+#AI signature: public function withSession(array $data): PendingRequest
 #AI contract: Creates a pending request with pre-populated session data.
 #AI param_details: [{name: $data | type: array | required: true | desc: Key-value session pairs.}]
-#AI return_detail: {type: pending_request | desc: Configured pending request.}
+#AI return_detail: {type: PendingRequest | desc: Configured pending request.}
 
 #AI:followingRedirects
 #AI group: Configuration
 #AI frequency: low
-#AI signature: public function followingRedirects(): pending_request
+#AI signature: public function followingRedirects(): PendingRequest
 #AI contract: Creates a pending request that automatically follows 3xx redirects.
-#AI return_detail: {type: pending_request | desc: Configured pending request.}
+#AI return_detail: {type: PendingRequest | desc: Configured pending request.}
 
 #AI:withoutMiddleware
 #AI group: Configuration
 #AI frequency: low
-#AI signature: public function withoutMiddleware(): pending_request
+#AI signature: public function withoutMiddleware(): PendingRequest
 #AI contract: Creates a pending request that skips all middleware during dispatch.
-#AI return_detail: {type: pending_request | desc: Configured pending request.}
+#AI return_detail: {type: PendingRequest | desc: Configured pending request.}
 
 #AI:get
 #AI group: HTTP Methods
 #AI frequency: high
-#AI signature: public function get(string $path, array $query = []): http_response
+#AI signature: public function get(string $path, array $query = []): HttpResponse
 #AI contract: Sends a GET request through the app.
 #AI param_details: [{name: $path | type: string | required: true | desc: Request URI path.}; {name: $query | type: array | required: false | desc: Query string parameters.}]
-#AI return_detail: {type: http_response | desc: Test response with assertion methods.}
+#AI return_detail: {type: HttpResponse | desc: Test response with assertion methods.}
 
 #AI:post
 #AI group: HTTP Methods
 #AI frequency: high
-#AI signature: public function post(string $path, array $post = [], array $json = []): http_response
+#AI signature: public function post(string $path, array $post = [], array $json = []): HttpResponse
 #AI contract: Sends a POST request. When $json is non-empty, sets Content-Type to application/json.
 #AI param_details: [{name: $path | type: string | required: true | desc: Request URI path.}; {name: $post | type: array | required: false | desc: Form-encoded POST data.}; {name: $json | type: array | required: false | desc: JSON body data.}]
-#AI return_detail: {type: http_response | desc: Test response with assertion methods.}
+#AI return_detail: {type: HttpResponse | desc: Test response with assertion methods.}
 
 #AI:put
 #AI group: HTTP Methods
 #AI frequency: medium
-#AI signature: public function put(string $path, array $post = []): http_response
+#AI signature: public function put(string $path, array $post = []): HttpResponse
 #AI contract: Sends a PUT request with form-encoded body data.
 #AI param_details: [{name: $path | type: string | required: true | desc: Request URI path.}; {name: $post | type: array | required: false | desc: Form-encoded body data.}]
-#AI return_detail: {type: http_response | desc: Test response with assertion methods.}
+#AI return_detail: {type: HttpResponse | desc: Test response with assertion methods.}
 
 #AI:delete
 #AI group: HTTP Methods
 #AI frequency: medium
-#AI signature: public function delete(string $path): http_response
+#AI signature: public function delete(string $path): HttpResponse
 #AI contract: Sends a DELETE request.
 #AI param_details: [{name: $path | type: string | required: true | desc: Request URI path.}]
-#AI return_detail: {type: http_response | desc: Test response with assertion methods.}
+#AI return_detail: {type: HttpResponse | desc: Test response with assertion methods.}

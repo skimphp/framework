@@ -92,7 +92,7 @@ describe('event::off()', function(): void {
 
 describe('event::resetRequest()', function(): void {
 
-    test('capture_boot_snapshot preserves boot-time listeners across resets', function(): void {
+    test('captureBootSnapshot preserves boot-time listeners across resets', function(): void {
         \Skim\Events\Event::off(); // clear snapshot for a clean slate
         $bootCalls = 0;
         \Skim\Events\Event::on('boot.event', function() use (&$bootCalls): void { $bootCalls++; });

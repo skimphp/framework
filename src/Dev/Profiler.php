@@ -257,7 +257,7 @@ final class Profiler {
 #AI frequency: medium
 #AI signature: public static function summary(): array
 #AI contract: Returns an aggregate summary of all collected events grouped by type, with counts and timing totals for toolbar badge display.
-#AI return_detail: {type: array | desc: Associative array with db, cache, views, view_ms, and logs keys.}
+#AI return_detail: {type: array | desc: Associative array with db, cache, views, viewMs, and logs keys.}
 
 #AI:events
 #AI group: Reading

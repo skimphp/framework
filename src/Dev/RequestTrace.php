@@ -10,10 +10,10 @@ namespace Skim\Dev;
  * In production, only errors and a summary are emitted to error_log.
  *
  * Example:
- *   request_trace::start($req_id, 'GET', '/users');
- *   request_trace::event('middleware.auth', ['ms' => 2.1]);
- *   request_trace::event('controller.index');
- *   $trace = request_trace::finish(200);
+ *   RequestTrace::start($req_id, 'GET', '/users');
+ *   RequestTrace::event('middleware.auth', ['ms' => 2.1]);
+ *   RequestTrace::event('controller.index');
+ *   $trace = RequestTrace::finish(200);
  *
  * Testing: Call reset() between requests to clear state.
  *
@@ -159,26 +159,26 @@ final class RequestTrace {
 
 #AI:class
 #AI symbol: Skim\Dev\RequestTrace
-#AI source_path: src/dev/request_trace.php
-#AI title: request_trace
+#AI source_path: src/dev/RequestTrace.php
+#AI title: RequestTrace
 #AI description: Per-request structured trace that records middleware, queries, controller calls, and response as a timestamped timeline.
 #AI role: request timeline tracer
 #AI layer: dev
 #AI badges: [dev; debug; trace; timeline; static]
-#AI intro: `request_trace` captures a structured timeline of events during a single HTTP request. In dev mode (APP_DEBUG=true), the full timeline is stored in sys.last_trace. In production, only errors and summaries are emitted.
+#AI intro: `RequestTrace` captures a structured timeline of events during a single HTTP request. In dev mode (APP_DEBUG=true), the full timeline is stored in sys.last_trace. In production, only errors and summaries are emitted.
 #AI lifecycle: start() at dispatch entry, event() throughout, finish() at response send, reset() in tests
 #AI fallback: all methods are no-ops when disabled or when trace not started
 #AI test_seam: enable()/disable() to toggle, reset() to clear between tests
 #AI invariants: [all methods are no-ops when disabled or trace not started; start() discards previous unfinished trace; finish() clears current trace state; reset() does not disable the tracer]
 #AI core_behaviors: [Records timestamped timeline events with elapsed time; Records Throwables with class and message; Tracks active extensions; Computes total duration on finish]
-#AI scope_items: [{name: $current | mutable: true | desc: Current in-progress trace array, null when not started.}; {name: $start_time | mutable: true | desc: microtime(true) at trace start.}; {name: $enabled | mutable: true | desc: Boolean toggle for trace collection.}]
-#AI owns: current trace, start_time, enabled flag
-#AI entry_points: [enable; disable; start; event; error; set_extensions; finish; current; reset]
+#AI scope_items: [{name: $current | mutable: true | desc: Current in-progress trace array, null when not started.}; {name: $startTime | mutable: true | desc: microtime(true) at trace start.}; {name: $enabled | mutable: true | desc: Boolean toggle for trace collection.}]
+#AI owns: current trace, startTime, enabled flag
+#AI entry_points: [enable; disable; start; event; error; setExtensions; finish; current; reset]
 #AI config_reads: []
 #AI non_goals: [Does not persist traces across requests; Does not replace structured logging; Does not sample or filter events]
 #AI side_effects: [mutates static $current array on each event/error call]
 #AI flow: start() -> event()* -> finish() -> trace array; reset() between requests
-#AI lifecycle_steps: [enable(); -> start(request_id, method, path); -> event() throughout request; -> error() on exceptions; -> set_extensions(); -> finish(status) returns trace; -> reset() in tests]
+#AI lifecycle_steps: [enable(); -> start(requestId, method, path); -> event() throughout request; -> error() on exceptions; -> setExtensions(); -> finish(status) returns trace; -> reset() in tests]
 #AI section_order: [Control; Recording; Reading; Architecture]
 #AI architectural_notes: Static facade pattern — all state is process-local. Designed for dev-mode request introspection, not production tracing.
 
@@ -248,4 +248,4 @@ final class RequestTrace {
 #AI frequency: low
 #AI signature: public static function reset(): void
 #AI contract: Clears all trace state (current trace and start time) without disabling the tracer. Call in tests between requests.
-#AI side_effects: [clears static $current and $start_time]
+#AI side_effects: [clears static $current and $startTime]

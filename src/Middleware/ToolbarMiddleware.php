@@ -17,7 +17,7 @@ use Skim\Dev\Toolbar;
  *
  * Example:
  *   // Registered globally in app boot — no manual setup needed
- *   $app->use(toolbar_middleware::class);
+ *   $app->use(ToolbarMiddleware::class);
  *
  * #AI:class
  */
@@ -66,13 +66,13 @@ class ToolbarMiddleware implements \Skim\Core\Middleware {
 
 #AI:class
 #AI symbol: Skim\Middleware\ToolbarMiddleware
-#AI source_path: src/middleware/toolbar_middleware.php
-#AI title: toolbar_middleware
+#AI source_path: src/middleware/ToolbarMiddleware.php
+#AI title: ToolbarMiddleware
 #AI description: Injects the debug toolbar HTML into text/html responses when APP_DEBUG is true.
 #AI role: debug toolbar middleware
 #AI layer: middleware
 #AI badges: [middleware; debug; toolbar; dev-only]
-#AI intro: `toolbar_middleware` appends the SKIM debug toolbar before `</body>` in HTML responses. It only activates when debug mode is enabled and the request is a standard page load (not JSON, AJAX, or htmx).
+#AI intro: `ToolbarMiddleware` appends the SKIM debug toolbar before `</body>` in HTML responses. It only activates when debug mode is enabled and the request is a standard page load (not JSON, AJAX, or htmx).
 #AI lifecycle: registered as global middleware; runs after controller on every request
 #AI test_seam: set app.debug to false to disable; mock toolbar::render() for output testing
 #AI invariants: [Only modifies text/html responses; Skips JSON/AJAX/htmx requests; No-op when debug is false]

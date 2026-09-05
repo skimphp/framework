@@ -31,13 +31,13 @@ interface LogHandler {
 
 #AI:class
 #AI symbol: Skim\Log\LogHandler
-#AI source_path: src/log/log_handler.php
-#AI title: log_handler
+#AI source_path: src/log/LogHandler.php
+#AI title: LogHandler
 #AI description: Interface contract for log message writers used by the log facade.
 #AI role: log handler interface
 #AI layer: log
 #AI badges: [interface; log; contract]
-#AI intro: `log_handler` is the single-method interface that every log backend must implement. The `log` facade holds one handler instance and delegates all level-specific calls to its `write()` method.
+#AI intro: `LogHandler` is the single-method interface that every log backend must implement. The `log` facade holds one handler instance and delegates all level-specific calls to its `write()` method.
 #AI lifecycle: instantiated once by log::resolveHandler() or injected via log::setHandler()
 #AI test_seam: log::setHandler(), log::reset()
 #AI invariants: [write() must not throw; implementations should handle their own errors]

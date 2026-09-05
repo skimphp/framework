@@ -413,27 +413,27 @@ class ClassVisitor extends NodeVisitorAbstract {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Extractor\ClassVisitor
-#AI source_path: src/dev/docs/extractor/class_visitor.php
-#AI title: class_visitor
+#AI source_path: src/dev/docs/extractor/ClassVisitor.php
+#AI title: ClassVisitor
 #AI description: Internal AST visitor that captures class-level and method-level @ai.* annotations from PHPDoc, inline comments, and detached #AI blocks.
 #AI role: internal AST visitor
 #AI layer: dev
 #AI badges: [extractor; ast; visitor; internal]
-#AI intro: `class_visitor` is the AST traversal engine used by `class_extractor`. It visits namespace and class nodes, merges annotations from three sources (PHPDoc, inline //, detached #AI blocks), and builds `extracted_class` and `extracted_method` value objects.
-#AI lifecycle: created per-file by class_extractor, single-use
+#AI intro: `ClassVisitor` is the AST traversal engine used by `ClassExtractor`. It visits namespace and class nodes, merges annotations from three sources (PHPDoc, inline //, detached #AI blocks), and builds `ExtractedClass` and `ExtractedMethod` value objects.
+#AI lifecycle: created per-file by ClassExtractor, single-use
 #AI fallback: none — captures first non-anonymous class only
-#AI test_seam: use via class_extractor; not designed for direct instantiation
+#AI test_seam: use via ClassExtractor; not designed for direct instantiation
 #AI invariants: [captures only the first non-anonymous class; anonymous classes skipped; private methods included only when they carry annotations or detached blocks; detached blocks override inline tags]
 #AI core_behaviors: [Merges tags from PHPDoc, inline comments, and detached #AI blocks; Builds method signatures from AST type nodes; Falls back to role tag when summary is empty; Parses detached #AI blocks from file bottom]
-#AI owns: result (extracted_class), file_lines cache
+#AI owns: result (ExtractedClass), fileLines cache
 #AI entry_points: [enterNode]
 #AI config_reads: []
 #AI non_goals: [Does not parse files directly; Does not validate annotations; Does not handle multiple classes per file]
 #AI side_effects: [sets $result property on class capture]
-#AI flow: enterNode() -> detect Class_ -> parse PHPDoc/inline/detached -> merge tags -> build extracted_class + extracted_method[]
-#AI lifecycle_steps: [enterNode(); -> namespace tracking; -> Class_ detection; -> PHPDoc or inline parse; -> detached block merge; -> method iteration; -> extract_method(); -> build extracted_class]
+#AI flow: enterNode() -> detect Class_ -> parse PHPDoc/inline/detached -> merge tags -> build ExtractedClass + ExtractedMethod[]
+#AI lifecycle_steps: [enterNode(); -> namespace tracking; -> Class_ detection; -> PHPDoc or inline parse; -> detached block merge; -> method iteration; -> extractMethod(); -> build ExtractedClass]
 #AI section_order: [Traversal; Extraction; Value Helpers; Architecture]
-#AI architectural_notes: Not part of the public API — only instantiated by class_extractor.
+#AI architectural_notes: Not part of the public API — only instantiated by ClassExtractor.
 
 #AI:enterNode
 #AI group: Traversal
@@ -444,8 +444,8 @@ class ClassVisitor extends NodeVisitorAbstract {
 #AI:extractMethod
 #AI group: Extraction
 #AI frequency: internal
-#AI signature: private function extractMethod(ClassMethod $method, string $owner, array $tags): extracted_method
-#AI contract: Builds an extracted_method from a ClassMethod AST node and its merged annotation tags. Constructs the method signature string from AST type nodes.
+#AI signature: private function extractMethod(ClassMethod $method, string $owner, array $tags): ExtractedMethod
+#AI contract: Builds an ExtractedMethod from a ClassMethod AST node and its merged annotation tags. Constructs the method signature string from AST type nodes.
 
 #AI:parseDetachedBlocks
 #AI group: Extraction

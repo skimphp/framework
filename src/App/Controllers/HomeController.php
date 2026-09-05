@@ -11,7 +11,7 @@ use Skim\Core\Response;
  * your own view rendering once the project has a homepage template.
  *
  * Example:
- *   // routes.php: $app->router->get('/', [home_controller::class, 'index']);
+ *   // routes.php: $app->router->get('/', [HomeController::class, 'index']);
  *
  * Testing: Instantiate and call index(), assert response contains expected HTML.
  *
@@ -30,13 +30,13 @@ class HomeController {
 
 #AI:class
 #AI symbol: App\Controllers\HomeController
-#AI source_path: src/controllers/home_controller.php
-#AI title: home_controller
+#AI source_path: src/App/Controllers/HomeController.php
+#AI title: HomeController
 #AI description: Default landing page controller for new SKIM applications.
 #AI role: starter controller
 #AI layer: controllers
 #AI badges: [controller; starter; http]
-#AI intro: `home_controller` is the default landing page shipped with new SKIM projects. It returns a static HTML greeting. Replace with view rendering once the project has templates.
+#AI intro: `HomeController` is the default landing page shipped with new SKIM projects. It returns a static HTML greeting. Replace with view rendering once the project has templates.
 #AI lifecycle: instantiated per request by the router
 #AI fallback: none
 #AI test_seam: instantiate directly, call index(), assert response body
@@ -50,8 +50,8 @@ class HomeController {
 #AI config_reads: []
 #AI non_goals: [Does not render templates; Does not accept request parameters]
 #AI side_effects: []
-#AI flow: router dispatches GET / -> home_controller::index() -> response::html(...)
-#AI lifecycle_steps: [GET / request; -> router matches home_controller::index; -> response::html() returned; -> middleware pipeline processes response]
+#AI flow: router dispatches GET / -> HomeController::index() -> response::html(...)
+#AI lifecycle_steps: [GET / request; -> router matches HomeController::index; -> response::html() returned; -> middleware pipeline processes response]
 #AI section_order: [Actions]
 #AI architectural_notes: Minimal controller demonstrating the SKIM controller contract — always return a response, never echo.
 

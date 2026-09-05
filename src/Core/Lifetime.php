@@ -8,7 +8,7 @@ namespace Skim\Core;
  * - singleton: one shared instance per process (the default). Correct for
  *   stateless services. In worker mode it lives for the whole worker, so it
  *   must NOT hold request-specific state.
- * - request: one instance per request; end_request() drops it so the next
+ * - request: one instance per request; endRequest() drops it so the next
  *   request rebuilds it. Use for services that cache request-scoped data.
  * - transient: a fresh instance on every make(); never cached.
  *
@@ -28,11 +28,11 @@ enum Lifetime {
 #AI role: enum
 #AI layer: core
 #AI badges: [di; lifetime; enum]
-#AI intro: `lifetime` is an enum with three cases that control how the DI container caches resolved services. singleton = process-wide cache; request = cleared at end_request(); transient = never cached.
+#AI intro: `lifetime` is an enum with three cases that control how the DI container caches resolved services. singleton = process-wide cache; request = cleared at endRequest(); transient = never cached.
 #AI lifecycle: used during bind() and make() resolution
 #AI test_seam: n/a — pure data enum
-#AI invariants: [singleton is the default when no lifetime is specified; request-scoped bindings are cleared by end_request(); transient bindings skip the resolved cache entirely]
-#AI core_behaviors: [Determines caching strategy in app::make(); Drives clear_lifetime_meta() and end_request() cleanup]
+#AI invariants: [singleton is the default when no lifetime is specified; request-scoped bindings are cleared by endRequest(); transient bindings skip the resolved cache entirely]
+#AI core_behaviors: [Determines caching strategy in app::make(); Drives clearLifetimeMeta() and endRequest() cleanup]
 #AI owns: no mutable state
 #AI entry_points: [singleton; request; transient]
 #AI config_reads: []

@@ -10,8 +10,8 @@ namespace Skim\Dev\Docs\Emitter;
  * names receive a source-file suffix to avoid overwrites.
  *
  * Example:
- *   $data = (new json_emitter())->load('llm.json');
- *   $count = (new mdx_emitter())->emit($data, 'docs/src/content/docs/api');
+ *   $data = (new JsonEmitter())->load('llm.json');
+ *   $count = (new MdxEmitter())->emit($data, 'docs/src/content/docs/api');
  *
  * Testing: Instantiate directly; operates on filesystem paths.
  *
@@ -493,14 +493,14 @@ class MdxEmitter {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Emitter\MdxEmitter
-#AI source_path: src/dev/docs/emitter/mdx_emitter.php
-#AI title: mdx_emitter
+#AI source_path: src/dev/docs/emitter/MdxEmitter.php
+#AI title: MdxEmitter
 #AI description: Generates component-style MDX files from llm.json class records for the Starlight documentation site.
 #AI role: MDX documentation generator
 #AI layer: dev
 #AI badges: [emitter; mdx; starlight; docs]
-#AI intro: `mdx_emitter` transforms decoded llm.json data into one .mdx file per class using Starlight-compatible components (ApiBadge, ApiMethod, ApiParam, ApiThrows, WarningBox, NoteBox, ScopeBox, AiContext, LifecycleFlow). Handles duplicate class names and filename collisions.
-#AI lifecycle: instantiated per-use by docs_site_command, no state retained
+#AI intro: `MdxEmitter` transforms decoded llm.json data into one .mdx file per class using Starlight-compatible components (ApiBadge, ApiMethod, ApiParam, ApiThrows, WarningBox, NoteBox, ScopeBox, AiContext, LifecycleFlow). Handles duplicate class names and filename collisions.
+#AI lifecycle: instantiated per-use by DocsSiteCommand, no state retained
 #AI fallback: none — throws on write failure
 #AI test_seam: instantiate directly with temp directory paths
 #AI invariants: [one MDX file per class; duplicate class names get source-file suffix; colliding filenames get numeric suffix; Architecture group methods excluded from method sections; writes classes into namespace subdirectories; cleans stale .mdx before writing; generates api/index.mdx]
@@ -510,8 +510,8 @@ class MdxEmitter {
 #AI config_reads: []
 #AI non_goals: [Does not generate Markdown; Does not extract or load llm.json]
 #AI side_effects: [writes .mdx files to output directory; creates directory if needed; cleans stale .mdx files recursively]
-#AI flow: emit(data, dir) -> clean_output_dir -> duplicate_class_names -> namespace_to_dir -> mdx_file_name -> render_class -> write; render_index -> write index.mdx
-#AI lifecycle_steps: [emit(); -> clean stale .mdx files; -> detect duplicate class names; -> derive namespace subdirectory; -> generate unique filenames; -> render_class() per class; -> write .mdx files; -> render_index(); -> write api/index.mdx]
+#AI flow: emit(data, dir) -> cleanOutputDir -> duplicateClassNames -> namespaceToDir -> mdxFileName -> renderClass -> write; renderIndex -> write index.mdx
+#AI lifecycle_steps: [emit(); -> clean stale .mdx files; -> detect duplicate class names; -> derive namespace subdirectory; -> generate unique filenames; -> renderClass() per class; -> write .mdx files; -> renderIndex(); -> write api/index.mdx]
 #AI section_order: [Emit; Architecture]
 #AI architectural_notes: MDX output uses Starlight-specific components; the emitter is coupled to the Starlight/Astro component API.
 

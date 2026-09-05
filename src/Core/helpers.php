@@ -53,7 +53,7 @@ if (!function_exists('storagePath')) {
      * Resolves SKIM_ROOT when defined, falls back to getcwd().
      *
      * Example:
-     *   storage_path('logs/app.log')  // → /var/www/myapp/.skim/logs/app.log
+     *   storagePath('logs/app.log')  // → /var/www/myapp/.skim/logs/app.log
      *
      * @param string $path Sub-path appended to .skim root. Empty returns the root itself.
      */
@@ -80,7 +80,7 @@ if (!function_exists('e')) {
      * HTML-escapes a string for safe template output. #AI:e
      *
      * Always call on user-supplied data — skipping is an XSS vulnerability.
-     * Pass `$double_encode = false` when the value already contains entities.
+     * Pass `$doubleEncode = false` when the value already contains entities.
      *
      * @param string $value          Raw string to escape.
      * @param bool   $doubleEncode  Re-encode existing entities when true.
@@ -99,7 +99,7 @@ if (!function_exists('component')) {
      *
      * Example:
      *   component('alert', ['message' => 'test']);
-     *   component('alert', new alert_props(message: 'test'));
+     *   component('alert', new AlertProps(message: 'test'));
      *
      * @param string $name Component name (maps to views/components/{$name}.php).
      * @param array|object $props Props array or *_props readonly object.
@@ -117,7 +117,7 @@ if (!function_exists('componentWithParts')) {
      * multiple named content blocks passed from the call site.
      *
      * Example:
-     *   component_with_parts('card', new card_props(title: 'Profile'), function($c) {
+     *   componentWithParts('card', new CardProps(title: 'Profile'), function($c) {
      *       $c->part('header', fn() => '<h2>Profile</h2>');
      *       echo '<p>Main content</p>';
      *   });
@@ -217,7 +217,7 @@ if (!function_exists('asset')) {
 #AI core_behaviors: [Functions are thin pass-through wrappers; Application code may override any helper by defining it before autoload]
 #AI notes: App code should import facade classes directly for IDE support. Helpers are for templates and config files where `use` statements are unavailable or awkward.
 #AI owns: nothing
-#AI entry_points: [env; config; route; storage_path; base_path; e; component; component_with_parts; part; has_part; t; asset]
+#AI entry_points: [env; config; route; storagePath; basePath; e; component; componentWithParts; part; hasPart; t; asset]
 #AI config_reads: [app.*; db.*; cache.*]
 #AI non_goals: [Does not add behavior beyond the underlying facades; Does not replace facade usage in application controllers or models]
 #AI side_effects: [none — all functions are pure delegation]
@@ -263,13 +263,13 @@ if (!function_exists('asset')) {
 #AI contract: Returns the absolute path under the .skim/ directory. Uses SKIM_ROOT when defined, falls back to getcwd(). Appends the optional sub-path.
 #AI param_details: [{name: $path | type: string | required: false | desc: Sub-path under .skim/. Empty string returns the .skim root itself.}]
 #AI return_detail: {type: string | desc: Absolute filesystem path under .skim/.}
-#AI examples: [{label: Log file path | code: storage_path('logs/app.log')  // → /var/www/myapp/.skim/logs/app.log}]
+#AI examples: [{label: Log file path | code: storagePath('logs/app.log')  // → /var/www/myapp/.skim/logs/app.log}]
 
 #AI:e
 #AI group: Templates & Routing
 #AI frequency: high
 #AI signature: function e(string $value, bool $doubleEncode = true): string
-#AI contract: HTML-escapes a string using htmlspecialchars with ENT_QUOTES and UTF-8. Always call on user-supplied data to prevent XSS. Pass $double_encode = false when the value already contains HTML entities.
+#AI contract: HTML-escapes a string using htmlspecialchars with ENT_QUOTES and UTF-8. Always call on user-supplied data to prevent XSS. Pass $doubleEncode = false when the value already contains HTML entities.
 #AI param_details: [{name: $value | type: string | required: true | desc: Raw string to escape.}; {name: $doubleEncode | type: bool | required: false | desc: When false, existing HTML entities are not re-encoded.}]
 #AI return_detail: {type: string | desc: HTML-safe escaped string.}
 #AI warnings: [Skipping e() on user-supplied data is an XSS vulnerability]
@@ -287,8 +287,8 @@ if (!function_exists('asset')) {
 #AI group: Templates & Routing
 #AI frequency: medium
 #AI signature: function componentWithParts(string $name, array|object $props, callable $render): string
-#AI contract: Renders a component with named parts captured via closures. The closure receives a component_collector to declare parts. Parts and main body are injected into the component template.
-#AI param_details: [{name: $name | type: string | required: true | desc: Component name (maps to views/components/{$name}.php).}; {name: $props | type: array|object | required: true | desc: Props array or *_props readonly object.}; {name: $render | type: callable | required: true | desc: Closure receiving the component_collector instance.}]
+#AI contract: Renders a component with named parts captured via closures. The closure receives a ComponentCollector to declare parts. Parts and main body are injected into the component template.
+#AI param_details: [{name: $name | type: string | required: true | desc: Component name (maps to views/components/{$name}.php).}; {name: $props | type: array|object | required: true | desc: Props array or *_props readonly object.}; {name: $render | type: callable | required: true | desc: Closure receiving the ComponentCollector instance.}]
 #AI return_detail: {type: string | desc: Rendered component HTML with parts injected.}
 #AI throws_details: [{type: \Skim\View\Exceptions\ViewException | desc: If component file is not found.}]
 

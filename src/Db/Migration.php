@@ -67,7 +67,7 @@ abstract class Migration {
 #AI non_goals: [Does not execute SQL — migrator handles execution; Does not track state — _migrations table handles that]
 #AI side_effects: []
 #AI flow: migrator requires file -> migration instance -> up()/down() returns SQL -> migrator executes
-#AI lifecycle_steps: [migrator::loadAll() requires migration file; -> migration instance created; -> filename assigned from basename; -> migrator calls up() or down(); -> SQL string returned; -> migrator executes via execute_sql()]
+#AI lifecycle_steps: [migrator::loadAll() requires migration file; -> migration instance created; -> filename assigned from basename; -> migrator calls up() or down(); -> SQL string returned; -> migrator executes via executeSql()]
 #AI section_order: [Migration Contract; Properties]
 #AI architectural_notes: SQL-first design avoids the impedance mismatch of fluent schema builders. What you write is exactly what runs on the database.
 

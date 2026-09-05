@@ -83,13 +83,13 @@ final class TaggedRedisDriver {
 
 #AI:class
 #AI symbol: Skim\Cache\TaggedRedisDriver
-#AI source_path: src/cache/tagged_redis_driver.php
-#AI title: tagged_redis_driver
-#AI description: Tag-scoped proxy over redis_driver for grouped cache invalidation via Redis sets.
+#AI source_path: src/cache/TaggedRedisDriver.php
+#AI title: TaggedRedisDriver
+#AI description: Tag-scoped proxy over RedisDriver for grouped cache invalidation via Redis sets.
 #AI role: tag-scoped cache proxy
 #AI layer: cache
 #AI badges: [proxy; cache; redis; tags; bulk-invalidation]
-#AI intro: `Skim\Cache\TaggedRedisDriver` is a proxy returned by `cache::tags()`. It wraps the redis_driver and adds tag membership tracking via Redis sets. On `set()`, the key is SADD'd to each tag's set. On `flush()`, all member keys are deleted along with the tag sets themselves.
+#AI intro: `Skim\Cache\TaggedRedisDriver` is a proxy returned by `cache::tags()`. It wraps the RedisDriver and adds tag membership tracking via Redis sets. On `set()`, the key is SADD'd to each tag's set. On `flush()`, all member keys are deleted along with the tag sets themselves.
 #AI lifecycle: created per cache::tags() call, no persistent state beyond Redis sets
 #AI invariants: [set() adds key to all tag sets before writing; get() delegates to driver without tag awareness; flush() deletes member keys then tag sets]
 #AI warnings: [flush() is destructive — removes all keys associated with any constructor tag; Requires live Redis connection]
@@ -101,7 +101,7 @@ final class TaggedRedisDriver {
 #AI group: Write API
 #AI frequency: high
 #AI signature: public function set(string $key, mixed $value, ?int $ttl = null): bool
-#AI contract: Adds the prefixed key to each tag's Redis set via SADD, then delegates the write to the underlying redis_driver.
+#AI contract: Adds the prefixed key to each tag's Redis set via SADD, then delegates the write to the underlying RedisDriver.
 #AI param_details: [{name: $key | type: string | required: true | desc: Cache key to write.}; {name: $value | type: mixed | required: true | desc: Payload to persist.}; {name: $ttl | type: ?int | required: false | desc: TTL in seconds, or null for no expiry.}]
 #AI return_detail: {type: bool | desc: True if backend confirmed successful write.}
 #AI side_effects: [Adds key to Redis tag sets via SADD]
@@ -110,7 +110,7 @@ final class TaggedRedisDriver {
 #AI group: Read API
 #AI frequency: high
 #AI signature: public function get(string $key, mixed $default = null): mixed
-#AI contract: Delegates directly to the underlying redis_driver. Tags do not affect reads.
+#AI contract: Delegates directly to the underlying RedisDriver. Tags do not affect reads.
 #AI param_details: [{name: $key | type: string | required: true | desc: Cache key to read.}; {name: $default | type: mixed | required: false | desc: Fallback returned on miss.}]
 #AI return_detail: {type: mixed | desc: The cached value or $default.}
 

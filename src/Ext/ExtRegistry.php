@@ -10,7 +10,7 @@ namespace Skim\Ext;
  * skim.json manifests. Caches results for the instance lifetime.
  *
  * Example:
- *   $registry = new ext_registry(base_path());
+ *   $registry = new ExtRegistry(basePath());
  *   $extensions = $registry->installed();
  *   $auth = $registry->find('acme/auth');
  *
@@ -105,7 +105,7 @@ final class ExtRegistry {
     /**
      * Convenience: returns all installed extensions using the given or default root. #AI:all
      *
-     * @param string|null $root Project root, or null for base_path().
+     * @param string|null $root Project root, or null for basePath().
      * @return array<int,array>
      */
     public static function all(?string $root = null): array {
@@ -400,23 +400,23 @@ final class ExtRegistry {
 
 #AI:class
 #AI symbol: Skim\Ext\ExtRegistry
-#AI source_path: src/ext/ext_registry.php
-#AI title: ext_registry
+#AI source_path: src/ext/ExtRegistry.php
+#AI title: ExtRegistry
 #AI description: Discovers installed SKIM extensions from Composer packages with capability mapping and conflict detection.
 #AI role: extension discovery registry
 #AI layer: ext
 #AI badges: [extension; discovery; registry; composer; capability-map]
-#AI intro: `ext_registry` scans vendor/ Composer packages for SKIM extension metadata. It reads extra.skim from composer.json and optional skim.json manifests, builds a capability map, detects conflicts, and caches results for the instance lifetime.
+#AI intro: `ExtRegistry` scans vendor/ Composer packages for SKIM extension metadata. It reads extra.skim from composer.json and optional skim.json manifests, builds a capability map, detects conflicts, and caches results for the instance lifetime.
 #AI lifecycle: instantiated per-discovery; results cached until refresh()
 #AI test_seam: construct with temp directory containing mock vendor/ structure
 #AI invariants: [Results cached per instance; skim.json takes priority over class instantiation; Extensions sorted by priority then name; Capability conflicts detected across all installed extensions]
 #AI core_behaviors: [Scans vendor/*/composer.json and vendor/*/*/composer.json; Reads extra.skim.extension for class name; Falls back to skim.json manifest; Builds capability map with conflict detection]
 #AI owns: extension metadata cache, capability map, conflict list
-#AI entry_points: [installed; find; refresh; all; capability_map]
+#AI entry_points: [installed; find; refresh; all; capabilityMap]
 #AI config_reads: []
 #AI non_goals: [Does not install or download packages; Does not validate extension classes beyond autoload check; Does not resolve version constraints]
 #AI side_effects: [Reads composer.json and skim.json files from vendor/]
-#AI flow: installed() -> composer_files() -> metadata_from_package() -> normalize() -> sort by priority; capability_map() -> iterate installed -> detect duplicate providers + declared conflicts
+#AI flow: installed() -> composerFiles() -> metadataFromPackage() -> normalize() -> sort by priority; capabilityMap() -> iterate installed -> detect duplicate providers + declared conflicts
 #AI section_order: [Discovery API; Lookup API; Capability API; Dynamic Dispatch; Cache Management]
 
 #AI:__construct
@@ -446,14 +446,14 @@ final class ExtRegistry {
 #AI frequency: low
 #AI signature: public function refresh(): void
 #AI contract: Clears all cached scan data so a later installed package can be discovered on the next installed() call.
-#AI side_effects: [Clears installed, capability_map, and conflicts caches]
+#AI side_effects: [Clears installed, capabilityMap, and conflicts caches]
 
 #AI:all
 #AI group: Discovery API
 #AI frequency: low
 #AI signature: public static function all(?string $root = null): array
 #AI contract: Convenience static method that creates a registry with the given or default root and returns installed extensions.
-#AI param_details: [{name: $root | type: ?string | required: false | desc: Project root, or null for base_path().}]
+#AI param_details: [{name: $root | type: ?string | required: false | desc: Project root, or null for basePath().}]
 #AI return_detail: {type: array | desc: Extension metadata arrays.}
 
 #AI:__call
@@ -468,7 +468,7 @@ final class ExtRegistry {
 #AI group: Dynamic Dispatch
 #AI frequency: low
 #AI signature: public static function __callStatic(string $method, array $args): mixed
-#AI contract: Static dispatch for has_capability, who_provides, and conflicts. Creates a new registry with base_path() or provided root.
+#AI contract: Static dispatch for has_capability, who_provides, and conflicts. Creates a new registry with basePath() or provided root.
 #AI param_details: [{name: $method | type: string | required: true | desc: Method name.}; {name: $args | type: array | required: true | desc: Method arguments.}]
 #AI throws_details: [{type: \BadMethodCallException | desc: When method is not recognized.}]
 

@@ -62,7 +62,7 @@ interface Driver {
      * Removes all keys matching the given prefix. #AI:flush
      *
      * The prefix is required — callers who want a full cache wipe must use
-     * flush_all() explicitly.
+     * flushAll() explicitly.
      *
      * @param string $prefix Key prefix to match (e.g. 'user:' clears all user:* keys).
      * @return bool True if backend confirmed invalidation.
@@ -88,10 +88,10 @@ interface Driver {
 #AI role: cache driver interface
 #AI layer: cache
 #AI badges: [interface; cache; driver; contract]
-#AI intro: `Skim\Cache\Driver` is the interface every cache backend must implement. The cache facade resolves the configured driver and delegates all operations through it. Swapping backends requires only a config change or a `set_driver()` call in tests.
+#AI intro: `Skim\Cache\Driver` is the interface every cache backend must implement. The cache facade resolves the configured driver and delegates all operations through it. Swapping backends requires only a config change or a `setDriver()` call in tests.
 #AI lifecycle: implemented by concrete drivers, resolved by cache facade
 #AI test_seam: implement interface in test double, inject via cache::setDriver()
-#AI invariants: [get() returns $default on miss; set() overwrites existing keys; null TTL means no expiry; flush() requires non-empty prefix; flush_all() clears everything]
+#AI invariants: [get() returns $default on miss; set() overwrites existing keys; null TTL means no expiry; flush() requires non-empty prefix; flushAll() clears everything]
 #AI section_order: [Read API; Write API; Invalidation]
 #AI architectural_notes: PSR-16 SimpleCache subset — only the methods SKIM actually uses. All drivers implement this; swap driver in config without changing app code.
 
@@ -131,7 +131,7 @@ interface Driver {
 #AI group: Invalidation
 #AI frequency: low
 #AI signature: public function flush(string $prefix): bool
-#AI contract: Removes all keys matching the given prefix. The prefix is required — callers who want a full cache wipe must use flush_all().
+#AI contract: Removes all keys matching the given prefix. The prefix is required — callers who want a full cache wipe must use flushAll().
 #AI param_details: [{name: $prefix | type: string | required: true | desc: Key prefix to match.}]
 #AI return_detail: {type: bool | desc: True if backend confirmed invalidation.}
 

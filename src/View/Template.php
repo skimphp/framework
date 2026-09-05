@@ -118,7 +118,7 @@ class Template {
      * Outputs captured slot content inside a layout file. #AI:block
      *
      * Returns empty string if the slot was never captured (missing start/end pair).
-     * Use has_section() to check existence before calling.
+     * Use hasSection() to check existence before calling.
      *
      * @param string $name Slot identifier matching a previous start() call.
      */
@@ -198,19 +198,19 @@ class Template {
 #AI badges: [template; layout; slots; partials]
 #AI intro: `template` is the context object available as `$this` inside every PHP view file. It provides the layout system (layout/start/end/slot) and partial inclusion (include). Layout execution runs the child template first to capture slots, then renders the layout.
 #AI lifecycle: instantiated by view::render() per render call, used as $this inside templates
-#AI fallback: default_layout applied when template does not call layout()
+#AI fallback: defaultLayout applied when template does not call layout()
 #AI test_seam: instantiate directly with a views path and data array
 #AI invariants: [start() must be paired with end(); Non-slot output becomes the 'content' slot automatically; include() does not inherit the parent's layout; .html extension is tried before .php]
 #AI core_behaviors: [Layout system: child renders first, captures slots, then layout renders with slot() calls; Partial inclusion via include() with isolated data context; Data extracted as local variables via extract()]
 #AI warnings: [end() without matching start() throws LogicException; extract() with EXTR_SKIP means data keys cannot override existing local variables]
 #AI notes: The layout receives all captured slots from the child template. The 'content' slot is auto-populated with any non-slot output from the child.
-#AI owns: slots array, layout_name, active_slot state
-#AI entry_points: [include; layout; start; end; section; end_section; block; has_section; slot; render_file]
+#AI owns: slots array, layoutName, activeSlot state
+#AI entry_points: [include; layout; start; end; section; endSection; block; hasSection; slot; renderFile]
 #AI config_reads: []
 #AI non_goals: [Does not handle fragment extraction (done by view class); Does not compile or cache templates; Does not escape output (use e() in templates)]
-#AI side_effects: [Uses ob_start/ob_get_clean for slot capture and template rendering; extract() creates local variables in render_file scope]
-#AI flow: view::render() -> new template() -> render_file() -> include $file -> layout? -> render layout -> return HTML
-#AI lifecycle_steps: [view::render() -> new template(path, data, default_layout); -> render_file($template); -> resolve .html/.php; -> extract data; -> ob_start + include; -> layout declared? -> capture content slot; -> render layout file; -> return HTML]
+#AI side_effects: [Uses ob_start/ob_get_clean for slot capture and template rendering; extract() creates local variables in renderFile scope]
+#AI flow: view::render() -> new template() -> renderFile() -> include $file -> layout? -> render layout -> return HTML
+#AI lifecycle_steps: [view::render() -> new template(path, data, defaultLayout); -> renderFile($template); -> resolve .html/.php; -> extract data; -> ob_start + include; -> layout declared? -> capture content slot; -> render layout file; -> return HTML]
 #AI section_order: [Template API; Layout System; Rendering; Architecture]
 #AI architectural_notes: The layout system uses a two-pass approach: child template runs first to capture slots, then the layout renders with access to those slots. This avoids the need for output buffering the entire page.
 
@@ -257,7 +257,7 @@ class Template {
 #AI group: Layout System
 #AI frequency: medium
 #AI signature: public function endSection(): void
-#AI contract: Alias for end() — provides a familiar end_section() API for Laravel/Symfony developers.
+#AI contract: Alias for end() — provides a familiar endSection() API for Laravel/Symfony developers.
 #AI throws_details: [{type: \LogicException | desc: If called without a matching section().}]
 #AI side_effects: [Ends output buffering via ob_get_clean()]
 
@@ -265,7 +265,7 @@ class Template {
 #AI group: Layout System
 #AI frequency: medium
 #AI signature: public function block(string $name, string $default = ''): string
-#AI contract: Returns captured slot content. Returns $default if the slot was never captured. Use has_section() to check existence.
+#AI contract: Returns captured slot content. Returns $default if the slot was never captured. Use hasSection() to check existence.
 #AI param_details: [{name: $name | type: string | required: true | desc: Slot identifier matching a previous start() call.}; {name: $default | type: string | required: false | desc: Default value returned when slot is not captured.}]
 #AI return_detail: {type: string | desc: Captured slot HTML or default value.}
 
@@ -292,5 +292,5 @@ class Template {
 #AI contract: Renders a template file, resolves .html/.php extension, extracts data as local variables, and applies the layout system.
 #AI param_details: [{name: $template | type: string | required: true | desc: Template path relative to views root.}]
 #AI return_detail: {type: string | desc: Fully rendered HTML with layout applied.}
-#AI throws_details: [{type: view_exception | desc: If the template file is not found.}]
+#AI throws_details: [{type: ViewException | desc: If the template file is not found.}]
 #AI side_effects: [Uses extract() to create local variables; Uses output buffering for rendering]

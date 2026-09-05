@@ -11,7 +11,7 @@ namespace Skim\Cli;
  *
  * Example:
  *   $kernel = new kernel();
- *   $exit_code = $kernel->run(argv_parser::parse($argv));
+ *   $exit_code = $kernel->run(ArgvParser::parse($argv));
  *   exit($exit_code);
  *
  * Testing: Instantiate directly with known argv_parser input; commands are resolved from built-in + config.
@@ -73,7 +73,7 @@ final class Kernel {
      * error box with Levenshtein "did you mean" suggestion. For help/list,
      * shows interactive TUI (TTY) or static listing (piped).
      *
-     * @param \Skim\Cli\ArgvParser $input Parsed CLI input from argv_parser::parse().
+     * @param \Skim\Cli\ArgvParser $input Parsed CLI input from ArgvParser::parse().
      * @return int POSIX exit code.
      */
     public function run(\Skim\Cli\ArgvParser $input): int {
@@ -336,25 +336,25 @@ final class Kernel {
 #AI intro: `kernel` is the central dispatcher for the SKIM CLI. It owns the built-in command registry, merges user-defined commands from config, resolves command names, prints the header banner, dispatches commands with timing and error handling, and provides interactive or static help listings.
 #AI lifecycle: instantiated once per CLI invocation in bin/skim, run() called with parsed argv
 #AI fallback: unknown commands show error box with Levenshtein suggestion; help/list shows command listing
-#AI test_seam: instantiate directly, pass argv_parser with known input; user commands come from config
+#AI test_seam: instantiate directly, pass ArgvParser with known input; user commands come from config
 #AI invariants: [built-in COMMANDS map is immutable; user commands from config/app.php are merged at runtime; --quiet suppresses header and duration; --no-ansi forces plain output; --agent implies --quiet and --no-ansi]
 #AI core_behaviors: [Resolves command names with colon-prefix fallback; Merges built-in and user commands; Prints header banner unless --quiet; Catches exceptions and renders error boxes; Shows duration on TTY; Interactive TUI help on TTY, static listing otherwise; Agent mode prints compact tab-separated help and errors]
-#AI owns: command registry, group ordering, quiet/no_ansi/agent flags
+#AI owns: command registry, group ordering, quiet/noAnsi/agent flags
 #AI entry_points: [run]
 #AI config_reads: [app.commands; app.debug; APP_ENV]
-#AI non_goals: [Does not parse argv (see argv_parser); Does not implement command logic (see command subclasses); Does not manage process signals]
+#AI non_goals: [Does not parse argv (see ArgvParser); Does not implement command logic (see command subclasses); Does not manage process signals]
 #AI side_effects: [prints to stdout/stderr; reads config for user commands and debug mode]
-#AI flow: kernel::run(input) -> check flags -> resolve command -> dispatch or show_help -> return exit code
-#AI lifecycle_steps: [run(argv_parser); -> check --version/--quiet/--no-ansi; -> resolve(command_name); -> if found: dispatch(); -> if help/list: show_help(); -> if unknown: error_box + did_you_mean; -> return exit code]
+#AI flow: kernel::run(input) -> check flags -> resolve command -> dispatch or showHelp -> return exit code
+#AI lifecycle_steps: [run(ArgvParser); -> check --version/--quiet/--no-ansi; -> resolve(commandName); -> if found: dispatch(); -> if help/list: showHelp(); -> if unknown: errorBox + didYouMean; -> return exit code]
 #AI section_order: [Dispatch; Command Resolution; Help Display; Architecture]
 #AI architectural_notes: The kernel is the single entry point for all CLI operations. It keeps the command registry as a private constant and merges user commands from config at runtime.
 
 #AI:run
 #AI group: Dispatch
 #AI frequency: high
-#AI signature: public function run(argv_parser $input): int
+#AI signature: public function run(ArgvParser $input): int
 #AI contract: Runs the CLI. Handles --version/--quiet/--no-ansi/--agent flags, resolves the command, dispatches it, or shows help for unknown/help/list commands.
-#AI param_details: [{name: $input | type: argv_parser | required: true | desc: Parsed CLI input from argv_parser::parse().}]
+#AI param_details: [{name: $input | type: ArgvParser | required: true | desc: Parsed CLI input from ArgvParser::parse().}]
 #AI return_detail: {type: int | desc: POSIX exit code from the dispatched command.}
 
 #AI:resolve
@@ -375,9 +375,9 @@ final class Kernel {
 #AI:dispatch
 #AI group: Dispatch
 #AI frequency: internal
-#AI signature: private function dispatch(string $class, string $commandName, argv_parser $input): int
+#AI signature: private function dispatch(string $class, string $commandName, ArgvParser $input): int
 #AI contract: Instantiates, configures, and dispatches a resolved command class. Prints header, records timing, catches exceptions.
-#AI param_details: [{name: $class | type: string | required: true | desc: FQCN of the command class.}; {name: $commandName | type: string | required: true | desc: Registered command name.}; {name: $input | type: argv_parser | required: true | desc: Parsed CLI input.}]
+#AI param_details: [{name: $class | type: string | required: true | desc: FQCN of the command class.}; {name: $commandName | type: string | required: true | desc: Registered command name.}; {name: $input | type: ArgvParser | required: true | desc: Parsed CLI input.}]
 #AI return_detail: {type: int | desc: Exit code from command handle(), or 1 on exception.}
 
 #AI:showHelp

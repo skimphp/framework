@@ -27,7 +27,7 @@ describe('router::map() — Slim/Laravel-style alias', function(): void {
         expect($r->dispatch('PUT', '/b'))->toBeFalse();
     });
 
-    test('returns a chainable route_entry — middleware() applies to the registered route', function(): void {
+    test('returns a chainable RouteEntry — middleware() applies to the registered route', function(): void {
         $r = new \Skim\Core\Router();
         $entry = $r->map('GET', '/c', fn() => null)->middleware('SomeMiddleware');
 
@@ -45,7 +45,7 @@ describe('router::map() — Slim/Laravel-style alias', function(): void {
         expect($generated)->toBe('/d');
     });
 
-    test('return type of map() is route_entry (static type contract)', function(): void {
+    test('return type of map() is RouteEntry (static type contract)', function(): void {
         $r = new \Skim\Core\Router();
 
         $return = $r->map('GET', '/e', fn() => null);

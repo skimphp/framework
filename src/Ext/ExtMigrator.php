@@ -14,7 +14,7 @@ use Skim\Db\Migration;
  * install session only.
  *
  * Example:
- *   $migrator = new ext_migrator('default');
+ *   $migrator = new ExtMigrator('default');
  *   $applied = $migrator->run('acme/auth', __DIR__ . '/migrations');
  *   // On failure:
  *   $migrator->rollbackSession($applied);
@@ -229,25 +229,25 @@ final class ExtMigrator {
 
 #AI:class
 #AI symbol: Skim\Ext\ExtMigrator
-#AI source_path: src/ext/ext_migrator.php
-#AI title: ext_migrator
+#AI source_path: src/ext/ExtMigrator.php
+#AI title: ExtMigrator
 #AI description: Runs extension migrations against the shared _migrations table with session-scoped rollback.
 #AI role: extension migration runner
 #AI layer: ext
 #AI badges: [extension; migration; database; transactional]
-#AI intro: `ext_migrator` applies an extension's migration files inside transactions and tracks them in the shared `_migrations` table. It supports session-scoped rollback for cleanup when installation fails partway through.
+#AI intro: `ExtMigrator` applies an extension's migration files inside transactions and tracks them in the shared `_migrations` table. It supports session-scoped rollback for cleanup when installation fails partway through.
 #AI lifecycle: instantiated per-extension install; tracks applied migrations per session
-#AI test_seam: use SQLite :memory: connection; inspect applied_this_session()
+#AI test_seam: use SQLite :memory: connection; inspect appliedThisSession()
 #AI invariants: [Each migration runs inside a transaction; Tracking filename format is 'ext_name: filename.php'; Extension name cannot contain colons; _migrations table is auto-created]
 #AI core_behaviors: [Scans migration directory for .php files; Compares against _migrations table; Applies pending in sorted order; Tracks in batch numbers]
 #AI owns: _migrations table rows for extension entries
-#AI entry_points: [run; rollback_session; applied_this_session]
+#AI entry_points: [run; rollbackSession; appliedThisSession]
 #AI config_reads: []
 #AI non_goals: [Does not handle core framework migrations; Does not support down-migrations by batch; Does not validate SQL syntax across drivers]
 #AI side_effects: [Creates _migrations table if missing; Inserts tracking rows; Executes DDL/DML from migration files; Deletes rows on rollback]
-#AI flow: run() -> ensure_table() -> applied_for() -> pending() -> foreach: transaction(up() + INSERT tracking) -> rollback_session(): reverse foreach: transaction(down() + DELETE tracking)
+#AI flow: run() -> ensureTable() -> appliedFor() -> pending() -> foreach: transaction(up() + INSERT tracking) -> rollbackSession(): reverse foreach: transaction(down() + DELETE tracking)
 #AI section_order: [Migration API; Inspection]
-#AI warnings: [rollback_session() only rolls back migrations from the current run() call — not previous sessions]
+#AI warnings: [rollbackSession() only rolls back migrations from the current run() call — not previous sessions]
 
 #AI:__construct
 #AI group: Migration API

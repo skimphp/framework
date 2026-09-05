@@ -168,11 +168,11 @@ final class I18n implements \Skim\Worker\Resettable {
 #AI intro: `i18n` provides translation lookup using PHP array files organized by locale. It supports dot-notation keys, pipe-based pluralization, :param interpolation, fallback locale, and custom loaders for alternative backends.
 #AI lifecycle: static facade, translation files loaded on first access per locale
 #AI fallback: returns the key unchanged when no translation is found
-#AI test_seam: set_loader(), reset()
+#AI test_seam: setLoader(), reset()
 #AI invariants: [t() never throws — returns key on miss; Files are loaded once and cached per locale; Custom loader bypasses file loading entirely]
 #AI core_behaviors: [Dot-notation key resolution through nested arrays; Pipe-based two-form pluralization; :param interpolation; Fallback locale on miss]
 #AI owns: loaded translation cache
-#AI entry_points: [t; locale; set_loader; set_path]
+#AI entry_points: [t; locale; setLoader; setPath]
 #AI config_reads: []
 #AI non_goals: [Does not support ICU plural rules; Does not handle RTL layout; Does not provide locale negotiation from Accept-Language]
 #AI side_effects: [Loads PHP files from lang/ directory on first access]
@@ -200,7 +200,7 @@ final class I18n implements \Skim\Worker\Resettable {
 #AI signature: public static function setPath(string $path): void
 #AI contract: Sets the base path to the lang/ directory containing locale subdirectories.
 #AI param_details: [{name: $path | type: string | required: true | desc: Absolute path to the lang directory.}]
-#AI side_effects: [Mutates static lang_path state]
+#AI side_effects: [Mutates static langPath state]
 
 #AI:t
 #AI group: Translation API

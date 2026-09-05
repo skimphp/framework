@@ -153,18 +153,18 @@ final class Worker {
 #AI layer: queue
 #AI badges: [queue; worker; long-lived; retry; signal-handling]
 #AI intro: `worker` is the long-lived CLI process that polls Redis for queued jobs using BRPOP. It promotes delayed jobs, unserializes and executes each job, handles retries with exponential back-off (5s, 10s, 15s...), and supports graceful shutdown via SIGTERM/SIGINT and Redis restart signals.
-#AI lifecycle: instantiated by queue_command, work() blocks until stopped by signal, max_jobs, or restart signal
+#AI lifecycle: instantiated by QueueCommand, work() blocks until stopped by signal, maxJobs, or restart signal
 #AI fallback: unserializable jobs are logged and skipped; failed() exceptions are caught and logged
-#AI test_seam: use queue::setRedis() for mock Redis, set max_jobs=1 for single-iteration testing
+#AI test_seam: use queue::setRedis() for mock Redis, set maxJobs=1 for single-iteration testing
 #AI invariants: [BRPOP blocks for $sleep seconds when queue is empty; retries use exponential back-off; restart signal checked every iteration; pcntl signals registered when available]
 #AI core_behaviors: [Promotes delayed jobs each iteration; BRPOP blocks efficiently without spinning; Retries with exponential back-off (attempts * 5 seconds); Calls failed() on retry exhaustion; Graceful shutdown via SIGTERM/SIGINT; Redis restart signal checked each loop]
-#AI owns: should_stop flag, processed job count
+#AI owns: shouldStop flag, processed job count
 #AI entry_points: [work; stop]
 #AI config_reads: []
 #AI non_goals: [Does not manage multiple queues simultaneously; Does not implement job priorities; Does not hot-reload code after deployments]
 #AI side_effects: [executes job handle() methods; writes retry payloads to Redis delayed sorted set; reads restart signal from Redis]
-#AI flow: worker::work() -> loop: promote_delayed() -> check_restart_signal() -> BRPOP -> process() -> handle() or retry/failed()
-#AI lifecycle_steps: [work(); -> register_signals(); -> loop: promote_delayed(); -> check_restart_signal(); -> BRPOP(sleep); -> process(payload); -> unserialize job; -> handle(); -> on exception: retry with back-off or failed(); -> increment processed; -> check max_jobs]
+#AI flow: worker::work() -> loop: promoteDelayed() -> checkRestartSignal() -> BRPOP -> process() -> handle() or retry/failed()
+#AI lifecycle_steps: [work(); -> registerSignals(); -> loop: promoteDelayed(); -> checkRestartSignal(); -> BRPOP(sleep); -> process(payload); -> unserialize job; -> handle(); -> on exception: retry with back-off or failed(); -> increment processed; -> check maxJobs]
 #AI section_order: [Worker Execution; Job Processing; Signal Handling; Architecture]
 #AI architectural_notes: The worker does not hot-reload code. After deployments, use `php skim queue:restart` to signal workers to stop and restart with fresh code. Exponential back-off prevents thundering herd on transient failures.
 
@@ -172,7 +172,7 @@ final class Worker {
 #AI group: Worker Execution
 #AI frequency: high
 #AI signature: public function work(): void
-#AI contract: Runs the main work loop. Blocks until stop() is called, a process signal is received, or max_jobs is reached.
+#AI contract: Runs the main work loop. Blocks until stop() is called, a process signal is received, or maxJobs is reached.
 
 #AI:stop
 #AI group: Worker Execution

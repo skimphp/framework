@@ -184,25 +184,25 @@ class DocsValidateCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Commands\DocsValidateCommand
-#AI source_path: src/dev/docs/commands/docs_validate_command.php
-#AI title: docs_validate_command
+#AI source_path: src/dev/docs/commands/DocsValidateCommand.php
+#AI title: DocsValidateCommand
 #AI description: CLI command that reports @ai.* annotation coverage and fails the build when below the configured threshold.
 #AI role: CI annotation gate
 #AI layer: dev
 #AI badges: [cli; docs; validation; ci]
-#AI intro: `docs_validate_command` scans all source files, counts public methods with at least one @ai.* annotation, and compares the ratio against a configurable threshold. Use in CI pipelines or pre-commit hooks to prevent annotation regressions.
+#AI intro: `DocsValidateCommand` scans all source files, counts public methods with at least one @ai.* annotation, and compares the ratio against a configurable threshold. Use in CI pipelines or pre-commit hooks to prevent annotation regressions.
 #AI lifecycle: instantiated by CLI router, runs synchronously
 #AI fallback: none — returns 1 on scan failure or below-threshold coverage
 #AI test_seam: instantiate directly; no static state
 #AI invariants: [a method is annotated if it has any @ai.* tag; threshold defaults to 0.8 (80%); scan failure returns 1]
-#AI core_behaviors: [Scans all configured source paths via project_scanner; Prints a table of unannotated methods; Compares coverage ratio against threshold]
-#AI owns: project_scanner instance
+#AI core_behaviors: [Scans all configured source paths via ProjectScanner; Prints a table of unannotated methods; Compares coverage ratio against threshold]
+#AI owns: ProjectScanner instance
 #AI entry_points: [handle]
 #AI config_reads: [docs.validate.min_coverage; docs.scan_paths]
 #AI non_goals: [Does not fix missing annotations; Does not generate docs]
 #AI side_effects: [prints table of unannotated methods to stdout]
-#AI flow: handle() -> project_scanner.scan() -> count annotated vs total -> compare threshold -> exit code
-#AI lifecycle_steps: [handle(); -> project_scanner.scan(); -> iterate methods; -> count annotated; -> compare threshold; -> exit 0 or 1]
+#AI flow: handle() -> ProjectScanner.scan() -> count annotated vs total -> compare threshold -> exit code
+#AI lifecycle_steps: [handle(); -> ProjectScanner.scan(); -> iterate methods; -> count annotated; -> compare threshold; -> exit 0 or 1]
 #AI section_order: [Pipeline; Architecture]
 #AI architectural_notes: Designed for CI gate usage — non-zero exit code blocks merges when coverage drops.
 

@@ -4,9 +4,9 @@ use Skim\Db\QueryBuilder;
 use Skim\Db\NullMarker;
 
 // These tests exercise query_builder directly — no PDO, no database required.
-// db::query() with debug:true delegates to query_builder::interpolate() for assertions.
+// db::query() with debug:true delegates to QueryBuilder::interpolate() for assertions.
 
-describe('query_builder — %where% removal', function(): void {
+describe('QueryBuilder — %where% removal', function(): void {
 
     test('removed entirely when where array is empty', function(): void {
         [$sql] = \Skim\Db\QueryBuilder::build('SELECT * FROM users %where%', ['where' => []]);
@@ -63,7 +63,7 @@ describe('query_builder — %where% removal', function(): void {
 
 });
 
-describe('query_builder — %set%', function(): void {
+describe('QueryBuilder — %set%', function(): void {
 
     test('null values are silently skipped', function(): void {
         [$sql, $params] = \Skim\Db\QueryBuilder::build('UPDATE users %set% WHERE id = :id', [
@@ -75,7 +75,7 @@ describe('query_builder — %set%', function(): void {
         expect($params)->not->toHaveKey(':avatar');
     });
 
-    test('null_marker instance generates SET col = NULL', function(): void {
+    test('NullMarker instance generates SET col = NULL', function(): void {
         [$sql] = \Skim\Db\QueryBuilder::build('UPDATE users %set% WHERE id = :id', [
             'set' => ['avatar' => \Skim\Db\NullMarker::make()],
             ':id' => 1,
@@ -94,7 +94,7 @@ describe('query_builder — %set%', function(): void {
 
 });
 
-describe('query_builder — %values%', function(): void {
+describe('QueryBuilder — %values%', function(): void {
 
     test('generates correct INSERT column list and placeholders', function(): void {
         [$sql, $params] = \Skim\Db\QueryBuilder::build('INSERT INTO users %values%', [
@@ -107,7 +107,7 @@ describe('query_builder — %values%', function(): void {
 
 });
 
-describe('query_builder — %limit% and %offset%', function(): void {
+describe('QueryBuilder — %limit% and %offset%', function(): void {
 
     test('limit is inlined as integer', function(): void {
         [$sql] = \Skim\Db\QueryBuilder::build('SELECT * FROM u %limit%', ['limit' => 20]);
@@ -132,7 +132,7 @@ describe('query_builder — %limit% and %offset%', function(): void {
 
 });
 
-describe('query_builder — %order_by% and %group_by%', function(): void {
+describe('QueryBuilder — %order_by% and %group_by%', function(): void {
 
     test('order_by is substituted correctly', function(): void {
         [$sql] = \Skim\Db\QueryBuilder::build('SELECT * FROM u %order_by%', ['order_by' => 'created_at DESC']);
@@ -146,7 +146,7 @@ describe('query_builder — %order_by% and %group_by%', function(): void {
 
 });
 
-describe('query_builder::interpolate()', function(): void {
+describe('QueryBuilder::interpolate()', function(): void {
 
     test('substitutes named params with quoted string values', function(): void {
         $sql = \Skim\Db\QueryBuilder::interpolate("SELECT * FROM u WHERE status = :status", [':status' => 'active']);

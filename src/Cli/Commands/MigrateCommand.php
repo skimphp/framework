@@ -114,16 +114,16 @@ class MigrateCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\MigrateCommand
-#AI source_path: src/cli/commands/migrate_command.php
-#AI title: migrate_command
+#AI source_path: src/cli/commands/MigrateCommand.php
+#AI title: MigrateCommand
 #AI description: CLI dispatcher for database migration operations — run, rollback, fresh, and status.
 #AI role: CLI migration dispatcher
 #AI layer: cli
 #AI badges: [cli; command; database; migration; destructive]
-#AI intro: `migrate_command` implements the `php skim migrate` family of CLI commands. It dispatches to the `migrator` class for all SQL operations and handles only CLI output and exit codes. Supports run (pending), down (rollback), fresh (drop+re-run), and status sub-commands.
+#AI intro: `MigrateCommand` implements the `php skim migrate` family of CLI commands. It dispatches to the `migrator` class for all SQL operations and handles only CLI output and exit codes. Supports run (pending), down (rollback), fresh (drop+re-run), and status sub-commands.
 #AI lifecycle: instantiated by kernel, handle() called once per invocation
 #AI fallback: prints informational message when nothing to migrate or roll back
-#AI test_seam: instantiate directly, call set_input() with test args, then handle()
+#AI test_seam: instantiate directly, call setInput() with test args, then handle()
 #AI invariants: [all SQL logic is in migrator — command handles only output; fresh destroys all data; down rolls back by batch]
 #AI core_behaviors: [Dispatches sub-commands via match expression; Delegates to migrator for all DB operations; Prints success/warn/info for each migration file]
 #AI warnings: [migrate:fresh drops ALL tables and destroys all data — use only in development]
@@ -132,8 +132,8 @@ class MigrateCommand extends \Skim\Cli\Command {
 #AI config_reads: []
 #AI non_goals: [Does not contain SQL logic; Does not create migration files; Does not validate migration syntax]
 #AI side_effects: [migrator::run() applies pending migrations; migrator::down() rolls back batches; migrator::fresh() drops all tables]
-#AI flow: migrate_command::handle() -> arg(0) sub-command -> new migrator(migrations/) -> match sub-command -> migrator method -> print results
-#AI lifecycle_steps: [handle(); -> arg(0) sub-command; -> new migrator(base_path('migrations')); -> match: run/down/fresh/status; -> migrator method; -> print results]
+#AI flow: MigrateCommand::handle() -> arg(0) sub-command -> new migrator(migrations/) -> match sub-command -> migrator method -> print results
+#AI lifecycle_steps: [handle(); -> arg(0) sub-command; -> new migrator(basePath('migrations')); -> match: run/down/fresh/status; -> migrator method; -> print results]
 #AI section_order: [Command Execution; Sub-commands]
 #AI architectural_notes: Thin CLI wrapper — all migration logic lives in Skim\Db\Migrator. This command handles only argument dispatch and terminal output.
 

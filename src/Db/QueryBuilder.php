@@ -10,7 +10,7 @@ namespace Skim\Db;
  * %limit%, %offset% substitution. Unused placeholders are stripped silently.
  *
  * Example (internal — called by db:: methods):
- *   [$sql, $params] = query_builder::build(
+ *   [$sql, $params] = QueryBuilder::build(
  *       'SELECT * FROM users %where% %limit%',
  *       ['where' => ['status = :s'], ':s' => 'active', 'limit' => 20],
  *   );
@@ -210,30 +210,30 @@ final class QueryBuilder {
 
 #AI:class
 #AI symbol: Skim\Db\QueryBuilder
-#AI source_path: src/db/query_builder.php
-#AI title: query_builder
+#AI source_path: src/db/QueryBuilder.php
+#AI title: QueryBuilder
 #AI description: Internal SQL template processor for query_gen %placeholder% substitution.
 #AI role: SQL template processor
 #AI layer: db
 #AI badges: [internal; query_gen; sql-template; null-safe]
-#AI intro: `query_builder` processes SQL templates with `%placeholder%` tokens into executable SQL and PDO parameter arrays. It is internal to the `db` facade — not part of the public SKIM API. Unused placeholders are stripped silently, enabling dynamic queries without conditionals.
+#AI intro: `QueryBuilder` processes SQL templates with `%placeholder%` tokens into executable SQL and PDO parameter arrays. It is internal to the `db` facade — not part of the public SKIM API. Unused placeholders are stripped silently, enabling dynamic queries without conditionals.
 #AI lifecycle: stateless — called per query by db:: methods
 #AI fallback: none
 #AI test_seam: use db::query(..., debug: true) to inspect generated SQL
-#AI invariants: [unused %placeholders% are stripped silently; null values in %set% skip the column; null_marker in %set% produces literal NULL; limit/offset are inlined as int (not PDO-bound); null :named params are excluded from PDO array]
-#AI core_behaviors: [build() processes placeholders in fixed order: set, values, where, order_by, group_by, limit, offset; build_where() supports flat and nested and/or structures; interpolate() sorts by key length to avoid partial replacements]
+#AI invariants: [unused %placeholders% are stripped silently; null values in %set% skip the column; NullMarker in %set% produces literal NULL; limit/offset are inlined as int (not PDO-bound); null :named params are excluded from PDO array]
+#AI core_behaviors: [build() processes placeholders in fixed order: set, values, where, order_by, group_by, limit, offset; buildWhere() supports flat and nested and/or structures; interpolate() sorts by key length to avoid partial replacements]
 #AI warnings: [interpolate() output is NOT safe to execute — for debug display only]
-#AI notes: This class is internal. Application code should use db::query/val/row/all which delegate to query_builder.
+#AI notes: This class is internal. Application code should use db::query/val/row/all which delegate to QueryBuilder.
 #AI scope_items: []
 #AI owns: nothing
-#AI entry_points: [build; build_where; build_set; build_values; interpolate]
+#AI entry_points: [build; buildWhere; buildSet; buildValues; interpolate]
 #AI config_reads: []
 #AI non_goals: [Not a query builder ORM — it is a template pre-processor; Does not validate SQL syntax; Does not escape identifiers]
 #AI side_effects: []
-#AI flow: db::method() -> query_builder::build(sql, params) -> [built_sql, pdo_params] -> PDO prepare/execute
-#AI lifecycle_steps: [db::query/val/row/all(); -> query_builder::build(sql, params); -> process %set%/%values%/%where%/%order_by%/%group_by%/%limit%/%offset%; -> strip unused placeholders; -> collect :named params; -> return [sql, pdo_params]]
+#AI flow: db::method() -> QueryBuilder::build(sql, params) -> [built_sql, pdoParams] -> PDO prepare/execute
+#AI lifecycle_steps: [db::query/val/row/all(); -> QueryBuilder::build(sql, params); -> process %set%/%values%/%where%/%order_by%/%group_by%/%limit%/%offset%; -> strip unused placeholders; -> collect :named params; -> return [sql, pdoParams]]
 #AI section_order: [Core Processing; Clause Builders; Debug]
-#AI architectural_notes: query_builder is the engine behind query_gen. It processes templates in a fixed order to avoid key conflicts between %set% and %where% params.
+#AI architectural_notes: QueryBuilder is the engine behind query_gen. It processes templates in a fixed order to avoid key conflicts between %set% and %where% params.
 
 #AI:build
 #AI group: Core Processing
@@ -255,7 +255,7 @@ final class QueryBuilder {
 #AI group: Clause Builders
 #AI frequency: internal
 #AI signature: public static function buildSet(array $data): array
-#AI contract: Builds a SET clause for UPDATE. Null skips the column, null_marker forces SET col = NULL.
+#AI contract: Builds a SET clause for UPDATE. Null skips the column, NullMarker forces SET col = NULL.
 #AI param_details: [{name: $data | type: array | required: true | desc: Column => value pairs.}]
 #AI return_detail: {type: array{string, array} | desc: [SET clause string, PDO params].}
 

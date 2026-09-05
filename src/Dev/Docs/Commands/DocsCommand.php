@@ -97,26 +97,26 @@ class DocsCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Commands\DocsCommand
-#AI source_path: src/dev/docs/commands/docs_command.php
-#AI title: docs_command
+#AI source_path: src/dev/docs/commands/DocsCommand.php
+#AI title: DocsCommand
 #AI description: Umbrella CLI command that runs the full docs generation pipeline (extract → llm → site) with optional watch mode.
 #AI role: CLI pipeline orchestrator
 #AI layer: dev
 #AI badges: [cli; docs; pipeline; watch-mode]
-#AI intro: `docs_command` chains the three sub-commands (extract, llm, site) into a single invocation. With `--watch`, it polls source directories every 2 seconds and triggers a full rebuild when any .php file mtime changes.
+#AI intro: `DocsCommand` chains the three sub-commands (extract, llm, site) into a single invocation. With `--watch`, it polls source directories every 2 seconds and triggers a full rebuild when any .php file mtime changes.
 #AI lifecycle: instantiated by CLI router, runs synchronously, exits with pipeline status
 #AI fallback: none — stops on first sub-command failure
-#AI test_seam: instantiate directly with set_input() to inject flags
-#AI invariants: [pipeline stops on first non-zero exit; watch mode loops until Ctrl+C; mtime_hash is deterministic for identical file states]
-#AI core_behaviors: [Runs extract → llm → site in sequence; Watch mode polls scan_paths every 2 seconds and rebuilds on mtime change]
+#AI test_seam: instantiate directly with setInput() to inject flags
+#AI invariants: [pipeline stops on first non-zero exit; watch mode loops until Ctrl+C; mtimeHash is deterministic for identical file states]
+#AI core_behaviors: [Runs extract → llm → site in sequence; Watch mode polls scanPaths every 2 seconds and rebuilds on mtime change]
 #AI warnings: [Watch mode runs indefinitely until interrupted]
 #AI owns: sub-command instances
 #AI entry_points: [handle]
 #AI config_reads: [docs.scan_paths; docs.output.json; docs.output.llm_md; docs.output.mdx_dir]
 #AI non_goals: [Does not perform incremental builds; Does not parallelize sub-commands]
 #AI side_effects: [writes llm.json, llm.md, and MDX files to configured output paths]
-#AI flow: handle() -> --watch? -> watch_mode() | build() -> [extract, llm, site]
-#AI lifecycle_steps: [handle(); -> --watch flag?; -> build() runs extract → llm → site; -> watch_mode() polls mtime_hash every 2s]
+#AI flow: handle() -> --watch? -> watchMode() | build() -> [extract, llm, site]
+#AI lifecycle_steps: [handle(); -> --watch flag?; -> build() runs extract → llm → site; -> watchMode() polls mtimeHash every 2s]
 #AI section_order: [Pipeline; Watch Mode; Architecture]
 #AI architectural_notes: Delegates all work to sub-commands; this class only orchestrates ordering and watch polling.
 

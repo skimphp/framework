@@ -30,8 +30,8 @@ interface ElementPatcher {
 
 #AI:interface
 #AI symbol: Skim\Realtime\Contract\ElementPatcher
-#AI source_path: src/realtime/contract/element_patcher.php
-#AI title: element_patcher
+#AI source_path: src/realtime/contract/ElementPatcher.php
+#AI title: ElementPatcher
 #AI description: Interface for hypermedia drivers that patch DOM elements.
 #AI role: realtime contract
 #AI layer: realtime

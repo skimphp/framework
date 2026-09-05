@@ -152,13 +152,13 @@ class McpServeCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Commands\McpServeCommand
-#AI source_path: src/dev/docs/commands/mcp_serve_command.php
-#AI title: mcp_serve_command
+#AI source_path: src/dev/docs/commands/McpServeCommand.php
+#AI title: McpServeCommand
 #AI description: CLI command that launches the stdio MCP server for LLM tool integration with Claude Code, Cursor, etc.
 #AI role: MCP server launcher
 #AI layer: dev
 #AI badges: [cli; mcp; stdio; llm]
-#AI intro: `mcp_serve_command` spawns the `skim-mcp` native binary as a child process communicating over stdio. It validates that llm.json and the binary exist before launching, and forwards the child's exit code.
+#AI intro: `McpServeCommand` spawns the `skim-mcp` native binary as a child process communicating over stdio. It validates that llm.json and the binary exist before launching, and forwards the child's exit code.
 #AI lifecycle: instantiated by CLI router, runs until stdin closes or Ctrl+C
 #AI fallback: none — returns 1 when prerequisites are missing
 #AI test_seam: instantiate directly; requires llm.json on disk

@@ -4,7 +4,7 @@ use Skim\Dev\Docs\Emitter\JsonEmitter;
 use Skim\Dev\Docs\Value\ExtractedClass;
 use Skim\Dev\Docs\Value\ExtractedMethod;
 
-describe('json_emitter — emit()', function(): void {
+describe('JsonEmitter — emit()', function(): void {
 
     test('writes a valid JSON file with generated_at and classes', function(): void {
         $path   = sys_get_temp_dir() . '/skim_llm_test_' . uniqid() . '.json';
@@ -52,7 +52,7 @@ describe('json_emitter — emit()', function(): void {
         unlink($path);
     });
 
-    test('serializes new extracted_class fields into classes array', function (): void {
+    test('serializes new ExtractedClass fields into classes array', function (): void {
         $cls = new \Skim\Dev\Docs\Value\ExtractedClass(
             className:   'cache',
             namespace:    'skim\\cache',
@@ -71,7 +71,7 @@ describe('json_emitter — emit()', function(): void {
         unlink($path);
     });
 
-    test('serializes new extracted_method fields into methods array', function (): void {
+    test('serializes new ExtractedMethod fields into methods array', function (): void {
         $method = new \Skim\Dev\Docs\Value\ExtractedMethod(
             name:      'remember',
             signature: 'public static function remember(): mixed',
@@ -93,7 +93,7 @@ describe('json_emitter — emit()', function(): void {
 
 });
 
-describe('json_emitter — load()', function(): void {
+describe('JsonEmitter — load()', function(): void {
 
     test('loads and decodes an existing llm.json', function(): void {
         $path = sys_get_temp_dir() . '/skim_load_test_' . uniqid() . '.json';

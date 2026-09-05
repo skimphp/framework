@@ -11,7 +11,7 @@ namespace Skim\Cli;
  * when not connected to a TTY.
  *
  * Example:
- *   $bar = new progress_bar(total: 100, label: 'Processing');
+ *   $bar = new ProgressBar(total: 100, label: 'Processing');
  *   foreach ($items as $item) { $bar->advance(); }
  *   $bar->finish('All items processed');
  *
@@ -124,24 +124,24 @@ final class ProgressBar {
 
 #AI:class
 #AI symbol: Skim\Cli\ProgressBar
-#AI source_path: src/cli/progress_bar.php
-#AI title: progress_bar
+#AI source_path: src/cli/ProgressBar.php
+#AI title: ProgressBar
 #AI description: Terminal progress bar with TTY-aware rendering, percentage display, and braille spinner for unknown totals.
 #AI role: CLI progress indicator
 #AI layer: cli
 #AI badges: [cli; progress; tty-aware; spinner]
-#AI intro: `progress_bar` provides a terminal progress indicator that renders a filled bar with percentage when total is known, or an animated braille spinner for indeterminate operations. Degrades to plain text on non-TTY output.
+#AI intro: `ProgressBar` provides a terminal progress indicator that renders a filled bar with percentage when total is known, or an animated braille spinner for indeterminate operations. Degrades to plain text on non-TTY output.
 #AI lifecycle: instantiated with total and label, advance() called per step, finish() completes the bar
 #AI fallback: plain text percentage on non-TTY output
 #AI test_seam: not designed for automated testing — writes directly to stdout
 #AI invariants: [current is clamped at total; spinner cycles through 10 braille frames; render uses carriage return for in-place updates]
 #AI core_behaviors: [Filled bar with █ and ░ characters; Percentage and count display; Braille spinner for indeterminate mode; Elapsed time on finish; TTY detection for ANSI vs plain output]
-#AI owns: current count, started_at timestamp, spinner state
+#AI owns: current count, startedAt timestamp, spinner state
 #AI entry_points: [advance; finish]
 #AI config_reads: []
 #AI non_goals: [Does not support multiple concurrent bars; Does not estimate remaining time; Does not support custom bar characters]
 #AI side_effects: [writes to stdout via printf with carriage return]
-#AI flow: new progress_bar(total, label) -> render() -> advance() loop -> finish(msg) -> print elapsed
+#AI flow: new ProgressBar(total, label) -> render() -> advance() loop -> finish(msg) -> print elapsed
 #AI lifecycle_steps: [__construct(total, label); -> render() initial frame; -> advance(step) per iteration; -> render() updated frame; -> finish(msg); -> print elapsed time]
 #AI section_order: [Progress Control; Rendering; Architecture]
 #AI architectural_notes: Uses carriage return (\r) for in-place terminal updates. The bar is rendered immediately on construction so the user sees progress from the start.
