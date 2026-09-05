@@ -14,7 +14,7 @@ namespace Skim\Core;
  * Example:
  *   $res = (new Pipeline())->run(
  *       $req, $res,
- *       middlewares: [Cors::class, auth_middleware::class],
+ *       middlewares: [Cors::class, AuthMiddleware::class],
  *       core: fn(Request $req, Response $res) => $controller->handle($req, $res),
  *   );
  *

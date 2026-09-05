@@ -172,7 +172,7 @@ class Response {
      *       $sse->send('message', 'Hello');
      *   });
      *
-     *   return $res->stream(function(element_patcher $ds) {
+     *   return $res->stream(function(ElementPatcher $ds) {
      *       $ds->patch('<div id="status">Active</div>', '#status');
      *   }, driver: Datastar::class);
      *

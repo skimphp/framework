@@ -184,7 +184,7 @@ final class Env {
 #AI non_goals: [Does not cast numeric strings to int or float; Does not validate .env syntax; Does not support nested or multiline values; Does not expand variable references like ${OTHER_VAR}]
 #AI side_effects: [load() populates internal cache only; set() mutates internal cache and sets loaded flag; reset() clears internal cache and loaded flag]
 #AI flow: Env::get(key) -> auto-load if !$loaded -> $_SERVER ?? $_ENV ?? cache ?? default -> type cast; Env::load(path) -> parse .env -> cache only
-#AI lifecycle_steps: [Env::get(key); -> !$loaded check; -> auto-load basePath('.env'); -> idempotent check; -> is_file check; -> parse lines into cache; -> $_SERVER[$key] ?? $_ENV[$key] ?? cache[$key] ?? default -> type cast]
+#AI lifecycle_steps: [Env::get(key); -> !$loaded check; -> auto-load basePath('.env'); -> idempotent check; -> is_file check; -> parse lines into cache; -> $_SERVER[$key] ?? $_ENV[$key] ?? Cache[$key] ?? default -> type cast]
 #AI section_order: [Read API; Write API; Testing Hooks]
 #AI architectural_notes: Own implementation avoids the vlucas/phpdotenv dependency. putenv() removed to avoid process-global mutations — internal cache only.
 

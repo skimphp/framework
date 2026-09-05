@@ -12,7 +12,7 @@ namespace Skim\Core;
  * that returns without calling $next short-circuits the entire chain.
  *
  * Example:
- *   class auth_middleware implements Middleware {
+ *   class AuthMiddleware implements Middleware {
  *       public function handle(Request $req, Response $res, callable $next): mixed {
  *           if (!Session::has('user_id')) {
  *               return $res->status(401)->json(['error' => 'Unauthorized']);

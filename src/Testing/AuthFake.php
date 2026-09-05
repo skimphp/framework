@@ -62,7 +62,7 @@ class AuthFake {
 #AI non_goals: [Does not validate credentials; Does not interact with session or database]
 #AI side_effects: []
 #AI flow: test -> AuthFake::check() -> true; AuthFake::user() -> injected object
-#AI lifecycle_steps: [new AuthFake($user); -> bind to container; -> controller calls auth::check() -> true]
+#AI lifecycle_steps: [new AuthFake($user); -> bind to container; -> controller calls Auth::check() -> true]
 #AI section_order: [Auth API; Architecture]
 #AI architectural_notes: Intentionally minimal — only the methods the auth middleware and controllers call.
 

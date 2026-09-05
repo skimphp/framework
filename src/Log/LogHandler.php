@@ -9,12 +9,12 @@ namespace Skim\Log;
  * The log facade resolves one handler and delegates every write() call to it.
  *
  * Example:
- *   class sentry_handler implements log_handler {
+ *   class SentryHandler implements LogHandler {
  *       public function write(string $level, string $message, array $context): void {
  *           \Sentry\captureMessage("[$level] $message");
  *       }
  *   }
- *   Log::setHandler(new sentry_handler());
+ *   Log::setHandler(new SentryHandler());
  *
  * #AI:class
  */

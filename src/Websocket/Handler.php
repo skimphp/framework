@@ -5,12 +5,12 @@ namespace Skim\Websocket;
 /**
  * WebSocket handler interface — implement per-route for custom WebSocket logic. #AI:class
  *
- * Use when registering WebSocket endpoints via $app->websocket('/ws/chat', new chat_handler()).
+ * Use when registering WebSocket endpoints via $app->websocket('/ws/chat', new ChatHandler()).
  * The server is backed by amphp/websocket-server with the Revolt event loop.
  * Connection is passed to every method — use $conn->send() to push messages.
  *
  * Example:
- *   class chat_handler implements Handler {
+ *   class ChatHandler implements Handler {
  *       public function onOpen(Connection $conn): void {
  *           $conn->join('chat:general');
  *       }

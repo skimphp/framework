@@ -125,22 +125,22 @@ php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
 ```php
 // routes.php
 $app->router->get('/', [HomeController::class, 'index']);
-$app->router->post('/users', [user_controller::class, 'store']);
+$app->router->post('/users', [UserController::class, 'store']);
 
 // Route params
-$app->router->get('/users/@id:int', [user_controller::class, 'show']);
+$app->router->get('/users/@id:int', [UserController::class, 'show']);
 // @id       → any string
 // @id:int   → digits only
 // @slug:str → letters, digits, dashes
 
 // Named routes
-$app->router->get('/users/@id', [user_controller::class, 'show'])->name('user.show');
+$app->router->get('/users/@id', [UserController::class, 'show'])->name('user.show');
 route('user.show', ['id' => 5]); // → /users/5
 
 // Groups with middleware
 $app->router->group('/api', function(Router $r) {
-    $r->get('/users', [api\user_controller::class, 'index']);
-}, middleware: [auth_middleware::class]);
+    $r->get('/users', [api\UserController::class, 'index']);
+}, middleware: [AuthMiddleware::class]);
 ```
 
 ---
@@ -176,7 +176,7 @@ class User extends \Skim\Db\Model {
 }
 
 User::find(1);                            // model|null
-User::findOrFail(1);                    // model|not_found_exception
+User::findOrFail(1);                    // model|NotFoundException
 User::where(['status' => 'active'])->limit(10)->all();
 User::create(['name' => 'John', 'email' => 'j@j.com']);
 
@@ -245,7 +245,7 @@ return $res->smartView('users/show', ['user' => $user], $req);        // auto fu
 ## Middleware
 
 ```php
-class auth_middleware implements Middleware {
+class AuthMiddleware implements Middleware {
     public function handle(Request $req, Response $res, callable $next): mixed {
         if (!Session::has('user_id')) {
             return $res->status(401)->json(['error' => 'Unauthorized']);
@@ -255,7 +255,7 @@ class auth_middleware implements Middleware {
 }
 
 $app->use(Cors::class);                           // global — every request
-$route->middleware([auth_middleware::class]);      // per-route
+$route->middleware([AuthMiddleware::class]);      // per-route
 ```
 
 Built-in: `cors`, `RateLimit`, `ToolbarMiddleware` (injects debug toolbar in HTML responses when `APP_DEBUG=true`).
@@ -319,7 +319,7 @@ If multiple extracted classes share the same class name, MDX filenames include t
 ### Write your own command
 
 ```php
-class greet_command extends Command {
+class GreetCommand extends Command {
     public function handle(): int {
         $name = $this->arg(0, 'World');
         $this->info("Hello {$name}!");
@@ -328,7 +328,7 @@ class greet_command extends Command {
 }
 
 // Register in config/app.php:
-'commands' => ['greet' => greet_command::class]
+'commands' => ['greet' => GreetCommand::class]
 
 // Run:
 // php skim greet John
@@ -448,7 +448,7 @@ chmod +x .git/hooks/pre-push
 
 ## Key design decisions
 
-- **Conventional PHP casing** — PascalCase classes, camelCase methods, UPPER_SNAKE constants. `HomeController`, not `home_controller`.
+- **Conventional PHP casing** — PascalCase classes, camelCase methods, UPPER_SNAKE constants. `HomeController`, not `HomeController`.
 - **No template engines** — raw PHP with opcache is ~3x faster than Twig/Blade; real stack traces.
 - **Static facades** (`Db::`, `Cache::`, `Log::`) — each has `reset()` and `setDriver()` for test isolation.
 - **Lazy connections** — DB and Redis are not opened until the first actual query.

@@ -7,7 +7,7 @@ emitAsync() offloads to the queue for side effects that should not block.
 ## Critical behaviours
 - Event::on() registration is global per-process — register in boot/service providers, not controllers
 - Higher priority = runs first (10 > 0 > -5)
-- Typed event classes (recommended): `class user_registered { public function __construct(public readonly int $user_id) {} }`
+- Typed event classes (recommended): `class UserRegistered { public function __construct(public readonly int $user_id) {} }`
   — key = get_class($event), IDE-navigable, refactor-safe
 - String events ('user.created'): simple cases, no type safety
 - Event::once() auto-removes after first emit — for warmup/boot hooks

@@ -10,7 +10,7 @@ namespace Skim\Cli;
  * the kernel's built-in COMMANDS map. Exit codes follow POSIX: 0 = success, 1+ = error.
  *
  * Example:
- *   class greet_command extends Command {
+ *   class GreetCommand extends Command {
  *       public function handle(): int {
  *           $name = $this->arg(0, 'World');
  *           $this->info("Hello {$name}!");

@@ -418,8 +418,8 @@ class App {
      * Applies decorators in priority order.
      *
      * Example:
-     *   $app->bind(mailer::class, fn($app) => new smtp_mailer($app->get('app.mail')));
-     *   $mailer = $app->make(mailer::class); // singleton from here on
+     *   $app->bind(Mailer::class, fn($app) => new SmtpMailer($app->get('app.mail')));
+     *   $mailer = $app->make(Mailer::class); // singleton from here on
      *
      * @param string $abstract Class name or identifier to resolve.
      * @return mixed The resolved (and possibly decorated) singleton instance.
@@ -1138,7 +1138,7 @@ class App {
 #AI return_detail: {type: mixed | desc: The resolved (and possibly decorated) singleton instance.}
 #AI throws_details: [{type: \RuntimeException | desc: If no binding exists and the class cannot be auto-wired (missing constructor dependency with no binding or default).}]
 #AI side_effects: [Caches resolved instance in $resolved array]
-#AI examples: [{label: Basic resolution | code: $app->bind(mailer::class, fn($app) => new smtp_mailer($app->get('app.mail')));\n$mailer = $app->make(mailer::class);}]
+#AI examples: [{label: Basic resolution | code: $app->bind(Mailer::class, fn($app) => new SmtpMailer($app->get('app.mail')));\n$mailer = $app->make(Mailer::class);}]
 
 #AI:makeTransient
 #AI group: DI Container

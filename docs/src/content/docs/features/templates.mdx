@@ -28,7 +28,7 @@ Always return a `response` object. Never `echo` or `die`.
 ```php
 use skim\core\response;
 
-class post_controller {
+class PostController {
     public function index(Response $response): response {
         return $response->view('pages/home', ['title' => 'Welcome']);
     }

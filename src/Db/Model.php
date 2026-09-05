@@ -13,7 +13,7 @@ use Skim\Db\Exceptions\NotFoundException;
  * Schema is fetched via DESCRIBE/information_schema on first access and cached.
  *
  * Example:
- *   class user extends Model {
+ *   class User extends Model {
  *       protected static string $table = 'users';
  *       public string $email { set(string $val) => strtolower(trim($val)); }
  *   }

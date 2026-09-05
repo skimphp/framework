@@ -11,7 +11,7 @@ namespace Skim\Db\Exceptions;
  * Example:
  *   try {
  *       Db::query('SELECT * FROM missing_table');
- *   } catch (db_exception $e) {
+ *   } catch (DbException $e) {
  *       Log::error($e->getMessage());
  *   }
  *

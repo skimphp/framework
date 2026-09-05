@@ -10,7 +10,7 @@ namespace Skim\View\Exceptions;
  * Example:
  *   try {
  *       View::render('nonexistent');
- *   } catch (view_exception $e) {
+ *   } catch (ViewException $e) {
  *       Log::error($e->getMessage());
  *   }
  *

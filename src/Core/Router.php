@@ -23,13 +23,13 @@ use function FastRoute\simpleDispatcher;
  * above or the generic add() directly.
  *
  * Example:
- *   $router->get('/users/@id:int', [user_controller::class, 'show'])
+ *   $router->get('/users/@id:int', [UserController::class, 'show'])
  *          ->name('user.show')
- *          ->middleware(auth_middleware::class);
+ *          ->middleware(AuthMiddleware::class);
  *   $router->map(['GET', 'HEAD'], '/ping', [health_controller::class, 'ping']);
  *   $router->group('/api/v1', function(Router $r) {
- *       $r->get('/posts', [post_controller::class, 'index']);
- *   }, middleware: [auth_middleware::class]);
+ *       $r->get('/posts', [PostController::class, 'index']);
+ *   }, middleware: [AuthMiddleware::class]);
  *
  * Testing: use App::testInstance() which creates a fresh router.
  *
@@ -205,8 +205,8 @@ class Router {
      *
      * Example:
      *   $router->group('/api/v1', function(Router $r) {
-     *       $r->get('/users', [user_controller::class, 'index']);
-     *   }, middleware: [auth_middleware::class]);
+     *       $r->get('/users', [UserController::class, 'index']);
+     *   }, middleware: [AuthMiddleware::class]);
      *
      * @param string   $prefix     URL prefix prepended to all routes in the group.
      * @param callable $callback   Receives the router for route registration.

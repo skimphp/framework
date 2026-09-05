@@ -10,7 +10,7 @@ namespace Skim\Validation;
  * constructor parameters (e.g., database uniqueness checks).
  *
  * Example:
- *   class unique_rule implements Rule {
+ *   class UniqueRule implements Rule {
  *       public function __construct(
  *           private string $table,
  *           private string $column,

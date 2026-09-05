@@ -11,9 +11,9 @@ namespace Skim\Core;
  * and returned from every HTTP-method registration call.
  *
  * Example:
- *   $app->get('/users/@id:int', [user_controller::class, 'show'])
+ *   $app->get('/users/@id:int', [UserController::class, 'show'])
  *       ->name('user.show')
- *       ->middleware(auth_middleware::class, rate_limit_middleware::class);
+ *       ->middleware(AuthMiddleware::class, RateLimitMiddleware::class);
  *
  * Testing: route_entry is a value object consumed by Router::dispatch() — test
  * the chaining API separately or through route registration assertions.

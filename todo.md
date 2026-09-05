@@ -61,7 +61,7 @@
 - [x] `tests/core/response_test.php`
 
 ### 1.6 Core: middleware pipeline
-- [x] `src/Core/Middleware.php` — interface: `handle(request, response, callable $next): mixed`
+- [x] `src/Core/Middleware.php` — interface: `handle(request, Response, callable $next): mixed`
 - [x] `src/Core/Pipeline.php` — builds chain: global → group → route, short-circuit on return
 - [x] `src/Middleware/Cors.php` — CORS headers, preflight OPTIONS handler
 - [x] `src/Middleware/RateLimit.php` — Redis-backed sliding window

@@ -12,7 +12,7 @@ use Skim\Core\App;
  * metadata; override config(), commands(), etc. for optional contributions.
  *
  * Example:
- *   class my_auth_extension extends Extension {
+ *   class MyAuthExtension extends Extension {
  *       public string $name = 'acme/auth';
  *       public string $version = '1.0.0';
  *       public array $capabilities = ['auth', 'session-auth'];

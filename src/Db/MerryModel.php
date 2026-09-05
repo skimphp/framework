@@ -10,7 +10,7 @@ namespace Skim\Db;
  * and explicit contracts. Eager loading via with() uses IN queries to prevent N+1.
  *
  * Example:
- *   class post extends merry_model {
+ *   class Post extends MerryModel {
  *       protected static string $table = 'posts';
  *       protected static array $belongs_to = ['author' => ['class' => User::class, 'fk' => 'user_id']];
  *       protected static array $many_to_many = ['tags' => ['class' => tag::class, 'pivot' => 'post_tag', 'fk' => 'post_id', 'rfk' => 'tag_id']];

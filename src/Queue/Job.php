@@ -10,7 +10,7 @@ namespace Skim\Queue;
  * JSON+serialize in Redis. All constructor properties must be JSON-encodable.
  *
  * Example:
- *   class generate_report_job implements Job {
+ *   class GenerateReportJob implements Job {
  *       public function __construct(private readonly int $report_id) {}
  *       public function handle(): void { Report::generate($this->report_id); }
  *       public function failed(\Throwable $e): void { Log::error("Report {$this->report_id} failed"); }

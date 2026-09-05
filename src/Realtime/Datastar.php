@@ -15,7 +15,7 @@ use Skim\Realtime\Contract\ScriptRunner;
  * this concrete class.
  *
  * Example:
- *   return $res->stream(function(element_patcher $ds) {
+ *   return $res->stream(function(ElementPatcher $ds) {
  *       $ds->patch('<div id="status">Active</div>', '#status', 'inner');
  *       $ds->signals(['loading' => false]);
  *   });

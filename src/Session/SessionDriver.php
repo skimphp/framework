@@ -9,8 +9,8 @@ namespace Skim\Session;
  * The session facade resolves one driver per request via config('app.session.driver').
  *
  * Example:
- *   class db_session_driver implements session_driver { ... }
- *   Session::setDriver(new db_session_driver(...));
+ *   class DbSessionDriver implements SessionDriver { ... }
+ *   Session::setDriver(new DbSessionDriver(...));
  *
  * Testing: Use session_fake which satisfies this interface in-memory.
  *

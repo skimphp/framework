@@ -12,8 +12,8 @@ use Skim\Worker\Resettable;
  * effects (email, reports) that should not delay the response.
  *
  * Example:
- *   Event::on(user_created_event::class, fn($e) => Log::info("User {$e->user->id} created"));
- *   Event::emit(new user_created_event($user));
+ *   Event::on(UserCreatedEvent::class, fn($e) => Log::info("User {$e->user->id} created"));
+ *   Event::emit(new UserCreatedEvent($user));
  *
  * Testing: Use off() in tearDown() to clear listeners between test cases.
  *
@@ -60,7 +60,7 @@ final class Event implements \Skim\Worker\Resettable {
      * raw payload (string events).
      *
      * Example:
-     *   Event::on(user_created_event::class, fn($e) => mailer::send($e->user));
+     *   Event::on(UserCreatedEvent::class, fn($e) => Mailer::send($e->user));
      *   Event::on('user.created', fn($data) => Log::info($data['id']), priority: 10);
      *
      * @param string   $event    Event class-string or string name.
@@ -94,7 +94,7 @@ final class Event implements \Skim\Worker\Resettable {
      * $payload and the data as $data. All listeners run synchronously.
      *
      * Example:
-     *   Event::emit(new user_created_event($user));
+     *   Event::emit(new UserCreatedEvent($user));
      *   Event::emit('user.created', ['id' => $user->id]);
      *
      * @param object|string $payload Event object (typed) or event name (string).
@@ -125,7 +125,7 @@ final class Event implements \Skim\Worker\Resettable {
      * Requires skim/queue to be installed.
      *
      * Example:
-     *   Event::emitAsync(new report_generated_event($report));
+     *   Event::emitAsync(new ReportGeneratedEvent($report));
      *
      * @param object|string $payload Event object or event name.
      * @param mixed         $data    Payload for string events.
@@ -146,7 +146,7 @@ final class Event implements \Skim\Worker\Resettable {
      * between tests.
      *
      * Example:
-     *   Event::off(user_created_event::class); // Remove listeners for one event
+     *   Event::off(UserCreatedEvent::class); // Remove listeners for one event
      *   Event::off();                           // Remove all listeners
      *
      * @param string|null $event Event name to clear, or null for all.

@@ -10,11 +10,11 @@ namespace Skim\Queue;
  * Override only the methods you need — most jobs just implement handle().
  *
  * Example:
- *   class send_email_job extends base_job {
+ *   class SendEmailJob extends BaseJob {
  *       public function __construct(private readonly int $user_id) {}
  *       public function handle(): void {
  *           $user = User::findOrFail($this->user_id);
- *           mailer::send($user->email, 'welcome');
+ *           Mailer::send($user->email, 'welcome');
  *       }
  *   }
  *

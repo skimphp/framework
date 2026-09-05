@@ -11,8 +11,8 @@ namespace Skim\Queue;
  * keyed by execute_at timestamp and are promoted to the main list when due.
  *
  * Example:
- *   Queue::push(new send_email_job($user_id));
- *   Queue::push(new generate_report_job($id), queue: 'reports');
+ *   Queue::push(new SendEmailJob($user_id));
+ *   Queue::push(new GenerateReportJob($id), queue: 'reports');
  *   Queue::pushMany([$job1, $job2], 'default');
  *
  * Testing: Use setRedis() to inject a mock Redis instance, flush() to clear queues.
