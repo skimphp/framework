@@ -2,7 +2,7 @@
 
 ## What this module does
 CLI framework for the `php skim <command>` entry point.
-Commands extend the base `command` class and implement `handle(): int`.
+Commands extend the base `Command` class and implement `handle(): int`.
 
 ## Architecture
 - `bin/skim` — Slim bootstrap file that parses arguments and delegates to the kernel.

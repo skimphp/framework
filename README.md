@@ -175,7 +175,7 @@ class User extends \Skim\Db\Model {
     protected static array  $casts   = ['age' => 'int', 'is_active' => 'bool'];
 }
 
-User::find(1);                            // model|null
+User::find(1);                            // Model|null
 User::findOrFail(1);                    // model|NotFoundException
 User::where(['status' => 'active'])->limit(10)->all();
 User::create(['name' => 'John', 'email' => 'j@j.com']);
