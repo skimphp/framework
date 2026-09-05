@@ -7,7 +7,7 @@ use Skim\View\Exceptions\ViewException;
 /**
  * State-machine fragment parser for robust HTML comment extraction. #AI:class
  *
- * Use when view::render() is asked for a named fragment. Replaces the old
+ * Use when View::render() is asked for a named fragment. Replaces the old
  * regex approach with tokenization, validation, and deterministic extraction.
  *
  * Tokenizes <!-- @fragment name --> and <!-- @end --> markers, validates

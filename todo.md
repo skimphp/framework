@@ -74,7 +74,7 @@
 ### 2.1 PDO wrapper + connection manager
 - [x] `src/Db/Db.php` — connection pool, `query/val/row/all/transaction`, profiler hooks
 - [x] `src/Db/QueryBuilder.php` — internal: `build/buildWhere/buildSet/buildValues/interpolate`
-- [x] `src/Db/NullMarker.php` — sentinel for `db::null()` (explicit SQL NULL in `%set%`)
+- [x] `src/Db/NullMarker.php` — sentinel for `Db::null()` (explicit SQL NULL in `%set%`)
 - [x] `tests/db/query_builder_test.php` — %where% removal, %set% null skip, or/and nesting, debug interpolation, key-length sort
 
 ### 2.2 Active record model
@@ -117,7 +117,7 @@
 
 ### 3.2 View
 - [x] `src/View/Template.php` — template context (`$this` inside .php views), `include/layout/start/end/slot`
-- [x] `src/View/View.php` — `render/renderFragment`, shared data via `view::share()`
+- [x] `src/View/View.php` — `render/renderFragment`, shared data via `View::share()`
 - [x] `src/View/View.php` — fragment extraction: parse `<!-- @fragment name -->...<!-- @end -->`
 - [x] `tests/view/view_test.php` — full render, fragment extraction, missing fragment throws, e() escaping
 
@@ -130,7 +130,7 @@
 
 ### 3.4 Validation
 - [x] `src/Validation/Validate.php` — `make/check/ok/errors/validated`
-- [x] `src/Validation/Validate.php` — `validate::rule()` for custom rules
+- [x] `src/Validation/Validate.php` — `Validate::rule()` for custom rules
 - [x] `tests/validation/validate_test.php` — required, type rules, custom rule, validated() whitelist
 
 ---
@@ -171,7 +171,7 @@
 - [x] `src/i18n/i18n.php` — PHP array files, `t()` helper, pluralization, locale switching
 - [x] `src/Websocket/Handler.php` — interface: `onOpen/onMessage/onClose/onError`
 - [x] `src/Websocket/Connection.php` — room support, `send/close/broadcast/join/leave`
-- [x] `src/Db/MerryModel.php` — extends model, `hasMany/belongsTo/hasOne/manyToMany`
+- [x] `src/Db/MerryModel.php` — extends Model, `hasMany/belongsTo/hasOne/manyToMany`
 - [x] `src/Db/MerryModel.php` — `with()/load()` eager/lazy loading, `attach/detach/sync`
 - [x] `src/Assets/Assets.php` — Vite manifest reader, `asset()` helper (dev proxy vs prod hash)
 

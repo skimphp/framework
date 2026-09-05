@@ -23,7 +23,7 @@ class IdeCommand extends \Skim\Cli\Command {
      * Discovers models, reads schema, and writes .ide-helper.php. #AI:handle
      *
      * Scans app/models/*.php for model classes, reads column metadata via
-     * model::schema() (uses schema cache if warm, falls back to DESCRIBE),
+     * Model::schema() (uses schema cache if warm, falls back to DESCRIBE),
      * and writes typed property stubs to .skim/ide-helper.php.
      */
     public function handle(): int {
@@ -152,14 +152,14 @@ class IdeCommand extends \Skim\Cli\Command {
 #AI fallback: models that fail reflection or schema reads are silently skipped
 #AI test_seam: instantiate directly, call setInput() with test args, then handle()
 #AI invariants: [output file is auto-generated — never edit manually; re-run after every migration; schema cache is used when warm]
-#AI core_behaviors: [Discovers models via glob on app/models/*.php; Reads column metadata via model::schema(); Maps SQL types to PHP scalar types; Writes typed property stubs to .skim/ide-helper.php]
+#AI core_behaviors: [Discovers models via glob on app/models/*.php; Reads column metadata via Model::schema(); Maps SQL types to PHP scalar types; Writes typed property stubs to .skim/ide-helper.php]
 #AI owns: nothing — reads schema and writes generated file
 #AI entry_points: [handle]
 #AI config_reads: []
 #AI non_goals: [Does not generate method stubs; Does not generate relation hints; Does not validate model correctness]
 #AI side_effects: [writes .skim/ide-helper.php; may trigger DESCRIBE queries if schema cache is cold]
 #AI flow: IdeCommand::handle() -> discoverModels() -> for each model: getColumns() -> stub() -> buildOutput() -> file_put_contents()
-#AI lifecycle_steps: [handle(); -> discoverModels() globs app/models; -> for each model: getColumns() via model::schema(); -> stub() generates typed properties; -> buildOutput() assembles PHP source; -> file_put_contents(.skim/ide-helper.php)]
+#AI lifecycle_steps: [handle(); -> discoverModels() globs app/models; -> for each model: getColumns() via Model::schema(); -> stub() generates typed properties; -> buildOutput() assembles PHP source; -> file_put_contents(.skim/ide-helper.php)]
 #AI section_order: [Command Execution; Model Discovery; Schema Reading; Code Generation]
 #AI architectural_notes: Output file is committed to git so IDEs can use it without running the app. The generated file uses @generated annotation to signal it should not be edited.
 

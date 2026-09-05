@@ -21,7 +21,7 @@ use Skim\View\Exceptions\ViewException;
  *   ComponentRenderer::render('alert', ['message' => 'Saved']);
  *   ComponentRenderer::render('alert', new AlertProps(message: 'Saved'));
  *
- * Testing: Point view::setPath() to fixture directory before calling.
+ * Testing: Point View::setPath() to fixture directory before calling.
  *
  * #AI:class
  */
@@ -89,18 +89,18 @@ class ComponentRenderer {
 #AI intro: `ComponentRenderer` renders reusable UI components in an isolated scope. It supports both legacy array props and readonly *_props objects, validating the latter to enforce naming conventions.
 #AI lifecycle: stateless static class, invoked per component render
 #AI fallback: n/a — stateless
-#AI test_seam: use view::setPath() to redirect to test fixtures
+#AI test_seam: use View::setPath() to redirect to test fixtures
 #AI invariants: [Props objects must end in '_props'; Component templates receive ONLY props data, no shared context; No layout wrapping is applied; Profiler records every component render]
-#AI core_behaviors: [Dual props: array (legacy) and readonly *_props object (new); Strict scope isolation via new template() with null layout; Props class naming validation; Profiler integration for component timing]
+#AI core_behaviors: [Dual props: array (legacy) and readonly *_props object (new); Strict scope isolation via new Template() with null layout; Props class naming validation; Profiler integration for component timing]
 #AI warnings: [get_object_vars() only sees public properties — declare DTO props as public readonly]
 #AI notes: Components are rendered with a fresh template instance and null layout, guaranteeing no parent template leakage.
 #AI owns: nothing
 #AI entry_points: [render]
 #AI config_reads: []
 #AI non_goals: [Does not support layout wrapping; Does not cache rendered components; Does not validate prop keys against component expectations]
-#AI side_effects: [Records component render timing in profiler::view()]
-#AI flow: render() -> validatePropsClass() -> get_object_vars() -> new template() -> renderFile() -> profiler::view() -> return HTML
-#AI lifecycle_steps: [render($name, $props); -> is_object($props)? validatePropsClass(); -> $data = is_object? get_object_vars() : $props; -> new template(componentsPath(), $data, null); -> renderFile($name); -> profiler::view(); -> return HTML]
+#AI side_effects: [Records component render timing in Profiler::view()]
+#AI flow: render() -> validatePropsClass() -> get_object_vars() -> new Template() -> renderFile() -> Profiler::view() -> return HTML
+#AI lifecycle_steps: [render($name, $props); -> is_object($props)? validatePropsClass(); -> $data = is_object? get_object_vars() : $props; -> new Template(componentsPath(), $data, null); -> renderFile($name); -> Profiler::view(); -> return HTML]
 #AI section_order: [Rendering API; Validation; Path Resolution]
 #AI architectural_notes: Components are intentionally isolated from the layout and shared data systems. This prevents accidental variable leakage and makes components predictable and testable.
 
@@ -112,7 +112,7 @@ class ComponentRenderer {
 #AI param_details: [{name: $name | type: string | required: true | desc: Component name (maps to views/components/{$name}.php).}; {name: $props | type: array|object | required: false | desc: Props array or *_props readonly object.}]
 #AI return_detail: {type: string | desc: Rendered component HTML.}
 #AI throws_details: [{type: ViewException | desc: If props object is not a *_props class or component file is not found.}]
-#AI side_effects: [Records render timing in profiler::view()]
+#AI side_effects: [Records render timing in Profiler::view()]
 
 #AI:validatePropsClass
 #AI group: Validation
@@ -126,5 +126,5 @@ class ComponentRenderer {
 #AI group: Path Resolution
 #AI frequency: internal
 #AI signature: private static function componentsPath(): string
-#AI contract: Resolves the components subdirectory under the active views path by delegating to view::viewsPath().
+#AI contract: Resolves the components subdirectory under the active views path by delegating to View::viewsPath().
 #AI return_detail: {type: string | desc: Absolute path to the views/components directory.}

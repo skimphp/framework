@@ -10,13 +10,13 @@ namespace Skim\Http;
  * method-only key, in that priority order.
  *
  * Example:
- *   $http = client::fake([
+ *   $http = Client::fake([
  *       'GET https://api.example.com/users' => ['status' => 200, 'body' => [['id' => 1]]],
  *   ]);
  *   $resp = $http->get('https://api.example.com/users');
  *   $http->assertSent('GET', 'users');
  *
- * Testing: Create via client::fake() — no external dependencies needed.
+ * Testing: Create via Client::fake() — no external dependencies needed.
  *
  * #AI:class
  */
@@ -167,8 +167,8 @@ final class FakeClient extends \Skim\Http\Client {
 #AI layer: http
 #AI badges: [testing; http; fake; stub]
 #AI intro: `FakeClient` extends `client` to intercept all HTTP requests in tests. It records every request for later assertion and returns configurable stub responses without making real network calls.
-#AI lifecycle: created via client::fake(); lives for the test case duration
-#AI test_seam: client::fake($stubs) factory; assertSent/assertNothingSent for verification
+#AI lifecycle: created via Client::fake(); lives for the test case duration
+#AI test_seam: Client::fake($stubs) factory; assertSent/assertNothingSent for verification
 #AI invariants: [No real HTTP calls are made; Unstubbed requests return 200 with empty JSON body; Stub matching priority: METHOD+URL > URL > METHOD]
 #AI core_behaviors: [Records all requests with method, URL, and body; Matches stubs by key priority; Provides assertion methods for test verification]
 #AI owns: recorded request log
@@ -176,7 +176,7 @@ final class FakeClient extends \Skim\Http\Client {
 #AI config_reads: []
 #AI non_goals: [Does not simulate network failures; Does not validate request format; Does not follow redirects]
 #AI side_effects: [Records requests in memory]
-#AI flow: client::fake($stubs) -> FakeClient -> method() -> fakeSend() -> record + match stub -> HttpResponse
+#AI flow: Client::fake($stubs) -> FakeClient -> method() -> fakeSend() -> record + match stub -> HttpResponse
 #AI section_order: [HTTP Methods; Assertions; Inspection]
 
 #AI:get

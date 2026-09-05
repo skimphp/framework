@@ -7,10 +7,10 @@ namespace Skim\Realtime;
  *
  * Use when a controller needs to push data to the browser over SSE.
  * Passed to the $res->stream() callback; output buffering must be
- * disabled before use (response::stream() handles this).
+ * disabled before use (Response::stream() handles this).
  *
  * Example:
- *   return $res->stream(function(sse $sse) {
+ *   return $res->stream(function(Sse $sse) {
  *       $sse->send(['count' => 1], event: 'update');
  *       sleep(1);
  *       $sse->ping();
@@ -90,8 +90,8 @@ class Sse {
 #AI role: SSE stream helper
 #AI layer: realtime
 #AI badges: [sse; streaming; realtime; push]
-#AI intro: `sse` provides methods to send events, pings, and close signals over a Server-Sent Events stream. It is passed to the response::stream() callback and handles SSE wire format and output flushing.
-#AI lifecycle: created per-stream by response::stream() callback; lives until close() or client disconnect
+#AI intro: `sse` provides methods to send events, pings, and close signals over a Server-Sent Events stream. It is passed to the Response::stream() callback and handles SSE wire format and output flushing.
+#AI lifecycle: created per-stream by Response::stream() callback; lives until close() or client disconnect
 #AI test_seam: capture output with ob_start()/ob_get_clean() in tests
 #AI invariants: [Output buffering must be disabled before use; Each send() flushes immediately; ping() sends SSE comment line]
 #AI core_behaviors: [Formats data as SSE wire protocol; JSON-encodes arrays; Flushes output buffer after each event]

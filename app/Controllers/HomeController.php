@@ -41,7 +41,7 @@ class HomeController {
 #AI fallback: none
 #AI test_seam: instantiate directly, call index(), assert response body
 #AI invariants: [always returns a response object; never echoes]
-#AI core_behaviors: [Returns static HTML via response::html()]
+#AI core_behaviors: [Returns static HTML via Response::html()]
 #AI warnings: []
 #AI notes: This is a starter template — replace with real view rendering in production apps.
 #AI scope_items: []
@@ -50,8 +50,8 @@ class HomeController {
 #AI config_reads: []
 #AI non_goals: [Does not render templates; Does not accept request parameters]
 #AI side_effects: []
-#AI flow: router dispatches GET / -> HomeController::index() -> response::html(...)
-#AI lifecycle_steps: [GET / request; -> router matches HomeController::index; -> response::html() returned; -> middleware pipeline processes response]
+#AI flow: router dispatches GET / -> HomeController::index() -> Response::html(...)
+#AI lifecycle_steps: [GET / request; -> router matches HomeController::index; -> Response::html() returned; -> middleware pipeline processes response]
 #AI section_order: [Actions]
 #AI architectural_notes: Minimal controller demonstrating the SKIM controller contract — always return a response, never echo.
 

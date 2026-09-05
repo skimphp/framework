@@ -191,8 +191,8 @@ final class RedisSessionDriver implements \Skim\Session\SessionDriver {
 #AI config_reads: []
 #AI non_goals: [Does not support session locking; Does not encrypt session data; Not suitable for very large session payloads]
 #AI side_effects: [Opens Redis connection on first use; Writes JSON blobs to Redis; Sets cookie headers for new sessions]
-#AI flow: session::method() -> RedisSessionDriver -> Redis SETEX/GET/DEL
-#AI lifecycle_steps: [session::start(); -> RedisSessionDriver::start(); -> read PHPSESSID cookie or generateId(); -> Redis GET; -> json_decode; -> Redis EXPIRE; -> setcookie if new]
+#AI flow: Session::method() -> RedisSessionDriver -> Redis SETEX/GET/DEL
+#AI lifecycle_steps: [Session::start(); -> RedisSessionDriver::start(); -> read PHPSESSID cookie or generateId(); -> Redis GET; -> json_decode; -> Redis EXPIRE; -> setcookie if new]
 #AI section_order: [Session API; Lifecycle; Testing Hooks; Architecture]
 #AI architectural_notes: Stores session as a single JSON blob rather than individual keys — simpler but means every write is O(session_size).
 
@@ -238,8 +238,8 @@ final class RedisSessionDriver implements \Skim\Session\SessionDriver {
 #AI group: Lifecycle
 #AI frequency: low
 #AI signature: public function regenerate(): void
-#AI contract: Deletes the old Redis session key, generates a new session ID, sends a fresh cookie, and persists existing data under the new key.
-#AI side_effects: [Deletes old Redis key; Generates new session ID; Sends Set-Cookie header; Writes new Redis key]
+#AI contract: Deletes the old Redis session key, generates a new Session ID, sends a fresh cookie, and persists existing data under the new key.
+#AI side_effects: [Deletes old Redis key; Generates new Session ID; Sends Set-Cookie header; Writes new Redis key]
 
 #AI:flush
 #AI group: Lifecycle

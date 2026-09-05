@@ -5,12 +5,12 @@ namespace Skim\Validation;
 /**
  * Zero-dependency validation engine with mass-assignment protection. #AI:class
  *
- * Use to validate request data before passing to model::create(). Fields not
+ * Use to validate request data before passing to Model::create(). Fields not
  * declared in make() are silently dropped from validated(), preventing
  * mass-assignment of unexpected POST fields.
  *
  * Example:
- *   $result = validate::make([
+ *   $result = Validate::make([
  *       'email' => ['required', 'email'],
  *       'age'   => ['required', 'int', 'min:18'],
  *   ])->check($req->post());
@@ -18,7 +18,7 @@ namespace Skim\Validation;
  *   if (!$result->ok) {
  *       return $res->status(422)->json(['errors' => $result->errors()]);
  *   }
- *   user::create($result->validated());
+ *   User::create($result->validated());
  *
  * Testing: Call make() and check() directly — no container or config needed.
  *
@@ -51,7 +51,7 @@ class Validate {
      * the field name. Returns $this for fluent chaining.
      *
      * Example:
-     *   validate::make([...])
+     *   Validate::make([...])
      *       ->extend('even', fn($v) => (int)$v % 2 === 0, ':field must be even')
      *       ->check($data);
      *
@@ -96,7 +96,7 @@ class Validate {
             }
 
             foreach ($ruleList as $ruleItem) {
-                // Rule object (implements rule interface)
+                // Rule object (implements Rule interface)
                 if ($ruleItem instanceof \Skim\Validation\Rule) {
                     $ok = $ruleItem->validate($value, $field, $data);
                     if (!$ok) {
@@ -149,7 +149,7 @@ class Validate {
             'url'      => !\Skim\Helpers\Filter::url($value) ? "The {$field} must be a valid URL." : null,
             'int'      => !\Skim\Helpers\Filter::int($value) ? "The {$field} must be an integer." : null,
             'float'    => !\Skim\Helpers\Filter::float($value) ? "The {$field} must be a number." : null,
-            // Bool rule: explicit string allowlist check instead of filter::bool() which always returns bool
+            // Bool rule: explicit string allowlist check instead of Filter::bool() which always returns bool
             'bool'     => !in_array(
                 is_bool($value) ? ($value ? 'true' : 'false') : strtolower(trim((string)$value)),
                 ['1', '0', 'true', 'false', 'yes', 'no', 'on', 'off'],
@@ -228,8 +228,8 @@ class Validate {
 #AI config_reads: []
 #AI non_goals: [Does not sanitize input; Does not handle file upload validation; Does not provide localized error messages]
 #AI side_effects: []
-#AI flow: validate::make($rules) -> extend() (optional) -> check($data) -> applyRule() per field per rule -> new result($errors, $validated)
-#AI lifecycle_steps: [validate::make([...]); -> extend() for custom rules; -> check($req->post()); -> foreach field -> foreach rule -> applyRule(); -> new result(errors, validated); -> controller branches on ok]
+#AI flow: Validate::make($rules) -> extend() (optional) -> check($data) -> applyRule() per field per rule -> new Result($errors, $validated)
+#AI lifecycle_steps: [Validate::make([...]); -> extend() for custom rules; -> check($req->post()); -> foreach field -> foreach rule -> applyRule(); -> new Result(errors, validated); -> controller branches on ok]
 #AI section_order: [Validation API; Custom Rules; Architecture]
 #AI architectural_notes: Own implementation with zero external dependencies. Uses Skim\Helpers\Filter for type checking. Custom rules are instance-scoped via extend() — safe for long-lived FrankenPHP processes.
 

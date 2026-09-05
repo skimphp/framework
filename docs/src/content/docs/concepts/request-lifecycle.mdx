@@ -6,25 +6,25 @@ description: Learn how SKIM Framework handles incoming HTTP and CLI requests.
 Every HTTP request in SKIM follows a single, linear, highly predictable path from entry to exit:
 
 ```
-app::instance()          // lightweight object creation only
-  → app::run()
+App::instance()          // lightweight object creation only
+  → App::run()
     → ensureBooted()     // lazy boot: router, pipeline, extensions
-    → request::fromGlobals()
-    → router::dispatch()
+    → Request::fromGlobals()
+    → Router::dispatch()
     → middleware pipeline (onion model)
     → controller handler
-    → response::send()
+    → Response::send()
 ```
 
 ### Key Lifecycle Stages
 
-1. **Bootstrap & Entry Point**: All HTTP traffic is routed to `public/index.php`, which calls `app::instance()` followed by `app::run()`. `app::instance()` creates the singleton object without booting subsystems — boot is deferred until the first request.
+1. **Bootstrap & Entry Point**: All HTTP traffic is routed to `public/index.php`, which calls `App::instance()` followed by `App::run()`. `App::instance()` creates the singleton object without booting subsystems — boot is deferred until the first request.
 2. **Lazy Boot**: Inside `run()`, `ensureBooted()` initialises the router, pipeline, and extensions only once. Env and config are loaded on-demand when first accessed.
-3. **Request Initialization**: The `request` class captures global state using `request::fromGlobals()`.
+3. **Request Initialization**: The `request` class captures global state using `Request::fromGlobals()`.
 4. **Routing**: The `router` dispatches the request against the registered route definitions.
 5. **Middleware Onion**: The request is passed through the registered middleware layers sequentially.
 6. **Controller Dispatch**: The matched controller or closure is executed.
-7. **Response Send**: The resulting `response` object is sent back to the client via `response::send()`.
+7. **Response Send**: The resulting `response` object is sent back to the client via `Response::send()`.
 
 ### Error & Flow Control
 

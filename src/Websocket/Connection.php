@@ -12,7 +12,7 @@ namespace Skim\Websocket;
  * Example:
  *   $conn->join('chat:general');
  *   $conn->send(['type' => 'message', 'text' => 'Hello']);
- *   connection::broadcast('chat:general', ['type' => 'notification'], except_id: $conn->id());
+ *   Connection::broadcast('chat:general', ['type' => 'notification'], except_id: $conn->id());
  *
  * Testing: Use resetRooms() in tearDown() to clear room state.
  *
@@ -89,7 +89,7 @@ class Connection {
      * Optionally excludes one connection (typically the sender) via $except_id.
      *
      * Example:
-     *   connection::broadcast('chat:general', ['text' => 'Hello'], except_id: $sender_id);
+     *   Connection::broadcast('chat:general', ['text' => 'Hello'], except_id: $sender_id);
      *
      * @param string       $room      Room to broadcast to.
      * @param string|array $message   Payload (arrays are JSON-encoded per connection).
@@ -144,8 +144,8 @@ class Connection {
 #AI config_reads: []
 #AI non_goals: [Does not handle WebSocket handshake; Does not manage connection lifecycle beyond close(); Does not provide cross-process room synchronization]
 #AI side_effects: [send() writes to the WebSocket; close() terminates the connection; join/leave mutate the static rooms array; broadcast() sends to multiple connections]
-#AI flow: handler::onMessage() -> connection::send/broadcast/join/leave -> amphp WebSocket
-#AI lifecycle_steps: [WebSocket handshake -> new connection($id, $raw); -> handler::onOpen($conn); -> $conn->join('room'); -> handler::onMessage() -> $conn->send() or connection::broadcast()]
+#AI flow: Handler::onMessage() -> Connection::send/broadcast/join/leave -> amphp WebSocket
+#AI lifecycle_steps: [WebSocket handshake -> new Connection($id, $raw); -> Handler::onOpen($conn); -> $conn->join('room'); -> Handler::onMessage() -> $conn->send() or Connection::broadcast()]
 #AI section_order: [Connection API; Room Management; Broadcasting; Testing Hooks; Architecture]
 #AI architectural_notes: Rooms are intentionally process-scoped. For multi-server WebSocket deployments, layer Redis pub/sub on top of the room API.
 

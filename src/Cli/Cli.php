@@ -11,10 +11,10 @@ namespace Skim\Cli;
  * to suppress colors unconditionally (e.g. --no-ansi flag).
  *
  * Example:
- *   cli::success('Migration complete.');
- *   cli::table(['name', 'status'], [['users', 'applied'], ['posts', 'pending']]);
+ *   Cli::success('Migration complete.');
+ *   Cli::table(['name', 'status'], [['users', 'applied'], ['posts', 'pending']]);
  *
- * Testing: Call cli::forcePlain(true) in setUp() to get deterministic output.
+ * Testing: Call Cli::forcePlain(true) in setUp() to get deterministic output.
  *
  * #AI:class
  */
@@ -440,8 +440,8 @@ final class Cli {
 #AI config_reads: []
 #AI non_goals: [Does not handle input parsing (see ArgvParser); Does not manage process lifecycle (see kernel); Does not provide full-screen TUI (see InteractiveMenu)]
 #AI side_effects: [Writes to STDOUT or STDERR; Reads from STDIN for interactive prompts; forcePlain() mutates static state]
-#AI flow: cli::method() -> isTty() check -> color() wraps text -> echo/fwrite output
-#AI lifecycle_steps: [caller invokes cli::method(); -> isTty() checks stdout; -> color() applies ANSI if TTY; -> echo or fwrite outputs text]
+#AI flow: Cli::method() -> isTty() check -> color() wraps text -> echo/fwrite output
+#AI lifecycle_steps: [caller invokes Cli::method(); -> isTty() checks stdout; -> color() applies ANSI if TTY; -> echo or fwrite outputs text]
 #AI section_order: [Output; Interactive Prompts; Progress and Tables; Display Components; Architecture]
 #AI architectural_notes: Static utility class with no dependencies on framework config or container. TTY detection ensures CI logs and piped output remain clean plain text.
 

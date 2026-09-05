@@ -12,8 +12,8 @@ use Skim\Worker\Resettable;
  * effects (email, reports) that should not delay the response.
  *
  * Example:
- *   event::on(user_created_event::class, fn($e) => log::info("User {$e->user->id} created"));
- *   event::emit(new user_created_event($user));
+ *   Event::on(user_created_event::class, fn($e) => Log::info("User {$e->user->id} created"));
+ *   Event::emit(new user_created_event($user));
  *
  * Testing: Use off() in tearDown() to clear listeners between test cases.
  *
@@ -60,8 +60,8 @@ final class Event implements \Skim\Worker\Resettable {
      * raw payload (string events).
      *
      * Example:
-     *   event::on(user_created_event::class, fn($e) => mailer::send($e->user));
-     *   event::on('user.created', fn($data) => log::info($data['id']), priority: 10);
+     *   Event::on(user_created_event::class, fn($e) => mailer::send($e->user));
+     *   Event::on('user.created', fn($data) => Log::info($data['id']), priority: 10);
      *
      * @param string   $event    Event class-string or string name.
      * @param callable $listener Callback receiving the event object or payload.
@@ -94,8 +94,8 @@ final class Event implements \Skim\Worker\Resettable {
      * $payload and the data as $data. All listeners run synchronously.
      *
      * Example:
-     *   event::emit(new user_created_event($user));
-     *   event::emit('user.created', ['id' => $user->id]);
+     *   Event::emit(new user_created_event($user));
+     *   Event::emit('user.created', ['id' => $user->id]);
      *
      * @param object|string $payload Event object (typed) or event name (string).
      * @param mixed         $data    Payload for string events (ignored for typed events).
@@ -125,7 +125,7 @@ final class Event implements \Skim\Worker\Resettable {
      * Requires skim/queue to be installed.
      *
      * Example:
-     *   event::emitAsync(new report_generated_event($report));
+     *   Event::emitAsync(new report_generated_event($report));
      *
      * @param object|string $payload Event object or event name.
      * @param mixed         $data    Payload for string events.
@@ -146,8 +146,8 @@ final class Event implements \Skim\Worker\Resettable {
      * between tests.
      *
      * Example:
-     *   event::off(user_created_event::class); // Remove listeners for one event
-     *   event::off();                           // Remove all listeners
+     *   Event::off(user_created_event::class); // Remove listeners for one event
+     *   Event::off();                           // Remove all listeners
      *
      * @param string|null $event Event name to clear, or null for all.
      */
@@ -201,7 +201,7 @@ final class Event implements \Skim\Worker\Resettable {
 #AI config_reads: []
 #AI non_goals: [Does not support wildcard event patterns; Does not persist events; Does not guarantee delivery for emitAsync — depends on queue worker]
 #AI side_effects: [emit() runs listeners inline; emitAsync() pushes to queue]
-#AI flow: event::on(class, fn) -> register; event::emit(obj) -> get_class -> iterate listeners by priority -> call each
+#AI flow: Event::on(class, fn) -> register; Event::emit(obj) -> get_class -> iterate listeners by priority -> call each
 #AI section_order: [Registration; Dispatch; Testing Hooks]
 
 #AI:on

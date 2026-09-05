@@ -102,7 +102,7 @@ describe('LeakDetector — hard invariants', function (): void {
             $app->make('leaky.svc');
         }
 
-        // Grow resolved count each request by adding new request-time bindings
+        // Grow resolved count each request by adding new Request-time bindings
         // (in a real leak this would be a singleton caching per-request state)
         for ($i = 0; $i < 20; $i++) {
             leakRunOnce($app, '/ping');

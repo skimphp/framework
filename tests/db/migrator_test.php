@@ -30,7 +30,7 @@ function setupMigratorDb(): void {
     \Skim\Db\Db::connect('default', ['driver' => 'sqlite', 'database' => ':memory:']);
 }
 
-describe('migrator::run()', function(): void {
+describe('Migrator::run()', function(): void {
 
     test('runs pending migrations and records them in _migrations table', function(): void {
         setupMigratorDb();
@@ -82,7 +82,7 @@ describe('migrator::run()', function(): void {
 
 });
 
-describe('migrator::down()', function(): void {
+describe('Migrator::down()', function(): void {
 
     test('rolls back last batch', function(): void {
         setupMigratorDb();
@@ -116,7 +116,7 @@ describe('migrator::down()', function(): void {
 
 });
 
-describe('migrator::status()', function(): void {
+describe('Migrator::status()', function(): void {
 
     test('reports pending and applied status for each migration', function(): void {
         setupMigratorDb();

@@ -97,13 +97,13 @@ final class WorkerReset {
 #AI test_seam: discovered() returns the scanned class list for assertions
 #AI invariants: [apply() is safe to call once per request; discover() only inspects new classes since last call; rollbackAll() is a no-op when no transactions are open]
 #AI core_behaviors: [Incremental discovery via get_declared_classes() suffix scanning; OB level restoration preserving test buffers; Transaction rollback on all pooled connections; Delegates per-facade reset to resetRequest() on each discovered class]
-#AI warnings: [If a facade implements resettable but is never loaded, it will not be discovered and will not be reset]
+#AI warnings: [If a facade implements Resettable but is never loaded, it will not be discovered and will not be reset]
 #AI owns: discovered class list, scan cursor
 #AI entry_points: [apply; discover; discovered]
 #AI config_reads: []
 #AI non_goals: [Does not reset non-resettable classes; Does not close DB connections — only rolls back transactions]
 #AI side_effects: [Flushes output buffers; Rolls back database transactions; Resets profiler and RequestTrace; Clears pipeline instance cache]
-#AI flow: worker entrypoint -> endRequest() -> WorkerReset::apply() -> discover() -> rollbackAll() -> resetRequest() on each discovered class -> profiler::reset() / RequestTrace::reset() / pipeline::resetInstanceCache()
+#AI flow: worker entrypoint -> endRequest() -> WorkerReset::apply() -> discover() -> rollbackAll() -> resetRequest() on each discovered class -> Profiler::reset() / RequestTrace::reset() / Pipeline::resetInstanceCache()
 #AI lifecycle_steps: [First request: discover() scans all declared classes; -> apply($preserveObLevel) flushes buffers; -> rollbackAll(); -> foreach discovered class: resetRequest(); -> profiler/RequestTrace reset]; [Subsequent requests: discover() scans only new classes; -> same reset sequence]
 
 #AI:apply

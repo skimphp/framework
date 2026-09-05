@@ -124,9 +124,9 @@ class HttpClient {
 #AI entry_points: [actingAs; withHeaders; withSession; followingRedirects; withoutMiddleware; get; post; put; delete]
 #AI config_reads: []
 #AI non_goals: [Does not open real network connections; Does not test CORS or real HTTP headers]
-#AI side_effects: [Dispatches through app::dispatch() which runs the full router pipeline]
-#AI flow: test -> HttpClient::method() -> PendingRequest -> app::dispatch() -> HttpResponse
-#AI lifecycle_steps: [new HttpClient($app); -> HttpClient::get/post/etc(); -> new PendingRequest($app); -> PendingRequest::send(); -> app::dispatch(); -> HttpResponse]
+#AI side_effects: [Dispatches through App::dispatch() which runs the full router pipeline]
+#AI flow: test -> HttpClient::method() -> PendingRequest -> App::dispatch() -> HttpResponse
+#AI lifecycle_steps: [new HttpClient($app); -> HttpClient::get/post/etc(); -> new PendingRequest($app); -> PendingRequest::send(); -> App::dispatch(); -> HttpResponse]
 #AI section_order: [Configuration; HTTP Methods; Architecture]
 #AI architectural_notes: Thin convenience layer over PendingRequest — each call creates a fresh instance to prevent state leakage.
 

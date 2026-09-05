@@ -128,7 +128,7 @@ describe('resettable contract guard', function (): void {
     // AND implement resettable.
     //
     // Note: profiler and request_trace also hold per-request state but are reset by
-    // explicit calls in WorkerReset::apply() (profiler::reset()/RequestTrace::reset()),
+    // explicit calls in WorkerReset::apply() (Profiler::reset()/RequestTrace::reset()),
     // not via the resettable interface — so they are intentionally absent here.
     // Process-scoped state (config, env, db connection pool, persistent caches,
     // model metadata) intentionally stays put and must NOT be listed.

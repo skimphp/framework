@@ -10,9 +10,9 @@ namespace Skim\Db\Exceptions;
  *
  * Example:
  *   try {
- *       db::query('SELECT * FROM missing_table');
+ *       Db::query('SELECT * FROM missing_table');
  *   } catch (db_exception $e) {
- *       log::error($e->getMessage());
+ *       Log::error($e->getMessage());
  *   }
  *
  * Testing: Trigger by executing invalid SQL against a test_db() connection.
@@ -39,7 +39,7 @@ class DbException extends \RuntimeException {
 #AI role: database error wrapper
 #AI layer: db
 #AI badges: [exception; db; error-context]
-#AI intro: `DbException` extends `\RuntimeException` and prepends the failed SQL to the error message. All PDO calls in `db::` are wrapped so that failures carry the originating query for log and debug output.
+#AI intro: `DbException` extends `\RuntimeException` and prepends the failed SQL to the error message. All PDO calls in `Db::` are wrapped so that failures carry the originating query for log and debug output.
 #AI lifecycle: thrown on PDO failure, caught by application code
 #AI fallback: none
 #AI test_seam: trigger with invalid SQL against test_db() SQLite connection
@@ -53,10 +53,10 @@ class DbException extends \RuntimeException {
 #AI config_reads: []
 #AI non_goals: [Does not retry queries; Does not mask the underlying PDO error]
 #AI side_effects: []
-#AI flow: PDO throws -> db:: catches -> new DbException($sql, $pdo_exception) -> rethrown
-#AI lifecycle_steps: [PDO operation fails; -> db:: catches PDOException; -> new DbException(sql, previous); -> thrown to caller]
+#AI flow: PDO throws -> Db:: catches -> new DbException($sql, $pdo_exception) -> rethrown
+#AI lifecycle_steps: [PDO operation fails; -> Db:: catches PDOException; -> new DbException(sql, previous); -> thrown to caller]
 #AI section_order: [Constructor]
-#AI architectural_notes: Thin wrapper — all intelligence lives in db::query() and friends.
+#AI architectural_notes: Thin wrapper — all intelligence lives in Db::query() and friends.
 
 #AI:__construct
 #AI group: Constructor

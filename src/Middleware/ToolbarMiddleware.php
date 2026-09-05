@@ -74,7 +74,7 @@ class ToolbarMiddleware implements \Skim\Core\Middleware {
 #AI badges: [middleware; debug; toolbar; dev-only]
 #AI intro: `ToolbarMiddleware` appends the SKIM debug toolbar before `</body>` in HTML responses. It only activates when debug mode is enabled and the request is a standard page load (not JSON, AJAX, or htmx).
 #AI lifecycle: registered as global middleware; runs after controller on every request
-#AI test_seam: set app.debug to false to disable; mock toolbar::render() for output testing
+#AI test_seam: set app.debug to false to disable; mock Toolbar::render() for output testing
 #AI invariants: [Only modifies text/html responses; Skips JSON/AJAX/htmx requests; No-op when debug is false]
 #AI core_behaviors: [Calls $next first to collect profiler data; Checks debug flag, request type, and content type; Injects toolbar HTML before </body>]
 #AI owns: nothing
@@ -82,13 +82,13 @@ class ToolbarMiddleware implements \Skim\Core\Middleware {
 #AI config_reads: [app.debug]
 #AI non_goals: [Does not render toolbar for API responses; Does not modify non-HTML content; Does not collect profiler data itself]
 #AI side_effects: [Modifies response body by injecting toolbar HTML; Adds X-Debug header]
-#AI flow: handle() -> $next() -> check debug -> check request type -> check content-type -> toolbar::render() -> inject before </body>
+#AI flow: handle() -> $next() -> check debug -> check request type -> check content-type -> Toolbar::render() -> inject before </body>
 #AI section_order: [Middleware]
 
 #AI:handle
 #AI group: Middleware
 #AI frequency: high
-#AI signature: public function handle(request $req, response $res, callable $next): mixed
+#AI signature: public function handle(Request $req, Response $res, callable $next): mixed
 #AI contract: Runs the next middleware/controller, then injects toolbar HTML into the response if all conditions are met: debug enabled, non-API request, text/html content type, and </body> present.
 #AI param_details: [{name: $req | type: request | required: true | desc: Current HTTP request.}; {name: $res | type: response | required: true | desc: Current HTTP response.}; {name: $next | type: callable | required: true | desc: Next middleware or controller in the pipeline.}]
 #AI return_detail: {type: mixed | desc: The response, possibly with toolbar HTML injected.}

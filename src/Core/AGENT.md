@@ -5,10 +5,10 @@ Container (app), config loader, env parser, HTTP router (fast-route wrapper),
 request/response abstractions, middleware pipeline.
 
 ## app container — critical behaviours
-- app::instance() returns the singleton — never construct app directly
-- app::testInstance() returns a fresh isolated container for tests
+- App::instance() returns the singleton — never construct app directly
+- App::testInstance() returns a fresh isolated container for tests
 - SYS scope: write-once after boot — throws on duplicate in production
-- APP scope: reads config/*.php via config::get — read-only after boot
+- APP scope: reads config/*.php via Config::get — read-only after boot
 - USER scope: mutable, per-request
 - bind() is singleton by default; use bindRequest()/bindTransient() or pass a
   lifetime; config('app.strict_di')=true makes an explicit lifetime mandatory.
@@ -24,12 +24,12 @@ request/response abstractions, middleware pipeline.
   and any() for all five
 
 ## request — critical behaviours
-- fromGlobals() reads superglobals — only called in app::run(), never elsewhere
+- fromGlobals() reads superglobals — only called in App::run(), never elsewhere
 - make() is the test factory — pass explicit arrays
 - isHtmx() checks HX-Request header
 - isDatastar() checks datastar-request header
 - json() parses body only when Content-Type is application/json
-- route params injected by app::run() via setRouteParams()
+- route params injected by App::run() via setRouteParams()
 
 ## response — critical behaviours
 - never echo or die in controllers — always return response
@@ -44,7 +44,7 @@ request/response abstractions, middleware pipeline.
 - cors must be first global middleware — OPTIONS preflight must not reach auth
 
 ## common mistakes to avoid
-- calling app::instance() in tests — use app::testInstance() instead
+- calling App::instance() in tests — use App::testInstance() instead
 - accessing $_GET/$_POST directly — always use request methods
-- calling response::send() in middleware — return the response object instead
-- forgetting to call send() at the end of app::run()
+- calling Response::send() in middleware — return the response object instead
+- forgetting to call send() at the end of App::run()

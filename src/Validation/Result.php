@@ -3,17 +3,17 @@
 namespace Skim\Validation;
 
 /**
- * Immutable validation result returned by validate::check(). #AI:class
+ * Immutable validation result returned by Validate::check(). #AI:class
  *
  * Use in controllers to branch on ok, display errors(), or pass validated()
- * data to model::create(). All three accessors are the only calls needed.
+ * data to Model::create(). All three accessors are the only calls needed.
  *
  * Example:
- *   $result = validate::make([...])->check($req->post());
+ *   $result = Validate::make([...])->check($req->post());
  *   if (!$result->ok) {
  *       return $res->status(422)->json(['errors' => $result->errors()]);
  *   }
- *   $user = user::create($result->validated());
+ *   $user = User::create($result->validated());
  *
  * Testing: Construct directly with known errors/validated arrays.
  *
@@ -38,7 +38,7 @@ final class Result {
     }
 
     /**
-     * Returns only declared fields — safe for model::create(). #AI:validated
+     * Returns only declared fields — safe for Model::create(). #AI:validated
      *
      * Undeclared POST fields are silently dropped, preventing mass-assignment
      * of unexpected fields.
@@ -56,8 +56,8 @@ final class Result {
 #AI role: validation result value object
 #AI layer: validation
 #AI badges: [validation; result; immutable; value-object; property-hooks]
-#AI intro: `result` is the immutable value object returned by `validate::check()`. It carries both the error map and the validated data subset, providing the three accessors controllers need: `ok` (virtual property), `errors()`, and `validated()`.
-#AI lifecycle: created by validate::check(), consumed by controller in the same request
+#AI intro: `result` is the immutable value object returned by `Validate::check()`. It carries both the error map and the validated data subset, providing the three accessors controllers need: `ok` (virtual property), `errors()`, and `validated()`.
+#AI lifecycle: created by Validate::check(), consumed by controller in the same request
 #AI fallback: n/a — pure value object
 #AI test_seam: construct directly with known arrays
 #AI invariants: [ok returns true only when errors array is empty; validated() contains only fields declared in the rules; errors() shape matches 422 JSON response format]
@@ -68,8 +68,8 @@ final class Result {
 #AI config_reads: []
 #AI non_goals: [Does not run validation; Does not format error messages for display]
 #AI side_effects: []
-#AI flow: validate::check() -> new result($errors, $validated) -> controller reads ok/errors/validated
-#AI lifecycle_steps: [validate::check() runs rules; -> new result(errors, validated); -> controller reads ok; -> branches on result]
+#AI flow: Validate::check() -> new Result($errors, $validated) -> controller reads ok/errors/validated
+#AI lifecycle_steps: [Validate::check() runs rules; -> new Result(errors, validated); -> controller reads ok; -> branches on result]
 #AI section_order: [Result API; Architecture]
 #AI architectural_notes: Kept as a pure value object — no behavior beyond accessors. The validate class is responsible for populating both arrays correctly. Uses PHP 8.4+ property hooks for the virtual ok property.
 

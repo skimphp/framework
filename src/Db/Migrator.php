@@ -11,7 +11,7 @@ namespace Skim\Db;
  * atomic rollback targeting.
  *
  * Example:
- *   $m = new migrator(basePath('migrations'));
+ *   $m = new Migrator(basePath('migrations'));
  *   $ran = $m->run();          // ['2024_01_01_create_users.php', ...]
  *   $m->down();                // rollback last batch
  *   $m->status();              // [['filename' => ..., 'batch' => ..., 'status' => 'applied'], ...]
@@ -274,8 +274,8 @@ final class Migrator {
 #AI config_reads: []
 #AI non_goals: [Does not generate migration files; Does not validate SQL syntax; Does not support per-connection migration tracking]
 #AI side_effects: [Creates _migrations table; Executes DDL and DML; Modifies database schema]
-#AI flow: CLI command -> new migrator(dir) -> run()/down()/fresh()/status() -> db::transaction -> migration::up()/down()
-#AI lifecycle_steps: [new migrator(dir, connection); -> run()/down()/fresh()/status(); -> ensureTable(); -> loadAll() reads files; -> compare with applied; -> execute pending in transactions; -> record in _migrations]
+#AI flow: CLI command -> new Migrator(dir) -> run()/down()/fresh()/status() -> Db::transaction -> Migration::up()/down()
+#AI lifecycle_steps: [new Migrator(dir, connection); -> run()/down()/fresh()/status(); -> ensureTable(); -> loadAll() reads files; -> compare with applied; -> execute pending in transactions; -> record in _migrations]
 #AI section_order: [Migration Commands; Architecture]
 #AI architectural_notes: Batch-based rollback means all migrations run in a single `migrate` call are rolled back together by `migrate:down`. This prevents partial-schema states.
 

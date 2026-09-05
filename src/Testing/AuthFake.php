@@ -10,7 +10,7 @@ namespace Skim\Testing;
  * through as-is — no database lookup.
  *
  * Example:
- *   $fake = new AuthFake(user::find(1));
+ *   $fake = new AuthFake(User::find(1));
  *   $app->bind('auth', fn() => $fake);
  *
  * Testing: This class IS the test double — no setup/teardown needed.
@@ -50,7 +50,7 @@ class AuthFake {
 #AI layer: testing
 #AI badges: [testing; fake; auth; double]
 #AI intro: `AuthFake` is a minimal test double for the auth service. It always reports the user as authenticated and returns the injected user object directly.
-#AI lifecycle: instantiated per-test, bound into the container via app::bind()
+#AI lifecycle: instantiated per-test, bound into the container via App::bind()
 #AI fallback: n/a — test-only class
 #AI test_seam: bind into container via $app->bind('auth', fn() => new AuthFake($user))
 #AI invariants: [check() always returns true; guest() always returns false; user() returns the injected object]

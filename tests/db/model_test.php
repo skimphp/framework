@@ -24,7 +24,7 @@ class TestUser extends \Skim\Db\Model {
     protected static array  $guarded = ['id', 'created_at', 'updated_at'];
 }
 
-describe('model::find()', function(): void {
+describe('Model::find()', function(): void {
 
     beforeEach(function(): void {
         setupTestDb();
@@ -43,7 +43,7 @@ describe('model::find()', function(): void {
 
 });
 
-describe('model::findOrFail()', function(): void {
+describe('Model::findOrFail()', function(): void {
 
     beforeEach(function(): void {
         setupTestDb();
@@ -62,7 +62,7 @@ describe('model::findOrFail()', function(): void {
 
 });
 
-describe('model::create() and save() INSERT', function(): void {
+describe('Model::create() and save() INSERT', function(): void {
 
     beforeEach(function(): void {
         setupTestDb();
@@ -82,7 +82,7 @@ describe('model::create() and save() INSERT', function(): void {
 
 });
 
-describe('model::save() UPDATE with dirty tracking', function(): void {
+describe('Model::save() UPDATE with dirty tracking', function(): void {
 
     beforeEach(function(): void {
         setupTestDb();
@@ -106,7 +106,7 @@ describe('model::save() UPDATE with dirty tracking', function(): void {
 
 });
 
-describe('model::delete()', function(): void {
+describe('Model::delete()', function(): void {
 
     beforeEach(function(): void {
         setupTestDb();
@@ -120,7 +120,7 @@ describe('model::delete()', function(): void {
 
 });
 
-describe('model::schema() — schema fetch', function(): void {
+describe('Model::schema() — schema fetch', function(): void {
 
     beforeEach(function(): void {
         setupTestDb();
@@ -148,7 +148,7 @@ describe('model::schema() — schema fetch', function(): void {
 
 });
 
-describe('model::deleteWhere()', function(): void {
+describe('Model::deleteWhere()', function(): void {
 
     beforeEach(function(): void {
         setupTestDb();
@@ -171,7 +171,7 @@ describe('model::deleteWhere()', function(): void {
 
 });
 
-describe('model::findBy()', function(): void {
+describe('Model::findBy()', function(): void {
 
     beforeEach(function(): void {
         setupTestDb();
@@ -195,7 +195,7 @@ describe('model::findBy()', function(): void {
 
 });
 
-describe('model::where() query scope', function(): void {
+describe('Model::where() query scope', function(): void {
 
     beforeEach(function(): void {
         setupTestDb();

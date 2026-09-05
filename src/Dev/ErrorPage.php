@@ -5,12 +5,12 @@ namespace Skim\Dev;
 /**
  * Developer-friendly error page rendered when APP_DEBUG=true. #AI:class
  *
- * Use only via the exception handler registered in app::run(). Delegates
+ * Use only via the exception handler registered in App::run(). Delegates
  * HTML generation to dev_view templates with a fallback to inline HTML
  * if the template system itself fails. Never expose in production.
  *
  * Example:
- *   // Registered by app::run() when APP_DEBUG=true:
+ *   // Registered by App::run() when APP_DEBUG=true:
  *   set_exception_handler(fn(\Throwable $e) => ErrorPage::render($e));
  *
  * Testing: Call render() directly with a test Throwable; output goes to stdout.
@@ -428,7 +428,7 @@ final class ErrorPage {
      * Collects the matched route (pattern + params) from request_trace. #AI:collect_route
      *
      * Returns null when trace is disabled or no route was matched. Reads the
-     * 'route_matched' event written by app::recordRouteTrace().
+     * 'route_matched' event written by App::recordRouteTrace().
      */
     private static function collectRoute(): ?array {
         $trace = \Skim\Dev\RequestTrace::current();
@@ -504,7 +504,7 @@ final class ErrorPage {
      * [class, method] array handler (the route target). Recursively reflects
      * its constructor and each typed parameter's class until either depth
      * limit is reached or a primitive is encountered. Uses the live container
-     * via app::instance() to confirm each class is actually resolvable.
+     * via App::instance() to confirm each class is actually resolvable.
      */
     private static function collectContainer(\Throwable $e): array {
         $controller = self::findControllerClass($e);
@@ -543,7 +543,7 @@ final class ErrorPage {
      * Returns the list of services already resolved during this request. #AI:collect_resolved
      *
      * Mirrors Laravel's container->resolved() — shows which abstracts have
-     * already been instantiated (and are cached in app::$resolved). Used by
+     * already been instantiated (and are cached in App::$resolved). Used by
      * the Container tab to distinguish "already built" from "still pending".
      *
      * @return array<int, array{abstract:string, status:string}> One row per
@@ -561,7 +561,7 @@ final class ErrorPage {
     }
 
     /**
-     * Returns the bindings list captured at app::boot() for the Container tab. #AI:collect_bindings_list
+     * Returns the bindings list captured at App::boot() for the Container tab. #AI:collect_bindings_list
      *
      * @return array<int, array{abstract:string, factory:string, priority:int}>
      *         One row per binding, sorted by abstract.
@@ -630,7 +630,7 @@ final class ErrorPage {
      * Uses the live app container to confirm resolution; falls back to
      * Reflection auto-wiring prediction when the class isn't bound.
      * Marks each node as `resolved` if its abstract appears in
-     * app::resolvedServices() — the actual list of services that
+     * App::resolvedServices() — the actual list of services that
      * make() instantiated during this request.
      */
     private static function buildDiNode(string $class, int $depth, array $visited): array {
@@ -681,7 +681,7 @@ final class ErrorPage {
     }
 
     /**
-     * Returns true if the given class is in app::resolvedServices(). #AI:is_in_resolved_list
+     * Returns true if the given class is in App::resolvedServices(). #AI:is_in_resolved_list
      *
      * Used by build_di_node to mark every node that make() actually
      * instantiated during this request with a green ✓ resolved badge.

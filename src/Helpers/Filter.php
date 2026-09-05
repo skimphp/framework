@@ -10,8 +10,8 @@ namespace Skim\Helpers;
  * never null. false means "invalid input, discard it".
  *
  * Example:
- *   $age   = filter::int($req->post('age'), min: 18, max: 120);
- *   $email = filter::email($req->post('email'));
+ *   $age   = Filter::int($req->post('age'), min: 18, max: 120);
+ *   $email = Filter::email($req->post('email'));
  *   if ($age === false || $email === false) {
  *       return $res->status(422)->json(['error' => 'Invalid input']);
  *   }
@@ -311,17 +311,17 @@ final class Filter {
 #AI invariants: [all methods return typed value or false, never null; int() rejects floats; email() lowercases output; strict type checking with === false]
 #AI core_behaviors: [int() uses string comparison to reject floats like 1.5; bool() accepts common truthy/falsy strings; array variants filter and re-index results]
 #AI warnings: []
-#AI notes: Use filter::int() for strict integer validation — it rejects float-like strings. Use validate::make() for form-level validation with error messages.
+#AI notes: Use Filter::int() for strict integer validation — it rejects float-like strings. Use Validate::make() for form-level validation with error messages.
 #AI scope_items: []
 #AI owns: nothing
 #AI entry_points: [int; intPositive; intNatural; float; bool; date; time; ip; domain; email; url; username; password; slug; regex; in; range; arrInt; arrIntPositive; arrIn]
 #AI config_reads: []
-#AI non_goals: [Does not provide error messages — use validate::make() for that; Does not sanitize HTML — use e() for output escaping]
+#AI non_goals: [Does not provide error messages — use Validate::make() for that; Does not sanitize HTML — use e() for output escaping]
 #AI side_effects: []
-#AI flow: controller -> filter::method(input) -> typed value or false -> model/query
-#AI lifecycle_steps: [controller receives input; -> filter::method() validates; -> typed value or false; -> controller branches on false]
+#AI flow: controller -> Filter::method(input) -> typed value or false -> model/query
+#AI lifecycle_steps: [controller receives input; -> Filter::method() validates; -> typed value or false; -> controller branches on false]
 #AI section_order: [Numeric; Boolean; Date & Time; Network; String Patterns; Range & Enum; Array Variants]
-#AI architectural_notes: Complements validate::make() — filter is for single-value type checking, validate is for form-level rules with error messages.
+#AI architectural_notes: Complements Validate::make() — filter is for single-value type checking, validate is for form-level rules with error messages.
 
 #AI:int
 #AI group: Numeric

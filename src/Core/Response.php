@@ -56,7 +56,7 @@ class Response {
     }
 
     /**
-     * Creates a new response with raw HTML content. #AI:html
+     * Creates a new Response with raw HTML content. #AI:html
      *
      * Static factory — returns a new instance, does not modify the current one.
      *
@@ -70,7 +70,7 @@ class Response {
     }
 
     /**
-     * Renders a PHP template via view::render(). #AI:view
+     * Renders a PHP template via View::render(). #AI:view
      *
      * Sets Content-Type to text/html. Delegates to the view engine.
      *
@@ -168,13 +168,13 @@ class Response {
      * this call have no effect.
      *
      * Example:
-     *   return $res->stream(function(sse $sse) {
+     *   return $res->stream(function(Sse $sse) {
      *       $sse->send('message', 'Hello');
      *   });
      *
      *   return $res->stream(function(element_patcher $ds) {
      *       $ds->patch('<div id="status">Active</div>', '#status');
-     *   }, driver: datastar::class);
+     *   }, driver: Datastar::class);
      *
      * @param callable  $callback Receives an sse or resolved driver instance.
      * @param ?string   $driver   Optional driver class to resolve from the container.
@@ -260,7 +260,7 @@ class Response {
      * Sends headers and body to the output buffer. #AI:send
      *
      * Idempotent — no-op if already sent. Handles stream and file download
-     * sentinel values internally. Called by app::run() after middleware completes.
+     * sentinel values internally. Called by App::run() after middleware completes.
      */
     public function send(): void {
         if ($this->sent) {
@@ -352,7 +352,7 @@ class Response {
 #AI layer: core
 #AI badges: [response; http; fluent; builder]
 #AI intro: `Skim\Core\Response` builds the HTTP response through fluent method chaining. Controllers return the response object; the framework calls send() after all middleware completes. Supports JSON, HTML views, fragments, redirects, SSE streaming, and file downloads.
-#AI lifecycle: created fresh per request by app::run(), populated by controller, sent after middleware
+#AI lifecycle: created fresh per request by App::run(), populated by controller, sent after middleware
 #AI test_seam: inspect via getStatus(), getBody(), getHeaders(), getJson() without calling send()
 #AI invariants: [send() is idempotent — no-op if already sent; stream() sends headers immediately; download() uses sentinel body detected by send(); status() returns $this for chaining; json() uses JSON_UNESCAPED_UNICODE]
 #AI warnings: [stream() sends headers inline — middleware response modifications after stream() have no effect; Never echo or die in controllers — always return $res->...]
@@ -385,7 +385,7 @@ class Response {
 #AI group: JSON & HTML
 #AI frequency: low
 #AI signature: public static function html(string $content): static
-#AI contract: Static factory that creates a new response with raw HTML content and text/html Content-Type.
+#AI contract: Static factory that creates a new Response with raw HTML content and text/html Content-Type.
 #AI param_details: [{name: $content | type: string | required: true | desc: Raw HTML string.}]
 #AI return_detail: {type: static | desc: New response instance with HTML body.}
 
@@ -393,7 +393,7 @@ class Response {
 #AI group: Views
 #AI frequency: high
 #AI signature: public function view(string $template, array $data = []): static
-#AI contract: Renders a PHP template via view::render() and sets Content-Type to text/html.
+#AI contract: Renders a PHP template via View::render() and sets Content-Type to text/html.
 #AI param_details: [{name: $template | type: string | required: true | desc: Template path relative to views directory.}; {name: $data | type: array | required: false | desc: Variables extracted into template scope.}]
 #AI return_detail: {type: static | desc: $this for fluent chaining.}
 #AI throws_details: [{type: \Skim\View\Exceptions\ViewException | desc: If template file not found.}]
@@ -409,7 +409,7 @@ class Response {
 #AI:smartView
 #AI group: Views
 #AI frequency: medium
-#AI signature: public function smartView(string $template, array $data, request $req): static
+#AI signature: public function smartView(string $template, array $data, Request $req): static
 #AI contract: Auto-selects full view vs fragment based on HX-Target or datastar-target request headers.
 #AI param_details: [{name: $template | type: string | required: true | desc: Template path.}; {name: $data | type: array | required: true | desc: Template variables.}; {name: $req | type: request | required: true | desc: Current request for header inspection.}]
 #AI return_detail: {type: static | desc: $this for fluent chaining.}
@@ -425,7 +425,7 @@ class Response {
 #AI:back
 #AI group: Redirects
 #AI frequency: medium
-#AI signature: public function back(request $req, string $fallback = '/'): static
+#AI signature: public function back(Request $req, string $fallback = '/'): static
 #AI contract: Redirects to the Referer header value, falling back to $fallback when absent.
 #AI param_details: [{name: $req | type: request | required: true | desc: Current request to read Referer from.}; {name: $fallback | type: string | required: false | desc: URL used when Referer is absent.}]
 #AI return_detail: {type: static | desc: $this for fluent chaining.}

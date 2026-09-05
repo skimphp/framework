@@ -96,8 +96,8 @@ class RequestFactory {
 #AI config_reads: []
 #AI non_goals: [Does not validate request data; Does not run middleware or routing]
 #AI side_effects: []
-#AI flow: PendingRequest::send() -> RequestFactory::make() -> new request(...)
-#AI lifecycle_steps: [PendingRequest builds headers/method/path; -> RequestFactory::make(); -> header mapping; -> new request(query, post, server, cookies, files, rawBody)]
+#AI flow: PendingRequest::send() -> RequestFactory::make() -> new Request(...)
+#AI lifecycle_steps: [PendingRequest builds headers/method/path; -> RequestFactory::make(); -> header mapping; -> new Request(query, post, server, cookies, files, rawBody)]
 #AI section_order: [Factory; Architecture]
 #AI architectural_notes: Isolates the $_SERVER header mapping logic so PendingRequest stays focused on dispatch configuration.
 

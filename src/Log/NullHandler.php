@@ -6,12 +6,12 @@ namespace Skim\Log;
  * Log handler that silently discards all entries.
  *
  * Use as the default handler in tests or when config sets log channel to 'null'.
- * Satisfies the log_handler contract without side effects, so profiler::log
+ * Satisfies the log_handler contract without side effects, so Profiler::log
  * still records entries in the debug toolbar even when file output is disabled.
  *
  * Example:
- *   log::setHandler(new NullHandler());
- *   log::error('this goes nowhere'); // profiler still sees it
+ *   Log::setHandler(new NullHandler());
+ *   Log::error('this goes nowhere'); // profiler still sees it
  *
  * #AI:class
  */
@@ -36,7 +36,7 @@ final class NullHandler implements \Skim\Log\LogHandler {
 #AI badges: [handler; log; null-object; testing]
 #AI intro: `NullHandler` implements `LogHandler` by discarding every write. It is the fallback when no file handler is configured and the default in test environments.
 #AI lifecycle: stateless, no resources opened
-#AI test_seam: inject via log::setHandler()
+#AI test_seam: inject via Log::setHandler()
 #AI invariants: [write() never throws; write() produces no output]
 #AI core_behaviors: [Accepts all log levels and discards them silently]
 #AI owns: nothing

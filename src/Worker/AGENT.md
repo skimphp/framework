@@ -22,7 +22,7 @@ regression-warn — shared runners are too noisy for a hard latency target.
 - `WorkerReset::discover()` incrementally scans `get_declared_classes()` for
   new `resettable` implementations — catches facades autoloaded lazily after
   the first request
-- `event::captureBootSnapshot()` must be called once after `freeze()` so
+- `Event::captureBootSnapshot()` must be called once after `freeze()` so
   boot-time listeners survive while request-time listeners are dropped
 - `ComponentCollector` is `resettable` — its stack is cleared even when a
   component throws and `pop()` never runs
@@ -44,14 +44,14 @@ Resolution: explicit config wins; `null` → `warn` when `WORKER_MODE && debug`.
   memory_get_usage(true), resolved singleton count, total event-listener count,
   DB connection count.
 
-**Reporting:** `log::warning` + `RequestTrace::event('leak.detected')` +
-`profiler::panel('leaks')`. Strict mode accumulates in
+**Reporting:** `Log::warning` + `RequestTrace::event('leak.detected')` +
+`Profiler::panel('leaks')`. Strict mode accumulates in
 `LeakDetector::findings()`; the `/__leaks` route exposes them for the T3 CI job.
 
 **Never throws mid-request** — that would corrupt the live response.
 
 ## Common mistakes
-- Skipping `event::captureBootSnapshot()` in a custom worker entry point —
+- Skipping `Event::captureBootSnapshot()` in a custom worker entry point —
   request listeners accumulate silently
 - Adding per-request state to a class without implementing `resettable` — the
   contract-guard test (`worker_reset_test.php`) will fail and block the PR

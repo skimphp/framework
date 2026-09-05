@@ -10,10 +10,10 @@ namespace Skim\Queue;
  * JSON+serialize in Redis. All constructor properties must be JSON-encodable.
  *
  * Example:
- *   class generate_report_job implements job {
+ *   class generate_report_job implements Job {
  *       public function __construct(private readonly int $report_id) {}
- *       public function handle(): void { report::generate($this->report_id); }
- *       public function failed(\Throwable $e): void { log::error("Report {$this->report_id} failed"); }
+ *       public function handle(): void { Report::generate($this->report_id); }
+ *       public function failed(\Throwable $e): void { Log::error("Report {$this->report_id} failed"); }
  *       public function tries(): int { return 1; }
  *       public function delay(): int { return 0; }
  *   }
@@ -26,7 +26,7 @@ interface Job {
     /**
      * Contains the actual work — runs in worker process, not request process. #AI:handle
      *
-     * Must not echo or write HTTP response. Use log::info() for output.
+     * Must not echo or write HTTP response. Use Log::info() for output.
      * Exceptions are caught by the worker and trigger retry or failed().
      */
     public function handle(): void;
@@ -73,10 +73,10 @@ interface Job {
 #AI owns: nothing — interface defines contract only
 #AI entry_points: [handle; failed; tries; delay]
 #AI config_reads: []
-#AI non_goals: [Does not define serialization format (see queue::serializeJob); Does not manage retry back-off (see worker); Does not handle job scheduling]
+#AI non_goals: [Does not define serialization format (see Queue::serializeJob); Does not manage retry back-off (see worker); Does not handle job scheduling]
 #AI side_effects: [handle() performs the actual work; failed() may send alerts or clean up]
-#AI flow: queue::push(job) -> serialize -> Redis -> worker unserializes -> handle() -> on failure: retry or failed()
-#AI lifecycle_steps: [application creates job instance; -> queue::push(job); -> queue::serializeJob(); -> Redis LPUSH/ZADD; -> worker BRPOP; -> unserialize; -> handle(); -> on exception: retry or failed()]
+#AI flow: Queue::push(job) -> serialize -> Redis -> worker unserializes -> handle() -> on failure: retry or failed()
+#AI lifecycle_steps: [application creates job instance; -> Queue::push(job); -> Queue::serializeJob(); -> Redis LPUSH/ZADD; -> worker BRPOP; -> unserialize; -> handle(); -> on exception: retry or failed()]
 #AI section_order: [Job Execution; Failure Handling; Configuration]
 #AI architectural_notes: Interface — not instantiated directly. Implementations must be serializable for Redis storage. Most jobs extend BaseJob for default tries/delay/failed behavior.
 

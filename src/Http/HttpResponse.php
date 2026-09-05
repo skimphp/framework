@@ -85,7 +85,7 @@ final class HttpResponse {
 #AI layer: http
 #AI badges: [value-object; http; immutable]
 #AI intro: `HttpResponse` is an immutable value object returned by all `client` HTTP methods. It wraps status code, body, and headers without throwing on non-2xx responses.
-#AI lifecycle: created by client::send() or fromStream(); immutable after construction
+#AI lifecycle: created by Client::send() or fromStream(); immutable after construction
 #AI test_seam: construct directly with known values
 #AI invariants: [Never throws on non-2xx status; json() returns empty array on invalid JSON]
 #AI core_behaviors: [Holds status, body, and headers as readonly properties; Provides ok() and json() convenience methods]
@@ -94,7 +94,7 @@ final class HttpResponse {
 #AI config_reads: []
 #AI non_goals: [Does not validate status codes; Does not retry requests; Does not follow redirects]
 #AI side_effects: []
-#AI flow: client::send() -> HttpResponse::fromStream() -> immutable value object
+#AI flow: Client::send() -> HttpResponse::fromStream() -> immutable value object
 #AI section_order: [Construction; Accessors]
 
 #AI:fromStream

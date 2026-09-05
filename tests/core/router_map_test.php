@@ -4,7 +4,7 @@ use Skim\Core\App;
 use Skim\Core\Router;
 use Skim\Core\RouteEntry;
 
-describe('router::map() — Slim/Laravel-style alias', function(): void {
+describe('Router::map() — Slim/Laravel-style alias', function(): void {
 
     test('dispatches a single-method string map() to the registered handler', function(): void {
         $handler = fn(): string => 'a';

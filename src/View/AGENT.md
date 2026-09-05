@@ -2,17 +2,17 @@
 
 ## What this module does
 Pure PHP template renderer with layout slots and fragment extraction.
-response::view() and response::fragment() are the primary entry points.
+Response::view() and Response::fragment() are the primary entry points.
 
 ## Critical behaviours
 - Always call e() on user-supplied data — skipping is XSS vulnerability
 - Fragment syntax: <!-- @fragment name --> ... <!-- @end --> in .php template file
-- response::smartView() auto-selects full vs fragment by HX-Target / datastar-target header
-- view::share() injects into ALL templates for this request — use for current_user, app_name
+- Response::smartView() auto-selects full vs fragment by HX-Target / datastar-target header
+- View::share() injects into ALL templates for this request — use for current_user, app_name
 - Layout order: child runs first (capturing slots), then layout renders and calls $this->slot()
 - Missing template → view_exception (never silently returns empty string)
 - Missing fragment → view_exception (check fragment name spelling exactly)
-- profiler::view() called after every render — appears in toolbar views tab
+- Profiler::view() called after every render — appears in toolbar views tab
 
 ## Template context ($this inside .php files)
 - $this->include('partial') — includes another template with merged data
@@ -22,5 +22,5 @@ response::view() and response::fragment() are the primary entry points.
 
 ## Common mistakes
 - Forgetting e() around output: <?= $user->name ?> → <?= e($user->name) ?>
-- Using view::render() directly in controllers instead of response::view()
+- Using View::render() directly in controllers instead of Response::view()
 - Setting view path after first render call (path is resolved lazily on first render)

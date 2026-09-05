@@ -196,12 +196,12 @@ describe('AnnotationParser::parse — #AI lines inside /** */ docblock', functio
          *
          * #AI contract:returns existing value or stores callback result on miss;
          * #AI input:key is the backend lookup key;ttl is seconds for stored miss result;
-         * #AI calls:[has,get,set,profiler::cache];
+         * #AI calls:[has,get,set,Profiler::cache];
          */
         DOC;
         $result = $parser->parse($doc);
         expect($result['contract'][0])->toContain('returns existing value or stores callback result')
-            ->and($result['calls'][0])->toBe(['has', 'get', 'set', 'profiler::cache'])
+            ->and($result['calls'][0])->toBe(['has', 'get', 'set', 'Profiler::cache'])
             ->and($result['input'])->not->toBeEmpty();
     });
 

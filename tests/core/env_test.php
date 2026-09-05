@@ -2,13 +2,13 @@
 
 use Skim\Core\Env;
 
-describe('env::get()', function(): void {
+describe('Env::get()', function(): void {
 
     test('returns default when key is not set', function(): void {
         expect(\Skim\Core\Env::get('UNDEFINED_KEY_XYZ', 'default'))->toBe('default');
     });
 
-    test('returns value after env::set()', function(): void {
+    test('returns value after Env::set()', function(): void {
         \Skim\Core\Env::set('TEST_KEY', 'hello');
         expect(\Skim\Core\Env::get('TEST_KEY'))->toBe('hello');
     });
@@ -35,7 +35,7 @@ describe('env::get()', function(): void {
 
 });
 
-describe('env::load()', function(): void {
+describe('Env::load()', function(): void {
 
     test('silently skips missing .env file', function(): void {
         \Skim\Core\Env::load('/nonexistent/path/.env');

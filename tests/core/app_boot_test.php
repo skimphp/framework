@@ -6,7 +6,7 @@ use Skim\Core\Response;
 
 describe('app boot lifecycle', function (): void {
 
-    test('app::instance() does not call boot() — completes quickly', function (): void {
+    test('App::instance() does not call boot() — completes quickly', function (): void {
         class_exists(\Skim\Core\App::class);
 
         $start   = hrtime(true);
@@ -17,14 +17,14 @@ describe('app boot lifecycle', function (): void {
             ->and($app)->toBeInstanceOf(\Skim\Core\App::class);
     });
 
-    test('app::instance() returns same singleton', function (): void {
+    test('App::instance() returns same singleton', function (): void {
         $first  = \Skim\Core\App::instance();
         $second = \Skim\Core\App::instance();
 
         expect($first)->toBe($second);
     });
 
-    test('app::testInstance() creates isolated instance', function (): void {
+    test('App::testInstance() creates isolated instance', function (): void {
         $singleton = \Skim\Core\App::instance();
         $isolated  = \Skim\Core\App::testInstance(['app.debug' => false]);
 

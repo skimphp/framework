@@ -12,10 +12,10 @@ namespace Skim\Db;
  * Example:
  *   class post extends merry_model {
  *       protected static string $table = 'posts';
- *       protected static array $belongs_to = ['author' => ['class' => user::class, 'fk' => 'user_id']];
+ *       protected static array $belongs_to = ['author' => ['class' => User::class, 'fk' => 'user_id']];
  *       protected static array $many_to_many = ['tags' => ['class' => tag::class, 'pivot' => 'post_tag', 'fk' => 'post_id', 'rfk' => 'tag_id']];
  *   }
- *   $posts = post::with(post::where(['status' => 'published'])->all(), 'author', 'tags');
+ *   $posts = Post::with(Post::where(['status' => 'published'])->all(), 'author', 'tags');
  *
  * Testing: Use test_db() SQLite :memory: with real relation tables.
  *
@@ -36,7 +36,7 @@ abstract class MerryModel extends \Skim\Db\Model {
      * Returns the same $models array with relations populated.
      *
      * Example:
-     *   $users = MerryModel::with(user::all(), 'posts', 'posts.comments');
+     *   $users = MerryModel::with(User::all(), 'posts', 'posts.comments');
      *   // 3 queries max regardless of user/post count
      *
      * @param array  $models    Collection of model instances to load relations onto.
@@ -294,7 +294,7 @@ abstract class MerryModel extends \Skim\Db\Model {
 #AI layer: db
 #AI badges: [orm; relations; eager-loading; pivot; n+1-safe]
 #AI intro: `MerryModel` extends `model` with relation declarations (hasMany, hasOne, belongsTo, manyToMany) and eager/lazy loading. Relations are declared as static arrays for IDE navigation and explicit contracts. Eager loading via `with()` uses IN queries to prevent N+1 automatically.
-#AI lifecycle: extends model lifecycle — relations cached per instance after first load
+#AI lifecycle: extends Model lifecycle — relations cached per instance after first load
 #AI fallback: none
 #AI test_seam: use test_db() SQLite :memory: with real relation tables
 #AI invariants: [relations declared as static arrays, not annotations; eager loading uses IN queries — max N+1 queries where N = relation depth; lazy loading fires on first load() call and caches; pivot operations use INSERT IGNORE for idempotent attach]
@@ -307,8 +307,8 @@ abstract class MerryModel extends \Skim\Db\Model {
 #AI config_reads: []
 #AI non_goals: [Does not support polymorphic relations; Does not support through-relations; Does not auto-delete related records on parent delete]
 #AI side_effects: [attach/detach/sync modify pivot tables; load() and with() execute SELECT queries]
-#AI flow: model::with(collection, 'relation') -> eagerLoad() -> IN query -> map results to models
-#AI lifecycle_steps: [model::with(models, ...relations); -> for each relation: eagerLoad(); -> determine relation type; -> IN query with all PKs; -> map results by FK; -> assign to model.relations; -> nested: recurse on loaded related models]
+#AI flow: Model::with(collection, 'relation') -> eagerLoad() -> IN query -> map results to models
+#AI lifecycle_steps: [Model::with(models, ...relations); -> for each relation: eagerLoad(); -> determine relation type; -> IN query with all PKs; -> map results by FK; -> assign to model.relations; -> nested: recurse on loaded related models]
 #AI section_order: [Eager Loading; Lazy Access; Pivot Operations]
 #AI architectural_notes: Static array declarations keep relations IDE-navigable and avoid reflection magic. Eager loading uses a single IN query per relation regardless of collection size.
 

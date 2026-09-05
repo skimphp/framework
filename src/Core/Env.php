@@ -11,7 +11,7 @@ namespace Skim\Core;
  * over .env values. Missing .env files are silently skipped.
  *
  * Example:
- *   $debug = env::get('APP_DEBUG', false);   // auto-loads .env on first call
+ *   $debug = Env::get('APP_DEBUG', false);   // auto-loads .env on first call
  *
  * Testing: Use set() to override keys, reset() to clear state between tests.
  *
@@ -31,7 +31,7 @@ final class Env {
      * read time in get(), not at load time.
      *
      * Example:
-     *   env::load(basePath('.env'));
+     *   Env::load(basePath('.env'));
      *
      * @param string $path Absolute path to the .env file.
      */
@@ -183,8 +183,8 @@ final class Env {
 #AI entry_points: [get; load; all]
 #AI non_goals: [Does not cast numeric strings to int or float; Does not validate .env syntax; Does not support nested or multiline values; Does not expand variable references like ${OTHER_VAR}]
 #AI side_effects: [load() populates internal cache only; set() mutates internal cache and sets loaded flag; reset() clears internal cache and loaded flag]
-#AI flow: env::get(key) -> auto-load if !$loaded -> $_SERVER ?? $_ENV ?? cache ?? default -> type cast; env::load(path) -> parse .env -> cache only
-#AI lifecycle_steps: [env::get(key); -> !$loaded check; -> auto-load basePath('.env'); -> idempotent check; -> is_file check; -> parse lines into cache; -> $_SERVER[$key] ?? $_ENV[$key] ?? cache[$key] ?? default -> type cast]
+#AI flow: Env::get(key) -> auto-load if !$loaded -> $_SERVER ?? $_ENV ?? cache ?? default -> type cast; Env::load(path) -> parse .env -> cache only
+#AI lifecycle_steps: [Env::get(key); -> !$loaded check; -> auto-load basePath('.env'); -> idempotent check; -> is_file check; -> parse lines into cache; -> $_SERVER[$key] ?? $_ENV[$key] ?? cache[$key] ?? default -> type cast]
 #AI section_order: [Read API; Write API; Testing Hooks]
 #AI architectural_notes: Own implementation avoids the vlucas/phpdotenv dependency. putenv() removed to avoid process-global mutations — internal cache only.
 
@@ -214,7 +214,7 @@ final class Env {
 #AI contract: Overrides a single environment variable in the internal cache only. Sets the loaded flag to prevent auto-load from overwriting test values. Does not touch $_ENV or putenv(). Intended for test isolation.
 #AI param_details: [{name: $key | type: string | required: true | desc: Environment variable name to override.}; {name: $value | type: mixed | required: true | desc: Value to store. Persists for the process lifetime until reset().}]
 #AI side_effects: [Mutates self::$cache; Sets self::$loaded to true]
-#AI notes: Override is visible to env::get() but not to getenv() or $_ENV readers.
+#AI notes: Override is visible to Env::get() but not to getenv() or $_ENV readers.
 
 #AI:all
 #AI group: Read API

@@ -32,7 +32,7 @@ branch + dirty flag), PHP/SAPI/uname, per-benchmark timings, and per-benchmark
 
 ## The Five Benchmarks
 
-### 1. `boot_isolation.php` — `app::instance()` overhead
+### 1. `boot_isolation.php` — `App::instance()` overhead
 
 Measures the time to create the application singleton (autoload + container
 construction, no request dispatched). **Target: < 1 ms on bare metal**;
@@ -42,9 +42,9 @@ construction, no request dispatched). **Target: < 1 ms on bare metal**;
 docker compose exec app php benchmarks/boot_isolation.php
 ```
 
-### 2. `cache_hit.php` — `env::get()` + `config::get()` per call
+### 2. `cache_hit.php` — `Env::get()` + `Config::get()` per call
 
-Runs 10,000 iterations of `env::get('APP_NAME')` and `config::get('app.name')`
+Runs 10,000 iterations of `Env::get('APP_NAME')` and `Config::get('app.name')`
 with the compiled cache. **Target: < 0.05 ms per call**. Pure OPcache memory
 hit once warm.
 
@@ -122,7 +122,7 @@ included `docker-compose.yml` already sets:
 
 - `PHP_CLI_SERVER_WORKERS=8` — parallel `php -S` workers (default is single-threaded)
 - `PHP_INI_FLAGS` — `output_buffering=4096` (lets `echo`+`header()` in routes work
-  with `response::send()`), `display_errors=stderr` (no warnings leak into the
+  with `Response::send()`), `display_errors=stderr` (no warnings leak into the
   response body), `implicit_flush=Off`, and `opcache.preload_user=www-data` so
   `storage/preload.php` warms the framework core into shared memory
 - `storage/preload.php` — preloads `src/core/`, `src/cache/`, `src/db/`, `src/view/`,
@@ -164,7 +164,7 @@ into a regression CI check.
 ```
 benchmarks/
 ├── use.md                   ← this file
-├── boot_isolation.php       ← app::instance() overhead
+├── boot_isolation.php       ← App::instance() overhead
 ├── cache_hit.php            ← env + config read latency
 ├── http_warm.php            ← 404 route HTTP throughput
 ├── http_hello.php           ← Hello World closure

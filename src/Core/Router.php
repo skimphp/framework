@@ -27,11 +27,11 @@ use function FastRoute\simpleDispatcher;
  *          ->name('user.show')
  *          ->middleware(auth_middleware::class);
  *   $router->map(['GET', 'HEAD'], '/ping', [health_controller::class, 'ping']);
- *   $router->group('/api/v1', function(router $r) {
+ *   $router->group('/api/v1', function(Router $r) {
  *       $r->get('/posts', [post_controller::class, 'index']);
  *   }, middleware: [auth_middleware::class]);
  *
- * Testing: use app::testInstance() which creates a fresh router.
+ * Testing: use App::testInstance() which creates a fresh router.
  *
  * #AI:class
  */
@@ -204,7 +204,7 @@ class Router {
      * callback receives the router instance for registering routes inside.
      *
      * Example:
-     *   $router->group('/api/v1', function(router $r) {
+     *   $router->group('/api/v1', function(Router $r) {
      *       $r->get('/users', [user_controller::class, 'index']);
      *   }, middleware: [auth_middleware::class]);
      *
@@ -261,7 +261,7 @@ class Router {
      * Replaces {name:regex} segments with values from $params.
      *
      * Example:
-     *   router::url('user.show', ['id' => 5]) // → /users/5
+     *   Router::url('user.show', ['id' => 5]) // → /users/5
      *
      * @param string $name   Registered route name.
      * @param array  $params Key-value pairs for route placeholders.
@@ -431,14 +431,14 @@ class Router {
 #AI badges: [router; fast-route; dispatch; named-routes; groups; cli]
 #AI intro: `Skim\Core\Router` wraps nikic/fast-route to compile all routes into a single regex on first dispatch. It supports F3-compatible @param token syntax (@id, @id:int, @slug:str, @any), route groups with additive prefix and middleware, named routes for reverse URL generation, and CLI command routing.
 #AI lifecycle: created during app boot, routes registered before freeze(), compiled on first dispatch
-#AI test_seam: app::testInstance() creates a fresh router; dispatch() can be called directly in tests
+#AI test_seam: App::testInstance() creates a fresh router; dispatch() can be called directly in tests
 #AI invariants: [routes compiled lazily on first dispatch(); add() invalidates compiled dispatcher; groups nest additively; mutation guard blocks changes after freeze(); @param tokens converted to fast-route regex]
 #AI warnings: [Route registration after freeze() throws LogicException; url() requires the app singleton to be available]
 #AI notes: Why fast-route over F3's router: compiles all routes into one regex, orders of magnitude faster than per-route string matching.
 #AI owns: routes, named routes, CLI commands, group stack, compiled dispatcher, mutation guard
 #AI entry_points: [get; post; put; patch; delete; any; map; add; group; command; dispatch; url]
 #AI config_reads: []
-#AI non_goals: [Does not handle middleware execution (delegated to pipeline); Does not resolve controller dependencies (delegated to app::callHandler)]
+#AI non_goals: [Does not handle middleware execution (delegated to pipeline); Does not resolve controller dependencies (delegated to App::callHandler)]
 #AI side_effects: [add() invalidates compiled dispatcher; group() pushes/pops group stack; compile() creates fast-route dispatcher]
 #AI flow: register routes -> compile() on first dispatch() -> fast-route regex match -> return handler/params/middleware
 #AI section_order: [Route Registration; HTTP Methods; Groups & Commands; Named Routes; Dispatch; Internals]

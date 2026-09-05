@@ -3,7 +3,7 @@
 namespace Skim\Core;
 
 /**
- * Fluent route registration result returned by router::add() and app::get() / post() / etc.
+ * Fluent route registration result returned by Router::add() and App::get() / post() / etc.
  *
  * Use when you need to configure a freshly registered route: assign a name for
  * reverse URL generation, or attach route-scoped middleware. Each method returns
@@ -15,7 +15,7 @@ namespace Skim\Core;
  *       ->name('user.show')
  *       ->middleware(auth_middleware::class, rate_limit_middleware::class);
  *
- * Testing: route_entry is a value object consumed by router::dispatch() — test
+ * Testing: route_entry is a value object consumed by Router::dispatch() — test
  * the chaining API separately or through route registration assertions.
  *
  * #AI:class
@@ -97,9 +97,9 @@ class RouteEntry {
 #AI role: route configuration builder
 #AI layer: core
 #AI badges: [fluent; route; middleware; named-route]
-#AI intro: `Skim\Core\RouteEntry` is the return value of every `router::add()` and `app::get()/post()/put()/patch()/delete()` call. It exposes two fluent configuration methods — `name()` and `middleware()` — and two read-only accessors consumed internally by the router during dispatch.
-#AI flow: router::add() -> new RouteEntry -> name() registers reverse URL -> middleware() appends to stack -> dispatch reads getName() and getMiddleware()
-#AI lifecycle: Created fresh per route registration. Passed around by reference (object, not copy) until consumed by router::dispatch().
+#AI intro: `Skim\Core\RouteEntry` is the return value of every `Router::add()` and `App::get()/post()/put()/patch()/delete()` call. It exposes two fluent configuration methods — `name()` and `middleware()` — and two read-only accessors consumed internally by the router during dispatch.
+#AI flow: Router::add() -> new RouteEntry -> name() registers reverse URL -> middleware() appends to stack -> dispatch reads getName() and getMiddleware()
+#AI lifecycle: Created fresh per route registration. Passed around by reference (object, not copy) until consumed by Router::dispatch().
 #AI test_seam: Instantiate with a router mock; assert name() calls registerName() on the router; assert getMiddleware() returns accumulated classes.
 #AI invariants: [name() overwrites duplicate names silently; middleware() is additive, never replacing; getName() returns null when name() was never called]
 #AI section_order: [Configuration; Accessors]

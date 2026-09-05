@@ -5,7 +5,7 @@ use Skim\Realtime\Sse;
 
 require_once __DIR__ . '/../Fixtures/Realtime/SilentSse.php';
 
-describe('datastar::signals()', function(): void {
+describe('Datastar::signals()', function(): void {
 
     test('emits datastar-patch-signals with json signals', function(): void {
         $ds = new \Skim\Realtime\Datastar(new \Tests\Fixtures\Realtime\SilentSse());
@@ -27,7 +27,7 @@ describe('datastar::signals()', function(): void {
 
 });
 
-describe('datastar::patch()', function(): void {
+describe('Datastar::patch()', function(): void {
 
     test('emits datastar-patch-elements with selector and mode', function(): void {
         $ds = new \Skim\Realtime\Datastar(new \Tests\Fixtures\Realtime\SilentSse());
@@ -72,7 +72,7 @@ describe('datastar::patch()', function(): void {
 
 });
 
-describe('datastar::remove()', function(): void {
+describe('Datastar::remove()', function(): void {
 
     test('emits datastar-patch-elements with mode remove', function(): void {
         $ds = new \Skim\Realtime\Datastar(new \Tests\Fixtures\Realtime\SilentSse());
@@ -89,7 +89,7 @@ describe('datastar::remove()', function(): void {
 
 });
 
-describe('datastar::run()', function(): void {
+describe('Datastar::run()', function(): void {
 
     test('appends a script element to body', function(): void {
         $ds = new \Skim\Realtime\Datastar(new \Tests\Fixtures\Realtime\SilentSse());

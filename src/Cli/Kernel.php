@@ -10,7 +10,7 @@ namespace Skim\Cli;
  * Merges built-in commands with user-defined ones from config/app.php.
  *
  * Example:
- *   $kernel = new kernel();
+ *   $kernel = new Kernel();
  *   $exit_code = $kernel->run(ArgvParser::parse($argv));
  *   exit($exit_code);
  *
@@ -344,7 +344,7 @@ final class Kernel {
 #AI config_reads: [app.commands; app.debug; APP_ENV]
 #AI non_goals: [Does not parse argv (see ArgvParser); Does not implement command logic (see command subclasses); Does not manage process signals]
 #AI side_effects: [prints to stdout/stderr; reads config for user commands and debug mode]
-#AI flow: kernel::run(input) -> check flags -> resolve command -> dispatch or showHelp -> return exit code
+#AI flow: Kernel::run(input) -> check flags -> resolve command -> dispatch or showHelp -> return exit code
 #AI lifecycle_steps: [run(ArgvParser); -> check --version/--quiet/--no-ansi; -> resolve(commandName); -> if found: dispatch(); -> if help/list: showHelp(); -> if unknown: errorBox + didYouMean; -> return exit code]
 #AI section_order: [Dispatch; Command Resolution; Help Display; Architecture]
 #AI architectural_notes: The kernel is the single entry point for all CLI operations. It keeps the command registry as a private constant and merges user commands from config at runtime.
@@ -398,4 +398,4 @@ final class Kernel {
 #AI group: Architecture
 #AI frequency: internal
 #AI signature: private function printHeader(): void
-#AI contract: Prints the SKIM header banner with logo and environment metadata via cli::header().
+#AI contract: Prints the SKIM header banner with logo and environment metadata via Cli::header().

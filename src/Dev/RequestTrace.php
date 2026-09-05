@@ -186,7 +186,7 @@ final class RequestTrace {
 #AI group: Control
 #AI frequency: low
 #AI signature: public static function enable(): void
-#AI contract: Enables trace collection. Called by app::run() when APP_DEBUG=true.
+#AI contract: Enables trace collection. Called by App::run() when APP_DEBUG=true.
 
 #AI:disable
 #AI group: Control

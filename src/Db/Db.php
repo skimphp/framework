@@ -12,14 +12,14 @@ use Skim\Dev\Profiler;
  * recorded in the profiler when APP_DEBUG=true.
  *
  * Example:
- *   $users = db::all('SELECT * FROM users %where% %limit%', [
+ *   $users = Db::all('SELECT * FROM users %where% %limit%', [
  *       'where' => ['status = :status'], ':status' => 'active', 'limit' => 20,
  *   ]);
- *   db::transaction(fn() => db::query('UPDATE accounts %set% WHERE id = :id', [
+ *   Db::transaction(fn() => Db::query('UPDATE accounts %set% WHERE id = :id', [
  *       'set' => ['balance' => 100], ':id' => 1,
  *   ]));
  *
- * Testing: Use test_db() for SQLite :memory:, db::reset() to clear connections.
+ * Testing: Use test_db() for SQLite :memory:, Db::reset() to clear connections.
  *
  * #AI:class
  */
@@ -149,7 +149,7 @@ class Db {
 
     /**
      * Executes a query_gen SQL template and returns rows or affected count. #AI:query
-     *   $rows = db::query('SELECT * FROM users %where% %limit%', [
+     *   $rows = Db::query('SELECT * FROM users %where% %limit%', [
      *       'where' => ['status = :s'], ':s' => 'active', 'limit' => 10,
      *   ]);
      *
@@ -257,9 +257,9 @@ class Db {
      * The original exception is rethrown after rollback, never swallowed.
      *
      * Example:
-     *   db::transaction(function() {
-     *       db::query('UPDATE accounts %set% WHERE id = :id', ['set' => ['balance' => 100], ':id' => 1]);
-     *       db::query('UPDATE accounts %set% WHERE id = :id', ['set' => ['balance' => 200], ':id' => 2]);
+     *   Db::transaction(function() {
+     *       Db::query('UPDATE accounts %set% WHERE id = :id', ['set' => ['balance' => 100], ':id' => 1]);
+     *       Db::query('UPDATE accounts %set% WHERE id = :id', ['set' => ['balance' => 200], ':id' => 2]);
      *   });
      *
      * @param callable $fn         Code to execute inside the transaction.
@@ -286,11 +286,11 @@ class Db {
     /**
      * Returns a null_marker sentinel for forcing SET col = NULL in %set%. #AI:null
      *
-     * Plain null in %set% skips the column; db::null() sets it to NULL.
+     * Plain null in %set% skips the column; Db::null() sets it to NULL.
      *
      * Example:
-     *   db::query('UPDATE users %set% WHERE id = :id', [
-     *       'set' => ['avatar' => db::null()], ':id' => 5,
+     *   Db::query('UPDATE users %set% WHERE id = :id', [
+     *       'set' => ['avatar' => Db::null()], ':id' => 5,
      *   ]);
      */
     public static function null(): \Skim\Db\NullMarker {
@@ -319,9 +319,9 @@ class Db {
 #AI entry_points: [query; val; row; all; transaction; null; pdo; connect; reset]
 #AI config_reads: [db.default; db.*.driver; db.*.host; db.*.port; db.*.database; db.*.charset; db.*.user; db.*.password]
 #AI non_goals: [Does not provide an ORM — use model for active record; Does not handle migrations — use migrator; QueryBuilder is internal, not public API]
-#AI side_effects: [profiler::db records every query; connect() opens PDO connections; reset() closes all pooled connections]
-#AI flow: db::method() -> QueryBuilder::build() -> PDO prepare/execute -> profiler::db()
-#AI lifecycle_steps: [db::query/val/row/all(); -> QueryBuilder::build(sql, params); -> pdo(connection) auto-connects if needed; -> PDO prepare + execute; -> profiler::db() records timing; -> return rows/scalar/count]
+#AI side_effects: [Profiler::db records every query; connect() opens PDO connections; reset() closes all pooled connections]
+#AI flow: Db::method() -> QueryBuilder::build() -> PDO prepare/execute -> Profiler::db()
+#AI lifecycle_steps: [Db::query/val/row/all(); -> QueryBuilder::build(sql, params); -> pdo(connection) auto-connects if needed; -> PDO prepare + execute; -> Profiler::db() records timing; -> return rows/scalar/count]
 #AI section_order: [Connection Management; Query Execution; Transactions; Utilities; Testing Hooks]
 #AI architectural_notes: The facade keeps raw SQL as the primary interface. QueryBuilder handles %placeholder% substitution internally — it is not part of the public API.
 

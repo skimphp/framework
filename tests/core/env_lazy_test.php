@@ -4,13 +4,13 @@ use Skim\Core\Env;
 
 describe('env lazy loading', function (): void {
 
-    test('env::get() triggers lazy load on first call', function (): void {
+    test('Env::get() triggers lazy load on first call', function (): void {
         \Skim\Core\Env::reset();
         $value = \Skim\Core\Env::get('APP_NAME', 'fallback_value');
         expect($value)->not->toBe('fallback_value');
     });
 
-    test('env::get() second call is faster than first', function (): void {
+    test('Env::get() second call is faster than first', function (): void {
         \Skim\Core\Env::reset();
 
         $start = microtime(true);
@@ -25,7 +25,7 @@ describe('env lazy loading', function (): void {
             ->and($second)->toBeLessThan($first + 0.001);
     });
 
-    test('env::load() does not call putenv()', function (): void {
+    test('Env::load() does not call putenv()', function (): void {
         \Skim\Core\Env::reset();
         $tmp = sys_get_temp_dir() . '/skim_env_test_' . uniqid() . '.env';
         file_put_contents($tmp, "TEST_PUTENV_CHECK=putenv_value\n");
@@ -68,7 +68,7 @@ describe('env lazy loading', function (): void {
         unlink($tmp);
     });
 
-    test('env::get() with compiled cache does not read .env from disk', function (): void {
+    test('Env::get() with compiled cache does not read .env from disk', function (): void {
         \Skim\Core\Env::reset();
 
         $cachePath = storagePath('config_cache/env.php');

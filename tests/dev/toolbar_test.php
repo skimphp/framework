@@ -45,7 +45,7 @@ function makeRequest(): \Skim\Core\Request {
     );
 }
 
-describe('toolbar::render() — debug off', function(): void {
+describe('Toolbar::render() — debug off', function(): void {
 
     test('returns empty string when app.debug=false', function(): void {
         \Skim\Core\Config::set('app.debug', false);
@@ -55,7 +55,7 @@ describe('toolbar::render() — debug off', function(): void {
 
 });
 
-describe('toolbar::render() — debug on', function(): void {
+describe('Toolbar::render() — debug on', function(): void {
 
     test('wraps output in #skim-tb root element', function(): void {
         $html = \Skim\Dev\Toolbar::render(makeRequest());

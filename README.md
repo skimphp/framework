@@ -138,7 +138,7 @@ $app->router->get('/users/@id', [user_controller::class, 'show'])->name('user.sh
 route('user.show', ['id' => 5]); // → /users/5
 
 // Groups with middleware
-$app->router->group('/api', function(router $r) {
+$app->router->group('/api', function(Router $r) {
     $r->get('/users', [api\user_controller::class, 'index']);
 }, middleware: [auth_middleware::class]);
 ```
@@ -151,18 +151,18 @@ $app->router->group('/api', function(router $r) {
 
 ```php
 // %placeholders% are removed silently if their keys are absent — no string concatenation needed
-db::all('SELECT * FROM users %where% %limit%', [
+Db::all('SELECT * FROM users %where% %limit%', [
     'where'   => ['status = :status'],
     ':status' => 'active',
     'limit'   => 20,
 ]);
 
-db::row('SELECT * FROM users WHERE id = :id', [':id' => 5]);
-db::val('SELECT COUNT(*) FROM users');
+Db::row('SELECT * FROM users WHERE id = :id', [':id' => 5]);
+Db::val('SELECT COUNT(*) FROM users');
 
-db::transaction(function() {
-    db::query('UPDATE accounts %set% WHERE id = :id', ['set' => ['balance' => 100], ':id' => 1]);
-    db::query('UPDATE accounts %set% WHERE id = :id', ['set' => ['balance' => 200], ':id' => 2]);
+Db::transaction(function() {
+    Db::query('UPDATE accounts %set% WHERE id = :id', ['set' => ['balance' => 100], ':id' => 1]);
+    Db::query('UPDATE accounts %set% WHERE id = :id', ['set' => ['balance' => 200], ':id' => 2]);
 });
 ```
 
@@ -175,10 +175,10 @@ class User extends \Skim\Db\Model {
     protected static array  $casts   = ['age' => 'int', 'is_active' => 'bool'];
 }
 
-user::find(1);                            // model|null
-user::findOrFail(1);                    // model|not_found_exception
-user::where(['status' => 'active'])->limit(10)->all();
-user::create(['name' => 'John', 'email' => 'j@j.com']);
+User::find(1);                            // model|null
+User::findOrFail(1);                    // model|not_found_exception
+User::where(['status' => 'active'])->limit(10)->all();
+User::create(['name' => 'John', 'email' => 'j@j.com']);
 
 $user->name = 'Jane';
 $user->save();    // INSERT if no id, UPDATE only changed columns if id set
@@ -197,7 +197,7 @@ $user->delete();
 ];
 
 // Use the connection name on any query
-db::all('SELECT * FROM reports', [], connection: 'analytics');
+Db::all('SELECT * FROM reports', [], connection: 'analytics');
 ```
 
 The `analytics` connection ships as an example of a read-heavy reporting database
@@ -209,12 +209,12 @@ block the main application.
 ## Cache
 
 ```php
-cache::set('user:1', $user, 3600);
-cache::get('user:1');
-cache::remember('user:1', 3600, fn() => user::find(1));   // get or compute+cache
-cache::delete('user:1');
-cache::flush('user:');         // remove all keys starting with 'user:'
-cache::tags(['users'])->flush();  // Redis only — tag-scoped invalidation
+Cache::set('user:1', $user, 3600);
+Cache::get('user:1');
+Cache::remember('user:1', 3600, fn() => User::find(1));   // get or compute+cache
+Cache::delete('user:1');
+Cache::flush('user:');         // remove all keys starting with 'user:'
+Cache::tags(['users'])->flush();  // Redis only — tag-scoped invalidation
 ```
 
 Drivers: `redis` (primary), `file` (fallback), `array` (tests).  
@@ -245,16 +245,16 @@ return $res->smartView('users/show', ['user' => $user], $req);        // auto fu
 ## Middleware
 
 ```php
-class auth_middleware implements middleware {
-    public function handle(request $req, response $res, callable $next): mixed {
-        if (!session::has('user_id')) {
+class auth_middleware implements Middleware {
+    public function handle(Request $req, Response $res, callable $next): mixed {
+        if (!Session::has('user_id')) {
             return $res->status(401)->json(['error' => 'Unauthorized']);
         }
         return $next($req, $res);
     }
 }
 
-$app->use(cors::class);                           // global — every request
+$app->use(Cors::class);                           // global — every request
 $route->middleware([auth_middleware::class]);      // per-route
 ```
 
@@ -319,7 +319,7 @@ If multiple extracted classes share the same class name, MDX filenames include t
 ### Write your own command
 
 ```php
-class greet_command extends command {
+class greet_command extends Command {
     public function handle(): int {
         $name = $this->arg(0, 'World');
         $this->info("Hello {$name}!");
@@ -347,11 +347,11 @@ Tests use SQLite `:memory:` for DB and `array` driver for cache — no real serv
 
 ```php
 // Request testing without HTTP
-$req = request::make('POST', '/users', headers: ['Content-Type' => 'application/json'], raw_body: '{"name":"John"}');
-$res = new response();
+$req = Request::make('POST', '/users', headers: ['Content-Type' => 'application/json'], raw_body: '{"name":"John"}');
+$res = new Response();
 
 // Fake HTTP client
-$http = client::fake(['GET https://api.example.com/users' => ['status' => 200, 'body' => []]]);
+$http = Client::fake(['GET https://api.example.com/users' => ['status' => 200, 'body' => []]]);
 $resp = $http->get('https://api.example.com/users');
 $http->assertSent('GET', 'users');
 ```
@@ -450,7 +450,7 @@ chmod +x .git/hooks/pre-push
 
 - **Conventional PHP casing** — PascalCase classes, camelCase methods, UPPER_SNAKE constants. `HomeController`, not `home_controller`.
 - **No template engines** — raw PHP with opcache is ~3x faster than Twig/Blade; real stack traces.
-- **Static facades** (`db::`, `cache::`, `log::`) — each has `reset()` and `setDriver()` for test isolation.
+- **Static facades** (`Db::`, `Cache::`, `Log::`) — each has `reset()` and `setDriver()` for test isolation.
 - **Lazy connections** — DB and Redis are not opened until the first actual query.
 - **Fail-open cache** — Redis failure falls back to file driver silently; app keeps running.
 - **PHP arrays for config** — no YAML/INI parser, IDE autocomplete works natively.

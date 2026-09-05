@@ -10,8 +10,8 @@ namespace Skim\Assets;
  * for cache-busted hashed filenames.
  *
  * Example:
- *   <?= assets::js('js/app.js') ?>
- *   <?= assets::css('css/app.css') ?>
+ *   <?= Assets::js('js/app.js') ?>
+ *   <?= Assets::css('css/app.css') ?>
  *
  * Testing: Use setManifest() to inject a fake manifest, reset() in tearDown().
  *
@@ -150,8 +150,8 @@ final class Assets {
 #AI config_reads: [app.debug; assets.build_path]
 #AI non_goals: [Does not run Vite build; Does not handle image/font assets; Does not support multiple Vite projects]
 #AI side_effects: [Reads manifest.json from disk on first production call]
-#AI flow: assets::url(path) -> debug? viteUrl/path : manifest()[path] -> buildPath/file
-#AI lifecycle_steps: [assets::url/js/css(); -> debug check; -> dev: viteUrl + path; -> prod: manifest() loads from disk; -> manifest[path].file; -> buildPath + hashed filename]
+#AI flow: Assets::url(path) -> debug? viteUrl/path : manifest()[path] -> buildPath/file
+#AI lifecycle_steps: [Assets::url/js/css(); -> debug check; -> dev: viteUrl + path; -> prod: manifest() loads from disk; -> manifest[path].file; -> buildPath + hashed filename]
 #AI section_order: [Asset Resolution; Tag Generation; Testing Hooks]
 #AI architectural_notes: Thin integration layer — all intelligence is in Vite's manifest format. The facade exists to provide a single API for templates.
 

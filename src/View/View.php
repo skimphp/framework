@@ -13,8 +13,8 @@ use Skim\Worker\Resettable;
  * Fragment extraction uses HTML comment markers (<!-- @fragment name -->...<!-- @end -->).
  *
  * Example:
- *   $html = view::render('users/show', ['user' => $user]);
- *   $fragment = view::render('users/show', ['user' => $user], 'user-card');
+ *   $html = View::render('users/show', ['user' => $user]);
+ *   $fragment = View::render('users/show', ['user' => $user], 'user-card');
  *
  * Testing: Use setPath() to point to test fixtures, reset() in tearDown().
  *
@@ -40,8 +40,8 @@ final class View implements \Skim\Worker\Resettable {
      * and only the named <!-- @fragment name -->...<!-- @end --> block is returned.
      *
      * Example:
-     *   view::render('users/show', ['user' => $user]);
-     *   view::render('users/show', ['user' => $user], 'user-card');
+     *   View::render('users/show', ['user' => $user]);
+     *   View::render('users/show', ['user' => $user], 'user-card');
      *
      * @param string      $template Template path relative to views root.
      * @param array       $data     Data merged with shared data for this render.
@@ -138,8 +138,8 @@ final class View implements \Skim\Worker\Resettable {
      * scope with no parent data leakage.
      *
      * Example:
-     *   view::component('alert', ['message' => 'test']);
-     *   view::component('alert', new AlertProps(message: 'test'));
+     *   View::component('alert', ['message' => 'test']);
+     *   View::component('alert', new AlertProps(message: 'test'));
      *
      * @param string $name Component name (maps to views/components/{$name}.php).
      * @param array|object $props Props array or *_props readonly object.
@@ -190,9 +190,9 @@ final class View implements \Skim\Worker\Resettable {
 #AI entry_points: [render; renderFragment; share; setPath; setDefaultLayout; reset; viewsPath; component]
 #AI config_reads: []
 #AI non_goals: [Does not compile or cache templates; Does not escape output; Does not handle asset bundling]
-#AI side_effects: [Records render timing in profiler::view(); share() mutates static sharedData]
-#AI flow: view::render() -> template::renderFile() -> layout system -> fragment extraction? -> profiler::view()
-#AI lifecycle_steps: [view::render($template, $data, $fragment); -> resolve viewsPath; -> new template(path, merged_data, defaultLayout); -> template::renderFile(); -> fragment? -> extractFragment(); -> profiler::view(); -> return HTML]
+#AI side_effects: [Records render timing in Profiler::view(); share() mutates static sharedData]
+#AI flow: View::render() -> Template::renderFile() -> layout system -> fragment extraction? -> Profiler::view()
+#AI lifecycle_steps: [View::render($template, $data, $fragment); -> resolve viewsPath; -> new Template(path, merged_data, defaultLayout); -> Template::renderFile(); -> fragment? -> extractFragment(); -> Profiler::view(); -> return HTML]
 #AI section_order: [Rendering API; Configuration; Testing Hooks; Architecture]
 #AI architectural_notes: Uses native PHP templates for real stack traces and opcache performance. Fragment extraction is a post-render state-machine pass — the full template always renders first.
 
@@ -204,7 +204,7 @@ final class View implements \Skim\Worker\Resettable {
 #AI param_details: [{name: $template | type: string | required: true | desc: Template path relative to views root.}; {name: $data | type: array | required: false | desc: Data merged with shared data for this render.}; {name: $fragment | type: ?string | required: false | desc: Named fragment to extract, or null for full page.}]
 #AI return_detail: {type: string | desc: Rendered HTML or extracted fragment.}
 #AI throws_details: [{type: ViewException | desc: If template file or fragment name is not found.}]
-#AI side_effects: [Records render timing in profiler::view()]
+#AI side_effects: [Records render timing in Profiler::view()]
 
 #AI:renderFragment
 #AI group: Rendering API

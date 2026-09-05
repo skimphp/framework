@@ -9,16 +9,16 @@ use Skim\Ext\ExtensionManager;
 /**
  * Singleton container and HTTP kernel: scoped key-value store, DI container, and middleware pipeline.
  *
- * Use as the application entry point (`app::instance()`) or test harness (`app::testInstance()`).
+ * Use as the application entry point (`App::instance()`) or test harness (`App::testInstance()`).
  * Three scopes isolate data: `sys.*` (framework, immutable after boot), `app.*` (config, frozen after boot),
  * `user.*` (per-request, mutable). The DI container resolves bindings as singletons with auto-wiring fallback.
  *
  * Example:
- *   $app = app::instance();
+ *   $app = App::instance();
  *   $app->router->get('/', [HomeController::class, 'index']);
  *   $app->run();
  *
- * Testing: Use `app::testInstance(['db.driver' => 'memory'])` for isolated containers without env/config loading.
+ * Testing: Use `App::testInstance(['db.driver' => 'memory'])` for isolated containers without env/config loading.
  *
  * #AI:class
  */
@@ -137,12 +137,12 @@ class App {
      * Returns a fresh isolated container for tests (testing only). #AI:testInstance
      *
      * Skips .env and config/*.php loading. Inject config directly via the `$config`
-     * parameter. Never shares state with `app::instance()`.
+     * parameter. Never shares state with `App::instance()`.
      *
      * Example:
-     *   $app = app::testInstance(['db.driver' => 'memory', 'app.debug' => true]);
+     *   $app = App::testInstance(['db.driver' => 'memory', 'app.debug' => true]);
      *   $app->router->get('/test', fn() => 'ok');
-     *   $res = $app->dispatch(request::make('GET', '/test'), new response());
+     *   $res = $app->dispatch(Request::make('GET', '/test'), new Response());
      *
      * @param array $config Key-value pairs injected into app scope (e.g. `['db.driver' => 'memory']`).
      * @return static A fresh, unbooted container with router and pipeline ready.
@@ -278,7 +278,7 @@ class App {
     /**
      * Reads a value from the scope matching the key prefix. #AI:get
      *
-     * Falls back to `config::get("app.{$k}")` for `app.*` keys not set directly.
+     * Falls back to `Config::get("app.{$k}")` for `app.*` keys not set directly.
      * Never throws — returns `$default` for missing keys.
      *
      * @param string $key     Scoped key to read.
@@ -748,7 +748,7 @@ class App {
      * Example:
      *   // public/index.php
      *   require __DIR__ . '/../vendor/autoload.php';
-     *   app::instance()->run();
+     *   App::instance()->run();
      */
     public function run(): void {
         $this->ensureBooted();
@@ -1053,14 +1053,14 @@ class App {
 #AI core_behaviors: [Three scopes (sys, app, user) isolate framework internals from config and per-request state; DI resolution caches singletons and falls back to reflection auto-wiring; Middleware runs in registration order before route handlers; Extensions register services with priority-based conflict resolution]
 #AI warnings: [`run()` installs a global exception handler and is not re-entrant; `freeze()` is irreversible for the instance lifetime; sys.* writes throw LogicException in production after first set]
 #AI notes: The constructor is private — always use `instance()` or `testInstance()`. Cloning resets resolved singletons and user scope but preserves bindings and sys/app data.
-#AI scope_items: [{name: sys | mutable: false | desc: Framework internals (router, extensions). Write-once in production, mutable in debug.}; {name: app | mutable: true | desc: Config values from config/*.php or testInstance(). Falls back to config::get on read.}; {name: user | mutable: true | desc: Per-request mutable state. Cleared on clone.}]
+#AI scope_items: [{name: sys | mutable: false | desc: Framework internals (router, extensions). Write-once in production, mutable in debug.}; {name: app | mutable: true | desc: Config values from config/*.php or testInstance(). Falls back to Config::get on read.}; {name: user | mutable: true | desc: Per-request mutable state. Cleared on clone.}]
 #AI owns: singleton instance, DI bindings, resolved singletons, scoped store, middleware stack, router, pipeline, extension context
 #AI entry_points: [instance; testInstance; run; dispatch]
 #AI config_reads: [app.debug; app.view.default_layout; app.*]
 #AI non_goals: [Does not handle HTTP transport (delegates to request/response); Does not manage database connections directly; Does not serialize or persist state across requests]
 #AI side_effects: [run() installs global exception handler and sends HTTP response; freeze() permanently locks mutation; set() may throw on sys.* overwrite in production; boot() initialises router, pipeline, and extensions once]
-#AI flow: app::instance() -> run() -> ensureBooted() -> boot() [router -> extensions] -> profiler/RequestTrace -> bootExtensions() -> freeze() -> dispatch() -> pipeline -> callHandler() -> response
-#AI lifecycle_steps: [app::instance(); -> run(); -> ensureBooted(); -> boot() [view layout + router + pipeline + extensionManager::discover + register]; -> profiler/RequestTrace enable (if debug); -> bootExtensions(); -> freeze(); -> request::fromGlobals(); -> dispatch(); -> pipeline::run(); -> callHandler(); -> response::send()]
+#AI flow: App::instance() -> run() -> ensureBooted() -> boot() [router -> extensions] -> profiler/RequestTrace -> bootExtensions() -> freeze() -> dispatch() -> pipeline -> callHandler() -> response
+#AI lifecycle_steps: [App::instance(); -> run(); -> ensureBooted(); -> boot() [view layout + router + pipeline + extensionManager::discover + register]; -> profiler/RequestTrace enable (if debug); -> bootExtensions(); -> freeze(); -> Request::fromGlobals(); -> dispatch(); -> Pipeline::run(); -> callHandler(); -> Response::send()]
 #AI section_order: [Lifecycle; Scoped Store; DI Container; Middleware; Request Dispatch; Extensions; Testing]
 #AI architectural_notes: The app class is intentionally a god object combining container, kernel, and store. This keeps the framework surface area small — one class to learn, one singleton to pass around. Extensions interact with app exclusively through `withExtensionContext()` during boot, then the app freezes to prevent further mutation.
 
@@ -1076,7 +1076,7 @@ class App {
 #AI group: Testing
 #AI frequency: high
 #AI signature: public static function testInstance(array $config = []): static
-#AI contract: Creates a fresh isolated container that skips .env and config/*.php loading. Config values are injected directly via the $config array. The returned instance has its own router, pipeline, and mutation guard but shares no state with app::instance().
+#AI contract: Creates a fresh isolated container that skips .env and config/*.php loading. Config values are injected directly via the $config array. The returned instance has its own router, pipeline, and mutation guard but shares no state with App::instance().
 #AI param_details: [{name: $config | type: array | required: false | desc: Key-value pairs injected into app scope. Keys use dot notation without the app. prefix (e.g. 'db.driver' => 'memory').}]
 #AI return_detail: {type: static | desc: A fresh, unbooted container with router and pipeline ready.}
 #AI notes: Safe to call multiple times per test. Each call returns an independent instance.
@@ -1107,14 +1107,14 @@ class App {
 #AI group: Scoped Store
 #AI frequency: high
 #AI signature: public function get(string $key, mixed $default = null): mixed
-#AI contract: Reads from the scope matching the key prefix. For app.* keys, falls back to config::get("app.{$k}") when the key is not set directly. Never throws — returns $default for missing keys.
+#AI contract: Reads from the scope matching the key prefix. For app.* keys, falls back to Config::get("app.{$k}") when the key is not set directly. Never throws — returns $default for missing keys.
 #AI param_details: [{name: $key | type: string | required: true | desc: Scoped key to read. Prefix determines source scope.}; {name: $default | type: mixed | required: false | desc: Returned when the key is absent from the target scope.}]
 #AI return_detail: {type: mixed | desc: The stored value, config fallback for app.*, or $default.}
 
 #AI:bind
 #AI group: DI Container
 #AI frequency: high
-#AI signature: public function bind(string $abstract, callable|string $factory, ?int $priority = null, ?lifetime $lifetime = null): void
+#AI signature: public function bind(string $abstract, callable|string $factory, ?int $priority = null, ?Lifetime $lifetime = null): void
 #AI contract: Registers a factory callable for DI resolution. Clears the resolved singleton cache for the abstract so the new factory takes effect on the next make() call. Higher-priority bindings replace lower ones; calls with lower priority than the current binding are silently ignored. When app.strict_di is true, an explicit lifetime is mandatory.
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind. Typically a fully-qualified class name.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving the app instance, or a class name string for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins). Null uses the current extension context priority (default 100).}; {name: $lifetime | type: ?lifetime | required: false | desc: Binding lifetime. Null defaults to singleton; null is rejected when strict_di is enabled.}]
 #AI throws_details: [{type: \LogicException | desc: If called after freeze().}; {type: \LogicException | desc: If strict_di is enabled and no lifetime is provided.}]
@@ -1210,17 +1210,17 @@ class App {
 #AI:dispatch
 #AI group: Request Dispatch
 #AI frequency: high
-#AI signature: public function dispatch(request $req, response $res, bool $skipMiddleware = false): response
+#AI signature: public function dispatch(Request $req, Response $res, bool $skipMiddleware = false): response
 #AI contract: Dispatches a request through the router and middleware pipeline without sending headers or body. Calls ensureBooted() first to guarantee the framework is initialised. Returns 404 for unmatched routes, 405 for method mismatches. Temporarily sets this instance as the global singleton during dispatch and restores the previous instance in a finally block.
 #AI param_details: [{name: $req | type: request | required: true | desc: The request to dispatch.}; {name: $res | type: response | required: true | desc: The response object to populate.}; {name: $skipMiddleware | type: bool | required: false | desc: When true, bypasses all global and route middleware. Useful for unit tests.}]
 #AI return_detail: {type: response | desc: The populated response. Status 404 if no route matches, 405 if path matches but method does not.}
 #AI side_effects: [Temporarily replaces self::$instance during dispatch]
-#AI examples: [{label: Test dispatch | code: $req = request::make('GET', '/users/42');\n$res = $app->dispatch($req, new response(), skipMiddleware: true);\nassert($res->getStatus() === 200);}]
+#AI examples: [{label: Test dispatch | code: $req = Request::make('GET', '/users/42');\n$res = $app->dispatch($req, new Response(), skipMiddleware: true);\nassert($res->getStatus() === 200);}]
 
 #AI:callHandler
 #AI group: Request Dispatch
 #AI frequency: internal
-#AI signature: private function callHandler(array|callable $handler, request $req, response $res, array $params): mixed
+#AI signature: private function callHandler(array|callable $handler, Request $req, Response $res, array $params): mixed
 #AI contract: Resolves controller handler arguments via DI and route params. For closures, passes request/response and route params directly. For class-based handlers, resolves the controller via make() and injects method dependencies by type-hint, matching route params by name.
 #AI param_details: [{name: $handler | type: array|callable | required: true | desc: Route handler — either a closure or [class, method] array.}; {name: $req | type: request | required: true | desc: Current request.}; {name: $res | type: response | required: true | desc: Current response.}; {name: $params | type: array | required: true | desc: Route parameters matched by the router.}]
 
@@ -1257,7 +1257,7 @@ class App {
 #AI:applyBinding
 #AI group: DI Container
 #AI frequency: internal
-#AI signature: private function applyBinding(string $abstract, callable|string $factory, ?int $priority, lifetime $lifetime): void
+#AI signature: private function applyBinding(string $abstract, callable|string $factory, ?int $priority, Lifetime $lifetime): void
 #AI contract: Performs the actual binding registration for a given lifetime. Shared by bind(), bindRequest() and bindTransient(). Keeps the strict-DI check out of the request/transient helpers so they are never blocked by app.strict_di.
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving app, or class name for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins). Null uses current extension priority.}; {name: $lifetime | type: lifetime | required: true | desc: Resolved lifetime to apply.}]
 #AI throws_details: [{type: \LogicException | desc: If called after freeze().}]
@@ -1296,7 +1296,7 @@ class App {
 #AI:emit
 #AI group: Request Dispatch
 #AI frequency: internal
-#AI signature: public function emit(mixed $result, response $fallback): void
+#AI signature: public function emit(mixed $result, Response $fallback): void
 #AI contract: Emits a controller result through the response object. Normalises mixed return values into a proper HTTP response and sends it.
 #AI param_details: [{name: $result | type: mixed | required: true | desc: Controller return value.}; {name: $fallback | type: response | required: true | desc: Response object used as fallback for non-response types.}]
 #AI side_effects: [Sends HTTP response]

@@ -114,7 +114,7 @@ class Datastar implements \Skim\Realtime\Contract\ElementPatcher, \Skim\Realtime
 #AI layer: realtime
 #AI badges: [datastar; v1; realtime; dom-patching; signals]
 #AI intro: `datastar` is the official Datastar v1 driver for SKIM. It emits `datastar-patch-elements` and `datastar-patch-signals` events over an injected SSE transport, enabling server-driven UI updates without hand-written JavaScript state.
-#AI lifecycle: created per-stream by response::stream() or container resolution; injected with an sse transport
+#AI lifecycle: created per-stream by Response::stream() or container resolution; injected with an sse transport
 #AI test_seam: capture output with ob_start()/ob_get_clean() in tests
 #AI invariants: [Implements ElementPatcher, SignalPatcher, ScriptRunner; Uses injected sse transport; Emits v1 event names only]
 #AI core_behaviors: [patch() sends datastar-patch-elements; remove() sends datastar-patch-elements with mode remove; signals() sends datastar-patch-signals; run() appends a script element to body; viewFragment() renders and patches in one call]
@@ -123,7 +123,7 @@ class Datastar implements \Skim\Realtime\Contract\ElementPatcher, \Skim\Realtime
 #AI config_reads: []
 #AI non_goals: [Does not manage Datastar client setup; Does not handle WebSocket directly; Does not validate HTML fragments]
 #AI side_effects: [Writes to output buffer via injected sse transport]
-#AI flow: controller -> res->stream(fn($ds) => $ds->patch(...)) -> sse::send() -> echo SSE format -> flush()
+#AI flow: controller -> res->stream(fn($ds) => $ds->patch(...)) -> Sse::send() -> echo SSE format -> flush()
 #AI section_order: [DOM Operations; Signal Operations; Script Execution; View Integration]
 #AI warnings: [run() executes arbitrary JavaScript in the browser — use sparingly and never with user-supplied input]
 

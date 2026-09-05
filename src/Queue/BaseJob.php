@@ -5,7 +5,7 @@ namespace Skim\Queue;
 /**
  * Convenience base class for queue jobs with sensible defaults for tries, delay, and failure handling.
  *
- * Use when creating new job classes that don't need custom retry or delay logic.
+ * Use when creating new Job classes that don't need custom retry or delay logic.
  * Provides default implementations: 3 retries, 0s delay, and error_log on failure.
  * Override only the methods you need — most jobs just implement handle().
  *
@@ -13,7 +13,7 @@ namespace Skim\Queue;
  *   class send_email_job extends base_job {
  *       public function __construct(private readonly int $user_id) {}
  *       public function handle(): void {
- *           $user = user::findOrFail($this->user_id);
+ *           $user = User::findOrFail($this->user_id);
  *           mailer::send($user->email, 'welcome');
  *       }
  *   }

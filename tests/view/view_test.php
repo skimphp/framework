@@ -8,7 +8,7 @@ beforeEach(function(): void {
     \Skim\View\View::setPath(dirname(__DIR__) . '/Fixtures/Views');
 });
 
-describe('view::render() — full template', function(): void {
+describe('View::render() — full template', function(): void {
 
     test('renders full template with data variables', function(): void {
         $html = \Skim\View\View::render('simple', ['name' => 'John']);
@@ -29,7 +29,7 @@ describe('view::render() — full template', function(): void {
 
 });
 
-describe('view::render() — fragment extraction', function(): void {
+describe('View::render() — fragment extraction', function(): void {
 
     test('returns only fragment content when fragment name given', function(): void {
         $html = \Skim\View\View::render('with_fragment', ['name' => 'Alice'], 'user-card');
@@ -50,7 +50,7 @@ describe('view::render() — fragment extraction', function(): void {
 
 });
 
-describe('view::share()', function(): void {
+describe('View::share()', function(): void {
 
     test('shared data is available in every template', function(): void {
         \Skim\View\View::share('name', 'SharedUser');

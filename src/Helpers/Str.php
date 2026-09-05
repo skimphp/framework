@@ -9,9 +9,9 @@ namespace Skim\Helpers;
  * models, and CLI commands. All methods are pure static — no state.
  *
  * Example:
- *   str::slug('Hello World!');     // 'hello-world'
- *   str::uuid();                   // '550e8400-e29b-41d4-a716-446655440000'
- *   str::toSnake('UserProfile');  // 'user_profile'
+ *   Str::slug('Hello World!');     // 'hello-world'
+ *   Str::uuid();                   // '550e8400-e29b-41d4-a716-446655440000'
+ *   Str::toSnake('UserProfile');  // 'user_profile'
  *
  * Testing: All methods are pure functions — test directly, no mocking needed.
  *
@@ -156,7 +156,7 @@ final class Str {
 #AI config_reads: []
 #AI non_goals: [Does not handle HTML entities; Does not perform locale-aware collation]
 #AI side_effects: []
-#AI flow: caller -> str::method() -> pure return value
+#AI flow: caller -> Str::method() -> pure return value
 #AI lifecycle_steps: [caller invokes static method; -> pure computation; -> return value]
 #AI section_order: [Slugs & Truncation; Generation; Predicates; Case Conversion]
 #AI architectural_notes: Thin, focused utility class. Prefer these over ad-hoc string manipulation for consistency.

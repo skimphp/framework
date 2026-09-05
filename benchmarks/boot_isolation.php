@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-// Measures app::instance() boot time in isolation.
+// Measures App::instance() boot time in isolation.
 // Target: < 1ms
 
 require __DIR__ . '/../vendor/autoload.php';

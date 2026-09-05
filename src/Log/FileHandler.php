@@ -13,7 +13,7 @@ namespace Skim\Log;
  *   // config/app.php: 'log' => ['channel' => 'file', 'path' => storagePath('logs/app.log')]
  *   // Produces: storage/logs/app-2024-01-15.log
  *
- * Testing: Inject null_handler via log::setHandler() to skip file I/O.
+ * Testing: Inject null_handler via Log::setHandler() to skip file I/O.
  *
  * #AI:class
  */
@@ -93,8 +93,8 @@ final class FileHandler implements \Skim\Log\LogHandler {
 #AI layer: log
 #AI badges: [handler; log; file; rotating]
 #AI intro: `FileHandler` writes log entries to date-suffixed files and automatically prunes files older than the configured retention period. It is the default log backend when no external service is configured.
-#AI lifecycle: created by log::resolveHandler(); lives for the process duration
-#AI test_seam: inject NullHandler via log::setHandler() to skip file I/O
+#AI lifecycle: created by Log::resolveHandler(); lives for the process duration
+#AI test_seam: inject NullHandler via Log::setHandler() to skip file I/O
 #AI invariants: [Entries below minLevel are silently dropped; Log directory is auto-created; Rotation runs after every write]
 #AI core_behaviors: [Filters by minimum log level; Appends formatted lines to date-suffixed files; Prunes old files beyond retention window]
 #AI owns: log files on disk
@@ -102,7 +102,7 @@ final class FileHandler implements \Skim\Log\LogHandler {
 #AI config_reads: [app.log.path; app.log.level; app.log.days]
 #AI non_goals: [Does not support structured JSON logging; Does not send to external services; Does not compress old files]
 #AI side_effects: [Appends to log files; Deletes files older than retention window; Creates log directory if missing]
-#AI flow: log::write() -> FileHandler::write() -> level check -> format -> append to file -> rotate()
+#AI flow: Log::write() -> FileHandler::write() -> level check -> format -> append to file -> rotate()
 #AI section_order: [Contract Implementation]
 
 #AI:write

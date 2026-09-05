@@ -2,7 +2,7 @@
 
 use Skim\Helpers\Filter;
 
-describe('filter::int()', function(): void {
+describe('Filter::int()', function(): void {
 
     test('returns int for valid numeric string', function(): void {
         expect(\Skim\Helpers\Filter::int('42'))->toBe(42);
@@ -47,7 +47,7 @@ describe('filter::int()', function(): void {
 
 });
 
-describe('filter::float()', function(): void {
+describe('Filter::float()', function(): void {
 
     test('returns float for numeric value', function(): void {
         expect(\Skim\Helpers\Filter::float('3.14'))->toBe(3.14);
@@ -63,7 +63,7 @@ describe('filter::float()', function(): void {
 
 });
 
-describe('filter::bool()', function(): void {
+describe('Filter::bool()', function(): void {
 
     test('accepts truthy string values', function(): void {
         foreach (['1', 'true', 'yes', 'on'] as $v) {
@@ -83,7 +83,7 @@ describe('filter::bool()', function(): void {
 
 });
 
-describe('filter::email()', function(): void {
+describe('Filter::email()', function(): void {
 
     test('returns lowercased email for valid address', function(): void {
         expect(\Skim\Helpers\Filter::email('USER@Example.COM'))->toBe('user@example.com');
@@ -95,7 +95,7 @@ describe('filter::email()', function(): void {
 
 });
 
-describe('filter::url()', function(): void {
+describe('Filter::url()', function(): void {
 
     test('returns url string for valid URL', function(): void {
         expect(\Skim\Helpers\Filter::url('https://example.com/path'))->toBe('https://example.com/path');
@@ -107,7 +107,7 @@ describe('filter::url()', function(): void {
 
 });
 
-describe('filter::slug()', function(): void {
+describe('Filter::slug()', function(): void {
 
     test('accepts lowercase alphanumeric dash', function(): void {
         expect(\Skim\Helpers\Filter::slug('hello-world-123'))->toBe('hello-world-123');
@@ -119,7 +119,7 @@ describe('filter::slug()', function(): void {
 
 });
 
-describe('filter::in()', function(): void {
+describe('Filter::in()', function(): void {
 
     test('returns value when in allowed list', function(): void {
         expect(\Skim\Helpers\Filter::in('admin', ['admin', 'user']))->toBe('admin');
@@ -131,7 +131,7 @@ describe('filter::in()', function(): void {
 
 });
 
-describe('filter::arrInt()', function(): void {
+describe('Filter::arrInt()', function(): void {
 
     test('filters out non-numeric values', function(): void {
         expect(\Skim\Helpers\Filter::arrInt([1, 'x', '3', null, 0]))->toBe([1, 3, 0]);
@@ -143,7 +143,7 @@ describe('filter::arrInt()', function(): void {
 
 });
 
-describe('filter::arrIn()', function(): void {
+describe('Filter::arrIn()', function(): void {
 
     test('returns only values present in allowed list', function(): void {
         expect(\Skim\Helpers\Filter::arrIn(['a', 'x', 'b'], ['a', 'b', 'c']))->toBe(['a', 'b']);

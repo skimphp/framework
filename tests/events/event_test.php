@@ -6,7 +6,7 @@ beforeEach(function(): void {
     \Skim\Events\Event::off();   // reset all listeners between tests
 });
 
-describe('event::on() and emit()', function(): void {
+describe('Event::on() and emit()', function(): void {
 
     test('registered listener is called on emit', function(): void {
         $called = false;
@@ -49,7 +49,7 @@ describe('event::on() and emit()', function(): void {
 
 });
 
-describe('event::once()', function(): void {
+describe('Event::once()', function(): void {
 
     test('once() listener is removed after first call', function(): void {
         $calls = 0;
@@ -64,7 +64,7 @@ describe('event::once()', function(): void {
 
 });
 
-describe('event::off()', function(): void {
+describe('Event::off()', function(): void {
 
     test('off($event) removes listeners for that event only', function(): void {
         $a = $b = false;
@@ -90,7 +90,7 @@ describe('event::off()', function(): void {
 
 });
 
-describe('event::resetRequest()', function(): void {
+describe('Event::resetRequest()', function(): void {
 
     test('captureBootSnapshot preserves boot-time listeners across resets', function(): void {
         \Skim\Events\Event::off(); // clear snapshot for a clean slate

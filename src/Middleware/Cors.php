@@ -14,9 +14,9 @@ use Skim\Core\Response;
  * browsers send OPTIONS preflight without auth headers.
  *
  * Example:
- *   $app->use(cors::class);
+ *   $app->use(Cors::class);
  *   // or with custom origin:
- *   $app->use(new cors(allow_origin: 'https://app.example.com'));
+ *   $app->use(new Cors(allow_origin: 'https://app.example.com'));
  *
  * #AI:class
  */
@@ -77,7 +77,7 @@ class Cors implements \Skim\Core\Middleware {
 #AI:handle
 #AI group: Middleware
 #AI frequency: high
-#AI signature: public function handle(request $req, response $res, callable $next): mixed
+#AI signature: public function handle(Request $req, Response $res, callable $next): mixed
 #AI contract: Adds CORS headers to every response. Short-circuits OPTIONS preflight with 204 without calling $next.
 #AI param_details: [{name: $req | type: request | required: true | desc: Current HTTP request.}; {name: $res | type: response | required: true | desc: Current HTTP response.}; {name: $next | type: callable | required: true | desc: Next middleware or controller.}]
 #AI return_detail: {type: mixed | desc: Response with CORS headers, or 204 for OPTIONS preflight.}

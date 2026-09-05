@@ -55,7 +55,7 @@ class ExtManifestCommand extends \Skim\Cli\Command {
 #AI fallback: prints usage error when argument is missing or not a valid extension class
 #AI test_seam: instantiate directly, call setInput() with test args, then handle()
 #AI invariants: [argument must be a class extending extension; skim.json is written to basePath()]
-#AI core_behaviors: [Validates class exists and extends extension; Delegates to ExtManifest::generate(); Writes skim.json to project root]
+#AI core_behaviors: [Validates class exists and extends Extension; Delegates to ExtManifest::generate(); Writes skim.json to project root]
 #AI owns: nothing — delegates to ExtManifest
 #AI entry_points: [handle]
 #AI config_reads: []

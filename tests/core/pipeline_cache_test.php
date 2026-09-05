@@ -5,7 +5,7 @@ use Skim\Core\Pipeline;
 use Skim\Core\Request;
 use Skim\Core\Response;
 
-describe('pipeline::resetInstanceCache()', function (): void {
+describe('Pipeline::resetInstanceCache()', function (): void {
 
     test('clears the middleware instance cache', function (): void {
         $pipeline = new \Skim\Core\Pipeline();

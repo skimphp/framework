@@ -85,9 +85,9 @@ describe('router — named routes', function(): void {
 
 });
 
-describe('router::url() — static url via app container', function(): void {
+describe('Router::url() — static url via app container', function(): void {
 
-    test('app::testInstance() registers sys.router in container', function(): void {
+    test('App::testInstance() registers sys.router in container', function(): void {
         $app = \Skim\Core\App::testInstance();
         expect($app->get('sys.router'))->toBeInstanceOf(\Skim\Core\Router::class);
     });

@@ -77,16 +77,16 @@ class CacheBuildCommand extends \Skim\Cli\Command {
 #AI test_seam: run against temp directory, verify generated files are valid PHP arrays
 #AI invariants: [Generates env.php, config.php, and extensions.php in storage/config_cache/; Resets env and config before loading to ensure fresh state; Creates cache directory recursively if missing]
 #AI core_behaviors: [Resets and reloads env from .env; Resets and reloads config from config/; Reads sys.extensions from app container; Writes var_export() output as PHP return statements]
-#AI warnings: [Calls app::instance() which triggers full boot — ensure .env and config/ are present]
+#AI warnings: [Calls App::instance() which triggers full boot — ensure .env and config/ are present]
 #AI owns: nothing — reads from env, config, and app facades
 #AI entry_points: [handle]
 #AI config_reads: []
 #AI non_goals: [Does not clear existing cache files before building; Does not validate generated files]
 #AI side_effects: [Writes env.php, config.php, extensions.php to storage/config_cache/; Creates storage/config_cache/ directory]
-#AI flow: CacheBuildCommand::handle() -> mkdir storage/config_cache -> env::reset + load + write -> config::reset + load + write -> app extensions write -> success
-#AI lifecycle_steps: [kernel dispatches CacheBuildCommand; -> handle(); -> mkdir storage/config_cache; -> env::reset(); -> env::load(.env); -> write env.php; -> config::reset(); -> config::load(config/); -> write config.php; -> app::instance(); -> write extensions.php; -> success]
+#AI flow: CacheBuildCommand::handle() -> mkdir storage/config_cache -> Env::reset + load + write -> Config::reset + load + write -> app extensions write -> success
+#AI lifecycle_steps: [kernel dispatches CacheBuildCommand; -> handle(); -> mkdir storage/config_cache; -> Env::reset(); -> Env::load(.env); -> write env.php; -> Config::reset(); -> Config::load(config/); -> write config.php; -> App::instance(); -> write extensions.php; -> success]
 #AI section_order: [Command Execution]
-#AI architectural_notes: Thin CLI wrapper that delegates to env, config, and app facades. The generated files are consumed by env::loadCompiledCache() and config::loadCompiledCache().
+#AI architectural_notes: Thin CLI wrapper that delegates to env, config, and app facades. The generated files are consumed by Env::loadCompiledCache() and Config::loadCompiledCache().
 
 #AI:handle
 #AI group: Command Execution

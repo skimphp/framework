@@ -9,10 +9,10 @@ namespace Skim\Db;
  * navigation booleans, and computed page count via property hooks.
  *
  * Example:
- *   $page = user::where(['status' => 'active'])->paginate(page: 2, per_page: 20);
+ *   $page = User::where(['status' => 'active'])->paginate(page: 2, per_page: 20);
  *   // $page->items, $page->total, $page->pages, $page->hasNext, $page->hasPrev
  *
- * Testing: Construct directly — new pagination(items: [], total: 0, per_page: 20, current: 1).
+ * Testing: Construct directly — new Pagination(items: [], total: 0, per_page: 20, current: 1).
  *
  * #AI:class
  */
@@ -68,8 +68,8 @@ final class Pagination {
 #AI config_reads: []
 #AI non_goals: [Does not execute queries — QueryScope handles that; Does not render HTML pagination controls]
 #AI side_effects: []
-#AI flow: QueryScope::paginate() -> count() + all() -> new pagination(items, total, per_page, current)
-#AI lifecycle_steps: [QueryScope::paginate(page, per_page); -> count() for total; -> limit/per_page + offset calculation; -> all() for items; -> new pagination(...)]
+#AI flow: QueryScope::paginate() -> count() + all() -> new Pagination(items, total, per_page, current)
+#AI lifecycle_steps: [QueryScope::paginate(page, per_page); -> count() for total; -> limit/per_page + offset calculation; -> all() for items; -> new Pagination(...)]
 #AI section_order: [Constructor; Computed Properties]
 #AI architectural_notes: Pure value object — no DB access, no side effects. Property hooks keep the API clean without storing redundant computed fields.
 

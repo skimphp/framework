@@ -2,7 +2,7 @@
 
 use Skim\Core\Response;
 
-describe('response::json()', function(): void {
+describe('Response::json()', function(): void {
 
     test('sets Content-Type to application/json', function(): void {
         $res = new \Skim\Core\Response();
@@ -24,7 +24,7 @@ describe('response::json()', function(): void {
 
 });
 
-describe('response::status()', function(): void {
+describe('Response::status()', function(): void {
 
     test('sets status code and returns $this for chaining', function(): void {
         $res = new \Skim\Core\Response();
@@ -40,7 +40,7 @@ describe('response::status()', function(): void {
 
 });
 
-describe('response::redirect()', function(): void {
+describe('Response::redirect()', function(): void {
 
     test('sets Location header', function(): void {
         $res = new \Skim\Core\Response();
@@ -62,7 +62,7 @@ describe('response::redirect()', function(): void {
 
 });
 
-describe('response::withHeader()', function(): void {
+describe('Response::withHeader()', function(): void {
 
     test('adds a custom header', function(): void {
         $res = new \Skim\Core\Response();

@@ -11,7 +11,7 @@ use Skim\Session\Session;
  *
  * Use as the core dispatch mechanism in HTTP tests. Each configuration method
  * (acting_as, with_headers, etc.) returns a clone, so the original is never mutated.
- * Dispatches through app::dispatch() with optional middleware skipping.
+ * Dispatches through App::dispatch() with optional middleware skipping.
  *
  * Example:
  *   $req = new PendingRequest($app);
@@ -194,15 +194,15 @@ class PendingRequest {
 #AI fallback: n/a — test-only class
 #AI test_seam: use via HttpClient or instantiate directly with an app instance
 #AI invariants: [Configuration methods return clones — original is never mutated; Auth and session are bound to a cloned app, not the original; Redirect following recurses via get()]
-#AI core_behaviors: [Builds a request via RequestFactory; Clones the app and binds auth/session fakes; Dispatches through app::dispatch()]
+#AI core_behaviors: [Builds a request via RequestFactory; Clones the app and binds auth/session fakes; Dispatches through App::dispatch()]
 #AI notes: When $json is non-empty on post(), Content-Type is automatically set to application/json.
 #AI owns: configuration state (user, headers, session, cookies, flags)
 #AI entry_points: [actingAs; withHeaders; withSession; withCookies; followingRedirects; withoutMiddleware; get; post; put; delete]
 #AI config_reads: []
 #AI non_goals: [Does not open real network connections; Does not test WebSocket or SSE endpoints]
 #AI side_effects: [Clones app instance; Binds auth/session fakes into cloned container; Dispatches through router pipeline]
-#AI flow: PendingRequest::config() -> clone -> HTTP method -> send() -> RequestFactory::make() -> app::dispatch() -> HttpResponse
-#AI lifecycle_steps: [HttpClient::method() -> new PendingRequest($app); -> actingAs/withHeaders/etc() -> clone; -> get/post/etc() -> send(); -> RequestFactory::make(); -> clone app; -> bind fakes; -> app::dispatch(); -> HttpResponse]
+#AI flow: PendingRequest::config() -> clone -> HTTP method -> send() -> RequestFactory::make() -> App::dispatch() -> HttpResponse
+#AI lifecycle_steps: [HttpClient::method() -> new PendingRequest($app); -> actingAs/withHeaders/etc() -> clone; -> get/post/etc() -> send(); -> RequestFactory::make(); -> clone app; -> bind fakes; -> App::dispatch(); -> HttpResponse]
 #AI section_order: [Configuration; HTTP Methods; Architecture]
 #AI architectural_notes: Immutable builder pattern — each configuration call returns a clone, making it safe to reuse a base PendingRequest across multiple assertions.
 

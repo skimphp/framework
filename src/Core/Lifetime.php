@@ -32,7 +32,7 @@ enum Lifetime {
 #AI lifecycle: used during bind() and make() resolution
 #AI test_seam: n/a — pure data enum
 #AI invariants: [singleton is the default when no lifetime is specified; request-scoped bindings are cleared by endRequest(); transient bindings skip the resolved cache entirely]
-#AI core_behaviors: [Determines caching strategy in app::make(); Drives clearLifetimeMeta() and endRequest() cleanup]
+#AI core_behaviors: [Determines caching strategy in App::make(); Drives clearLifetimeMeta() and endRequest() cleanup]
 #AI owns: no mutable state
 #AI entry_points: [singleton; request; transient]
 #AI config_reads: []

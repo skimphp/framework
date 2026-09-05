@@ -227,7 +227,7 @@ if (!function_exists('asset')) {
 #AI group: Config & Env
 #AI frequency: high
 #AI signature: function env(string $key, mixed $default = null): mixed
-#AI contract: Reads an environment variable by key, returning $default when the variable is not set. Delegates to env::get().
+#AI contract: Reads an environment variable by key, returning $default when the variable is not set. Delegates to Env::get().
 #AI param_details: [{name: $key | type: string | required: true | desc: Dotenv key such as 'DB_HOST' or 'APP_NAME'.}; {name: $default | type: mixed | required: false | desc: Fallback value returned when the variable is missing.}]
 #AI return_detail: {type: mixed | desc: The environment variable value or $default.}
 

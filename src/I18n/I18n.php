@@ -12,9 +12,9 @@ use Skim\Worker\Resettable;
  * returning a flat or nested array. Supports simple pipe-based pluralization.
  *
  * Example:
- *   i18n::locale('fr');
- *   i18n::t('auth.login.title');              // lang/fr/auth.php['login']['title']
- *   i18n::t('items.count', ['count' => 3]);   // "3 items" (plural form)
+ *   I18n::locale('fr');
+ *   I18n::t('auth.login.title');              // lang/fr/auth.php['login']['title']
+ *   I18n::t('items.count', ['count' => 3]);   // "3 items" (plural form)
  *
  * Testing: Use reset() in tearDown() to clear locale and loaded files.
  *
@@ -68,9 +68,9 @@ final class I18n implements \Skim\Worker\Resettable {
      * a 'count' param is present, and :param interpolation.
      *
      * Example:
-     *   i18n::t('auth.welcome', ['name' => 'John']);  // "Welcome, John"
-     *   i18n::t('items.count', ['count' => 1]);        // "1 item"
-     *   i18n::t('items.count', ['count' => 5]);        // "5 items"
+     *   I18n::t('auth.welcome', ['name' => 'John']);  // "Welcome, John"
+     *   I18n::t('items.count', ['count' => 1]);        // "1 item"
+     *   I18n::t('items.count', ['count' => 5]);        // "5 items"
      *
      * @param string $key    Dot-notation key: 'file.path.to.key'.
      * @param array  $params Interpolation params (:name) and pluralization (count).
@@ -176,7 +176,7 @@ final class I18n implements \Skim\Worker\Resettable {
 #AI config_reads: []
 #AI non_goals: [Does not support ICU plural rules; Does not handle RTL layout; Does not provide locale negotiation from Accept-Language]
 #AI side_effects: [Loads PHP files from lang/ directory on first access]
-#AI flow: i18n::t(key) -> resolve(key, locale) -> resolve(key, fallback) -> key -> pluralize -> interpolate
+#AI flow: I18n::t(key) -> resolve(key, locale) -> resolve(key, fallback) -> key -> pluralize -> interpolate
 #AI section_order: [Translation API; Configuration; Testing Hooks]
 
 #AI:locale

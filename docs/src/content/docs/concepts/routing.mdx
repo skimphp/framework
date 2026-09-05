@@ -11,9 +11,9 @@ Routes are canonically registered in the `routes.php` file in your project root.
 
 ```php
 // routes.php
-router::get('/', [HomeController::class, 'index']);
-router::get('/posts', [PostController::class, 'list']);
-router::get('/posts/{id}', [PostController::class, 'show']);
+Router::get('/', [HomeController::class, 'index']);
+Router::get('/posts', [PostController::class, 'list']);
+Router::get('/posts/{id}', [PostController::class, 'show']);
 ```
 
 ### Parameter Tokens
@@ -27,8 +27,8 @@ URL parameters can be matched using standard curly brace tokens:
 Example:
 
 ```php
-router::get('/users/@id:int', [UserController::class, 'show']);
-router::get('/blog/@slug:str', [BlogController::class, 'show']);
+Router::get('/users/@id:int', [UserController::class, 'show']);
+Router::get('/blog/@slug:str', [BlogController::class, 'show']);
 ```
 
 ### Route Grouping & Prefixing
@@ -36,9 +36,9 @@ router::get('/blog/@slug:str', [BlogController::class, 'show']);
 You can group related routes together under a shared prefix and apply group-level middleware:
 
 ```php
-router::group(['prefix' => '/api/v1', 'middleware' => 'api_auth'], function() {
-    router::get('/users', [UserApiController::class, 'index']);
-    router::post('/users', [UserApiController::class, 'create']);
+Router::group(['prefix' => '/api/v1', 'middleware' => 'api_auth'], function() {
+    Router::get('/users', [UserApiController::class, 'index']);
+    Router::post('/users', [UserApiController::class, 'create']);
 });
 ```
 
@@ -47,7 +47,7 @@ router::group(['prefix' => '/api/v1', 'middleware' => 'api_auth'], function() {
 To reference routes dynamically throughout your application, you can assign them names:
 
 ```php
-router::get('/profile', [ProfileController::class, 'show'])->name('profile');
+Router::get('/profile', [ProfileController::class, 'show'])->name('profile');
 
 // Generate URL elsewhere:
 $url = route('profile'); // Returns "/profile"

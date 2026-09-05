@@ -10,11 +10,11 @@ namespace Skim\Http;
  * on non-2xx status. The caller decides whether a status code is an error.
  *
  * Example:
- *   $http = new client(['base_url' => 'https://api.example.com', 'timeout' => 5]);
+ *   $http = new Client(['base_url' => 'https://api.example.com', 'timeout' => 5]);
  *   $resp = $http->get('/users', ['page' => 1]);
  *   if ($resp->ok()) { $users = $resp->json(); }
  *
- * Testing: Use client::fake() to get a fake_client that records requests.
+ * Testing: Use Client::fake() to get a fake_client that records requests.
  *
  * #AI:class
  */
@@ -103,7 +103,7 @@ class Client {
      * Returns a fake_client for tests that records all requests. #AI:fake
      *
      * Example:
-     *   $http = client::fake(['GET https://api.example.com/users' => ['status' => 200, 'body' => []]]);
+     *   $http = Client::fake(['GET https://api.example.com/users' => ['status' => 200, 'body' => []]]);
      *   $resp = $http->get('https://api.example.com/users');
      *   $http->assertSent('GET', 'users');
      *
@@ -156,7 +156,7 @@ class Client {
 #AI badges: [http; client; streams; zero-dep; testable]
 #AI intro: `client` wraps PHP's native `file_get_contents` + `stream_context_create` for outbound HTTP. It returns immutable `HttpResponse` objects and never throws on non-2xx status codes.
 #AI lifecycle: instantiated per-service or per-request; no persistent connections
-#AI test_seam: client::fake() returns a FakeClient that records requests and returns stubs
+#AI test_seam: Client::fake() returns a FakeClient that records requests and returns stubs
 #AI invariants: [Never throws on non-2xx status; All responses are HttpResponse value objects; JSON Content-Type by default]
 #AI core_behaviors: [Sends HTTP via PHP streams; JSON-encodes request bodies; Merges default and per-request headers; Supports baseUrl prefixing]
 #AI owns: nothing
@@ -164,7 +164,7 @@ class Client {
 #AI config_reads: []
 #AI non_goals: [Does not support async/concurrent requests; Does not follow redirects; Does not retry on failure; No Guzzle dependency]
 #AI side_effects: [Makes outbound HTTP requests]
-#AI flow: client::method() -> send() -> stream_context_create() -> file_get_contents() -> HttpResponse::fromStream()
+#AI flow: Client::method() -> send() -> stream_context_create() -> file_get_contents() -> HttpResponse::fromStream()
 #AI section_order: [HTTP Methods; Testing; Architecture]
 
 #AI:get
@@ -214,4 +214,4 @@ class Client {
 #AI contract: Returns a FakeClient that intercepts all HTTP requests, records them, and returns stub responses.
 #AI param_details: [{name: $stubs | type: array | required: false | desc: Map of 'METHOD URL' => response stub arrays or HttpResponse objects.}]
 #AI return_detail: {type: FakeClient | desc: Test double that records requests and returns stubs.}
-#AI examples: [{label: Basic stub | code: $http = client::fake(['GET https://api.example.com/users' => ['status' => 200, 'body' => []]]);}]
+#AI examples: [{label: Basic stub | code: $http = Client::fake(['GET https://api.example.com/users' => ['status' => 200, 'body' => []]]);}]

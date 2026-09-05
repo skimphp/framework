@@ -7,12 +7,12 @@ SKIM provides a database toolkit spanning three distinct layers: raw SQL, a flue
 
 ### 1. Raw Queries
 
-For ultimate performance and transparency, use `db::` facade direct queries:
+For ultimate performance and transparency, use `Db::` facade direct queries:
 
 ```php
-$users = db::all("SELECT * FROM users WHERE active = ?", [1]);
-$user = db::row("SELECT * FROM users WHERE id = ?", [3]);
-$count = db::val("SELECT COUNT(*) FROM users");
+$users = Db::all("SELECT * FROM users WHERE active = ?", [1]);
+$user = Db::row("SELECT * FROM users WHERE id = ?", [3]);
+$count = Db::val("SELECT COUNT(*) FROM users");
 ```
 
 ### 2. Query Builder
@@ -20,7 +20,7 @@ $count = db::val("SELECT COUNT(*) FROM users");
 Construct queries programmatically using a fluent interface with automatic parameter binding:
 
 ```php
-$users = db::table('users')
+$users = Db::table('users')
     ->where('active', '=', 1)
     ->where_null('deleted_at')
     ->order_by('created_at', 'DESC')
@@ -43,13 +43,13 @@ $user->save();
 ```
 
 <NoteBox>
-**The `db::null()` Sentinel**
+**The `Db::null()` Sentinel**
 
-When updating columns to `NULL` via the Query Builder or Active Record, SQL parameters can easily trip up simple binding libraries. In SKIM, if you need to explicitly bind and persist a literal SQL `NULL` value, use the `db::null()` sentinel.
+When updating columns to `NULL` via the Query Builder or Active Record, SQL parameters can easily trip up simple binding libraries. In SKIM, if you need to explicitly bind and persist a literal SQL `NULL` value, use the `Db::null()` sentinel.
 
 ```php
-db::table('users')
+Db::table('users')
     ->where('id', '=', 1)
-    ->update(['suspended_at' => db::null()]);
+    ->update(['suspended_at' => Db::null()]);
 ```
 </NoteBox>

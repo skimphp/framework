@@ -9,9 +9,9 @@ namespace Skim\View\Exceptions;
  *
  * Example:
  *   try {
- *       view::render('nonexistent');
+ *       View::render('nonexistent');
  *   } catch (view_exception $e) {
- *       log::error($e->getMessage());
+ *       Log::error($e->getMessage());
  *   }
  *
  * Testing: Expect this exception when testing missing templates or fragments.
@@ -29,7 +29,7 @@ class ViewException extends \RuntimeException {}
 #AI layer: view
 #AI badges: [exception; view; error]
 #AI intro: `ViewException` is thrown by the view system when a template file cannot be resolved or a requested fragment name does not exist in the rendered output.
-#AI lifecycle: thrown during view::render() or template::renderFile()
+#AI lifecycle: thrown during View::render() or Template::renderFile()
 #AI fallback: n/a — exception type
 #AI test_seam: expect this exception in Pest tests for missing templates
 #AI invariants: [Extends RuntimeException; Thrown only for template-not-found and fragment-not-found errors]
@@ -40,7 +40,7 @@ class ViewException extends \RuntimeException {}
 #AI config_reads: []
 #AI non_goals: [Does not handle rendering logic; Does not provide recovery mechanisms]
 #AI side_effects: []
-#AI flow: view::render() -> template not found or fragment missing -> throw ViewException
-#AI lifecycle_steps: [view::render() or template::renderFile(); -> file/fragment not found; -> throw new ViewException(...)]
+#AI flow: View::render() -> template not found or fragment missing -> throw ViewException
+#AI lifecycle_steps: [View::render() or Template::renderFile(); -> file/fragment not found; -> throw new ViewException(...)]
 #AI section_order: [Architecture]
 #AI architectural_notes: Simple RuntimeException subclass — exists solely for type-specific catching.

@@ -58,7 +58,7 @@ describe('FragmentExtractor', function(): void {
 
 });
 
-describe('view::render() fragment integration', function(): void {
+describe('View::render() fragment integration', function(): void {
 
     test('renders only fragment content from template', function(): void {
         $html = \Skim\View\View::render('pages/dashboard', ['name' => 'Alice', 'stats_value' => '42', 'users' => ['Bob', 'Charlie']], 'stats_widget');

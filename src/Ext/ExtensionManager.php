@@ -243,7 +243,7 @@ final class ExtensionManager {
 #AI:discover
 #AI group: Discovery
 #AI frequency: high
-#AI signature: public static function discover(string $root, app $app): self
+#AI signature: public static function discover(string $root, App $app): self
 #AI contract: Scans Composer packages for extensions, validates dependencies, topologically sorts them, and stores metadata in the app container.
 #AI param_details: [{name: $root | type: string | required: true | desc: Project root directory containing vendor/.}; {name: $app | type: app | required: true | desc: Application container to store extension metadata.}]
 #AI return_detail: {type: self | desc: Configured extensionManager ready for register()/boot().}
@@ -253,7 +253,7 @@ final class ExtensionManager {
 #AI:register
 #AI group: Lifecycle Hooks
 #AI frequency: high
-#AI signature: public function register(app $app): void
+#AI signature: public function register(App $app): void
 #AI contract: Calls register(app) for every extension in dependency-sorted order. Throws immediately if conflicts exist.
 #AI param_details: [{name: $app | type: app | required: true | desc: Application container.}]
 #AI throws_details: [{type: \RuntimeException | desc: When extension conflicts are detected.}]
@@ -262,7 +262,7 @@ final class ExtensionManager {
 #AI:boot
 #AI group: Lifecycle Hooks
 #AI frequency: high
-#AI signature: public function boot(app $app): void
+#AI signature: public function boot(App $app): void
 #AI contract: Calls boot(app) for every extension in dependency-sorted order. Runs after all extensions have been registered.
 #AI param_details: [{name: $app | type: app | required: true | desc: Application container.}]
 #AI side_effects: [Calls extension boot() hooks]

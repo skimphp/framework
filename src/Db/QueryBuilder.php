@@ -5,17 +5,17 @@ namespace Skim\Db;
 /**
  * Internal SQL template processor for query_gen %placeholder% substitution. #AI:class
  *
- * Not part of the public SKIM API — used exclusively by db::query(), db::val(),
- * db::row(), db::all(). Handles %where%, %set%, %values%, %order_by%, %group_by%,
+ * Not part of the public SKIM API — used exclusively by Db::query(), Db::val(),
+ * Db::row(), Db::all(). Handles %where%, %set%, %values%, %order_by%, %group_by%,
  * %limit%, %offset% substitution. Unused placeholders are stripped silently.
  *
- * Example (internal — called by db:: methods):
+ * Example (internal — called by Db:: methods):
  *   [$sql, $params] = QueryBuilder::build(
  *       'SELECT * FROM users %where% %limit%',
  *       ['where' => ['status = :s'], ':s' => 'active', 'limit' => 20],
  *   );
  *
- * Testing: Use db::query(..., debug: true) to get interpolated SQL without executing.
+ * Testing: Use Db::query(..., debug: true) to get interpolated SQL without executing.
  *
  * #AI:class
  */
@@ -134,7 +134,7 @@ final class QueryBuilder {
      * Builds a SET clause for UPDATE statements. #AI:buildSet
      *
      * Null values skip the column (partial update). null_marker instances
-     * produce SET col = NULL (explicit erasure via db::null()).
+     * produce SET col = NULL (explicit erasure via Db::null()).
      *
      * @param array $data Column => value pairs for the SET clause.
      * @return array{string, array<string, mixed>} [SET clause, PDO params].
@@ -217,21 +217,21 @@ final class QueryBuilder {
 #AI layer: db
 #AI badges: [internal; query_gen; sql-template; null-safe]
 #AI intro: `QueryBuilder` processes SQL templates with `%placeholder%` tokens into executable SQL and PDO parameter arrays. It is internal to the `db` facade — not part of the public SKIM API. Unused placeholders are stripped silently, enabling dynamic queries without conditionals.
-#AI lifecycle: stateless — called per query by db:: methods
+#AI lifecycle: stateless — called per query by Db:: methods
 #AI fallback: none
-#AI test_seam: use db::query(..., debug: true) to inspect generated SQL
+#AI test_seam: use Db::query(..., debug: true) to inspect generated SQL
 #AI invariants: [unused %placeholders% are stripped silently; null values in %set% skip the column; NullMarker in %set% produces literal NULL; limit/offset are inlined as int (not PDO-bound); null :named params are excluded from PDO array]
 #AI core_behaviors: [build() processes placeholders in fixed order: set, values, where, order_by, group_by, limit, offset; buildWhere() supports flat and nested and/or structures; interpolate() sorts by key length to avoid partial replacements]
 #AI warnings: [interpolate() output is NOT safe to execute — for debug display only]
-#AI notes: This class is internal. Application code should use db::query/val/row/all which delegate to QueryBuilder.
+#AI notes: This class is internal. Application code should use Db::query/val/row/all which delegate to QueryBuilder.
 #AI scope_items: []
 #AI owns: nothing
 #AI entry_points: [build; buildWhere; buildSet; buildValues; interpolate]
 #AI config_reads: []
 #AI non_goals: [Not a query builder ORM — it is a template pre-processor; Does not validate SQL syntax; Does not escape identifiers]
 #AI side_effects: []
-#AI flow: db::method() -> QueryBuilder::build(sql, params) -> [built_sql, pdoParams] -> PDO prepare/execute
-#AI lifecycle_steps: [db::query/val/row/all(); -> QueryBuilder::build(sql, params); -> process %set%/%values%/%where%/%order_by%/%group_by%/%limit%/%offset%; -> strip unused placeholders; -> collect :named params; -> return [sql, pdoParams]]
+#AI flow: Db::method() -> QueryBuilder::build(sql, params) -> [built_sql, pdoParams] -> PDO prepare/execute
+#AI lifecycle_steps: [Db::query/val/row/all(); -> QueryBuilder::build(sql, params); -> process %set%/%values%/%where%/%order_by%/%group_by%/%limit%/%offset%; -> strip unused placeholders; -> collect :named params; -> return [sql, pdoParams]]
 #AI section_order: [Core Processing; Clause Builders; Debug]
 #AI architectural_notes: QueryBuilder is the engine behind query_gen. It processes templates in a fixed order to avoid key conflicts between %set% and %where% params.
 

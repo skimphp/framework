@@ -12,11 +12,11 @@ Commands extend the base `command` class and implement `handle(): int`.
 - `\Skim\Cli\Cli` — Facade for terminal output, formatting, ASCII banners, and TTY detection.
 
 ## Critical behaviours
-- ANSI colors and TUI menus are emitted only when `cli::isTty()` is true (checks `stream_isatty` with fallback to `posix_isatty`), making it safe for CI and piped output.
-- `cli::error()` writes to STDERR — correct for shell scripting and CI log separation.
+- ANSI colors and TUI menus are emitted only when `Cli::isTty()` is true (checks `stream_isatty` with fallback to `posix_isatty`), making it safe for CI and piped output.
+- `Cli::error()` writes to STDERR — correct for shell scripting and CI log separation.
 - `handle()` return code: 0 = success, 1+ = error — `exit()` uses this code.
 - Flags parsed: `--flag=value` → string, `--flag` → bool true. Flags can appear before or after the command name.
-- Sub-commands: `migrate:down` injects `down` as `arg[0]`; command resolves from base `migrate` via `kernel::resolve()`.
+- Sub-commands: `migrate:down` injects `down` as `arg[0]`; command resolves from base `migrate` via `Kernel::resolve()`.
 
 ## Command registration
 Register custom commands in `config/app.php` under the `commands` key:
@@ -39,6 +39,6 @@ class MyCommand extends Command {
 ```
 
 ## Common mistakes
-- Using `echo`/`print` in commands instead of `cli::info()`/`cli::success()` — bypasses TTY detection and stderr routing.
+- Using `echo`/`print` in commands instead of `Cli::info()`/`Cli::success()` — bypasses TTY detection and stderr routing.
 - Calling `exit()` inside `handle()` — use the return code instead; the kernel handles process exit cleanly.
 - Forgetting to return an `int` from `handle()` — causes implicit 0 even on failure.

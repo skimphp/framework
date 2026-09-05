@@ -4,13 +4,13 @@ use Skim\Core\Config;
 
 describe('config lazy loading', function (): void {
 
-    test('config::get() triggers lazy load on first call', function (): void {
+    test('Config::get() triggers lazy load on first call', function (): void {
         \Skim\Core\Config::reset();
         $value = \Skim\Core\Config::get('app.name', 'fallback_value');
         expect($value)->not->toBe('fallback_value');
     });
 
-    test('config::get() second call uses cached data', function (): void {
+    test('Config::get() second call uses cached data', function (): void {
         \Skim\Core\Config::reset();
 
         $start = microtime(true);
@@ -25,7 +25,7 @@ describe('config lazy loading', function (): void {
             ->and($second)->toBeLessThan($first + 0.001);
     });
 
-    test('config::load() is idempotent — second call is a no-op', function (): void {
+    test('Config::load() is idempotent — second call is a no-op', function (): void {
         \Skim\Core\Config::reset();
 
         $dir = sys_get_temp_dir() . '/skim_cfg_lazy_' . uniqid();
@@ -44,7 +44,7 @@ describe('config lazy loading', function (): void {
         rmdir($dir);
     });
 
-    test('config::load() with compiled cache skips directory scan', function (): void {
+    test('Config::load() with compiled cache skips directory scan', function (): void {
         \Skim\Core\Config::reset();
 
         $cachePath = storagePath('config_cache/config.php');

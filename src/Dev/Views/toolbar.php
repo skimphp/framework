@@ -23,7 +23,7 @@
  * @var string $ms_class      Time color class
  * @var string $php_ver       PHP version
  * @var string $req_html      Pre-built request panel HTML
- * @var array  $custom_panels Custom panels from profiler::panels()
+ * @var array  $custom_panels Custom panels from Profiler::panels()
  */
 
 use Skim\Dev\DevTheme;

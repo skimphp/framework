@@ -10,10 +10,10 @@ namespace Skim\Dev;
  * Called by db.php, cache.php, view.php, and log.php after every operation.
  *
  * Example:
- *   profiler::enable();
+ *   Profiler::enable();
  *   // ... request processing ...
- *   $summary = profiler::summary();  // ['db' => ['count' => 5, 'ms' => 12.3], ...]
- *   $events  = profiler::events();  // raw event array for toolbar
+ *   $summary = Profiler::summary();  // ['db' => ['count' => 5, 'ms' => 12.3], ...]
+ *   $events  = Profiler::events();  // raw event array for toolbar
  *
  * Testing: Call reset() between requests to clear collected data.
  *
@@ -90,7 +90,7 @@ final class Profiler {
     /**
      * Records a log entry with source location from debug_backtrace. #AI:log
      *
-     * Called by log::* methods. No-op when disabled.
+     * Called by Log::* methods. No-op when disabled.
      *
      * @param string $level   Log level (debug, info, warning, error).
      * @param string $message Log message.
@@ -145,7 +145,7 @@ final class Profiler {
      * the toolbar renders it via dev_view with $data.
      *
      * Example:
-     *   profiler::panel('htmx', 'htmx Debug', [
+     *   Profiler::panel('htmx', 'htmx Debug', [
      *       'icon' => 'arrows exchange',
      *       'data' => ['swaps' => 3, 'boosts' => 1],
      *   ]);
@@ -196,7 +196,7 @@ final class Profiler {
 #AI layer: dev
 #AI badges: [dev; debug; profiler; static; toolbar]
 #AI intro: `profiler` is a static event collector that records framework operations (DB queries, cache ops, view renders, log entries) during a request. All methods are no-ops when disabled, ensuring zero overhead in production. The toolbar reads collected events for display.
-#AI lifecycle: created empty at boot, enabled by app::run() when APP_DEBUG=true, populated during request, read by toolbar, reset between requests
+#AI lifecycle: created empty at boot, enabled by App::run() when APP_DEBUG=true, populated during request, read by toolbar, reset between requests
 #AI fallback: all recording methods are no-ops when disabled
 #AI test_seam: enable()/disable() to toggle, reset() to clear between tests
 #AI invariants: [all recording methods are no-ops when disabled; reset() clears events but does not disable; summary() computes aggregates from raw events]
@@ -216,7 +216,7 @@ final class Profiler {
 #AI group: Control
 #AI frequency: low
 #AI signature: public static function enable(): void
-#AI contract: Enables event collection. Called by app::run() when APP_DEBUG=true.
+#AI contract: Enables event collection. Called by App::run() when APP_DEBUG=true.
 
 #AI:disable
 #AI group: Control

@@ -131,9 +131,9 @@ class MigrateCommand extends \Skim\Cli\Command {
 #AI entry_points: [handle]
 #AI config_reads: []
 #AI non_goals: [Does not contain SQL logic; Does not create migration files; Does not validate migration syntax]
-#AI side_effects: [migrator::run() applies pending migrations; migrator::down() rolls back batches; migrator::fresh() drops all tables]
-#AI flow: MigrateCommand::handle() -> arg(0) sub-command -> new migrator(migrations/) -> match sub-command -> migrator method -> print results
-#AI lifecycle_steps: [handle(); -> arg(0) sub-command; -> new migrator(basePath('migrations')); -> match: run/down/fresh/status; -> migrator method; -> print results]
+#AI side_effects: [Migrator::run() applies pending migrations; Migrator::down() rolls back batches; Migrator::fresh() drops all tables]
+#AI flow: MigrateCommand::handle() -> arg(0) sub-command -> new Migrator(migrations/) -> match sub-command -> migrator method -> print results
+#AI lifecycle_steps: [handle(); -> arg(0) sub-command; -> new Migrator(basePath('migrations')); -> match: run/down/fresh/status; -> migrator method; -> print results]
 #AI section_order: [Command Execution; Sub-commands]
 #AI architectural_notes: Thin CLI wrapper — all migration logic lives in Skim\Db\Migrator. This command handles only argument dispatch and terminal output.
 
@@ -147,21 +147,21 @@ class MigrateCommand extends \Skim\Cli\Command {
 #AI:run
 #AI group: Sub-commands
 #AI frequency: low
-#AI signature: private function run(migrator $mig): int
+#AI signature: private function run(Migrator $mig): int
 #AI contract: Runs all pending migrations via the migrator and prints each applied file.
 #AI param_details: [{name: $mig | type: migrator | required: true | desc: Migrator instance pointed at the migrations directory.}]
 
 #AI:down
 #AI group: Sub-commands
 #AI frequency: low
-#AI signature: private function down(migrator $mig): int
+#AI signature: private function down(Migrator $mig): int
 #AI contract: Rolls back the last batch of migrations. Use --steps=N flag to roll back multiple batches.
 #AI param_details: [{name: $mig | type: migrator | required: true | desc: Migrator instance.}]
 
 #AI:fresh
 #AI group: Sub-commands
 #AI frequency: low
-#AI signature: private function fresh(migrator $mig): int
+#AI signature: private function fresh(Migrator $mig): int
 #AI contract: Drops all tables and re-runs all migrations from scratch.
 #AI param_details: [{name: $mig | type: migrator | required: true | desc: Migrator instance.}]
 #AI warnings: [Destroys ALL data in the database — use only in development environments]
@@ -169,6 +169,6 @@ class MigrateCommand extends \Skim\Cli\Command {
 #AI:status
 #AI group: Sub-commands
 #AI frequency: low
-#AI signature: private function status(migrator $mig): int
+#AI signature: private function status(Migrator $mig): int
 #AI contract: Displays a table showing each migration's filename, batch number, and applied/pending status.
 #AI param_details: [{name: $mig | type: migrator | required: true | desc: Migrator instance.}]

@@ -12,8 +12,8 @@ namespace Skim\Cache;
  * tag sets themselves are removed.
  *
  * Example:
- *   cache::tags(['users'])->set('user:42:profile', $data, 3600);
- *   cache::tags(['users'])->flush(); // Deletes user:42:profile and all tagged keys
+ *   Cache::tags(['users'])->set('user:42:profile', $data, 3600);
+ *   Cache::tags(['users'])->flush(); // Deletes user:42:profile and all tagged keys
  *
  * Testing: requires a live Redis connection. Use array_driver for unit tests.
  *
@@ -64,7 +64,7 @@ final class TaggedRedisDriver {
      * This is a destructive bulk operation — use with specific tag names only.
      *
      * Example:
-     *   cache::tags(['users', 'posts'])->flush(); // All keys tagged 'users' OR 'posts'
+     *   Cache::tags(['users', 'posts'])->flush(); // All keys tagged 'users' OR 'posts'
      *
      * @return bool Always true.
      */
@@ -89,8 +89,8 @@ final class TaggedRedisDriver {
 #AI role: tag-scoped cache proxy
 #AI layer: cache
 #AI badges: [proxy; cache; redis; tags; bulk-invalidation]
-#AI intro: `Skim\Cache\TaggedRedisDriver` is a proxy returned by `cache::tags()`. It wraps the RedisDriver and adds tag membership tracking via Redis sets. On `set()`, the key is SADD'd to each tag's set. On `flush()`, all member keys are deleted along with the tag sets themselves.
-#AI lifecycle: created per cache::tags() call, no persistent state beyond Redis sets
+#AI intro: `Skim\Cache\TaggedRedisDriver` is a proxy returned by `Cache::tags()`. It wraps the RedisDriver and adds tag membership tracking via Redis sets. On `set()`, the key is SADD'd to each tag's set. On `flush()`, all member keys are deleted along with the tag sets themselves.
+#AI lifecycle: created per Cache::tags() call, no persistent state beyond Redis sets
 #AI invariants: [set() adds key to all tag sets before writing; get() delegates to driver without tag awareness; flush() deletes member keys then tag sets]
 #AI warnings: [flush() is destructive — removes all keys associated with any constructor tag; Requires live Redis connection]
 #AI notes: Why Redis sets: O(1) membership check, atomic SADD, natural TTL via separate key expiry. This class does NOT implement the driver interface — it's a proxy with a reduced API (set, get, flush only).

@@ -12,9 +12,9 @@ namespace Skim\Core;
  * that returns without calling $next short-circuits the entire chain.
  *
  * Example:
- *   class auth_middleware implements middleware {
- *       public function handle(request $req, response $res, callable $next): mixed {
- *           if (!session::has('user_id')) {
+ *   class auth_middleware implements Middleware {
+ *       public function handle(Request $req, Response $res, callable $next): mixed {
+ *           if (!Session::has('user_id')) {
  *               return $res->status(401)->json(['error' => 'Unauthorized']);
  *           }
  *           return $next($req, $res);
@@ -60,7 +60,7 @@ interface Middleware {
 #AI:handle
 #AI group: Contract
 #AI frequency: high
-#AI signature: public function handle(request $req, response $res, callable $next): mixed
+#AI signature: public function handle(Request $req, Response $res, callable $next): mixed
 #AI contract: Process the request/response pair. Call $next to continue the chain; return a response to short-circuit. Mutations to $req and $res propagate through the chain.
 #AI param_details: [{name: $req | type: request | required: true | desc: Current request, mutable before passing to $next}; {name: $res | type: response | required: true | desc: Current response, mutable before passing to $next}; {name: $next | type: callable | required: true | desc: Next middleware or terminal handler, signature (request, response): mixed}]
 #AI return_detail: {type: mixed | desc: Response from $next or short-circuit value.}

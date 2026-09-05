@@ -11,21 +11,21 @@ describe('CLI utility formatting and headers', function(): void {
         \Skim\Cli\Cli::forcePlain(true);
     });
 
-    test('cli::line outputs clean lines', function(): void {
+    test('Cli::line outputs clean lines', function(): void {
         ob_start();
         \Skim\Cli\Cli::line("hello world");
         $out = ob_get_clean();
         expect($out)->toBe("hello world\n");
     });
 
-    test('cli::bold outputs clean text under forcePlain', function(): void {
+    test('Cli::bold outputs clean text under forcePlain', function(): void {
         ob_start();
         \Skim\Cli\Cli::bold("bold text");
         $out = ob_get_clean();
         expect($out)->toBe("bold text\n");
     });
 
-    test('cli::errorBox renders bordered error message', function(): void {
+    test('Cli::errorBox renders bordered error message', function(): void {
         ob_start();
         \Skim\Cli\Cli::errorBox("Critical", "Something went wrong!");
         $out = ob_get_clean();
@@ -35,14 +35,14 @@ describe('CLI utility formatting and headers', function(): void {
         expect($out)->toContain("+-");
     });
 
-    test('cli::didYouMean outputs suggestions', function(): void {
+    test('Cli::didYouMean outputs suggestions', function(): void {
         ob_start();
         \Skim\Cli\Cli::didYouMean("migrat", ["migrate", "serve", "queue:work"]);
         $out = ob_get_clean();
         expect($out)->toContain("Did you mean:  migrate");
     });
 
-    test('cli::didYouMean is silent if no close matches', function(): void {
+    test('Cli::didYouMean is silent if no close matches', function(): void {
         ob_start();
         \Skim\Cli\Cli::didYouMean("foobar", ["migrate", "serve", "queue:work"]);
         $out = ob_get_clean();

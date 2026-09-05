@@ -240,7 +240,7 @@ describe('ErrorPage::render()', function(): void {
 
     test('DI tree marks resolved services with the green checkmark', function(): void {
         // Verify buildDiNode() produces the `resolved` flag for services
-        // that appear in app::resolvedServices() — the di_node component
+        // that appear in App::resolvedServices() — the di_node component
         // renders the green ✓ marker when this flag is true.
         \Skim\Core\App::testInstance();
         \Skim\Core\App::instance()->bind('svc.alpha', fn() => 'A');
@@ -256,7 +256,7 @@ describe('ErrorPage::render()', function(): void {
 
     test('DI tree marks unresolved services without the checkmark', function(): void {
         // A service that's bound but not yet resolved should NOT be marked
-        // as resolved — only services in app::resolvedServices() get the ✓.
+        // as resolved — only services in App::resolvedServices() get the ✓.
         \Skim\Core\App::testInstance();
         \Skim\Core\App::instance()->bind('svc.beta', fn() => 'B');
 
@@ -343,7 +343,7 @@ describe('ErrorPage noise detection', function(): void {
         expect($isNoise)->toBeTrue();
     });
 
-    test('marks framework method calls (e.g. app::run) as noise from caller file', function(): void {
+    test('marks framework method calls (e.g. App::run) as noise from caller file', function(): void {
         $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('isNoise');
         $isNoise = $method->invoke(

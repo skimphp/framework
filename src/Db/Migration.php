@@ -10,7 +10,7 @@ namespace Skim\Db;
  * Files are named YYYY_MM_DD_HHMMSS_description.php for deterministic ordering.
  *
  * Example:
- *   return new class extends migration {
+ *   return new class extends Migration {
  *       public function up(): string {
  *           return "CREATE TABLE posts (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255))";
  *       }
@@ -53,7 +53,7 @@ abstract class Migration {
 #AI layer: db
 #AI badges: [abstract; migration; sql-first]
 #AI intro: `migration` is the abstract base for all database migrations. Each migration file returns an anonymous class extending this base, implementing `up()` and `down()` with raw SQL strings. The migrator tracks applied migrations by filename in the `_migrations` table.
-#AI lifecycle: instantiated by migrator::loadAll() via require, filename assigned from basename
+#AI lifecycle: instantiated by Migrator::loadAll() via require, filename assigned from basename
 #AI fallback: none
 #AI test_seam: run via migrator against test_db() SQLite :memory: connection
 #AI invariants: [up() and down() must return valid SQL strings; filename is set by migrator, never manually; down() must exactly reverse up()]
@@ -67,7 +67,7 @@ abstract class Migration {
 #AI non_goals: [Does not execute SQL — migrator handles execution; Does not track state — _migrations table handles that]
 #AI side_effects: []
 #AI flow: migrator requires file -> migration instance -> up()/down() returns SQL -> migrator executes
-#AI lifecycle_steps: [migrator::loadAll() requires migration file; -> migration instance created; -> filename assigned from basename; -> migrator calls up() or down(); -> SQL string returned; -> migrator executes via executeSql()]
+#AI lifecycle_steps: [Migrator::loadAll() requires migration file; -> migration instance created; -> filename assigned from basename; -> migrator calls up() or down(); -> SQL string returned; -> migrator executes via executeSql()]
 #AI section_order: [Migration Contract; Properties]
 #AI architectural_notes: SQL-first design avoids the impedance mismatch of fluent schema builders. What you write is exactly what runs on the database.
 

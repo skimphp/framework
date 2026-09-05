@@ -10,7 +10,7 @@ namespace Skim\Cli;
  * the kernel's built-in COMMANDS map. Exit codes follow POSIX: 0 = success, 1+ = error.
  *
  * Example:
- *   class greet_command extends command {
+ *   class greet_command extends Command {
  *       public function handle(): int {
  *           $name = $this->arg(0, 'World');
  *           $this->info("Hello {$name}!");
@@ -207,12 +207,12 @@ abstract class Command {
 #AI fallback: configureForName() provides default descriptions and usage strings for built-in commands
 #AI test_seam: instantiate subclass, call setInput() with test data, then handle()
 #AI invariants: [handle() must return POSIX exit code; args and flags are set by kernel before handle(); configureForName() preserves subclass overrides]
-#AI core_behaviors: [arg() and flag() provide safe access with defaults; configureForName() auto-fills metadata from command name; output helpers delegate to cli:: static methods]
+#AI core_behaviors: [arg() and flag() provide safe access with defaults; configureForName() auto-fills metadata from command name; output helpers delegate to Cli:: static methods]
 #AI owns: args, flags, name, description, group, usage
 #AI entry_points: [handle; setInput; arg; flag; help]
 #AI config_reads: []
 #AI non_goals: [Does not parse argv (see ArgvParser); Does not register commands (see kernel); Does not handle process signals]
-#AI side_effects: [Output helpers write to STDOUT/STDERR via cli::]
+#AI side_effects: [Output helpers write to STDOUT/STDERR via Cli::]
 #AI flow: kernel -> new Command() -> configureForName() -> setInput(args, flags) -> handle() -> exit code
 #AI lifecycle_steps: [kernel resolves command class; -> new $class(); -> configureForName($name); -> setInput($args, $flags); -> handle(); -> return exit code]
 #AI section_order: [Metadata Access; Configuration; Command Execution; Input Access; Output Helpers]
@@ -257,7 +257,7 @@ abstract class Command {
 #AI group: Configuration
 #AI frequency: low
 #AI signature: public function help(): void
-#AI contract: Prints usage and description to the terminal via cli:: output helpers.
+#AI contract: Prints usage and description to the terminal via Cli:: output helpers.
 
 #AI:handle
 #AI group: Command Execution

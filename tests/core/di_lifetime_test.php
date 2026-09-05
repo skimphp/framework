@@ -10,7 +10,7 @@ describe('DI lifetime — explicit lifetime enum', function (): void {
         \Skim\Core\Config::set('app.strict_di', false);
     });
 
-    test('bind with lifetime::Singleton returns the same instance on repeated make()', function (): void {
+    test('bind with Lifetime::Singleton returns the same instance on repeated make()', function (): void {
         $app = \Skim\Core\App::testInstance();
         $app->bind('svc.s', fn() => new \stdClass(), lifetime: \Skim\Core\Lifetime::Singleton);
 
@@ -20,7 +20,7 @@ describe('DI lifetime — explicit lifetime enum', function (): void {
         expect($first)->toBe($second);
     });
 
-    test('bind with lifetime::Transient returns a different instance each make()', function (): void {
+    test('bind with Lifetime::Transient returns a different instance each make()', function (): void {
         $app = \Skim\Core\App::testInstance();
         $app->bind('svc.t', fn() => new \stdClass(), lifetime: \Skim\Core\Lifetime::Transient);
 
@@ -30,7 +30,7 @@ describe('DI lifetime — explicit lifetime enum', function (): void {
         expect($first)->not->toBe($second);
     });
 
-    test('bind with lifetime::Request is cleared after endRequest', function (): void {
+    test('bind with Lifetime::Request is cleared after endRequest', function (): void {
         $app = \Skim\Core\App::testInstance();
         $app->bind('svc.r', fn() => new \stdClass(), lifetime: \Skim\Core\Lifetime::Request);
 

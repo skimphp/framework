@@ -71,7 +71,7 @@ final class ExtManifest {
 #AI:generate
 #AI group: Generation
 #AI frequency: low
-#AI signature: public static function generate(extension $ext, string $outputPath): void
+#AI signature: public static function generate(Extension $ext, string $outputPath): void
 #AI contract: Serializes extension metadata to a JSON file. Overwrites any existing file at the target path.
 #AI param_details: [{name: $ext | type: extension | required: true | desc: Instantiated extension to extract metadata from.}; {name: $outputPath | type: string | required: true | desc: Absolute file path for the JSON output.}]
 #AI side_effects: [Writes JSON file to disk]

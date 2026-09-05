@@ -11,10 +11,10 @@ namespace Skim\Cache;
  * through it. TTL is in seconds; null means no expiry.
  *
  * Example:
- *   class custom_driver implements driver { ... }
- *   cache::setDriver(new custom_driver());
+ *   class custom_driver implements Driver { ... }
+ *   Cache::setDriver(new custom_driver());
  *
- * Testing: implement this interface in a test double and inject via cache::setDriver().
+ * Testing: implement this interface in a test double and inject via Cache::setDriver().
  *
  * #AI:class
  */
@@ -90,7 +90,7 @@ interface Driver {
 #AI badges: [interface; cache; driver; contract]
 #AI intro: `Skim\Cache\Driver` is the interface every cache backend must implement. The cache facade resolves the configured driver and delegates all operations through it. Swapping backends requires only a config change or a `setDriver()` call in tests.
 #AI lifecycle: implemented by concrete drivers, resolved by cache facade
-#AI test_seam: implement interface in test double, inject via cache::setDriver()
+#AI test_seam: implement interface in test double, inject via Cache::setDriver()
 #AI invariants: [get() returns $default on miss; set() overwrites existing keys; null TTL means no expiry; flush() requires non-empty prefix; flushAll() clears everything]
 #AI section_order: [Read API; Write API; Invalidation]
 #AI architectural_notes: PSR-16 SimpleCache subset — only the methods SKIM actually uses. All drivers implement this; swap driver in config without changing app code.

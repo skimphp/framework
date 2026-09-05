@@ -197,7 +197,7 @@ class Template {
 #AI layer: view
 #AI badges: [template; layout; slots; partials]
 #AI intro: `template` is the context object available as `$this` inside every PHP view file. It provides the layout system (layout/start/end/slot) and partial inclusion (include). Layout execution runs the child template first to capture slots, then renders the layout.
-#AI lifecycle: instantiated by view::render() per render call, used as $this inside templates
+#AI lifecycle: instantiated by View::render() per render call, used as $this inside templates
 #AI fallback: defaultLayout applied when template does not call layout()
 #AI test_seam: instantiate directly with a views path and data array
 #AI invariants: [start() must be paired with end(); Non-slot output becomes the 'content' slot automatically; include() does not inherit the parent's layout; .html extension is tried before .php]
@@ -209,8 +209,8 @@ class Template {
 #AI config_reads: []
 #AI non_goals: [Does not handle fragment extraction (done by view class); Does not compile or cache templates; Does not escape output (use e() in templates)]
 #AI side_effects: [Uses ob_start/ob_get_clean for slot capture and template rendering; extract() creates local variables in renderFile scope]
-#AI flow: view::render() -> new template() -> renderFile() -> include $file -> layout? -> render layout -> return HTML
-#AI lifecycle_steps: [view::render() -> new template(path, data, defaultLayout); -> renderFile($template); -> resolve .html/.php; -> extract data; -> ob_start + include; -> layout declared? -> capture content slot; -> render layout file; -> return HTML]
+#AI flow: View::render() -> new Template() -> renderFile() -> include $file -> layout? -> render layout -> return HTML
+#AI lifecycle_steps: [View::render() -> new Template(path, data, defaultLayout); -> renderFile($template); -> resolve .html/.php; -> extract data; -> ob_start + include; -> layout declared? -> capture content slot; -> render layout file; -> return HTML]
 #AI section_order: [Template API; Layout System; Rendering; Architecture]
 #AI architectural_notes: The layout system uses a two-pass approach: child template runs first to capture slots, then the layout renders with access to those slots. This avoids the need for output buffering the entire page.
 

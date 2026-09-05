@@ -42,7 +42,7 @@ describe('component rendering', function(): void {
             ->toThrow(\Skim\View\Exceptions\ViewException::class);
     });
 
-    test('global component() helper delegates to view::component', function(): void {
+    test('global component() helper delegates to View::component', function(): void {
         $html = component('alert', ['message' => 'Helper works']);
         expect($html)->toContain('Helper works');
     });

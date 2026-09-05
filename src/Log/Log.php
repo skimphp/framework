@@ -9,11 +9,11 @@ use Skim\Dev\Profiler;
  *
  * Use for all application logging. The handler is resolved on first write
  * from config(app.log.channel) and reused for the process lifetime. Every
- * write also records in profiler::log for the debug toolbar.
+ * write also records in Profiler::log for the debug toolbar.
  *
  * Example:
- *   log::error('Payment failed', ['order_id' => $id, 'reason' => $e->getMessage()]);
- *   log::info('User logged in', ['user_id' => $user->id]);
+ *   Log::error('Payment failed', ['order_id' => $id, 'reason' => $e->getMessage()]);
+ *   Log::info('User logged in', ['user_id' => $user->id]);
  *
  * Testing: Use setHandler() to inject a spy, reset() in tearDown().
  *
@@ -92,7 +92,7 @@ final class Log {
      * Use in tests to inject a spy or in production to swap in Monolog.
      *
      * Example:
-     *   log::setHandler(new NullHandler());
+     *   Log::setHandler(new NullHandler());
      *
      * @param \Skim\Log\LogHandler $handler Custom handler implementation.
      */
@@ -149,15 +149,15 @@ final class Log {
 #AI lifecycle: static facade, handler resolved on first log call
 #AI fallback: NullHandler when channel is unrecognized
 #AI test_seam: setHandler(), reset()
-#AI invariants: [handler is resolved once and reused until reset() or setHandler(); every write records in profiler::log; unknown channels fall back to NullHandler]
-#AI core_behaviors: [Eight level-specific methods delegate to write(); write() captures caller file/line via backtrace; profiler::log receives every entry]
+#AI invariants: [handler is resolved once and reused until reset() or setHandler(); every write records in Profiler::log; unknown channels fall back to NullHandler]
+#AI core_behaviors: [Eight level-specific methods delegate to write(); write() captures caller file/line via backtrace; Profiler::log receives every entry]
 #AI owns: handler instance cache
 #AI entry_points: [debug; info; notice; warning; error; critical; alert; emergency]
 #AI config_reads: [app.log.channel; app.log.path; app.log.level; app.log.days]
 #AI non_goals: [Does not support channels or named loggers; Does not format messages beyond sprintf; Does not send to external services directly]
-#AI side_effects: [profiler::log records every entry; setHandler() replaces active handler; reset() forces re-resolution]
-#AI flow: log::level() -> write() -> profiler::log() -> handler()->write()
-#AI lifecycle_steps: [log::error() / info() / etc.; -> write(); -> debug_backtrace for caller; -> profiler::log(); -> handler(); -> resolveHandler() if null; -> handler->write()]
+#AI side_effects: [Profiler::log records every entry; setHandler() replaces active handler; reset() forces re-resolution]
+#AI flow: Log::level() -> write() -> Profiler::log() -> handler()->write()
+#AI lifecycle_steps: [Log::error() / info() / etc.; -> write(); -> debug_backtrace for caller; -> Profiler::log(); -> handler(); -> resolveHandler() if null; -> handler->write()]
 #AI section_order: [Log Levels; Testing Hooks; Architecture]
 
 #AI:debug

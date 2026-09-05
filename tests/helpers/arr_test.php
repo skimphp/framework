@@ -2,7 +2,7 @@
 
 use Skim\Helpers\Arr;
 
-describe('arr::mapBy()', function(): void {
+describe('Arr::mapBy()', function(): void {
 
     test('re-indexes array by column value', function(): void {
         $input  = [['id' => 5, 'name' => 'John'], ['id' => 6, 'name' => 'Jane']];
@@ -20,7 +20,7 @@ describe('arr::mapBy()', function(): void {
 
 });
 
-describe('arr::mapCol()', function(): void {
+describe('Arr::mapCol()', function(): void {
 
     test('maps two columns into key→value pairs', function(): void {
         $rows   = [['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Bob']];
@@ -30,7 +30,7 @@ describe('arr::mapCol()', function(): void {
 
 });
 
-describe('arr::pluck()', function(): void {
+describe('Arr::pluck()', function(): void {
 
     test('extracts single column into flat list', function(): void {
         $rows = [['id' => 1, 'name' => 'X'], ['id' => 2, 'name' => 'Y']];
@@ -39,7 +39,7 @@ describe('arr::pluck()', function(): void {
 
 });
 
-describe('arr::filterBy()', function(): void {
+describe('Arr::filterBy()', function(): void {
 
     test('returns only matching rows, re-indexed', function(): void {
         $rows   = [['s' => 'a'], ['s' => 'b'], ['s' => 'a']];
@@ -50,7 +50,7 @@ describe('arr::filterBy()', function(): void {
 
 });
 
-describe('arr::findAll()', function(): void {
+describe('Arr::findAll()', function(): void {
 
     test('returns all matching elements', function(): void {
         $items  = [['role' => 'admin'], ['role' => 'user'], ['role' => 'admin']];
@@ -66,7 +66,7 @@ describe('arr::findAll()', function(): void {
 
 });
 
-describe('arr::normalize100()', function(): void {
+describe('Arr::normalize100()', function(): void {
 
     test('values sum to 100', function(): void {
         $result = \Skim\Helpers\Arr::normalize100(['a' => 80, 'b' => 20]);
@@ -80,7 +80,7 @@ describe('arr::normalize100()', function(): void {
 
 });
 
-describe('arr::weightedPick()', function(): void {
+describe('Arr::weightedPick()', function(): void {
 
     test('always returns a key from the weights array', function(): void {
         $keys = ['red', 'blue', 'green'];

@@ -10,9 +10,9 @@ namespace Skim\Helpers;
  * indexing for eager-loading relation maps.
  *
  * Example:
- *   arr::find(['id' => 5], $users);           // first user with id=5
- *   arr::mapBy('id', $users);                // [5 => user, 6 => user, ...]
- *   arr::pluck('name', $users);               // ['John', 'Jane', ...]
+ *   Arr::find(['id' => 5], $users);           // first user with id=5
+ *   Arr::mapBy('id', $users);                // [5 => user, 6 => user, ...]
+ *   Arr::pluck('name', $users);               // ['John', 'Jane', ...]
  *
  * Testing: All methods are pure functions — test directly, no mocking needed.
  *
@@ -55,7 +55,7 @@ final class Arr {
      * Re-indexes an array by a column value — last-write-wins on collision. #AI:mapBy
      *
      * Example:
-     *   arr::mapBy('id', [['id'=>5,'name'=>'J']]); // [5 => ['id'=>5,'name'=>'J']]
+     *   Arr::mapBy('id', [['id'=>5,'name'=>'J']]); // [5 => ['id'=>5,'name'=>'J']]
      *
      * @param string $key   Column to use as the new key.
      * @param array  $items Array of arrays or objects.
@@ -73,7 +73,7 @@ final class Arr {
      * Maps two columns into key→value pairs. #AI:mapCol
      *
      * Example:
-     *   arr::mapCol('id', 'name', $rows); // [5 => 'John', 6 => 'Jane']
+     *   Arr::mapCol('id', 'name', $rows); // [5 => 'John', 6 => 'Jane']
      *
      * @param string $key   Column for the resulting array key.
      * @param string $val   Column for the resulting array value.
@@ -93,7 +93,7 @@ final class Arr {
      * Extracts a single column into a flat list. #AI:pluck
      *
      * Example:
-     *   arr::pluck('name', $users); // ['John', 'Jane', ...]
+     *   Arr::pluck('name', $users); // ['John', 'Jane', ...]
      *
      * @param string $key   Column to extract.
      * @param array  $items Array of arrays.
@@ -205,7 +205,7 @@ final class Arr {
      * Picks a random key weighted by values. #AI:weightedPick
      *
      * Example:
-     *   arr::weightedPick(['red' => 80, 'blue' => 20]); // 'red' ~80% of the time
+     *   Arr::weightedPick(['red' => 80, 'blue' => 20]); // 'red' ~80% of the time
      *
      * @param array $weights Associative array of key => weight.
      */
@@ -262,7 +262,7 @@ final class Arr {
 #AI config_reads: []
 #AI non_goals: [Does not provide lazy evaluation; Does not support nested dot-notation keys]
 #AI side_effects: []
-#AI flow: caller -> arr::method() -> pure return value
+#AI flow: caller -> Arr::method() -> pure return value
 #AI lifecycle_steps: [caller invokes static method; -> pure computation; -> return value]
 #AI section_order: [Search; Indexing; Extraction; Navigation; Aggregation; Debug]
 #AI architectural_notes: Thin utility layer. All methods work with both array and object items for flexibility with DB rows and model instances.

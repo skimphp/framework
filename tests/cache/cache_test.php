@@ -65,7 +65,7 @@ describe('cache — TTL expiry (array driver)', function(): void {
 
 });
 
-describe('cache::remember()', function(): void {
+describe('Cache::remember()', function(): void {
 
     test('calls closure on miss and caches result', function(): void {
         $calls = 0;
@@ -93,7 +93,7 @@ describe('cache::remember()', function(): void {
 
 });
 
-describe('cache::flush()', function(): void {
+describe('Cache::flush()', function(): void {
 
     test('flush with prefix removes only matching keys', function(): void {
         \Skim\Cache\Cache::set('user:1', 'Alice');

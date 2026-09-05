@@ -42,7 +42,7 @@ tests/
         layout slot injection, e() escaping
 - cache: set/get/delete, ttl expiry, fallback driver on failure, flush('prefix:')
 - helpers: every filter type returns false on invalid input,
-           arr::mapBy key collision behaviour
+           Arr::mapBy key collision behaviour
 - validation: required rule, type rules, custom rule registration,
               validated() returns only declared fields
 - routing: static route match, dynamic route with type token,

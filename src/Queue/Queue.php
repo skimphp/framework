@@ -11,9 +11,9 @@ namespace Skim\Queue;
  * keyed by execute_at timestamp and are promoted to the main list when due.
  *
  * Example:
- *   queue::push(new send_email_job($user_id));
- *   queue::push(new generate_report_job($id), queue: 'reports');
- *   queue::pushMany([$job1, $job2], 'default');
+ *   Queue::push(new send_email_job($user_id));
+ *   Queue::push(new generate_report_job($id), queue: 'reports');
+ *   Queue::pushMany([$job1, $job2], 'default');
  *
  * Testing: Use setRedis() to inject a mock Redis instance, flush() to clear queues.
  *
@@ -104,7 +104,7 @@ final class Queue {
      * in tearDown() to restore normal behavior.
      *
      * Example:
-     *   queue::setRedis($mock_redis);
+     *   Queue::setRedis($mock_redis);
      *   // ... run tests ...
      *   // reset in tearDown
      *
@@ -193,15 +193,15 @@ final class Queue {
 #AI config_reads: [cache.redis.host; cache.redis.port; cache.redis.password]
 #AI non_goals: [Does not implement job execution (see worker); Does not manage retry logic (see worker); Does not provide dead-letter queues]
 #AI side_effects: [writes to Redis lists and sorted sets; setRedis() replaces active connection; flush() deletes queue data]
-#AI flow: queue::push(job) -> serializeJob() -> delay > 0 ? ZADD delayed : LPUSH queue -> worker BRPOP -> deserialize -> handle()
-#AI lifecycle_steps: [queue::push(job); -> serializeJob(job, queue); -> job->delay() > 0 ? ZADD delayedKey : LPUSH skim:queue:$queue; -> worker BRPOP; -> deserialize(); -> unserialize payload; -> handle()]
+#AI flow: Queue::push(job) -> serializeJob() -> delay > 0 ? ZADD delayed : LPUSH queue -> worker BRPOP -> deserialize -> handle()
+#AI lifecycle_steps: [Queue::push(job); -> serializeJob(job, queue); -> job->delay() > 0 ? ZADD delayedKey : LPUSH skim:queue:$queue; -> worker BRPOP; -> deserialize(); -> unserialize payload; -> handle()]
 #AI section_order: [Enqueue; Delayed Jobs; Queue Inspection; Testing Hooks; Architecture]
 #AI architectural_notes: Static facade sharing the Redis connection with the cache subsystem via config. The connection is lazy — not opened until the first queue operation.
 
 #AI:push
 #AI group: Enqueue
 #AI frequency: high
-#AI signature: public static function push(job $job, string $queue = 'default'): void
+#AI signature: public static function push(Job $job, string $queue = 'default'): void
 #AI contract: Pushes a job to the queue. Jobs with delay > 0 go into a sorted set; others are LPUSHed to the Redis list.
 #AI param_details: [{name: $job | type: job | required: true | desc: Job instance to enqueue. Must be serializable.}; {name: $queue | type: string | required: false | desc: Queue name for multi-queue support.}]
 #AI side_effects: Writes to Redis list or sorted set.
@@ -250,7 +250,7 @@ final class Queue {
 #AI:serializeJob
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: public static function serializeJob(job $job, string $queue): string
+#AI signature: public static function serializeJob(Job $job, string $queue): string
 #AI contract: Serializes a job into a JSON payload containing class name, serialized payload, queue, tries, attempts, and timestamp.
 #AI param_details: [{name: $job | type: job | required: true | desc: Job instance to serialize.}; {name: $queue | type: string | required: true | desc: Queue name embedded in the payload.}]
 #AI return_detail: {type: string | desc: JSON-encoded payload string.}

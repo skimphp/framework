@@ -112,7 +112,7 @@ class QueueCommand extends \Skim\Cli\Command {
 #AI intro: `QueueCommand` implements the `php skim queue:*` family of CLI commands. It dispatches to work (start worker), status (show pending counts), flush (remove pending jobs), and restart (signal workers to stop) sub-commands.
 #AI lifecycle: instantiated by kernel, handle() called once per invocation; work sub-command blocks until worker stops
 #AI fallback: unknown sub-commands print an error and return exit code 1
-#AI test_seam: instantiate directly, call setInput() with test args, then handle(); use queue::setRedis() for mock Redis
+#AI test_seam: instantiate directly, call setInput() with test args, then handle(); use Queue::setRedis() for mock Redis
 #AI invariants: [work blocks until worker stops; flush destroys pending jobs; restart sets a Redis timestamp checked by workers]
 #AI core_behaviors: [work starts a long-lived worker with BRPOP polling; status reads queue sizes from Redis; flush deletes queue keys; restart writes a timestamp to Redis]
 #AI warnings: [flush destroys all pending jobs in the specified queue; work blocks the terminal until stopped]
@@ -122,7 +122,7 @@ class QueueCommand extends \Skim\Cli\Command {
 #AI non_goals: [Does not manage job priorities; Does not implement dead-letter queues; Does not handle job scheduling]
 #AI side_effects: [work starts a blocking worker process; flush deletes Redis queue keys; restart writes Redis restart timestamp]
 #AI flow: QueueCommand::handle() -> arg(0) sub-command -> match: work/status/flush/restart -> queue/worker methods
-#AI lifecycle_steps: [handle(); -> arg(0) sub-command; -> match: work -> new worker() -> worker->work(); status -> queue::size(); flush -> queue::flush(); restart -> queue::redis()->set(restart key)]
+#AI lifecycle_steps: [handle(); -> arg(0) sub-command; -> match: work -> new Worker() -> worker->work(); status -> Queue::size(); flush -> Queue::flush(); restart -> Queue::redis()->set(restart key)]
 #AI section_order: [Command Execution; Sub-commands]
 #AI architectural_notes: Thin CLI wrapper over queue and worker classes. The work sub-command is the only blocking operation — all others return immediately.
 

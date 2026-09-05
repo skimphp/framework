@@ -67,7 +67,7 @@ describe('profiler — enabled (debug mode)', function(): void {
 
 });
 
-describe('profiler::reset()', function(): void {
+describe('Profiler::reset()', function(): void {
 
     test('clears event buffer but does not disable profiler', function(): void {
         \Skim\Dev\Profiler::enable();

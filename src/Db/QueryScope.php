@@ -10,7 +10,7 @@ namespace Skim\Db;
  * a terminal method (all, first, count, paginate) is called.
  *
  * Example:
- *   $users = user::where(['status' => 'active'])
+ *   $users = User::where(['status' => 'active'])
  *       ->order('created_at DESC')
  *       ->limit(20)
  *       ->all();
@@ -120,7 +120,7 @@ class QueryScope {
      * Paginates results, returning a pagination value object. #AI:paginate
      *
      * Example:
-     *   $page = user::where(['role' => 'admin'])->paginate(page: 2, per_page: 25);
+     *   $page = User::where(['role' => 'admin'])->paginate(page: 2, per_page: 25);
      *   // $page->items, $page->total, $page->pages, $page->hasNext
      *
      * @param int $page     Current page number (1-indexed).
@@ -135,7 +135,7 @@ class QueryScope {
     /**
      * Exports collected params in QueryBuilder::build() format. #AI:toBuilderParams
      *
-     * Used internally by model::deleteWhere() to build scoped DELETE queries.
+     * Used internally by Model::deleteWhere() to build scoped DELETE queries.
      */
     public function toBuilderParams(): array {
         return array_merge(['where' => $this->conditions], $this->pdoParams);
@@ -177,10 +177,10 @@ class QueryScope {
 #AI role: fluent query builder
 #AI layer: db
 #AI badges: [fluent; builder; orm; no-discard]
-#AI intro: `QueryScope` collects WHERE, ORDER BY, LIMIT, and OFFSET clauses without executing any SQL. Terminal methods (`all()`, `first()`, `count()`, `paginate()`) compile the collected state into a query_gen SQL template and execute it via `db::query()`.
-#AI lifecycle: created by model::where(), consumed by terminal method call
+#AI intro: `QueryScope` collects WHERE, ORDER BY, LIMIT, and OFFSET clauses without executing any SQL. Terminal methods (`all()`, `first()`, `count()`, `paginate()`) compile the collected state into a query_gen SQL template and execute it via `Db::query()`.
+#AI lifecycle: created by Model::where(), consumed by terminal method call
 #AI fallback: none
-#AI test_seam: test via model::where() against test_db() SQLite :memory:
+#AI test_seam: test via Model::where() against test_db() SQLite :memory:
 #AI invariants: [clause methods are #[\NoDiscard] — discarding the return silently loses the clause; repeated where() calls join with AND; order/limit/offset use last-call-wins; count() ignores limit/offset]
 #AI core_behaviors: [Collects conditions without DB access until terminal method; Array conditions auto-generate unique placeholders to avoid collisions; Terminal methods compile to query_gen SQL and execute]
 #AI warnings: [Discarding the return of where()/order()/limit()/offset() loses that clause — always capture or chain]
@@ -191,8 +191,8 @@ class QueryScope {
 #AI config_reads: []
 #AI non_goals: [Does not support JOINs; Does not support GROUP BY or HAVING; Does not cache results]
 #AI side_effects: [Terminal methods execute real DB queries]
-#AI flow: model::where() -> new QueryScope -> chain clauses -> terminal method -> execute() -> db::query()
-#AI lifecycle_steps: [model::where(conditions); -> new QueryScope(class); -> chain where/order/limit/offset; -> terminal method (all/first/count/paginate); -> execute() compiles SQL; -> db::query() with query_gen placeholders]
+#AI flow: Model::where() -> new QueryScope -> chain clauses -> terminal method -> execute() -> Db::query()
+#AI lifecycle_steps: [Model::where(conditions); -> new QueryScope(class); -> chain where/order/limit/offset; -> terminal method (all/first/count/paginate); -> execute() compiles SQL; -> Db::query() with query_gen placeholders]
 #AI section_order: [Clause Methods; Terminal Methods; Internal]
 #AI architectural_notes: QueryScope is a thin collector over query_gen placeholders. All SQL generation happens in QueryBuilder::build() at execution time.
 
@@ -266,5 +266,5 @@ class QueryScope {
 #AI group: Internal
 #AI frequency: internal
 #AI signature: public function toBuilderParams(): array
-#AI contract: Exports collected conditions and params in QueryBuilder::build() format. Used by model::deleteWhere().
+#AI contract: Exports collected conditions and params in QueryBuilder::build() format. Used by Model::deleteWhere().
 #AI return_detail: {type: array | desc: Params array compatible with QueryBuilder::build().}

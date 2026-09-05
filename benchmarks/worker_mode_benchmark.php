@@ -2,7 +2,7 @@
 
 // Benchmarks SKIM in FrankenPHP-style worker mode locally.
 // Spins up a small TCP server, accepts connections, and for each request
-// runs app::beginRequest() → dispatch() → send() → endRequest() in a loop.
+// runs App::beginRequest() → dispatch() → send() → endRequest() in a loop.
 //
 // Usage inside container:
 //   docker compose exec app php benchmarks/worker_mode_benchmark.php [concurrency] [duration] [port]

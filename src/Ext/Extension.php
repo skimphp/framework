@@ -7,18 +7,18 @@ use Skim\Core\App;
 /**
  * Base class for SKIM extensions — declares metadata and lifecycle hooks.
  *
- * Use as the parent class when building a new extension package. Override
+ * Use as the parent class when building a new Extension package. Override
  * register() and boot() for lifecycle hooks; set public properties for
  * metadata; override config(), commands(), etc. for optional contributions.
  *
  * Example:
- *   class my_auth_extension extends extension {
+ *   class my_auth_extension extends Extension {
  *       public string $name = 'acme/auth';
  *       public string $version = '1.0.0';
  *       public array $capabilities = ['auth', 'session-auth'];
  *
- *       public function register(app $app): void { ... }
- *       public function boot(app $app): void { ... }
+ *       public function register(App $app): void { ... }
+ *       public function boot(App $app): void { ... }
  *   }
  *
  * #AI:class
@@ -98,14 +98,14 @@ abstract class Extension {
 #AI:register
 #AI group: Lifecycle Hooks
 #AI frequency: high
-#AI signature: abstract public function register(app $app): void
+#AI signature: abstract public function register(App $app): void
 #AI contract: Called during the registration phase. Bind services, register routes, declare config. Runs before boot().
 #AI param_details: [{name: $app | type: app | required: true | desc: The application container instance.}]
 
 #AI:boot
 #AI group: Lifecycle Hooks
 #AI frequency: high
-#AI signature: abstract public function boot(app $app): void
+#AI signature: abstract public function boot(App $app): void
 #AI contract: Called after all extensions have registered. Start services, warm caches, attach event listeners.
 #AI param_details: [{name: $app | type: app | required: true | desc: The application container instance.}]
 

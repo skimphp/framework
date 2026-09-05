@@ -2,7 +2,7 @@
 
 use Skim\Db\Db;
 
-describe('db::rollbackAll()', function (): void {
+describe('Db::rollbackAll()', function (): void {
 
     test('rolls back open transactions on all pooled connections', function (): void {
         \Skim\Db\Db::reset();

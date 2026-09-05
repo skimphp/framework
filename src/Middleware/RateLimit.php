@@ -14,7 +14,7 @@ use Skim\Core\Response;
  * passthrough (no rate limit) when Redis is unavailable.
  *
  * Example:
- *   $app->router->group('/api', function(router $r) {
+ *   $app->router->group('/api', function(Router $r) {
  *       $r->get('/data', [api_controller::class, 'index']);
  *   }, middleware: [new RateLimit(limit: 100, window: 60)]);
  *
@@ -109,7 +109,7 @@ class RateLimit implements \Skim\Core\Middleware {
 #AI:handle
 #AI group: Middleware
 #AI frequency: high
-#AI signature: public function handle(request $req, response $res, callable $next): mixed
+#AI signature: public function handle(Request $req, Response $res, callable $next): mixed
 #AI contract: Counts the request in a Redis sliding window per IP. Returns 429 when the limit is exceeded. Adds X-RateLimit-* headers. Falls open when Redis is unavailable.
 #AI param_details: [{name: $req | type: request | required: true | desc: Current HTTP request (IP extracted for key).}; {name: $res | type: response | required: true | desc: Current HTTP response (headers added).}; {name: $next | type: callable | required: true | desc: Next middleware or controller.}]
 #AI return_detail: {type: mixed | desc: Response with rate limit headers, or 429 JSON when limit exceeded.}

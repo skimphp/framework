@@ -12,9 +12,9 @@ use Skim\Worker\Resettable;
  * Flash values (stored via flash()) are auto-deleted on the first get() call.
  *
  * Example:
- *   session::set('user_id', $user->id);
- *   session::flash('notice', 'Profile updated');
- *   session::regenerate(); // after login
+ *   Session::set('user_id', $user->id);
+ *   Session::flash('notice', 'Profile updated');
+ *   Session::regenerate(); // after login
  *
  * Testing: Use setDriver() to inject session_fake, reset() to clear state.
  *
@@ -107,8 +107,8 @@ final class Session implements \Skim\Worker\Resettable {
      * when read via get(). Use for one-time notifications after redirects.
      *
      * Example:
-     *   session::flash('notice', 'Item saved successfully');
-     *   // Next request: session::get('notice') returns the message and deletes it
+     *   Session::flash('notice', 'Item saved successfully');
+     *   // Next request: Session::get('notice') returns the message and deletes it
      *
      * @param string $key   Flash key (read back via get() without prefix).
      * @param mixed  $value One-time payload.
@@ -154,9 +154,9 @@ final class Session implements \Skim\Worker\Resettable {
      * in tearDown() to restore normal behavior.
      *
      * Example:
-     *   session::setDriver(new SessionFake());
+     *   Session::setDriver(new SessionFake());
      *   // ... run tests ...
-     *   session::reset();
+     *   Session::reset();
      *
      * @param \Skim\Session\SessionDriver $driver Mock or fake driver for testing.
      */
@@ -221,8 +221,8 @@ final class Session implements \Skim\Worker\Resettable {
 #AI config_reads: [app.session.driver; app.session.prefix; app.session.lifetime; cache.redis.host; cache.redis.port; cache.redis.password]
 #AI non_goals: [Does not encrypt session data; Does not handle session locking; Flash is single-read only, not queued]
 #AI side_effects: [Auto-starts session on first get/set/has/delete; setDriver() replaces active driver; reset() forces re-resolution]
-#AI flow: session::method() -> start() -> driver() -> resolveDriver() -> concrete driver
-#AI lifecycle_steps: [session::get/set/has/delete(); -> start(); -> started?; -> driver(); -> resolveDriver(); -> match config app.session.driver; -> FileSessionDriver or RedisSessionDriver]
+#AI flow: Session::method() -> start() -> driver() -> resolveDriver() -> concrete driver
+#AI lifecycle_steps: [Session::get/set/has/delete(); -> start(); -> started?; -> driver(); -> resolveDriver(); -> match config app.session.driver; -> FileSessionDriver or RedisSessionDriver]
 #AI section_order: [Read API; Write API; Flash Messages; Lifecycle; Testing Hooks; Architecture]
 #AI architectural_notes: Wraps native session drivers to enable test injection and add flash message semantics.
 

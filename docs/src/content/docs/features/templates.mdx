@@ -29,12 +29,12 @@ Always return a `response` object. Never `echo` or `die`.
 use skim\core\response;
 
 class post_controller {
-    public function index(response $response): response {
+    public function index(Response $response): response {
         return $response->view('pages/home', ['title' => 'Welcome']);
     }
 
-    public function show(response $response, int $id): response {
-        $post = post::find($id);
+    public function show(Response $response, int $id): response {
+        $post = Post::find($id);
         return $response->view('pages/post', ['post' => $post]);
     }
 }
@@ -205,7 +205,7 @@ Mark a fragment in the template with HTML comments:
 Request a fragment from the controller:
 
 ```php
-public function stats_widget(response $response): response {
+public function stats_widget(Response $response): response {
     return $response->fragment('pages/dashboard', ['stats_value' => '42'], 'stats_widget');
 }
 ```
@@ -218,10 +218,10 @@ Fragments must be flat — no nesting. The parser validates structure and throws
 
 ### Smart View
 
-`response::smartView()` auto-selects full page or fragment based on request headers. Use it when the same endpoint serves both full-page loads and HTMX partials:
+`Response::smartView()` auto-selects full page or fragment based on request headers. Use it when the same endpoint serves both full-page loads and HTMX partials:
 
 ```php
-public function dashboard(response $response): response {
+public function dashboard(Response $response): response {
     $data = ['stats_value' => '42', 'users' => ['Alice', 'Bob']];
     return $response->smartView('pages/dashboard', $data);
 }
@@ -233,8 +233,8 @@ Cross-cutting values like `current_user` or `appName` can be injected into every
 
 ```php
 // In middleware or boot
-view::share('current_user', $user);
-view::share('app_name', config('app.name'));
+View::share('current_user', $user);
+View::share('app_name', config('app.name'));
 ```
 
 Shared data is merged with per-render data; per-render keys win on conflict.
@@ -248,7 +248,7 @@ Shared data is merged with per-render data; per-render keys win on conflict.
 | Split HTMX responses into fragments | Render full pages for every partial update |
 | Keep fragment markers flat | Nest fragments inside fragments |
 | Use `section()` aliases for readability | Mix `start()` and `section()` in the same file |
-| Set `view::share()` in middleware | Pass the same data in every controller |
+| Set `View::share()` in middleware | Pass the same data in every controller |
 
 ## Helpers
 

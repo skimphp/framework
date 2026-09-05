@@ -4,7 +4,7 @@ use Skim\Db\QueryBuilder;
 use Skim\Db\NullMarker;
 
 // These tests exercise query_builder directly — no PDO, no database required.
-// db::query() with debug:true delegates to QueryBuilder::interpolate() for assertions.
+// Db::query() with debug:true delegates to QueryBuilder::interpolate() for assertions.
 
 describe('QueryBuilder — %where% removal', function(): void {
 

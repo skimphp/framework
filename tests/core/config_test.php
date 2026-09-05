@@ -2,7 +2,7 @@
 
 use Skim\Core\Config;
 
-describe('config::get()', function(): void {
+describe('Config::get()', function(): void {
 
     test('returns default when key not set', function(): void {
         expect(\Skim\Core\Config::get('nonexistent.key', 'fallback'))->toBe('fallback');
@@ -38,7 +38,7 @@ describe('config::get()', function(): void {
 
 });
 
-describe('config::load()', function(): void {
+describe('Config::load()', function(): void {
 
     test('loads php config files from directory', function(): void {
         $dir = sys_get_temp_dir() . '/skim_cfg_' . uniqid();

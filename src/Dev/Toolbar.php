@@ -13,7 +13,7 @@ use Skim\Core\Request;
  *
  * Example:
  *   // Called by toolbar_middleware, not directly:
- *   $html = toolbar::render($req);
+ *   $html = Toolbar::render($req);
  *   $response_body .= $html;
  *
  * Testing: Call render() with a mock request; requires profiler to be populated.
@@ -392,7 +392,7 @@ final class Toolbar {
 #AI role: debug toolbar renderer
 #AI layer: dev
 #AI badges: [dev; debug; toolbar; html; profiler]
-#AI intro: `toolbar` generates a fixed-bottom debug panel with tabbed views for request info, DB queries, cache statistics, timeline breakdown, rendered views, and log entries. It reads all data from profiler::summary() and profiler::events().
+#AI intro: `toolbar` generates a fixed-bottom debug panel with tabbed views for request info, DB queries, cache statistics, timeline breakdown, rendered views, and log entries. It reads all data from Profiler::summary() and Profiler::events().
 #AI lifecycle: called by ToolbarMiddleware after controller returns, before response is sent
 #AI fallback: returns empty string when APP_DEBUG=false
 #AI test_seam: call render() with a mock request after populating profiler
@@ -403,15 +403,15 @@ final class Toolbar {
 #AI config_reads: [app.debug; cache.driver]
 #AI non_goals: [Does not collect events (profiler does); Does not inject itself (ToolbarMiddleware does); Does not render for JSON/AJAX responses]
 #AI side_effects: [generates large HTML string with inline CSS and JavaScript]
-#AI flow: render(req) -> config debug check -> profiler::summary() + events() -> build_*_rows() -> HTML template
-#AI lifecycle_steps: [render(); -> check app.debug; -> profiler::summary(); -> profiler::events(); -> build panels; -> return HTML]
+#AI flow: render(req) -> config debug check -> Profiler::summary() + events() -> build_*_rows() -> HTML template
+#AI lifecycle_steps: [render(); -> check app.debug; -> Profiler::summary(); -> Profiler::events(); -> build panels; -> return HTML]
 #AI section_order: [Rendering; Architecture]
 #AI architectural_notes: Called by ToolbarMiddleware, not directly. The toolbar includes inline CSS and JavaScript for self-contained rendering.
 
 #AI:render
 #AI group: Rendering
 #AI frequency: medium
-#AI signature: public static function render(request $req): string
+#AI signature: public static function render(Request $req): string
 #AI contract: Generates the complete debug toolbar HTML string from profiler data. Returns empty string when APP_DEBUG=false. Builds tabbed panels for request info, DB queries, cache stats, timeline, views, and log entries.
 #AI param_details: [{name: $req | type: request | required: true | desc: Current HTTP request for method/path display in the toolbar header.}]
 #AI return_detail: {type: string | desc: Complete toolbar HTML with inline CSS and JS, or empty string when debug is off.}

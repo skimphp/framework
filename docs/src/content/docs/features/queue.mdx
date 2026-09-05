@@ -16,7 +16,7 @@ class send_email_job extends BaseJob {
     public function __construct(private readonly int $user_id) {}
 
     public function handle(): void {
-        $user = user::find($this->user_id);
+        $user = User::find($this->user_id);
         mailer::send($user->email, 'welcome');
     }
 }
@@ -35,13 +35,13 @@ Push from controllers, models, or other jobs:
 use skim\queue\queue;
 
 // single job
-queue::push(new send_email_job($user_id));
+Queue::push(new send_email_job($user_id));
 
 // named queue
-queue::push(new generate_report_job($id), queue: 'reports');
+Queue::push(new generate_report_job($id), queue: 'reports');
 
 // batch (atomic via Redis pipeline)
-queue::pushMany([$job1, $job2], 'default');
+Queue::pushMany([$job1, $job2], 'default');
 ```
 
 ## Worker
@@ -151,10 +151,10 @@ autorestart=true
 Inject a mock Redis instance to bypass the real connection:
 
 ```php
-queue::setRedis($mock_redis);
-queue::push(new send_email_job(1));
+Queue::setRedis($mock_redis);
+Queue::push(new send_email_job(1));
 // assertions...
-queue::setRedis(null); // reset
+Queue::setRedis(null); // reset
 ```
 
-Use `queue::flush()` to clear queues between tests.
+Use `Queue::flush()` to clear queues between tests.

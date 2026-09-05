@@ -19,7 +19,7 @@ function streamSubprocess(string $phpCode): string {
     return trim($stdout . $stderr);
 }
 
-describe('response::stream() driver resolution', function(): void {
+describe('Response::stream() driver resolution', function(): void {
 
     test('passes a plain sse when no driver is configured', function(): void {
         $code = '

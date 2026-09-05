@@ -10,13 +10,13 @@ namespace Skim\Validation;
  * constructor parameters (e.g., database uniqueness checks).
  *
  * Example:
- *   class unique_rule implements rule {
+ *   class unique_rule implements Rule {
  *       public function __construct(
  *           private string $table,
  *           private string $column,
  *       ) {}
  *       public function validate(mixed $value, string $field, array $data): bool {
- *           return !db::table($this->table)->where($this->column, $value)->exists();
+ *           return !Db::table($this->table)->where($this->column, $value)->exists();
  *       }
  *       public function message(string $field): string {
  *           return "The {$field} is already taken.";
@@ -40,7 +40,7 @@ interface Rule {
 #AI role: validation rule contract
 #AI layer: validation
 #AI badges: [validation; rule; interface; contract]
-#AI intro: `rule` is the interface that custom validation rule objects must implement. It allows rule objects to be placed directly in rule arrays passed to `validate::make()`, enabling complex rules with constructor parameters.
+#AI intro: `rule` is the interface that custom validation rule objects must implement. It allows rule objects to be placed directly in rule arrays passed to `Validate::make()`, enabling complex rules with constructor parameters.
 #AI lifecycle: instantiated by user code, passed in rule arrays, evaluated during check()
 #AI fallback: n/a — interface only
 #AI test_seam: implement and pass in rule arrays

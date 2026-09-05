@@ -10,7 +10,7 @@ namespace Skim\Session;
  *
  * Example:
  *   class db_session_driver implements session_driver { ... }
- *   session::setDriver(new db_session_driver(...));
+ *   Session::setDriver(new db_session_driver(...));
  *
  * Testing: Use session_fake which satisfies this interface in-memory.
  *
@@ -89,7 +89,7 @@ interface SessionDriver {
 #AI non_goals: [Does not prescribe storage mechanism; Does not handle encryption or serialization format]
 #AI side_effects: []
 #AI flow: session facade -> SessionDriver implementation -> backend storage
-#AI lifecycle_steps: [session::start() -> driver::start(); session::get() -> driver::get(); etc.]
+#AI lifecycle_steps: [Session::start() -> Driver::start(); Session::get() -> Driver::get(); etc.]
 #AI section_order: [Session API; Lifecycle; Architecture]
 #AI architectural_notes: Kept minimal — only the operations the session facade needs. Custom drivers may add internal methods.
 

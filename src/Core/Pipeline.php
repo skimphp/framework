@@ -12,10 +12,10 @@ namespace Skim\Core;
  * middleware that returns without calling $next short-circuits the chain.
  *
  * Example:
- *   $res = (new pipeline())->run(
+ *   $res = (new Pipeline())->run(
  *       $req, $res,
- *       middlewares: [cors::class, auth_middleware::class],
- *       core: fn(request $req, response $res) => $controller->handle($req, $res),
+ *       middlewares: [Cors::class, auth_middleware::class],
+ *       core: fn(Request $req, Response $res) => $controller->handle($req, $res),
  *   );
  *
  * Testing: instantiate pipeline directly with test doubles as middlewares and a
@@ -170,7 +170,7 @@ class Pipeline {
 #AI:run
 #AI group: Execution
 #AI frequency: high
-#AI signature: public function run(request $req, response $res, array $middlewares, callable $core): mixed
+#AI signature: public function run(Request $req, Response $res, array $middlewares, callable $core): mixed
 #AI contract: Resolves and chains middlewares, invokes the composed chain, and returns the terminal or short-circuit response.
 #AI param_details: [{name: $req | type: request | required: true | desc: Incoming request}; {name: $res | type: response | required: true | desc: Mutable response}; {name: $middlewares | type: array | required: true | desc: Ordered list of class-string, instance, or factory-array entries}; {name: $core | type: callable | required: true | desc: Terminal handler, signature (request, response): mixed}]
 #AI return_detail: {type: mixed | desc: Response from terminal handler or short-circuit middleware.}
@@ -186,7 +186,7 @@ class Pipeline {
 #AI:resolve
 #AI group: Internals
 #AI frequency: internal
-#AI signature: private function resolve(string|array|middleware $entry): middleware
+#AI signature: private function resolve(string|array|Middleware $entry): middleware
 #AI contract: Normalizes a middleware entry to a concrete middleware instance. Accepts instances (returned as-is), class-strings (instantiated via new), and factory arrays ['class' => ..., 'args' => [...]].
 #AI param_details: [{name: $entry | type: string|array|middleware | required: true | desc: Entry in one of three supported formats}]
 #AI return_detail: {type: middleware | desc: Resolved middleware instance.}

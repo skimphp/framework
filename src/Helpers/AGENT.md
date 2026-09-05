@@ -1,24 +1,24 @@
 # src/helpers — Agent Contract
 
 ## arr helper
-- arr::mapBy('id', $rows) — re-index by column; last-write-wins on collision
-- arr::find() wraps PHP 8.4 array_find() — returns first match or null
-- arr::first() / arr::last() wrap PHP 8.5 array_first() / array_last()
-- arr::pluck('name', $rows) — equivalent to array_column($rows, 'name')
-- arr::weightedPick() — uses random_int (crypto-safe), suitable for A/B tests
+- Arr::mapBy('id', $rows) — re-index by column; last-write-wins on collision
+- Arr::find() wraps PHP 8.4 array_find() — returns first match or null
+- Arr::first() / Arr::last() wrap PHP 8.5 array_first() / array_last()
+- Arr::pluck('name', $rows) — equivalent to array_column($rows, 'name')
+- Arr::weightedPick() — uses random_int (crypto-safe), suitable for A/B tests
 
 ## filter helper
 - All methods return the typed value or false (never null)
-- filter::int() with min/max enforces range; filter::intPositive()/intNatural() are shortcuts
-- filter::bool() accepts '1','true','yes','on' / '0','false','no','off' — rejects ambiguous strings
-- filter::email() lowercases the result — always store as lowercase
-- filter::arrInt()/arrIn() — batch variants for filtering form checkbox arrays
+- Filter::int() with min/max enforces range; Filter::intPositive()/intNatural() are shortcuts
+- Filter::bool() accepts '1','true','yes','on' / '0','false','no','off' — rejects ambiguous strings
+- Filter::email() lowercases the result — always store as lowercase
+- Filter::arrInt()/arrIn() — batch variants for filtering form checkbox arrays
 
 ## str helper
-- str::random() uses random_int — cryptographically safe, safe for tokens/secrets
-- str::uuid() is RFC 4122 v4 — collision probability negligible for app-scale use
-- str::slug() strips non-Unicode letters/numbers — safe for multi-language slugs
+- Str::random() uses random_int — cryptographically safe, safe for tokens/secrets
+- Str::uuid() is RFC 4122 v4 — collision probability negligible for app-scale use
+- Str::slug() strips non-Unicode letters/numbers — safe for multi-language slugs
 
 ## Common mistakes
-- Checking `if (filter::int($v))` instead of `if (filter::int($v) !== false)` — int 0 is falsy!
-- Using str::random() for passwords — use password_hash() instead
+- Checking `if (Filter::int($v))` instead of `if (Filter::int($v) !== false)` — int 0 is falsy!
+- Using Str::random() for passwords — use password_hash() instead

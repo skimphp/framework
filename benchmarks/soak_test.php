@@ -50,7 +50,7 @@ $app->router->post('/contact', function(): mixed {
 
 $app->router->get('/event', function(): array {
     event::on('soak.demo', fn($data) => null);
-    event::emit('soak.demo', ['time' => microtime(true)]);
+    Event::emit('soak.demo', ['time' => microtime(true)]);
     return ['emitted' => true];
 });
 

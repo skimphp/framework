@@ -64,19 +64,19 @@ class SessionFake {
 #AI layer: testing
 #AI badges: [testing; fake; session; in-memory]
 #AI intro: `SessionFake` provides a minimal in-memory session implementation for tests. It stores data in a plain array with no side effects — no cookies, no headers, no Redis.
-#AI lifecycle: instantiated per-test, bound into the container via app::bind()
+#AI lifecycle: instantiated per-test, bound into the container via App::bind()
 #AI fallback: n/a — test-only class
 #AI test_seam: bind into container via $app->bind('session', fn() => new SessionFake())
 #AI invariants: [Data exists only in memory for the lifetime of the object; flush() clears all data; all() returns the full data array]
 #AI core_behaviors: [Plain array storage; Implements the session read/write/has/flush contract]
-#AI notes: Does not implement SessionDriver interface — it provides only the methods PendingRequest needs. Use session::setDriver() with a proper driver for full interface compliance.
+#AI notes: Does not implement SessionDriver interface — it provides only the methods PendingRequest needs. Use Session::setDriver() with a proper driver for full interface compliance.
 #AI owns: in-memory data array
 #AI entry_points: [set; get; has; flush; all]
 #AI config_reads: []
 #AI non_goals: [Does not implement SessionDriver interface; Does not handle flash messages; Does not persist data]
 #AI side_effects: []
 #AI flow: test -> SessionFake::set/get/has/flush -> in-memory array
-#AI lifecycle_steps: [new SessionFake(); -> bind to container; -> controller calls session::get() -> SessionFake::get()]
+#AI lifecycle_steps: [new SessionFake(); -> bind to container; -> controller calls Session::get() -> SessionFake::get()]
 #AI section_order: [Session API; Architecture]
 #AI architectural_notes: Intentionally minimal — only the methods needed by PendingRequest for session injection during tests.
 

@@ -13,13 +13,13 @@ use Skim\Db\Exceptions\NotFoundException;
  * Schema is fetched via DESCRIBE/information_schema on first access and cached.
  *
  * Example:
- *   class user extends model {
+ *   class user extends Model {
  *       protected static string $table = 'users';
  *       public string $email { set(string $val) => strtolower(trim($val)); }
  *   }
- *   $user = user::find(1);           // model|null
- *   $user = user::findOrFail(1);   // model|throws
- *   user::create(['name' => 'John', 'email' => 'J@J.COM']);
+ *   $user = User::find(1);           // model|null
+ *   $user = User::findOrFail(1);   // model|throws
+ *   User::create(['name' => 'John', 'email' => 'J@J.COM']);
  *
  * Testing: Use test_db() for SQLite :memory:, models work directly against it.
  *
@@ -96,7 +96,7 @@ abstract class Model {
      * Chain ->order(), ->limit(), ->paginate() before calling a terminal method.
      *
      * Example:
-     *   $users = user::where(['status' => 'active'])->order('name')->limit(20)->all();
+     *   $users = User::where(['status' => 'active'])->order('name')->limit(20)->all();
      *
      * @param string|array $conditions SQL fragment or column=>value pairs.
      * @param array        $params     PDO params when $conditions is a string.
@@ -272,7 +272,7 @@ abstract class Model {
      * Returns column definitions from DB schema, cached for 1 hour. #AI:schema
      *
      * Supports MySQL (DESCRIBE), PostgreSQL (information_schema), SQLite (PRAGMA).
-     * Cache key: schema:{table}:{connection} — flush with cache::flush('schema:').
+     * Cache key: schema:{table}:{connection} — flush with Cache::flush('schema:').
      */
     public static function schema(): array {
         $cacheKey = 'schema:' . static::$table . ':' . static::$connection;
@@ -445,10 +445,10 @@ abstract class Model {
 #AI owns: attributes array, dirtyCols tracking
 #AI entry_points: [find; findOrFail; findBy; where; all; count; create; raw; deleteWhere; save; delete; fill; toArray; hydrateOne; hydrateMany; schema; columnNames]
 #AI config_reads: [db.*.connection]
-#AI non_goals: [Does not support relations — use MerryModel; Does not provide query builder — use QueryScope via where(); Does not handle validation — use validate::make()]
+#AI non_goals: [Does not support relations — use MerryModel; Does not provide query builder — use QueryScope via where(); Does not handle validation — use Validate::make()]
 #AI side_effects: [save() executes INSERT or UPDATE; delete() executes DELETE; schema() reads and caches DB schema]
-#AI flow: model::find(id) -> db::row() -> hydrateOne() -> model instance; model->save() -> doInsert()/doUpdate() -> db::query()
-#AI lifecycle_steps: [model::find/create/new; -> hydration or fill(); -> attribute assignment with dirty tracking; -> save() checks PK presence; -> doInsert() or doUpdate(); -> db::query() with %values% or %set%; -> dirtyCols reset]
+#AI flow: Model::find(id) -> Db::row() -> hydrateOne() -> model instance; model->save() -> doInsert()/doUpdate() -> Db::query()
+#AI lifecycle_steps: [Model::find/create/new; -> hydration or fill(); -> attribute assignment with dirty tracking; -> save() checks PK presence; -> doInsert() or doUpdate(); -> Db::query() with %values% or %set%; -> dirtyCols reset]
 #AI section_order: [Finders; Query Building; Creation; Persistence; Deletion; Mass Assignment; Hydration; Schema; Accessors]
 #AI architectural_notes: Active record pattern with dirty tracking for efficient updates. Schema caching avoids repeated DESCRIBE calls. Guarded columns protect against mass-assignment vulnerabilities.
 
@@ -507,7 +507,7 @@ abstract class Model {
 #AI group: Creation
 #AI frequency: high
 #AI signature: public static function create(array $data): static
-#AI contract: Creates a new model, mass-assigns non-guarded columns, and persists via save(). Guarded columns in $data are silently ignored.
+#AI contract: Creates a new Model, mass-assigns non-guarded columns, and persists via save(). Guarded columns in $data are silently ignored.
 #AI param_details: [{name: $data | type: array | required: true | desc: Column=>value pairs to assign.}]
 #AI return_detail: {type: static | desc: Persisted model instance with assigned id.}
 #AI side_effects: Executes INSERT query.

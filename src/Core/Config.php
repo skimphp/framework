@@ -11,8 +11,8 @@ namespace Skim\Core;
  * after boot — subsequent load() calls are no-ops.
  *
  * Example:
- *   config::load(__DIR__ . '/../config');
- *   $host = config::get('db.default.host', 'localhost');
+ *   Config::load(__DIR__ . '/../config');
+ *   $host = Config::get('db.default.host', 'localhost');
  *
  * Testing: Use set() to inject values without files, reset() to clear state.
  *
@@ -30,9 +30,9 @@ final class Config {
      * after the first are silently ignored.
      *
      * Example:
-     *   config::load(__DIR__ . '/../config');
-     *   // config/db.php  → config::get('db.default.host')
-     *   // config/app.php → config::get('app.name')
+     *   Config::load(__DIR__ . '/../config');
+     *   // config/db.php  → Config::get('db.default.host')
+     *   // config/app.php → Config::get('app.name')
      *
      * @param string $dir Absolute path to the config directory.
      */
@@ -88,9 +88,9 @@ final class Config {
      * auto-load from overwriting test values. Call reset() in tearDown().
      *
      * Example:
-     *   config::set('db.default.host', 'sqlite::memory:');
+     *   Config::set('db.default.host', 'sqlite::memory:');
      *   // ... run tests ...
-     *   config::reset();
+     *   Config::reset();
      *
      * @param string $key   Dot-separated path to write.
      * @param mixed  $value Value to store at the resolved path.
@@ -186,8 +186,8 @@ final class Config {
 #AI config_reads: []
 #AI non_goals: [Does not write config back to disk; Does not validate config structure; Does not support runtime config reloading]
 #AI side_effects: [load() sets the boot flag preventing further loads; get() triggers lazy load on first call; set() sets boot flag and mutates the in-memory config map]
-#AI flow: config::get(key) -> auto-load if !$booted -> explode('.') -> traverse $data; config::load(dir) -> glob *.php -> require each -> store by filename
-#AI lifecycle_steps: [config::get(key); -> !$booted check; -> auto-load basePath('config'); -> idempotent check; -> glob *.php; -> require each; -> store by filename; -> explode('.'); -> traverse $data]
+#AI flow: Config::get(key) -> auto-load if !$booted -> explode('.') -> traverse $data; Config::load(dir) -> glob *.php -> require each -> store by filename
+#AI lifecycle_steps: [Config::get(key); -> !$booted check; -> auto-load basePath('config'); -> idempotent check; -> glob *.php; -> require each; -> store by filename; -> explode('.'); -> traverse $data]
 #AI section_order: [Read API; Testing Hooks]
 #AI architectural_notes: Config is intentionally simple — plain PHP arrays with no parser overhead. IDE autocomplete works natively on the returned arrays.
 
@@ -198,7 +198,7 @@ final class Config {
 #AI contract: Scans $dir for *.php files, requires each one, and stores the returned array under a key derived from the filename (without extension). Only the first call takes effect; subsequent calls are no-ops.
 #AI param_details: [{name: $dir | type: string | required: true | desc: Absolute path to the directory containing config PHP files.}]
 #AI side_effects: [Sets the boot flag to true; Populates the internal data map from disk files]
-#AI examples: [{label: Boot config | code: config::load(basePath('config'));}]
+#AI examples: [{label: Boot config | code: Config::load(basePath('config'));}]
 
 #AI:get
 #AI group: Read API

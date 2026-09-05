@@ -7,7 +7,7 @@ beforeEach(function(): void {
     \Skim\I18n\I18n::setPath(dirname(__DIR__) . '/fixtures/lang');
 });
 
-describe('i18n::t() — basic translation', function(): void {
+describe('I18n::t() — basic translation', function(): void {
 
     test('returns translation for existing key', function(): void {
         \Skim\I18n\I18n::setLoader(fn($locale, $key) => match ($key) {
@@ -29,7 +29,7 @@ describe('i18n::t() — basic translation', function(): void {
 
 });
 
-describe('i18n::t() — pluralization', function(): void {
+describe('I18n::t() — pluralization', function(): void {
 
     test('uses singular form when count = 1', function(): void {
         \Skim\I18n\I18n::setLoader(fn($l, $k) => 'One item|Many items');

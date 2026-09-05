@@ -143,8 +143,8 @@ final class FileSessionDriver implements \Skim\Session\SessionDriver {
 #AI config_reads: []
 #AI non_goals: [Does not support multi-server session sharing; Does not encrypt session data at rest]
 #AI side_effects: [Writes session files to disk; Sets cookie headers via session_start(); Modifies $_SESSION superglobal]
-#AI flow: session::method() -> FileSessionDriver -> session_* native functions -> $_SESSION
-#AI lifecycle_steps: [session::start(); -> FileSessionDriver::start(); -> mkdir if needed; -> session_set_cookie_params(); -> session_start(); -> $_SESSION available]
+#AI flow: Session::method() -> FileSessionDriver -> session_* native functions -> $_SESSION
+#AI lifecycle_steps: [Session::start(); -> FileSessionDriver::start(); -> mkdir if needed; -> session_set_cookie_params(); -> session_start(); -> $_SESSION available]
 #AI section_order: [Session API; Lifecycle; Testing Hooks; Architecture]
 #AI architectural_notes: Wraps PHP native sessions to enable test injection via the SessionDriver interface.
 
@@ -189,7 +189,7 @@ final class FileSessionDriver implements \Skim\Session\SessionDriver {
 #AI frequency: low
 #AI signature: public function regenerate(): void
 #AI contract: Regenerates the session ID and deletes the old session file. Call after login/logout to prevent session fixation.
-#AI side_effects: [Deletes old session file; Generates new session ID]
+#AI side_effects: [Deletes old session file; Generates new Session ID]
 
 #AI:flush
 #AI group: Lifecycle

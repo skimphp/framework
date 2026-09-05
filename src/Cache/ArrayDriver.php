@@ -11,12 +11,12 @@ namespace Skim\Cache;
  * because state diverges across PHP-FPM workers (same reason APCu is banned).
  *
  * Example:
- *   cache::setDriver(new ArrayDriver());
- *   cache::set('key', 'value', 60);
+ *   Cache::setDriver(new ArrayDriver());
+ *   Cache::set('key', 'value', 60);
  *   // ... run tests ...
- *   cache::reset();
+ *   Cache::reset();
  *
- * Testing: this IS the test driver. Inject via cache::setDriver().
+ * Testing: this IS the test driver. Inject via Cache::setDriver().
  *
  * #AI:class
  */
@@ -136,7 +136,7 @@ final class ArrayDriver implements \Skim\Cache\Driver {
 #AI badges: [driver; cache; in-memory; test-only]
 #AI intro: `Skim\Cache\ArrayDriver` stores cache entries in a PHP array. Values exist only for the current process and are never persisted. TTL is enforced via microtime expiry checked lazily on read. This is the default driver for Pest/PHPUnit tests.
 #AI lifecycle: process-scoped, resets naturally between requests
-#AI test_seam: inject via cache::setDriver(new ArrayDriver())
+#AI test_seam: inject via Cache::setDriver(new ArrayDriver())
 #AI invariants: [all operations return true; expired keys are lazily removed on has()/get(); flushAll() clears the entire store]
 #AI warnings: [Not suitable for production — state diverges across PHP-FPM workers]
 #AI notes: Why not APCu: APCu state is per-process, inconsistent under PHP-FPM multi-worker. ArrayDriver is the safe alternative for tests.

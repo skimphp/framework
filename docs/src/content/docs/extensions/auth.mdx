@@ -17,8 +17,8 @@ The SKIM Auth extension handles the entire user authentication and authorization
 Protect your routes using the `auth` middleware:
 
 ```php
-router::group(['middleware' => 'auth'], function() {
-    router::get('/dashboard', [DashboardController::class, 'index']);
+Router::group(['middleware' => 'auth'], function() {
+    Router::get('/dashboard', [DashboardController::class, 'index']);
 });
 ```
 
