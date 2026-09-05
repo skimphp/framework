@@ -59,7 +59,7 @@ describe('worker lifecycle — in-process gate (T2)', function (): void {
 
     test('request-time event listeners do not accumulate', function (): void {
         $app = bootWorkerApp();
-        $boot_baseline = \Skim\Events\Event::listenerCount('boot.ping');
+        $bootBaseline = \Skim\Events\Event::listenerCount('boot.ping');
 
         for ($i = 0; $i < 10; $i++) {
             runOnce($app, '/ping');
@@ -67,7 +67,7 @@ describe('worker lifecycle — in-process gate (T2)', function (): void {
             runOnce($app, '/ping'); // end_request triggers reset
         }
 
-        expect(\Skim\Events\Event::listenerCount('boot.ping'))->toBe($boot_baseline);
+        expect(\Skim\Events\Event::listenerCount('boot.ping'))->toBe($bootBaseline);
         expect(\Skim\Events\Event::listenerCount('req.ping'))->toBe(0);
     });
 
@@ -89,7 +89,7 @@ describe('worker lifecycle — in-process gate (T2)', function (): void {
 
     test('post-error isolation leaves no stale state', function (): void {
         $app = bootWorkerApp();
-        $baseline_ob = ob_get_level();
+        $baselineOb = ob_get_level();
 
         runOnce($app, '/boom');
 
@@ -97,7 +97,7 @@ describe('worker lifecycle — in-process gate (T2)', function (): void {
 
         expect($app->get('user.name'))->toBeNull();
         expect(\Skim\View\ComponentCollector::current())->toBeNull();
-        expect(ob_get_level())->toBe($baseline_ob);
+        expect(ob_get_level())->toBe($baselineOb);
     });
 
     test('memory is bounded over many requests', function (): void {
@@ -109,14 +109,14 @@ describe('worker lifecycle — in-process gate (T2)', function (): void {
         }
 
         $baseline = memory_get_usage(true);
-        $peak_delta = 0;
+        $peakDelta = 0;
 
         for ($i = 0; $i < 1000; $i++) {
             runOnce($app, '/ping');
-            $peak_delta = max($peak_delta, memory_get_usage(true) - $baseline);
+            $peakDelta = max($peakDelta, memory_get_usage(true) - $baseline);
         }
 
-        $mb = $peak_delta / 1024 / 1024;
+        $mb = $peakDelta / 1024 / 1024;
         expect($mb)->toBeLessThan(1.0,
             "Memory grew {$mb} MB over 1000 requests after warmup"
         );

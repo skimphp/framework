@@ -108,8 +108,8 @@ class FragmentExtractor {
         foreach ($tokens as $i => $token) {
             if ($token['type'] === 'fragment' && $token['name'] === $name) {
                 $start     = $token['offset'] + $token['length'];
-                $end_token = $tokens[$i + 1]; // next token must be @end
-                $end       = $end_token['offset'];
+                $endToken = $tokens[$i + 1]; // next token must be @end
+                $end       = $endToken['offset'];
 
                 return trim(substr($html, $start, $end - $start));
             }

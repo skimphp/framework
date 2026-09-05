@@ -21,15 +21,15 @@ use Skim\Worker\Resettable;
  * #AI:class
  */
 final class View implements \Skim\Worker\Resettable {
-    private static string  $views_path     = '';
-    private static array   $shared_data    = [];
-    private static ?string $default_layout = null;
+    private static string  $viewsPath     = '';
+    private static array   $sharedData    = [];
+    private static ?string $defaultLayout = null;
 
     /**
      * Clears shared data between requests in worker mode. #AI:resetRequest
      */
     public static function resetRequest(): void {
-        self::$shared_data = [];
+        self::$sharedData = [];
     }
 
     /**
@@ -52,9 +52,9 @@ final class View implements \Skim\Worker\Resettable {
         $t = microtime(true);
 
         // CRITICAL: Disable layout if only a fragment is needed for HTMX performance
-        $layout = $fragment ? null : self::$default_layout;
+        $layout = $fragment ? null : self::$defaultLayout;
 
-        $ctx = new \Skim\View\Template(self::viewsPath(), array_merge(self::$shared_data, $data), $layout, $fragment !== null);
+        $ctx = new \Skim\View\Template(self::viewsPath(), array_merge(self::$sharedData, $data), $layout, $fragment !== null);
         $html = $ctx->renderFile($template);
 
         if ($fragment !== null) {
@@ -86,7 +86,7 @@ final class View implements \Skim\Worker\Resettable {
      * @param mixed  $value Shared variable value.
      */
     public static function share(string $key, mixed $value): void {
-        self::$shared_data[$key] = $value;
+        self::$sharedData[$key] = $value;
     }
     /**
      * Returns a shared data value, or null if not set. #AI:get_shared
@@ -94,7 +94,7 @@ final class View implements \Skim\Worker\Resettable {
      * @param string $key Shared variable name.
      */
     public static function getShared(string $key): mixed {
-        return self::$shared_data[$key] ?? null;
+        return self::$sharedData[$key] ?? null;
     }
 
     /**
@@ -105,7 +105,7 @@ final class View implements \Skim\Worker\Resettable {
      * @param string $path Absolute path to the views directory.
      */
     public static function setPath(string $path): void {
-        self::$views_path = rtrim($path, '/');
+        self::$viewsPath = rtrim($path, '/');
     }
 
     /**
@@ -116,7 +116,7 @@ final class View implements \Skim\Worker\Resettable {
      * @param string|null $name Layout template path, or null to disable.
      */
     public static function setDefaultLayout(?string $name): void {
-        self::$default_layout = $name;
+        self::$defaultLayout = $name;
     }
 
     /**
@@ -125,9 +125,9 @@ final class View implements \Skim\Worker\Resettable {
      * Call in tearDown() to restore defaults between tests.
      */
     public static function reset(): void {
-        self::$views_path     = '';
-        self::$shared_data    = [];
-        self::$default_layout = null;
+        self::$viewsPath     = '';
+        self::$sharedData    = [];
+        self::$defaultLayout = null;
     }
 
     /**
@@ -152,8 +152,8 @@ final class View implements \Skim\Worker\Resettable {
     // --- internals ---
 
     public static function viewsPath(): string {
-        if (self::$views_path !== '') {
-            return self::$views_path;
+        if (self::$viewsPath !== '') {
+            return self::$viewsPath;
         }
         $root = defined('SKIM_ROOT') ? \SKIM_ROOT : dirname(__DIR__, 3);
         return $root . '/app/views';

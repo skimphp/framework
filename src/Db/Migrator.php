@@ -22,11 +22,11 @@ namespace Skim\Db;
  */
 final class Migrator {
     private string $table      = '_migrations';
-    private string $migrations_dir;
+    private string $migrationsDir;
     private string $connection;
 
     public function __construct(string $migrationsDir, string $connection = 'default') {
-        $this->migrations_dir = rtrim($migrationsDir, '/');
+        $this->migrationsDir = rtrim($migrationsDir, '/');
         $this->connection     = $connection;
     }
 
@@ -95,10 +95,10 @@ final class Migrator {
             );
         }
 
-        $rolled_back = [];
+        $rolledBack = [];
 
         foreach ($rows as $row) {
-            $file = $this->migrations_dir . '/' . $row['filename'];
+            $file = $this->migrationsDir . '/' . $row['filename'];
             if (!is_file($file)) {
                 continue;
             }
@@ -111,10 +111,10 @@ final class Migrator {
                     connection: $this->connection,
                 );
             }, $this->connection);
-            $rolled_back[] = $row['filename'];
+            $rolledBack[] = $row['filename'];
         }
 
-        return $rolled_back;
+        return $rolledBack;
     }
 
     /**
@@ -129,7 +129,7 @@ final class Migrator {
     public function fresh(): void {
         $applied = array_reverse($this->appliedFilenames());
         foreach ($applied as $filename) {
-            $file = $this->migrations_dir . '/' . $filename;
+            $file = $this->migrationsDir . '/' . $filename;
             if (is_file($file)) {
                 $migration = require $file;
                 $this->executeSql($migration->down());
@@ -173,7 +173,7 @@ final class Migrator {
     private function ensureTable(): void {
         $driver = \Skim\Db\Db::pdo($this->connection)->getAttribute(\PDO::ATTR_DRIVER_NAME);
 
-		$id_col = match ($driver) {
+		$idCol = match ($driver) {
             'pgsql'  => 'id SERIAL PRIMARY KEY',
             'sqlite' => 'id INTEGER PRIMARY KEY AUTOINCREMENT',
             default  => 'id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY',
@@ -196,7 +196,7 @@ final class Migrator {
 
         \Skim\Db\Db::query(
             "CREATE TABLE IF NOT EXISTS {$this->table} (
-                {$id_col},
+                {$idCol},
                 filename {$text} NOT NULL,
                 batch    INT NOT NULL
                 {$suffix}",
@@ -215,7 +215,7 @@ final class Migrator {
     }
 
     private function loadAll(): array {
-        $files = glob($this->migrations_dir . '/*.php') ?: [];
+        $files = glob($this->migrationsDir . '/*.php') ?: [];
         sort($files);
         $migrations = [];
         foreach ($files as $file) {

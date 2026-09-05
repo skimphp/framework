@@ -35,10 +35,10 @@ class InstallCommand extends \Skim\Cli\Command {
         \Skim\Cli\Cli::bold('SKIM Framework Installer');
         \Skim\Cli\Cli::line();
 
-        $env_path = basePath('.env');
+        $envPath = basePath('.env');
         $force    = (bool) $this->flag('force', false);
 
-        if (file_exists($env_path) && !$force) {
+        if (file_exists($envPath) && !$force) {
             $overwrite = \Skim\Cli\Cli::confirm('.env already exists. Overwrite?', false);
             if (!$overwrite) {
                 \Skim\Cli\Cli::info('Installation cancelled. Existing .env kept.');
@@ -47,84 +47,84 @@ class InstallCommand extends \Skim\Cli\Command {
         }
 
         \Skim\Cli\Cli::info('[ Application ]');
-        $app_name  = \Skim\Cli\Cli::ask('Application name', 'SKIM App');
-        $app_env   = \Skim\Cli\Cli::choice('Environment', ['local', 'staging', 'production'], 'local');
-        $app_debug = ($app_env === 'local') ? 'true' : 'false';
-        $app_key   = $this->generateKey();
+        $appName  = \Skim\Cli\Cli::ask('Application name', 'SKIM App');
+        $appEnv   = \Skim\Cli\Cli::choice('Environment', ['local', 'staging', 'production'], 'local');
+        $appDebug = ($appEnv === 'local') ? 'true' : 'false';
+        $appKey   = $this->generateKey();
 
         \Skim\Cli\Cli::line();
         \Skim\Cli\Cli::info('[ Database ]');
-        $db_driver = \Skim\Cli\Cli::choice('DB driver', ['mysql', 'pgsql', 'sqlite'], 'mysql');
+        $dbDriver = \Skim\Cli\Cli::choice('DB driver', ['mysql', 'pgsql', 'sqlite'], 'mysql');
 
-        if ($db_driver === 'sqlite') {
-            $db_host = '';
-            $db_port = '';
-            $db_name = \Skim\Cli\Cli::ask('SQLite file path', basePath('database/app.sqlite'));
-            $db_user = '';
-            $db_pass = '';
+        if ($dbDriver === 'sqlite') {
+            $dbHost = '';
+            $dbPort = '';
+            $dbName = \Skim\Cli\Cli::ask('SQLite file path', basePath('database/app.sqlite'));
+            $dbUser = '';
+            $dbPass = '';
         } else {
-            $default_host = $db_driver === 'mysql' ? 'mysql' : 'pgsql';
-            $default_port = $db_driver === 'mysql' ? '3306' : '5432';
-            $db_host = \Skim\Cli\Cli::ask('DB host', $default_host);
-            $db_port = \Skim\Cli\Cli::ask('DB port', $default_port);
-            $db_name = \Skim\Cli\Cli::ask('DB name', 'skim_dev');
-            $db_user = \Skim\Cli\Cli::ask('DB user', 'skim');
-            $db_pass = \Skim\Cli\Cli::ask('DB password', 'secret');
+            $defaultHost = $dbDriver === 'mysql' ? 'mysql' : 'pgsql';
+            $defaultPort = $dbDriver === 'mysql' ? '3306' : '5432';
+            $dbHost = \Skim\Cli\Cli::ask('DB host', $defaultHost);
+            $dbPort = \Skim\Cli\Cli::ask('DB port', $defaultPort);
+            $dbName = \Skim\Cli\Cli::ask('DB name', 'skim_dev');
+            $dbUser = \Skim\Cli\Cli::ask('DB user', 'skim');
+            $dbPass = \Skim\Cli\Cli::ask('DB password', 'secret');
         }
 
         \Skim\Cli\Cli::line();
         \Skim\Cli\Cli::info('[ Cache ]');
-        $cache_driver = \Skim\Cli\Cli::choice('Cache driver', ['redis', 'file', 'array'], 'redis');
+        $cacheDriver = \Skim\Cli\Cli::choice('Cache driver', ['redis', 'file', 'array'], 'redis');
 
-        $redis_host = 'redis';
-        $redis_port = '6379';
-        $redis_pass = '';
-        $redis_db   = '0';
+        $redisHost = 'redis';
+        $redisPort = '6379';
+        $redisPass = '';
+        $redisDb   = '0';
 
-        if ($cache_driver === 'redis') {
-            $redis_host = \Skim\Cli\Cli::ask('Redis host', 'redis');
-            $redis_port = \Skim\Cli\Cli::ask('Redis port', '6379');
-            $redis_pass = \Skim\Cli\Cli::ask('Redis password (leave blank for none)', '');
+        if ($cacheDriver === 'redis') {
+            $redisHost = \Skim\Cli\Cli::ask('Redis host', 'redis');
+            $redisPort = \Skim\Cli\Cli::ask('Redis port', '6379');
+            $redisPass = \Skim\Cli\Cli::ask('Redis password (leave blank for none)', '');
         }
 
         \Skim\Cli\Cli::line();
         \Skim\Cli\Cli::info('[ Logging ]');
-        $log_channel = \Skim\Cli\Cli::choice('Log channel', ['file', 'null'], 'file');
-        $log_level   = \Skim\Cli\Cli::choice('Log level', ['debug', 'info', 'warning', 'error'], 'debug');
+        $logChannel = \Skim\Cli\Cli::choice('Log channel', ['file', 'null'], 'file');
+        $logLevel   = \Skim\Cli\Cli::choice('Log level', ['debug', 'info', 'warning', 'error'], 'debug');
 
         $env = $this->buildEnv([
-            'APP_NAME'     => "\"{$app_name}\"",
-            'APP_ENV'      => $app_env,
-            'APP_DEBUG'    => $app_debug,
-            'APP_KEY'      => $app_key,
-            'DB_DRIVER'    => $db_driver,
-            'DB_HOST'      => $db_host,
-            'DB_PORT'      => $db_port,
-            'DB_NAME'      => $db_name,
-            'DB_USER'      => $db_user,
-            'DB_PASS'      => $db_pass,
-            'CACHE_DRIVER' => $cache_driver,
-            'REDIS_HOST'   => $redis_host,
-            'REDIS_PORT'   => $redis_port,
-            'REDIS_PASS'   => $redis_pass,
-            'REDIS_DB'     => $redis_db,
-            'LOG_CHANNEL'  => $log_channel,
-            'LOG_LEVEL'    => $log_level,
+            'APP_NAME'     => "\"{$appName}\"",
+            'APP_ENV'      => $appEnv,
+            'APP_DEBUG'    => $appDebug,
+            'APP_KEY'      => $appKey,
+            'DB_DRIVER'    => $dbDriver,
+            'DB_HOST'      => $dbHost,
+            'DB_PORT'      => $dbPort,
+            'DB_NAME'      => $dbName,
+            'DB_USER'      => $dbUser,
+            'DB_PASS'      => $dbPass,
+            'CACHE_DRIVER' => $cacheDriver,
+            'REDIS_HOST'   => $redisHost,
+            'REDIS_PORT'   => $redisPort,
+            'REDIS_PASS'   => $redisPass,
+            'REDIS_DB'     => $redisDb,
+            'LOG_CHANNEL'  => $logChannel,
+            'LOG_LEVEL'    => $logLevel,
         ]);
 
-        file_put_contents($env_path, $env);
+        file_put_contents($envPath, $env);
         \Skim\Cli\Cli::line();
-        \Skim\Cli\Cli::success('.env written to ' . $env_path);
+        \Skim\Cli\Cli::success('.env written to ' . $envPath);
 
         \Skim\Core\Env::reset();
-        \Skim\Core\Env::load($env_path);
+        \Skim\Core\Env::load($envPath);
         \Skim\Core\Config::reset();
         \Skim\Core\Config::load(basePath('config'));
 
         if (!$this->flag('no-migrate', false)) {
             \Skim\Cli\Cli::line();
-            $run_mig = \Skim\Cli\Cli::confirm('Run migrations now?', true);
-            if ($run_mig) {
+            $runMig = \Skim\Cli\Cli::confirm('Run migrations now?', true);
+            if ($runMig) {
                 $migrate = new \Skim\Cli\Commands\MigrateCommand();
                 $migrate->setInput([], []);
                 return $migrate->handle();

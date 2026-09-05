@@ -34,14 +34,14 @@ final class Pagination {
     /**
      * True when there is a next page beyond the current one. #AI:has_next
      */
-    public bool $has_next {
+    public bool $hasNext {
         get => $this->current < $this->pages;
     }
 
     /**
      * True when the current page is greater than 1. #AI:has_prev
      */
-    public bool $has_prev {
+    public bool $hasPrev {
         get => $this->current > 1;
     }
 }

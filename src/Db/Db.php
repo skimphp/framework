@@ -165,18 +165,18 @@ class Db {
         bool   $debug = false,
         string $connection = 'default',
     ): mixed {
-        [$built_sql, $pdo_params] = \Skim\Db\QueryBuilder::build($sql, $params);
+        [$builtSql, $pdoParams] = \Skim\Db\QueryBuilder::build($sql, $params);
 
         if ($debug) {
-            return \Skim\Db\QueryBuilder::interpolate($built_sql, $pdo_params);
+            return \Skim\Db\QueryBuilder::interpolate($builtSql, $pdoParams);
         }
 
         $t    = microtime(true);
-        $stmt = self::pdo($connection)->prepare($built_sql);
-        $stmt->execute($pdo_params);
+        $stmt = self::pdo($connection)->prepare($builtSql);
+        $stmt->execute($pdoParams);
         $rows = $stmt->fetchAll();
 
-        \Skim\Dev\Profiler::db(\Skim\Db\QueryBuilder::interpolate($built_sql, $pdo_params), (microtime(true) - $t) * 1000, $connection, count($rows));
+        \Skim\Dev\Profiler::db(\Skim\Db\QueryBuilder::interpolate($builtSql, $pdoParams), (microtime(true) - $t) * 1000, $connection, count($rows));
 
         return $rows !== [] ? $rows : $stmt->rowCount();
     }
@@ -195,12 +195,12 @@ class Db {
         array  $params = [],
         string $connection = 'default',
     ): mixed {
-        [$built_sql, $pdo_params] = \Skim\Db\QueryBuilder::build($sql, $params);
+        [$builtSql, $pdoParams] = \Skim\Db\QueryBuilder::build($sql, $params);
         $t    = microtime(true);
-        $stmt = self::pdo($connection)->prepare($built_sql);
-        $stmt->execute($pdo_params);
+        $stmt = self::pdo($connection)->prepare($builtSql);
+        $stmt->execute($pdoParams);
         $row  = $stmt->fetch(\PDO::FETCH_NUM);
-        \Skim\Dev\Profiler::db(\Skim\Db\QueryBuilder::interpolate($built_sql, $pdo_params), (microtime(true) - $t) * 1000, $connection, $row ? 1 : 0);
+        \Skim\Dev\Profiler::db(\Skim\Db\QueryBuilder::interpolate($builtSql, $pdoParams), (microtime(true) - $t) * 1000, $connection, $row ? 1 : 0);
         return $row ? $row[0] : null;
     }
 
@@ -218,12 +218,12 @@ class Db {
         array  $params = [],
         string $connection = 'default',
     ): ?array {
-        [$built_sql, $pdo_params] = \Skim\Db\QueryBuilder::build($sql, $params);
+        [$builtSql, $pdoParams] = \Skim\Db\QueryBuilder::build($sql, $params);
         $t    = microtime(true);
-        $stmt = self::pdo($connection)->prepare($built_sql);
-        $stmt->execute($pdo_params);
+        $stmt = self::pdo($connection)->prepare($builtSql);
+        $stmt->execute($pdoParams);
         $row  = $stmt->fetch() ?: null;
-        \Skim\Dev\Profiler::db(\Skim\Db\QueryBuilder::interpolate($built_sql, $pdo_params), (microtime(true) - $t) * 1000, $connection, $row ? 1 : 0);
+        \Skim\Dev\Profiler::db(\Skim\Db\QueryBuilder::interpolate($builtSql, $pdoParams), (microtime(true) - $t) * 1000, $connection, $row ? 1 : 0);
         return $row;
     }
 
@@ -241,12 +241,12 @@ class Db {
         array  $params = [],
         string $connection = 'default',
     ): array {
-        [$built_sql, $pdo_params] = \Skim\Db\QueryBuilder::build($sql, $params);
+        [$builtSql, $pdoParams] = \Skim\Db\QueryBuilder::build($sql, $params);
         $t    = microtime(true);
-        $stmt = self::pdo($connection)->prepare($built_sql);
-        $stmt->execute($pdo_params);
+        $stmt = self::pdo($connection)->prepare($builtSql);
+        $stmt->execute($pdoParams);
         $rows = $stmt->fetchAll();
-        \Skim\Dev\Profiler::db(\Skim\Db\QueryBuilder::interpolate($built_sql, $pdo_params), (microtime(true) - $t) * 1000, $connection, count($rows));
+        \Skim\Dev\Profiler::db(\Skim\Db\QueryBuilder::interpolate($builtSql, $pdoParams), (microtime(true) - $t) * 1000, $connection, count($rows));
         return $rows;
     }
 

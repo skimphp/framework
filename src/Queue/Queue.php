@@ -20,8 +20,8 @@ namespace Skim\Queue;
  * #AI:class
  */
 final class Queue {
-    private static string  $queue_key    = 'skim:queue:default';
-    private static string  $delayed_key  = 'skim:queue:delayed';
+    private static string  $queueKey    = 'skim:queue:default';
+    private static string  $delayedKey  = 'skim:queue:delayed';
     private static ?\Redis $redis        = null;
 
     /**
@@ -38,8 +38,8 @@ final class Queue {
         $delay   = $job->delay();
 
         if ($delay > 0) {
-            $execute_at = time() + $delay;
-            self::redis()->zadd(self::$delayed_key, $execute_at, $payload);
+            $executeAt = time() + $delay;
+            self::redis()->zadd(self::$delayedKey, $executeAt, $payload);
         } else {
             self::redis()->lpush('skim:queue:' . $queue, $payload);
         }
@@ -74,14 +74,14 @@ final class Queue {
      */
     public static function promoteDelayed(): int {
         $now   = time();
-        $jobs  = self::redis()->zrangebyscore(self::$delayed_key, '-inf', (string) $now);
+        $jobs  = self::redis()->zrangebyscore(self::$delayedKey, '-inf', (string) $now);
         $count = 0;
 
         foreach ($jobs as $payload) {
             $data  = json_decode($payload, true);
             $queue = $data['queue'] ?? 'default';
             self::redis()->lpush('skim:queue:' . $queue, $payload);
-            self::redis()->zrem(self::$delayed_key, $payload);
+            self::redis()->zrem(self::$delayedKey, $payload);
             $count++;
         }
 

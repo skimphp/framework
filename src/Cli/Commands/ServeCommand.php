@@ -35,22 +35,22 @@ class ServeCommand extends \Skim\Cli\Command {
         $this->muted('Press Ctrl+C to stop.');
         $this->line();
 
-        $ini_flags = trim((string) (getenv('PHP_INI_FLAGS') ?? ''));
-        $ini_args  = $ini_flags === '' ? '' : ' ' . $ini_flags;
+        $iniFlags = trim((string) (getenv('PHP_INI_FLAGS') ?? ''));
+        $iniArgs  = $iniFlags === '' ? '' : ' ' . $iniFlags;
         $workers   = (int) (getenv('PHP_CLI_SERVER_WORKERS') ?? 0);
         $preload   = basePath('storage/preload.php');
-        $preload_arg = is_file($preload) ? ' -d opcache.preload=' . escapeshellarg($preload) : '';
-        $php_cmd   = "php{$ini_args}{$preload_arg} -S {$host}:{$port} -t {$root}";
+        $preloadArg = is_file($preload) ? ' -d opcache.preload=' . escapeshellarg($preload) : '';
+        $phpCmd   = "php{$iniArgs}{$preloadArg} -S {$host}:{$port} -t {$root}";
         if ($workers > 0) {
-            $php_cmd = "PHP_CLI_SERVER_WORKERS={$workers} {$php_cmd}";
+            $phpCmd = "PHP_CLI_SERVER_WORKERS={$workers} {$phpCmd}";
         }
-        $vite_cmd = file_exists(basePath('package.json')) ? 'npm run dev' : null;
+        $viteCmd = file_exists(basePath('package.json')) ? 'npm run dev' : null;
 
         $procs = [];
-        $procs[] = proc_open($php_cmd, [STDIN, STDOUT, STDERR], $pipes, basePath());
+        $procs[] = proc_open($phpCmd, [STDIN, STDOUT, STDERR], $pipes, basePath());
 
-        if ($vite_cmd !== null) {
-            $procs[] = proc_open($vite_cmd, [STDIN, STDOUT, STDERR], $pipes2, basePath());
+        if ($viteCmd !== null) {
+            $procs[] = proc_open($viteCmd, [STDIN, STDOUT, STDERR], $pipes2, basePath());
         }
 
         foreach ($procs as $proc) {

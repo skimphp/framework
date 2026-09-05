@@ -16,16 +16,16 @@ describe('app DI tracing', function(): void {
     test('enable_tracing() flips the flag and clears state', function(): void {
         $a = \Skim\Core\App::testInstance();
         $a->tracing        = true;
-        $a->resolve_stack  = [['id' => 'stale', 'time' => 0.0]];
-        $a->failed_at      = 'stale';
-        $a->partial_args   = ['stale'];
+        $a->resolveStack  = [['id' => 'stale', 'time' => 0.0]];
+        $a->failedAt      = 'stale';
+        $a->partialArgs   = ['stale'];
 
         $a->enableTracing();
 
         expect($a->tracing)->toBeTrue();
-        expect($a->resolve_stack)->toBe([]);
-        expect($a->failed_at)->toBeNull();
-        expect($a->partial_args)->toBe([]);
+        expect($a->resolveStack)->toBe([]);
+        expect($a->failedAt)->toBeNull();
+        expect($a->partialArgs)->toBe([]);
     });
 
     test('disable_tracing() clears state and flips the flag off', function(): void {
@@ -34,9 +34,9 @@ describe('app DI tracing', function(): void {
         $a->disableTracing();
 
         expect($a->tracing)->toBeFalse();
-        expect($a->resolve_stack)->toBe([]);
-        expect($a->failed_at)->toBeNull();
-        expect($a->partial_args)->toBe([]);
+        expect($a->resolveStack)->toBe([]);
+        expect($a->failedAt)->toBeNull();
+        expect($a->partialArgs)->toBe([]);
     });
 
     test('resolve_stack records in-flight chain when tracing is on', function(): void {
@@ -47,7 +47,7 @@ describe('app DI tracing', function(): void {
         $a->make('svc.a');
 
         // make() pushes to stack then pops on success — stack must be empty
-        expect($a->resolve_stack)->toBe([]);
+        expect($a->resolveStack)->toBe([]);
     });
 
     test('failed_at is captured when a binding throws', function(): void {
@@ -65,8 +65,8 @@ describe('app DI tracing', function(): void {
             // expected
         }
 
-        expect($a->failed_at)->toBe('svc.bad');
-        expect($a->resolve_stack)->toBe([]); // cleaned up after throw
+        expect($a->failedAt)->toBe('svc.bad');
+        expect($a->resolveStack)->toBe([]); // cleaned up after throw
     });
 
     test('bindings_snapshot is captured after boot()', function(): void {
@@ -75,8 +75,8 @@ describe('app DI tracing', function(): void {
         $a->bind('svc.bar', fn() => new \stdClass());
         $a->boot();
 
-        expect($a->bindings_snapshot)->toBeArray();
-        $abstracts = array_column($a->bindings_snapshot, 'abstract');
+        expect($a->bindingsSnapshot)->toBeArray();
+        $abstracts = array_column($a->bindingsSnapshot, 'abstract');
         expect($abstracts)->toContain('svc.foo');
         expect($abstracts)->toContain('svc.bar');
     });
@@ -88,23 +88,23 @@ describe('app DI tracing', function(): void {
 
         $snap = $a->snapshotBindings();
 
-        $closure_row = null;
-        $class_row   = null;
+        $closureRow = null;
+        $classRow   = null;
         foreach ($snap as $row) {
             if ($row['abstract'] === 'svc.closure') {
-                $closure_row = $row;
+                $closureRow = $row;
             }
             if ($row['abstract'] === \stdClass::class) {
-                $class_row = $row;
+                $classRow = $row;
             }
         }
 
         // Default priority for non-extension binds is 100, but the explicit
         // priority of 100 in the second bind proves the value is recorded.
-        expect($closure_row['factory_kind'])->toBe('closure');
-        expect($closure_row['priority'])->toBe(100);
-        expect($class_row['factory_kind'])->toBe('closure');
-        expect($class_row['priority'])->toBe(100);
+        expect($closureRow['factory_kind'])->toBe('closure');
+        expect($closureRow['priority'])->toBe(100);
+        expect($classRow['factory_kind'])->toBe('closure');
+        expect($classRow['priority'])->toBe(100);
     });
 
     test('tracing is allocation-free when disabled (no array push)', function(): void {
@@ -115,8 +115,8 @@ describe('app DI tracing', function(): void {
         $a->make('svc.simple');
 
         // resolve_stack should be empty (and untouched) when tracing is off
-        expect($a->resolve_stack)->toBe([]);
-        expect($a->failed_at)->toBeNull();
+        expect($a->resolveStack)->toBe([]);
+        expect($a->failedAt)->toBeNull();
     });
 
     test('resolved_services() returns the sorted list of resolved abstracts', function(): void {

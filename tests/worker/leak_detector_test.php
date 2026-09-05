@@ -85,8 +85,8 @@ describe('leak_detector — hard invariants', function (): void {
         ]);
 
         // Bind leaky singletons BEFORE freeze
-        static $leak_arr = [];
-        $app->bind('leaky.svc', fn() => $leak_arr[] = 'x');
+        static $leakArr = [];
+        $app->bind('leaky.svc', fn() => $leakArr[] = 'x');
 
         $app->router->get('/ping', fn(): array => ['ok' => true]);
         \Skim\Events\Event::on('boot.ping', fn() => null);
@@ -112,8 +112,8 @@ describe('leak_detector — hard invariants', function (): void {
         }
 
         $findings = \Skim\Worker\LeakDetector::findings();
-        $growth_keys = array_filter($findings, fn($f) => str_starts_with($f['key'], 'growth.'));
-        expect(count($growth_keys))->toBeGreaterThan(0);
+        $growthKeys = array_filter($findings, fn($f) => str_starts_with($f['key'], 'growth.'));
+        expect(count($growthKeys))->toBeGreaterThan(0);
     });
 
 });

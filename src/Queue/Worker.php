@@ -19,7 +19,7 @@ namespace Skim\Queue;
  * #AI:class
  */
 final class Worker {
-    private bool $should_stop = false;
+    private bool $shouldStop = false;
 
     /**
      * @param string $queue    Queue name to poll.
@@ -43,7 +43,7 @@ final class Worker {
         $this->registerSignals();
         $processed = 0;
 
-        while (!$this->should_stop) {
+        while (!$this->shouldStop) {
             \Skim\Queue\Queue::promoteDelayed();
             $this->checkRestartSignal();
 
@@ -71,7 +71,7 @@ final class Worker {
      * Signals the worker to stop after the current job completes. #AI:stop
      */
     public function stop(): void {
-        $this->should_stop = true;
+        $this->shouldStop = true;
     }
 
     /**
@@ -102,12 +102,12 @@ final class Worker {
             error_log(sprintf("[worker] Job %s attempt %d/%d failed: %s", $class, $attempts, $tries, $e->getMessage()));
 
             if ($attempts < $tries) {
-                $back_off = $attempts * 5;
-                $retry_payload = (string) json_encode(array_merge(
+                $backOff = $attempts * 5;
+                $retryPayload = (string) json_encode(array_merge(
                     $data,
                     ['attempts' => $attempts],
                 ));
-                \Skim\Queue\Queue::redis()->zadd('skim:queue:delayed', time() + $back_off, $retry_payload);
+                \Skim\Queue\Queue::redis()->zadd('skim:queue:delayed', time() + $backOff, $retryPayload);
             } else {
                 try {
                     $job->failed($e);
@@ -137,8 +137,8 @@ final class Worker {
      * Checks the Redis restart signal timestamp and stops if newer than process start. #AI:checkRestartSignal
      */
     private function checkRestartSignal(): void {
-        $restart_at = (int) \Skim\Queue\Queue::redis()->get('skim:queue:restart');
-        if ($restart_at > 0 && $restart_at > (int) $_SERVER['REQUEST_TIME_FLOAT']) {
+        $restartAt = (int) \Skim\Queue\Queue::redis()->get('skim:queue:restart');
+        if ($restartAt > 0 && $restartAt > (int) $_SERVER['REQUEST_TIME_FLOAT']) {
             $this->stop();
         }
     }

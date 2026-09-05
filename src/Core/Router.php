@@ -39,10 +39,10 @@ class Router {
     private array $routes       = [];
     private array $named        = [];
     private array $commands     = [];
-    private array $group_stack  = [];
+    private array $groupStack  = [];
 
     private ?Dispatcher $dispatcher = null;
-    private mixed $mutation_guard = null;
+    private mixed $mutationGuard = null;
 
     private static function convertParams(string $pattern): string {
         return (string) preg_replace_callback(
@@ -157,7 +157,7 @@ class Router {
      * @param callable $guard Returns true when mutation is allowed.
      */
     public function setMutationGuard(callable $guard): void {
-        $this->mutation_guard = $guard;
+        $this->mutationGuard = $guard;
     }
 
     /**
@@ -177,18 +177,18 @@ class Router {
     public function add(string|array $methods, string $pattern, array|callable $handler): \Skim\Core\RouteEntry {
         $this->assertMutable();
 
-        $current_prefix     = $this->currentPrefix();
-        $current_middleware = $this->currentGroupMiddleware();
+        $currentPrefix     = $this->currentPrefix();
+        $currentMiddleware = $this->currentGroupMiddleware();
 
-        $full_pattern   = $current_prefix . self::convertParams($pattern);
+        $fullPattern   = $currentPrefix . self::convertParams($pattern);
         $methods        = (array) $methods;
-        $entry          = new \Skim\Core\RouteEntry(implode('|', $methods), $full_pattern, $handler, $this);
+        $entry          = new \Skim\Core\RouteEntry(implode('|', $methods), $fullPattern, $handler, $this);
 
         $this->routes[] = [
             'methods'    => $methods,
-            'pattern'    => $full_pattern,
+            'pattern'    => $fullPattern,
             'handler'    => $handler,
-            'middleware' => $current_middleware,
+            'middleware' => $currentMiddleware,
             'entry'      => $entry,
         ];
 
@@ -216,14 +216,14 @@ class Router {
     public function group(string $prefix, callable $callback, array $middleware = []): void {
         $this->assertMutable();
 
-        $this->group_stack[] = [
+        $this->groupStack[] = [
             'prefix'     => $this->currentPrefix() . $prefix,
             'middleware' => array_merge($this->currentGroupMiddleware(), $middleware),
         ];
 
         $callback($this);
 
-        array_pop($this->group_stack);
+        array_pop($this->groupStack);
     }
 
     /**
@@ -407,15 +407,15 @@ class Router {
     }
 
     private function currentPrefix(): string {
-        return empty($this->group_stack) ? '' : end($this->group_stack)['prefix'];
+        return empty($this->groupStack) ? '' : end($this->groupStack)['prefix'];
     }
 
     private function currentGroupMiddleware(): array {
-        return empty($this->group_stack) ? [] : end($this->group_stack)['middleware'];
+        return empty($this->groupStack) ? [] : end($this->groupStack)['middleware'];
     }
 
     private function assertMutable(): void {
-        if ($this->mutation_guard !== null && !($this->mutation_guard)()) {
+        if ($this->mutationGuard !== null && !($this->mutationGuard)()) {
             throw new \LogicException('Cannot modify routes after app is frozen.');
         }
     }

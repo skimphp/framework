@@ -48,13 +48,13 @@ class IdeCommand extends \Skim\Cli\Command {
      * Scans app/models for PHP files and returns loadable class names. #AI:discoverModels
      */
     private function discoverModels(): array {
-        $model_dir = basePath('app/models');
-        if (!is_dir($model_dir)) {
+        $modelDir = basePath('app/models');
+        if (!is_dir($modelDir)) {
             return [];
         }
 
         $classes = [];
-        foreach (glob($model_dir . '/*.php') ?: [] as $file) {
+        foreach (glob($modelDir . '/*.php') ?: [] as $file) {
             $class = 'app\\models\\' . basename($file, '.php');
             if (class_exists($class)) {
                 $classes[] = $class;

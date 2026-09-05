@@ -47,20 +47,20 @@ describe('config lazy loading', function (): void {
     test('config::load() with compiled cache skips directory scan', function (): void {
         \Skim\Core\Config::reset();
 
-        $cache_path = storagePath('config_cache/config.php');
-        $backup     = is_file($cache_path) ? file_get_contents($cache_path) : null;
+        $cachePath = storagePath('config_cache/config.php');
+        $backup     = is_file($cachePath) ? file_get_contents($cachePath) : null;
 
         try {
-            file_put_contents($cache_path, "<?php\nreturn ['app' => ['compiled_key' => 'from_cache']];\n");
+            file_put_contents($cachePath, "<?php\nreturn ['app' => ['compiled_key' => 'from_cache']];\n");
 
             $value = \Skim\Core\Config::get('app.compiled_key', 'miss');
             expect($value)->toBe('from_cache');
         } finally {
             if ($backup !== null) {
-                file_put_contents($cache_path, $backup);
+                file_put_contents($cachePath, $backup);
             }
-            elseif (is_file($cache_path)) {
-                unlink($cache_path);
+            elseif (is_file($cachePath)) {
+                unlink($cachePath);
             }
         }
     });

@@ -102,14 +102,14 @@ describe('soak test — 1000 mixed requests', function (): void {
         $app = bootSoakApp();
 
         $routes = ['/home', '/user/42', '/event', '/view', '/component'];
-        $errors_expected = 0;
+        $errorsExpected = 0;
 
         for ($i = 0; $i < 1000; $i++) {
             if ($i % 20 === 0) {
                 soakRunOnce($app, '/contact', 'POST');
             } elseif ($i % 50 === 0) {
                 soakRunOnce($app, '/boom');
-                $errors_expected++;
+                $errorsExpected++;
             } else {
                 $uri = $routes[$i % count($routes)] . '?req=' . $i;
                 soakRunOnce($app, $uri);
@@ -135,7 +135,7 @@ describe('soak test — 1000 mixed requests', function (): void {
         }
 
         $baseline = memory_get_usage(true);
-        $peak_delta = 0;
+        $peakDelta = 0;
 
         for ($i = 0; $i < 1000; $i++) {
             if ($i % 20 === 0) {
@@ -145,10 +145,10 @@ describe('soak test — 1000 mixed requests', function (): void {
             } else {
                 soakRunOnce($app, $routes[$i % count($routes)]);
             }
-            $peak_delta = max($peak_delta, memory_get_usage(true) - $baseline);
+            $peakDelta = max($peakDelta, memory_get_usage(true) - $baseline);
         }
 
-        $mb = $peak_delta / 1024 / 1024;
+        $mb = $peakDelta / 1024 / 1024;
         expect($mb)->toBeLessThan(1.0,
             "Memory grew {$mb} MB over 1000 mixed requests after warmup"
         );

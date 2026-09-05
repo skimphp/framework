@@ -60,11 +60,11 @@ final class RedisDriver implements \Skim\Cache\Driver {
     public function set(string $key, mixed $value, ?int $ttl = null): bool {
         $serialized = serialize($value);
         $r          = $this->redis();
-        $full_key   = $this->prefix . $key;
+        $fullKey   = $this->prefix . $key;
         if ($ttl !== null && $ttl > 0) {
-            return (bool) $r->setex($full_key, $ttl, $serialized);
+            return (bool) $r->setex($fullKey, $ttl, $serialized);
         }
-        return (bool) $r->set($full_key, $serialized);
+        return (bool) $r->set($fullKey, $serialized);
     }
 
     /**
@@ -96,10 +96,10 @@ final class RedisDriver implements \Skim\Cache\Driver {
      * @return bool Always true.
      */
     public function flush(string $prefix): bool {
-        $full_prefix = $this->prefix . $prefix;
+        $fullPrefix = $this->prefix . $prefix;
         $cursor      = null;
         do {
-            $result = $this->redis()->scan($cursor, $full_prefix . '*', 100);
+            $result = $this->redis()->scan($cursor, $fullPrefix . '*', 100);
             if ($result === false) {
                 break;
             }

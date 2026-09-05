@@ -30,13 +30,13 @@ class App {
     private array $bindings = [];
 
     // Binding priority: higher priority wins service replacement conflicts.
-    private array $binding_priorities = [];
+    private array $bindingPriorities = [];
 
     // Decoration chain: abstract → list of decorators sorted by priority.
     private array $decorators = [];
 
     // Monotonic counter ensures stable insertion order for decorator sorting.
-    private int $decorator_order = 0;
+    private int $decoratorOrder = 0;
 
     // Resolved singletons cache: abstract → instance (process-lifetime).
     private array $resolved = [];
@@ -52,17 +52,17 @@ class App {
     //                    when the failure occurred (frame context).
     //   $bindings_snapshot — captured at boot() so the error page can list every
     //                    registered binding even after the request blew up.
-    public array $resolve_stack    = [];
-    public ?string $failed_at      = null;
-    public array $partial_args     = [];
-    public array $bindings_snapshot = [];
+    public array $resolveStack    = [];
+    public ?string $failedAt      = null;
+    public array $partialArgs     = [];
+    public array $bindingsSnapshot = [];
     public bool $tracing           = false;
 
     // SYS scope: framework internals, immutable after boot.
     private array $sys = [];
 
     // APP scope: config values from config/*.php, read-only at runtime.
-    private array $app_data = [];
+    private array $appData = [];
 
     // USER scope: per-request mutable state, reset on each handle().
     private array $user = [];
@@ -72,23 +72,23 @@ class App {
     // Middleware execution chain built during boot.
     private \Skim\Core\Pipeline   $pipeline;
     // Middleware classes applied to every request before route-specific ones.
-    private array      $global_middleware = [];
+    private array      $globalMiddleware = [];
     // Mutation guard: blocks router and scope writes after freeze().
     private bool       $frozen = false;
 
     // Active extension context: {name, priority} during DI resolution.
-    private ?array $extension_context = null;
+    private ?array $extensionContext = null;
     // Discovers, registers, and boots extensions in priority order.
-    private ?\Skim\Ext\ExtensionManager $extension_manager = null;
-    private bool $extensions_booted = false;
+    private ?\Skim\Ext\ExtensionManager $extensionManager = null;
+    private bool $extensionsBooted = false;
     // Idempotent boot guard: prevents re-running boot() on repeated calls.
     private bool $booted = false;
-    private bool $debug_mode = false;
+    private bool $debugMode = false;
     // Snapshot of ob_get_level() at begin_request() so end_request() only closes
     // buffers opened during the request, leaving PHPUnit/test buffers intact.
-    private int $request_ob_level = 0;
+    private int $requestObLevel = 0;
     // Tracks abstracts bound with request lifetime so end_request() can clear them.
-    private array $request_scoped = [];
+    private array $requestScoped = [];
     // Tracks abstracts bound with transient lifetime so make() skips caching.
     private array $transient = [];
 
@@ -149,12 +149,12 @@ class App {
      */
     public static function testInstance(array $config = []): static {
         $inst = new static(dirname(__DIR__, 2));
-        $inst->request_ob_level = ob_get_level();
+        $inst->requestObLevel = ob_get_level();
         foreach ($config as $key => $val) {
             if (str_starts_with($key, 'app.')) {
-                $inst->app_data[substr($key, 4)] = $val;
+                $inst->appData[substr($key, 4)] = $val;
             } else {
-                $inst->app_data[$key] = $val;
+                $inst->appData[$key] = $val;
             }
         }
         $inst->router->setMutationGuard(fn(): bool => !$inst->frozen);
@@ -180,13 +180,13 @@ class App {
             \Skim\View\View::setDefaultLayout((string) $layout);
         }
 
-        $this->extension_manager = \Skim\Ext\ExtensionManager::discover($this->root, $this);
-        $this->extension_manager->register($this);
+        $this->extensionManager = \Skim\Ext\ExtensionManager::discover($this->root, $this);
+        $this->extensionManager->register($this);
 
         // Capture the bindings snapshot once at boot so the error page can list
         // every registered service even if the request blows up later. Cheap —
         // a single array_keys + a hash for type metadata.
-        $this->bindings_snapshot = $this->snapshotBindings();
+        $this->bindingsSnapshot = $this->snapshotBindings();
     }
 
     /**
@@ -205,7 +205,7 @@ class App {
             $rows[] = [
                 'abstract'     => $abstract,
                 'factory_kind' => is_string($factory) ? 'string' : 'closure',
-                'priority'     => $this->binding_priorities[$abstract] ?? 0,
+                'priority'     => $this->bindingPriorities[$abstract] ?? 0,
             ];
         }
         return $rows;
@@ -268,7 +268,7 @@ class App {
             }
             $this->sys[$k] = $value;
         } elseif (str_starts_with($key, 'app.')) {
-            $this->app_data[substr($key, 4)] = $value;
+            $this->appData[substr($key, 4)] = $value;
         } else {
             $prefix = str_starts_with($key, 'user.') ? substr($key, 5) : $key;
             $this->user[$prefix] = $value;
@@ -290,7 +290,7 @@ class App {
         }
         if (str_starts_with($key, 'app.')) {
             $k = substr($key, 4);
-            return $this->app_data[$k] ?? \Skim\Core\Config::get("app.{$k}", $default);
+            return $this->appData[$k] ?? \Skim\Core\Config::get("app.{$k}", $default);
         }
         if (str_starts_with($key, 'user.')) {
             return $this->user[substr($key, 5)] ?? $default;
@@ -368,18 +368,18 @@ class App {
         $this->assertMutable('bind services');
 
         $priority ??= $this->currentExtensionPriority();
-        $current_priority = $this->binding_priorities[$abstract] ?? PHP_INT_MIN;
+        $currentPriority = $this->bindingPriorities[$abstract] ?? PHP_INT_MIN;
 
-        if (isset($this->bindings[$abstract]) && $priority < $current_priority) {
+        if (isset($this->bindings[$abstract]) && $priority < $currentPriority) {
             return;
         }
 
         $this->bindings[$abstract] = $this->normalizeFactory($factory);
-        $this->binding_priorities[$abstract] = $priority;
+        $this->bindingPriorities[$abstract] = $priority;
         $this->clearLifetimeMeta($abstract);
 
         if ($lifetime === \Skim\Core\Lifetime::Request) {
-            $this->request_scoped[$abstract] = true;
+            $this->requestScoped[$abstract] = true;
         } elseif ($lifetime === \Skim\Core\Lifetime::Transient) {
             $this->transient[$abstract] = true;
         }
@@ -403,7 +403,7 @@ class App {
         $this->decorators[$abstract][] = [
             'factory'  => $decorator,
             'priority' => $priority ?? $this->currentExtensionPriority(),
-            'order'    => ++$this->decorator_order,
+            'order'    => ++$this->decoratorOrder,
         ];
 
         unset($this->resolved[$abstract]);
@@ -432,7 +432,7 @@ class App {
 
         $tracking = $this->tracing;
         if ($tracking) {
-            $this->resolve_stack[] = ['id' => $abstract, 'time' => microtime(true)];
+            $this->resolveStack[] = ['id' => $abstract, 'time' => microtime(true)];
         }
 
         try {
@@ -463,14 +463,14 @@ class App {
         }
         catch (\Throwable $e) {
             if ($tracking) {
-                $this->failed_at     = $abstract;
-                $this->partial_args  = $this->currentCtorParams($abstract);
+                $this->failedAt     = $abstract;
+                $this->partialArgs  = $this->currentCtorParams($abstract);
             }
             throw $e;
         }
         finally {
             if ($tracking) {
-                array_pop($this->resolve_stack);
+                array_pop($this->resolveStack);
             }
         }
     }
@@ -533,9 +533,9 @@ class App {
      */
     public function enableTracing(): void {
         $this->tracing        = true;
-        $this->resolve_stack  = [];
-        $this->failed_at      = null;
-        $this->partial_args   = [];
+        $this->resolveStack  = [];
+        $this->failedAt      = null;
+        $this->partialArgs   = [];
     }
 
     /**
@@ -546,9 +546,9 @@ class App {
      */
     public function disableTracing(): void {
         $this->tracing        = false;
-        $this->resolve_stack  = [];
-        $this->failed_at      = null;
-        $this->partial_args   = [];
+        $this->resolveStack  = [];
+        $this->failedAt      = null;
+        $this->partialArgs   = [];
     }
 
     /**
@@ -573,7 +573,7 @@ class App {
      * @return string[] Abstract identifiers bound as request-scoped.
      */
     public function requestScopedServices(): array {
-        return array_keys($this->request_scoped);
+        return array_keys($this->requestScoped);
     }
 
     /**
@@ -597,7 +597,7 @@ class App {
      */
     public function use(string $class, mixed ...$args): void {
         $this->assertMutable('register middleware');
-        $this->global_middleware[] = ['class' => $class, 'args' => $args];
+        $this->globalMiddleware[] = ['class' => $class, 'args' => $args];
     }
 
     /**
@@ -627,7 +627,7 @@ class App {
      * Returns whether debug mode is enabled. #AI:isDebugMode
      */
     public function isDebugMode(): bool {
-        return $this->debug_mode;
+        return $this->debugMode;
     }
 
     /**
@@ -648,13 +648,13 @@ class App {
      * @return mixed Whatever the callback returns.
      */
     public function withExtensionContext(string $name, int $priority, callable $callback): mixed {
-        $previous = $this->extension_context;
-        $this->extension_context = ['name' => $name, 'priority' => $priority];
+        $previous = $this->extensionContext;
+        $this->extensionContext = ['name' => $name, 'priority' => $priority];
 
         try {
             return $callback();
         } finally {
-            $this->extension_context = $previous;
+            $this->extensionContext = $previous;
         }
     }
     /**
@@ -664,10 +664,10 @@ class App {
      * without re-running the full boot sequence.
      */
     public function beginRequest(): void {
-        $this->request_ob_level = ob_get_level();
-        $this->debug_mode = (bool) $this->get('app.debug', false);
+        $this->requestObLevel = ob_get_level();
+        $this->debugMode = (bool) $this->get('app.debug', false);
 
-        if ($this->debug_mode) {
+        if ($this->debugMode) {
             \Skim\Dev\Profiler::enable();
             \Skim\Dev\RequestTrace::enable();
             \Skim\Dev\RequestTrace::start(
@@ -694,12 +694,12 @@ class App {
     public function endRequest(): void {
         $this->user = [];
 
-        foreach (array_keys($this->request_scoped) as $abstract) {
+        foreach (array_keys($this->requestScoped) as $abstract) {
             unset($this->resolved[$abstract]);
         }
 
         $this->disableTracing();
-        \Skim\Worker\WorkerReset::apply($this->request_ob_level);
+        \Skim\Worker\WorkerReset::apply($this->requestObLevel);
 
         if (\Skim\Worker\LeakDetector::isActive()) {
             \Skim\Worker\LeakDetector::check($this);
@@ -710,7 +710,7 @@ class App {
      * Handles an uncaught exception. Used by the global exception handler. #AI:handleException
      */
     public function handleException(\Throwable $e): void {
-        if ($this->debug_mode) {
+        if ($this->debugMode) {
             \Skim\Dev\ErrorPage::render($e);
         } else {
             http_response_code(500);
@@ -766,7 +766,7 @@ class App {
         try {
             $result = $this->dispatch($req, $res);
 
-            if ($this->debug_mode) {
+            if ($this->debugMode) {
                 $trace = \Skim\Dev\RequestTrace::finish($result->getStatus());
                 $this->sys['last_trace'] = $trace;
             } elseif ($result->getStatus() >= 500) {
@@ -804,23 +804,23 @@ class App {
                 $req->setRouteParams($route['params']);
             }
 
-            if ($this->debug_mode) {
+            if ($this->debugMode) {
                 $this->recordRouteTrace($route);
             }
 
             $middlewares = $skipMiddleware
                 ? []
-                : array_merge($this->global_middleware, $route['middleware'] ?? []);
+                : array_merge($this->globalMiddleware, $route['middleware'] ?? []);
 
             $handler = $route['handler'];
             $result = $this->pipeline->run($req, $res, $middlewares, function(\Skim\Core\Request $req, \Skim\Core\Response $res) use ($handler, $route): mixed {
-                if (is_array($handler) && $this->debug_mode) {
+                if (is_array($handler) && $this->debugMode) {
                     \Skim\Dev\RequestTrace::event('controller_called', ['class' => $handler[0], 'method' => $handler[1]]);
                 }
                 return $this->callHandler($handler, $req, $res, $route['params'] ?? []);
             });
 
-            if ($this->debug_mode) {
+            if ($this->debugMode) {
                 $this->pipeline->recordPipelineTrace($req, $middlewares);
             }
 
@@ -915,12 +915,12 @@ class App {
      * Idempotent — subsequent calls after the first are no-ops.
      */
     public function bootExtensions(): void {
-        if ($this->extensions_booted) {
+        if ($this->extensionsBooted) {
             return;
         }
 
-        $this->extension_manager?->boot($this);
-        $this->extensions_booted = true;
+        $this->extensionManager?->boot($this);
+        $this->extensionsBooted = true;
     }
 
     /**
@@ -941,7 +941,7 @@ class App {
      * behind when an abstract is rebound with a different lifetime.
      */
     private function clearLifetimeMeta(string $abstract): void {
-        unset($this->resolved[$abstract], $this->request_scoped[$abstract], $this->transient[$abstract]);
+        unset($this->resolved[$abstract], $this->requestScoped[$abstract], $this->transient[$abstract]);
     }
 
     /**
@@ -982,7 +982,7 @@ class App {
                 // Record which params are being resolved so the error page can
                 // show "stuck on param #2" even if the make() throws.
                 if ($this->tracing) {
-                    $this->partial_args[] = $param->getName();
+                    $this->partialArgs[] = $param->getName();
                 }
                 $deps[] = $this->make($type->getName());
             } elseif ($param->isDefaultValueAvailable()) {
@@ -1019,7 +1019,7 @@ class App {
      * Returns the priority from the active extension context, defaulting to 100. #AI:currentExtensionPriority
      */
     private function currentExtensionPriority(): int {
-        return (int) ($this->extension_context['priority'] ?? 100);
+        return (int) ($this->extensionContext['priority'] ?? 100);
     }
 
     /**
@@ -1030,7 +1030,7 @@ class App {
      */
     private function assertMutable(string $action): void {
         if ($this->frozen) {
-            $extension = $this->extension_context['name'] ?? 'unknown';
+            $extension = $this->extensionContext['name'] ?? 'unknown';
             error_log("[skim][invariant-violation] extension='{$extension}' attempted '{$action}' after freeze");
             throw new \LogicException("Cannot {$action} after app is frozen.");
         }

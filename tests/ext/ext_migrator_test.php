@@ -81,9 +81,9 @@ PHP);
 
         $migrator = new \Skim\Ext\ExtMigrator();
         $applied = $migrator->run('skim/auth', $migrations);
-        $rolled_back = $migrator->rollbackSession($applied);
+        $rolledBack = $migrator->rollbackSession($applied);
 
-        expect($rolled_back)->toBe(['skim/auth: 001_create_ext_items.php']);
+        expect($rolledBack)->toBe(['skim/auth: 001_create_ext_items.php']);
         expect(\Skim\Db\Db::row("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'ext_items'"))->toBeNull();
         expect(\Skim\Db\Db::val('SELECT COUNT(*) FROM _migrations'))->toBe(0);
     });

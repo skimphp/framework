@@ -25,7 +25,7 @@ use Skim\Db\Migration;
  */
 final class ExtMigrator {
     private string $table = '_migrations';
-    private array $applied_this_session = [];
+    private array $appliedThisSession = [];
 
     /**
      * Sets the DB connection name used for extension migrations. #AI:__construct
@@ -52,7 +52,7 @@ final class ExtMigrator {
      */
     public function run(string $extName, string $migrationsPath): array {
         $extName = $this->normalizeExtName($extName);
-        $this->applied_this_session = [];
+        $this->appliedThisSession = [];
 
         if (!is_dir($migrationsPath)) {
             return [];
@@ -82,10 +82,10 @@ final class ExtMigrator {
                 );
             }, $this->connection);
 
-            $this->applied_this_session[] = $entry;
+            $this->appliedThisSession[] = $entry;
         }
 
-        return $this->applied_this_session;
+        return $this->appliedThisSession;
     }
 
     /**
@@ -98,7 +98,7 @@ final class ExtMigrator {
      * @return array<int,string> Tracking filenames that were rolled back.
      */
     public function rollbackSession(array $appliedThisSession): array {
-        $rolled_back = [];
+        $rolledBack = [];
 
         foreach (array_reverse($appliedThisSession) as $entry) {
             if (!isset($entry['file'], $entry['tracking_filename']) || !is_file($entry['file'])) {
@@ -118,17 +118,17 @@ final class ExtMigrator {
                 );
             }, $this->connection);
 
-            $rolled_back[] = $entry['tracking_filename'];
+            $rolledBack[] = $entry['tracking_filename'];
         }
 
-        return $rolled_back;
+        return $rolledBack;
     }
 
     /**
      * Returns migrations applied during the most recent run() call. #AI:appliedThisSession
      */
     public function appliedThisSession(): array {
-        return $this->applied_this_session;
+        return $this->appliedThisSession;
     }
 
     private function normalizeExtName(string $extName): string {
@@ -147,15 +147,15 @@ final class ExtMigrator {
         $pending = [];
         foreach ($files as $file) {
             $filename = basename($file);
-            $tracking_filename = "{$extName}: {$filename}";
-            if (in_array($tracking_filename, $applied, true)) {
+            $trackingFilename = "{$extName}: {$filename}";
+            if (in_array($trackingFilename, $applied, true)) {
                 continue;
             }
 
             $pending[] = [
                 'ext_name'          => $extName,
                 'filename'          => $filename,
-                'tracking_filename' => $tracking_filename,
+                'tracking_filename' => $trackingFilename,
                 'file'              => $file,
             ];
         }
@@ -176,7 +176,7 @@ final class ExtMigrator {
     private function ensureTable(): void {
         $driver = \Skim\Db\Db::pdo($this->connection)->getAttribute(\PDO::ATTR_DRIVER_NAME);
 
-        $id_col = match ($driver) {
+        $idCol = match ($driver) {
             'pgsql'  => 'id SERIAL PRIMARY KEY',
             'sqlite' => 'id INTEGER PRIMARY KEY AUTOINCREMENT',
             default  => 'id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY',
@@ -199,7 +199,7 @@ final class ExtMigrator {
 
         \Skim\Db\Db::query(
             "CREATE TABLE IF NOT EXISTS {$this->table} (
-                {$id_col},
+                {$idCol},
                 filename {$text} NOT NULL,
                 batch    INT NOT NULL
                 {$suffix}",

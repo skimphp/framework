@@ -20,7 +20,7 @@ namespace Skim\Ext;
  */
 final class ExtRegistry {
     private ?array $installed = null;
-    private ?array $capability_map = null;
+    private ?array $capabilityMap = null;
     private ?array $conflicts = null;
 
     /**
@@ -93,12 +93,12 @@ final class ExtRegistry {
      */
     public function refresh(): void {
         $this->installed = null;
-        $this->capability_map = null;
+        $this->capabilityMap = null;
         $this->conflicts = null;
 
-        $cache_path = $this->root . '/.skim/config_cache/extensions.php';
-        if (is_file($cache_path)) {
-            unlink($cache_path);
+        $cachePath = $this->root . '/.skim/config_cache/extensions.php';
+        if (is_file($cachePath)) {
+            unlink($cachePath);
         }
     }
 
@@ -173,8 +173,8 @@ final class ExtRegistry {
      * @return array<string,string> Capability name => extension name map.
      */
     public function capabilityMap(): array {
-        if ($this->capability_map !== null) {
-            return $this->capability_map;
+        if ($this->capabilityMap !== null) {
+            return $this->capabilityMap;
         }
 
         $map = [];
@@ -223,7 +223,7 @@ final class ExtRegistry {
 
         $this->conflicts = array_values($conflicts);
 
-        return $this->capability_map = $map;
+        return $this->capabilityMap = $map;
     }
 
     /**
@@ -234,25 +234,25 @@ final class ExtRegistry {
      * APP_DEBUG=true and vendor/composer/installed.json newer than cache).
      */
     private function loadCompiledCache(): bool {
-        $cache_path = $this->root . '/.skim/config_cache/extensions.php';
-        if (!is_file($cache_path)) {
+        $cachePath = $this->root . '/.skim/config_cache/extensions.php';
+        if (!is_file($cachePath)) {
             return false;
         }
 
         $debug = $_SERVER['APP_DEBUG'] ?? $_ENV['APP_DEBUG'] ?? false;
-        $installed_json = $this->root . '/vendor/composer/installed.json';
-        $installed_php  = $this->root . '/vendor/composer/installed.php';
+        $installedJson = $this->root . '/vendor/composer/installed.json';
+        $installedPhp  = $this->root . '/vendor/composer/installed.php';
 
         if ($debug) {
-            if (is_file($installed_json) && filemtime($installed_json) > filemtime($cache_path)) {
+            if (is_file($installedJson) && filemtime($installedJson) > filemtime($cachePath)) {
                 return false;
             }
-            if (is_file($installed_php) && filemtime($installed_php) > filemtime($cache_path)) {
+            if (is_file($installedPhp) && filemtime($installedPhp) > filemtime($cachePath)) {
                 return false;
             }
         }
 
-        $cache = require $cache_path;
+        $cache = require $cachePath;
         if (!is_array($cache)) {
             return false;
         }
@@ -266,13 +266,13 @@ final class ExtRegistry {
      * WHY: Pure arrays allow OPcache shared-memory hit with zero parse overhead.
      */
     private function writeCompiledCache(): void {
-        $cache_dir = $this->root . '/.skim/config_cache';
-        if (!is_dir($cache_dir)) {
-            @mkdir($cache_dir, 0755, true);
+        $cacheDir = $this->root . '/.skim/config_cache';
+        if (!is_dir($cacheDir)) {
+            @mkdir($cacheDir, 0755, true);
         }
 
         @file_put_contents(
-            $cache_dir . '/extensions.php',
+            $cacheDir . '/extensions.php',
             '<?php return ' . var_export($this->installed, true) . ';'
         );
     }
@@ -309,9 +309,9 @@ final class ExtRegistry {
             ? $skim['extension']
             : '';
 
-        $manifest_path = $path . '/skim.json';
-        if (is_file($manifest_path)) {
-            $manifest = json_decode((string) file_get_contents($manifest_path), true);
+        $manifestPath = $path . '/skim.json';
+        if (is_file($manifestPath)) {
+            $manifest = json_decode((string) file_get_contents($manifestPath), true);
             if (!is_array($manifest)) {
                 return null;
             }
@@ -368,12 +368,12 @@ final class ExtRegistry {
             $commands = array_fill_keys($commands, true);
         }
 
-        $raw_caps           = $manifest['capabilities'] ?? $skim['capabilities'] ?? [];
-        $capabilities_list  = is_array($raw_caps) && !array_is_list($raw_caps)
-            ? array_keys($raw_caps)
-            : array_values((array) $raw_caps);
-        $capability_details = is_array($raw_caps) && !array_is_list($raw_caps)
-            ? $raw_caps
+        $rawCaps           = $manifest['capabilities'] ?? $skim['capabilities'] ?? [];
+        $capabilitiesList  = is_array($rawCaps) && !array_is_list($rawCaps)
+            ? array_keys($rawCaps)
+            : array_values((array) $rawCaps);
+        $capabilityDetails = is_array($rawCaps) && !array_is_list($rawCaps)
+            ? $rawCaps
             : [];
 
         return [
@@ -386,8 +386,8 @@ final class ExtRegistry {
             'requires'           => array_values((array) ($manifest['requires'] ?? $skim['requires'] ?? [])),
             'provides'           => array_values((array) ($manifest['provides'] ?? $skim['provides'] ?? [])),
             'conflicts'          => array_values((array) ($manifest['conflicts'] ?? $skim['conflicts'] ?? [])),
-            'capabilities'       => $capabilities_list,
-            'capability_details' => $capability_details,
+            'capabilities'       => $capabilitiesList,
+            'capability_details' => $capabilityDetails,
             'config'             => (array) ($manifest['config'] ?? []),
             'migrations'         => (bool) ($manifest['migrations'] ?? false),
             'commands'           => $commands,

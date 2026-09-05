@@ -22,17 +22,17 @@ namespace Skim\View;
  * #AI:class
  */
 class Template {
-    private string  $views_path;
+    private string  $viewsPath;
     private array   $data;
-    private ?string $layout_name  = null;
+    private ?string $layoutName  = null;
     private array   $slots        = [];   // name → captured HTML
-    private ?string $active_slot  = null;
-    private bool    $fragment_mode = false; // true = ignore layout() calls
+    private ?string $activeSlot  = null;
+    private bool    $fragmentMode = false; // true = ignore layout() calls
 
     public function __construct(string $viewsPath, array $data = [], private readonly ?string $defaultLayout = null, bool $fragmentMode = false) {
-        $this->views_path = rtrim($viewsPath, '/');
+        $this->viewsPath = rtrim($viewsPath, '/');
         $this->data       = $data;
-        $this->fragment_mode = $fragmentMode;
+        $this->fragmentMode = $fragmentMode;
     }
 
     /**
@@ -45,7 +45,7 @@ class Template {
      * @param array  $extra    Additional data merged for this partial only.
      */
     public function include(string $template, array $extra = []): string {
-        return (new self($this->views_path, array_merge($this->data, $extra), null))->renderFile($template);
+        return (new self($this->viewsPath, array_merge($this->data, $extra), null))->renderFile($template);
     }
 
     /**
@@ -58,10 +58,10 @@ class Template {
      * @param string $name Layout template path relative to views root.
      */
     public function layout(string $name): void {
-        if ($this->fragment_mode) {
+        if ($this->fragmentMode) {
             return;
         }
-        $this->layout_name = $name;
+        $this->layoutName = $name;
     }
 
     /**
@@ -73,10 +73,10 @@ class Template {
      * @param string $name Slot identifier used by the layout to retrieve content.
      */
     public function start(string $name): void {
-        if ($this->fragment_mode) {
+        if ($this->fragmentMode) {
             return;
         }
-        $this->active_slot = $name;
+        $this->activeSlot = $name;
         ob_start();
     }
 
@@ -86,14 +86,14 @@ class Template {
      * @throws \LogicException If called without a matching start().
      */
     public function end(): void {
-        if ($this->fragment_mode) {
+        if ($this->fragmentMode) {
             return;
         }
-        if ($this->active_slot === null) {
+        if ($this->activeSlot === null) {
             throw new \LogicException('end() called without matching start()');
         }
-        $this->slots[$this->active_slot] = (string) ob_get_clean();
-        $this->active_slot               = null;
+        $this->slots[$this->activeSlot] = (string) ob_get_clean();
+        $this->activeSlot               = null;
     }
 
     /**
@@ -155,7 +155,7 @@ class Template {
      * @throws \Skim\View\Exceptions\ViewException If the template file is not found.
      */
     public function renderFile(string $template): string {
-        $base = $this->views_path . '/' . ltrim($template, '/');
+        $base = $this->viewsPath . '/' . ltrim($template, '/');
         $file = is_file($base . '.html') ? $base . '.html' : $base . '.php';
 
         if (!is_file($file)) {
@@ -169,19 +169,19 @@ class Template {
         include $file;
         $content = (string) ob_get_clean();
 
-        if ($this->layout_name === null && $this->defaultLayout !== null) {
-            $this->layout_name = $this->defaultLayout;
+        if ($this->layoutName === null && $this->defaultLayout !== null) {
+            $this->layoutName = $this->defaultLayout;
         }
 
         // If a layout was declared, wrap content and render layout
-        if ($this->layout_name !== null) {
+        if ($this->layoutName !== null) {
             // Capture any non-slot output as 'content' slot if not already set
             if (!isset($this->slots['content'])) {
                 $this->slots['content'] = $content;
             }
-            $layout = new self($this->views_path, $this->data, null);
+            $layout = new self($this->viewsPath, $this->data, null);
             $layout->slots = $this->slots;
-            return $layout->renderFile($this->layout_name);
+            return $layout->renderFile($this->layoutName);
         }
 
         return $content;

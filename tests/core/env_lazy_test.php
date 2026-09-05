@@ -71,20 +71,20 @@ describe('env lazy loading', function (): void {
     test('env::get() with compiled cache does not read .env from disk', function (): void {
         \Skim\Core\Env::reset();
 
-        $cache_path = storagePath('config_cache/env.php');
-        $backup     = is_file($cache_path) ? file_get_contents($cache_path) : null;
+        $cachePath = storagePath('config_cache/env.php');
+        $backup     = is_file($cachePath) ? file_get_contents($cachePath) : null;
 
         try {
-            file_put_contents($cache_path, "<?php\nreturn ['COMPILE_TEST_KEY' => 'from_compiled'];\n");
+            file_put_contents($cachePath, "<?php\nreturn ['COMPILE_TEST_KEY' => 'from_compiled'];\n");
 
             $value = \Skim\Core\Env::get('COMPILE_TEST_KEY', 'miss');
             expect($value)->toBe('from_compiled');
         } finally {
             if ($backup !== null) {
-                file_put_contents($cache_path, $backup);
+                file_put_contents($cachePath, $backup);
             }
-            elseif (is_file($cache_path)) {
-                unlink($cache_path);
+            elseif (is_file($cachePath)) {
+                unlink($cachePath);
             }
         }
     });

@@ -50,9 +50,9 @@ final class Str {
         }
         $truncated = mb_substr($text, 0, $length);
         if ($wordBoundary) {
-            $last_space = mb_strrpos($truncated, ' ');
-            if ($last_space !== false) {
-                $truncated = mb_substr($truncated, 0, $last_space);
+            $lastSpace = mb_strrpos($truncated, ' ');
+            if ($lastSpace !== false) {
+                $truncated = mb_substr($truncated, 0, $lastSpace);
             }
         }
         return rtrim($truncated) . $suffix;

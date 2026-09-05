@@ -31,24 +31,24 @@ class DocsSiteCommand extends \Skim\Cli\Command {
      */
     public function handle(): int {
         $paths     = \Skim\Dev\Docs\Value\DocsGenerationPaths::fromFlags($this->flags);
-        $json_path = $paths->jsonPath();
-        $mdx_dir   = $paths->mdxDir();
+        $jsonPath = $paths->jsonPath();
+        $mdxDir   = $paths->mdxDir();
 
         try {
-            $data = (new \Skim\Dev\Docs\Emitter\JsonEmitter())->load($json_path);
+            $data = (new \Skim\Dev\Docs\Emitter\JsonEmitter())->load($jsonPath);
         } catch (\Throwable $e) {
             $this->error($e->getMessage());
             return 1;
         }
 
         try {
-            $count = (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit($data, $mdx_dir);
+            $count = (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit($data, $mdxDir);
         } catch (\Throwable $e) {
             $this->error('Write failed: ' . $e->getMessage());
             return 1;
         }
 
-        $this->success("{$count} MDX files written → {$mdx_dir}");
+        $this->success("{$count} MDX files written → {$mdxDir}");
         return 0;
     }
 }

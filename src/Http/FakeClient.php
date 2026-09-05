@@ -146,13 +146,13 @@ final class FakeClient extends \Skim\Http\Client {
             return $stub;
         }
 
-        $body_content = isset($stub['body']) && is_array($stub['body'])
+        $bodyContent = isset($stub['body']) && is_array($stub['body'])
             ? (string) json_encode($stub['body'])
             : (string) ($stub['body'] ?? '');
 
         return new \Skim\Http\HttpResponse(
             $stub['status'] ?? 200,
-            $body_content,
+            $bodyContent,
             $stub['headers'] ?? ['Content-Type' => 'application/json'],
         );
     }

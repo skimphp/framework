@@ -62,10 +62,10 @@ readonly class ExtractedMethod {
      */
     public function toArray(): array {
         $contract = $this->contract !== '' ? $this->contract : ($this->contracts[0] ?? '');
-        $return_detail = $this->returnDetail !== [] ? $this->returnDetail : ($this->returns !== '' ? ['type' => '', 'desc' => $this->returns] : []);
-        $throws_details = $this->throwsDetails;
-        if ($throws_details === [] && $this->throws !== []) {
-            $throws_details = array_map(fn(string $throw): array => ['type' => $throw, 'desc' => ''], $this->throws);
+        $returnDetail = $this->returnDetail !== [] ? $this->returnDetail : ($this->returns !== '' ? ['type' => '', 'desc' => $this->returns] : []);
+        $throwsDetails = $this->throwsDetails;
+        if ($throwsDetails === [] && $this->throws !== []) {
+            $throwsDetails = array_map(fn(string $throw): array => ['type' => $throw, 'desc' => ''], $this->throws);
         }
 
         return [
@@ -75,8 +75,8 @@ readonly class ExtractedMethod {
             'signature'     => $this->signature,
             'contract'      => $contract,
             'param_details' => $this->paramDetails,
-            'return_detail' => $return_detail,
-            'throws_details' => $throws_details,
+            'return_detail' => $returnDetail,
+            'throws_details' => $throwsDetails,
             'contracts'    => $this->contracts,
             'invariants'   => $this->invariants,
             'non_goals'    => $this->nonGoals,

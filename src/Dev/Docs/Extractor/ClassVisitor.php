@@ -22,8 +22,8 @@ use Skim\Dev\Docs\Value\ExtractedMethod;
  */
 class ClassVisitor extends NodeVisitorAbstract {
     public ?\Skim\Dev\Docs\Value\ExtractedClass $result = null;
-    private string $current_namespace = '';
-    private ?array $file_lines = null;
+    private string $currentNamespace = '';
+    private ?array $fileLines = null;
 
     public function __construct(
         private readonly \Skim\Dev\Docs\Extractor\AnnotationParser $annotations,
@@ -34,11 +34,11 @@ class ClassVisitor extends NodeVisitorAbstract {
      * Returns cached file lines, reading from disk on first call. #AI:get_file_lines
      */
     private function getFileLines(): array {
-        if ($this->file_lines === null) {
+        if ($this->fileLines === null) {
             $content = file_exists($this->file) ? file_get_contents($this->file) : '';
-            $this->file_lines = array_merge([''], explode("\n", $content));
+            $this->fileLines = array_merge([''], explode("\n", $content));
         }
-        return $this->file_lines;
+        return $this->fileLines;
     }
 
     /**
@@ -46,20 +46,20 @@ class ClassVisitor extends NodeVisitorAbstract {
      */
     private function getPrecedingInlineComments(Node $node): string {
         $lines = $this->getFileLines();
-        $start_line = $node->getStartLine();
+        $startLine = $node->getStartLine();
         
-        $comment_lines = [];
-        for ($i = $start_line - 1; $i >= 1; $i--) {
+        $commentLines = [];
+        for ($i = $startLine - 1; $i >= 1; $i--) {
             $line = $lines[$i] ?? '';
             if (preg_match('/^\s*\/\//', $line)) {
-                $comment_lines[] = $line;
+                $commentLines[] = $line;
             } else {
                 break;
             }
         }
         
-        $comment_lines = array_reverse($comment_lines);
-        return implode("\n", $comment_lines);
+        $commentLines = array_reverse($commentLines);
+        return implode("\n", $commentLines);
     }
 
     /**
@@ -70,7 +70,7 @@ class ClassVisitor extends NodeVisitorAbstract {
      */
     public function enterNode(Node $node): null {
         if ($node instanceof Node\Stmt\Namespace_) {
-            $this->current_namespace = $node->name !== null ? (string) $node->name : '';
+            $this->currentNamespace = $node->name !== null ? (string) $node->name : '';
             return null;
         }
 
@@ -78,13 +78,13 @@ class ClassVisitor extends NodeVisitorAbstract {
             return null;
         }
 
-        $class_doc = (string) ($node->getDocComment()?->getText() ?? '');
-        $class_examples = $class_doc !== '' ? $this->annotations->extractExamples($class_doc) : [];
+        $classDoc = (string) ($node->getDocComment()?->getText() ?? '');
+        $classExamples = $classDoc !== '' ? $this->annotations->extractExamples($classDoc) : [];
         $tags = [];
         $summary = '';
-        if ($class_doc !== '') {
-            $tags    = $this->annotations->parse($class_doc);
-            $summary = $this->annotations->extractSummary($class_doc);
+        if ($classDoc !== '') {
+            $tags    = $this->annotations->parse($classDoc);
+            $summary = $this->annotations->extractSummary($classDoc);
         } else {
             $inline  = $this->getPrecedingInlineComments($node);
             $tags    = $this->annotations->parseInline($inline);
@@ -93,10 +93,10 @@ class ClassVisitor extends NodeVisitorAbstract {
         }
 
         foreach ($node->getComments() as $comment) {
-            $comment_text = $comment->getText();
-            if (str_contains($comment_text, '#AI')) {
-                $hash_tags = $this->annotations->parseHashAi($comment_text);
-                foreach ($hash_tags as $k => $v) {
+            $commentText = $comment->getText();
+            if (str_contains($commentText, '#AI')) {
+                $hashTags = $this->annotations->parseHashAi($commentText);
+                foreach ($hashTags as $k => $v) {
                     $tags[$k][] = $v;
                 }
             }
@@ -106,7 +106,7 @@ class ClassVisitor extends NodeVisitorAbstract {
             $summary = $tags['role'][0];
         }
 
-        $owner = $this->current_namespace . '\\' . (string) $node->name;
+        $owner = $this->currentNamespace . '\\' . (string) $node->name;
 
         $detached = $this->parseDetachedBlocks();
         if (($detached['class'] ?? []) !== []) {
@@ -114,59 +114,59 @@ class ClassVisitor extends NodeVisitorAbstract {
         }
 
         $methods = [];
-        $method_nodes = [];
+        $methodNodes = [];
         foreach ($node->getMethods() as $method) {
-            $method_nodes[(string) $method->name] = $method;
+            $methodNodes[(string) $method->name] = $method;
             $doc = (string) ($method->getDocComment()?->getText() ?? '');
             if ($doc !== '') {
-                $tags_m = $this->annotations->parse($doc);
-                $summary_m = $this->annotations->extractSummary($doc);
+                $tagsM = $this->annotations->parse($doc);
+                $summaryM = $this->annotations->extractSummary($doc);
             } else {
-                $inline_m = $this->getPrecedingInlineComments($method);
-                $tags_m = $this->annotations->parseInline($inline_m);
-                $summary_m = $tags_m['summary'] ?? '';
-                unset($tags_m['summary']);
+                $inlineM = $this->getPrecedingInlineComments($method);
+                $tagsM = $this->annotations->parseInline($inlineM);
+                $summaryM = $tagsM['summary'] ?? '';
+                unset($tagsM['summary']);
             }
 
             if (!$method->isPublic()) {
-                $has_owner = !empty($tags_m['owner']);
-                $has_lifecycle = !empty($tags_m['lifecycle']);
-                $has_detached = isset($detached['methods'][(string) $method->name]);
-                if (!$has_owner && !$has_lifecycle && !$has_detached) {
+                $hasOwner = !empty($tagsM['owner']);
+                $hasLifecycle = !empty($tagsM['lifecycle']);
+                $hasDetached = isset($detached['methods'][(string) $method->name]);
+                if (!$hasOwner && !$hasLifecycle && !$hasDetached) {
                     continue;
                 }
             }
 
             if (isset($detached['methods'][(string) $method->name])) {
-                $tags_m = array_merge($tags_m, $detached['methods'][(string) $method->name]);
+                $tagsM = array_merge($tagsM, $detached['methods'][(string) $method->name]);
             }
 
-            if ($summary_m !== '' && !isset($detached['methods'][(string) $method->name])) {
-                if (!isset($tags_m['contract'])) {
-                    $tags_m['contract'] = [];
+            if ($summaryM !== '' && !isset($detached['methods'][(string) $method->name])) {
+                if (!isset($tagsM['contract'])) {
+                    $tagsM['contract'] = [];
                 }
-                if (!is_array($tags_m['contract'])) {
-                    $tags_m['contract'] = [$tags_m['contract']];
+                if (!is_array($tagsM['contract'])) {
+                    $tagsM['contract'] = [$tagsM['contract']];
                 }
-                array_unshift($tags_m['contract'], $summary_m);
+                array_unshift($tagsM['contract'], $summaryM);
             }
 
-            $methods[] = $this->extractMethod($method, $owner, $tags_m);
+            $methods[] = $this->extractMethod($method, $owner, $tagsM);
         }
 
-        foreach ($detached['methods'] ?? [] as $name => $detached_tags) {
-            if (isset($method_nodes[$name])) {
+        foreach ($detached['methods'] ?? [] as $name => $detachedTags) {
+            if (isset($methodNodes[$name])) {
                 continue;
             }
         }
 
         $invariants = array_merge($this->listValue($tags, 'invariant'), $this->listValue($tags, 'invariants'));
-        $non_goals = array_merge($this->listValue($tags, 'non_goal'), $this->listValue($tags, 'non_goals'));
-        $side_effects = array_merge($this->listValue($tags, 'side_effect'), $this->listValue($tags, 'side_effects'));
+        $nonGoals = array_merge($this->listValue($tags, 'non_goal'), $this->listValue($tags, 'non_goals'));
+        $sideEffects = array_merge($this->listValue($tags, 'side_effect'), $this->listValue($tags, 'side_effects'));
 
         $this->result = new \Skim\Dev\Docs\Value\ExtractedClass(
             className:   (string) $node->name,
-            namespace:    $this->current_namespace,
+            namespace:    $this->currentNamespace,
             file:         $this->file,
             summary:      $summary,
             lifecycle:    $this->scalarValue($tags, 'lifecycle'),
@@ -176,8 +176,8 @@ class ClassVisitor extends NodeVisitorAbstract {
             entryPoints: $this->listValue($tags, 'entry_points'),
             configReads: $this->listValue($tags, 'config_reads'),
             invariants:   $invariants,
-            sideEffects: $side_effects,
-            nonGoals:    $non_goals,
+            sideEffects: $sideEffects,
+            nonGoals:    $nonGoals,
             symbol:       $this->scalarValue($tags, 'symbol', $owner),
             title:        $this->scalarValue($tags, 'title', (string) $node->name),
             description:  $this->scalarValue($tags, 'description', $summary),
@@ -195,7 +195,7 @@ class ClassVisitor extends NodeVisitorAbstract {
             lifecycleSteps: $this->listValue($tags, 'lifecycle_steps'),
             sectionOrder: $this->listValue($tags, 'section_order'),
             architecturalNotes: $this->scalarValue($tags, 'architectural_notes'),
-            examples:     $class_examples,
+            examples:     $classExamples,
             seeAlso:     $this->listValue($tags, 'see_also'),
             methods:      $methods,
         );
@@ -213,44 +213,44 @@ class ClassVisitor extends NodeVisitorAbstract {
             $name     = $variadic . '$' . (string) $param->var->name;
             $params[] = ($type !== '' ? $type . ' ' : '') . $name;
         }
-        $return_type = $method->returnType !== null
+        $returnType = $method->returnType !== null
             ? ': ' . $this->typeToString($method->returnType)
             : '';
             
-        $vis_name = match(true) {
+        $visName = match(true) {
             $method->isPrivate() => 'private',
             $method->isProtected() => 'protected',
             default => 'public',
         };
-        $visibility = $method->isStatic() ? $vis_name . ' static' : $vis_name;
+        $visibility = $method->isStatic() ? $visName . ' static' : $visName;
         $signature  = "{$visibility} function {$method->name}("
-            . implode(', ', $params) . "){$return_type}";
+            . implode(', ', $params) . "){$returnType}";
 
         $invariants = array_merge($this->listValue($tags, 'invariant'), $this->listValue($tags, 'invariants'));
-        $non_goals = array_merge($this->listValue($tags, 'non_goal'), $this->listValue($tags, 'non_goals'));
-        $side_effects = array_merge($this->listValue($tags, 'side_effect'), $this->listValue($tags, 'side_effects'));
+        $nonGoals = array_merge($this->listValue($tags, 'non_goal'), $this->listValue($tags, 'non_goals'));
+        $sideEffects = array_merge($this->listValue($tags, 'side_effect'), $this->listValue($tags, 'side_effects'));
         $signature = $this->scalarValue($tags, 'signature', $signature);
         $contracts = $this->listValue($tags, 'contract');
         $contract = $contracts[0] ?? '';
 
         $doc = (string) ($method->getDocComment()?->getText() ?? '');
-        $method_examples = $doc !== '' ? $this->annotations->extractExamples($doc) : [];
-        $tag_examples = $this->listValue($tags, 'example');
-        $formatted_examples = [];
-        foreach ($tag_examples as $ex) {
+        $methodExamples = $doc !== '' ? $this->annotations->extractExamples($doc) : [];
+        $tagExamples = $this->listValue($tags, 'example');
+        $formattedExamples = [];
+        foreach ($tagExamples as $ex) {
             if (is_array($ex) && isset($ex['code'])) {
-                $formatted_examples[] = [
+                $formattedExamples[] = [
                     'label' => $ex['label'] ?? 'Basic usage',
                     'code' => $ex['code']
                 ];
             } else {
-                $formatted_examples[] = [
+                $formattedExamples[] = [
                     'label' => 'Basic usage',
                     'code' => (string) $ex
                 ];
             }
         }
-        $examples = array_merge($method_examples, $formatted_examples);
+        $examples = array_merge($methodExamples, $formattedExamples);
 
         return new \Skim\Dev\Docs\Value\ExtractedMethod(
             name:         (string) $method->name,
@@ -260,8 +260,8 @@ class ClassVisitor extends NodeVisitorAbstract {
             frequency:    $this->scalarValue($tags, 'frequency'),
             contracts:    $contracts,
             invariants:   $invariants,
-            nonGoals:    $non_goals,
-            sideEffects: $side_effects,
+            nonGoals:    $nonGoals,
+            sideEffects: $sideEffects,
             inputs:       $this->listValue($tags, 'input'),
             returns:      $this->scalarValue($tags, 'returns'),
             reads:        $this->listValue($tags, 'reads'),

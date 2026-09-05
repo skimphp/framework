@@ -138,17 +138,17 @@ final class Env {
      * to parsing .env directly.
      */
     private static function loadCompiledCache(): bool {
-        $cache_path = storagePath('config_cache/env.php');
-        if (!is_file($cache_path)) {
+        $cachePath = storagePath('config_cache/env.php');
+        if (!is_file($cachePath)) {
             return false;
         }
 
         $debug = $_SERVER['APP_DEBUG'] ?? $_ENV['APP_DEBUG'] ?? false;
-        if ($debug && is_file(basePath('.env')) && filemtime(basePath('.env')) > filemtime($cache_path)) {
+        if ($debug && is_file(basePath('.env')) && filemtime(basePath('.env')) > filemtime($cachePath)) {
             return false;
         }
 
-        self::$cache  = require $cache_path;
+        self::$cache  = require $cachePath;
         self::$loaded = true;
         return true;
     }

@@ -57,8 +57,8 @@ class ExtInstallCommand extends \Skim\Cli\Command {
             return 1;
         }
 
-        $no_interaction = (bool) $this->flag('no-interaction', false);
-        $composer = $this->composerRequire($package, $no_interaction);
+        $noInteraction = (bool) $this->flag('no-interaction', false);
+        $composer = $this->composerRequire($package, $noInteraction);
         if ($composer['code'] !== 0) {
             $this->error('Composer install failed.');
             if ($composer['output'] !== '') {
@@ -75,10 +75,10 @@ class ExtInstallCommand extends \Skim\Cli\Command {
             return 1;
         }
 
-        $config_path = $this->publishConfig($extension);
-        if ($config_path !== null) {
-            $prefix = $this->tablePrefix($no_interaction);
-            $this->writeTablePrefix($config_path, $prefix);
+        $configPath = $this->publishConfig($extension);
+        if ($configPath !== null) {
+            $prefix = $this->tablePrefix($noInteraction);
+            $this->writeTablePrefix($configPath, $prefix);
         }
 
         $migrator = $this->migrator();
@@ -165,7 +165,7 @@ class ExtInstallCommand extends \Skim\Cli\Command {
         stream_set_blocking($pipes[2], false);
 
         $output = '';
-        $stream_output = \Skim\Cli\Cli::isTty() && !$noInteraction;
+        $streamOutput = \Skim\Cli\Cli::isTty() && !$noInteraction;
 
         do {
             $chunk = stream_get_contents($pipes[1]);
@@ -175,7 +175,7 @@ class ExtInstallCommand extends \Skim\Cli\Command {
                     continue;
                 }
                 $output .= $part;
-                if ($stream_output) {
+                if ($streamOutput) {
                     echo $part;
                 }
             }
@@ -192,9 +192,9 @@ class ExtInstallCommand extends \Skim\Cli\Command {
         fclose($pipes[2]);
 
         $code = (int) ($status['exitcode'] ?? 1);
-        $closed_code = proc_close($process);
-        if ($code < 0 && $closed_code >= 0) {
-            $code = $closed_code;
+        $closedCode = proc_close($process);
+        if ($code < 0 && $closedCode >= 0) {
+            $code = $closedCode;
         }
 
         return ['code' => $code, 'output' => trim($output)];

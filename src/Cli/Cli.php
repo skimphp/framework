@@ -19,7 +19,7 @@ namespace Skim\Cli;
  * #AI:class
  */
 final class Cli {
-    private static bool $force_plain = false;
+    private static bool $forcePlain = false;
 
     /**
      * Forces plain-text output regardless of TTY detection. #AI:forcePlain
@@ -27,7 +27,7 @@ final class Cli {
      * @param bool $plain True to suppress all ANSI escape codes.
      */
     public static function forcePlain(bool $plain): void {
-        self::$force_plain = $plain;
+        self::$forcePlain = $plain;
     }
 
     /**
@@ -210,17 +210,17 @@ final class Cli {
      * @param string $os      Operating system identifier.
      */
     public static function header(string $version, string $php, string $env, string $os): void {
-        $logo_path = defined('SKIM_ROOT') ? SKIM_ROOT . '/skim_ascii.txt' : null;
+        $logoPath = defined('SKIM_ROOT') ? SKIM_ROOT . '/skim_ascii.txt' : null;
         $logo = [];
-        if ($logo_path && file_exists($logo_path)) {
-            $logo_lines = explode("\n", file_get_contents($logo_path));
-            while (count($logo_lines) > 0 && trim($logo_lines[0]) === '') {
-                array_shift($logo_lines);
+        if ($logoPath && file_exists($logoPath)) {
+            $logoLines = explode("\n", file_get_contents($logoPath));
+            while (count($logoLines) > 0 && trim($logoLines[0]) === '') {
+                array_shift($logoLines);
             }
-            while (count($logo_lines) > 0 && trim($logo_lines[count($logo_lines) - 1]) === '') {
-                array_pop($logo_lines);
+            while (count($logoLines) > 0 && trim($logoLines[count($logoLines) - 1]) === '') {
+                array_pop($logoLines);
             }
-            $logo = $logo_lines;
+            $logo = $logoLines;
         }
 
         if (empty($logo)) {
@@ -232,9 +232,9 @@ final class Cli {
             ];
         }
 
-        $is_plain = self::$force_plain || !self::isTty();
+        $isPlain = self::$forcePlain || !self::isTty();
 
-        if ($is_plain) {
+        if ($isPlain) {
             foreach ($logo as $line) {
                 self::line($line);
             }
@@ -250,11 +250,11 @@ final class Cli {
         }
         self::line();
         
-        $meta_str = self::color("\e[1m", "SKIM Framework CLI") . " (v{$version}) | " .
+        $metaStr = self::color("\e[1m", "SKIM Framework CLI") . " (v{$version}) | " .
                     self::color("\e[2m", "PHP:") . " {$php} | " .
                     self::color("\e[2m", "Env:") . " {$env} | " .
                     self::color("\e[2m", "OS:") . " {$os}";
-        self::line($meta_str);
+        self::line($metaStr);
         self::divider();
     }
 
@@ -294,47 +294,47 @@ final class Cli {
      * @param string $body  Error body. When empty, $title is used as the body.
      */
     public static function errorBox(string $title, string $body = ''): void {
-        $is_plain = self::$force_plain || !self::isTty();
+        $isPlain = self::$forcePlain || !self::isTty();
         
         $msg = $body !== '' ? $body : $title;
         $hdr = $body !== '' ? $title : 'Error';
         
         $lines = explode("\n", $msg);
-        $max_line_len = 0;
+        $maxLineLen = 0;
         foreach ($lines as $line) {
-            $max_line_len = max($max_line_len, mb_strlen($line));
+            $maxLineLen = max($maxLineLen, mb_strlen($line));
         }
         
-        $outer_width = max($max_line_len + 6, mb_strlen($hdr) + 8);
+        $outerWidth = max($maxLineLen + 6, mb_strlen($hdr) + 8);
         
         $cols = 80;
         if (self::isTty()) {
             $cols = (int)(shell_exec('tput cols 2>/dev/null') ?: 80);
         }
-        $outer_width = min($outer_width, $cols - 4);
-        if ($outer_width < 20) {
-            $outer_width = 20;
+        $outerWidth = min($outerWidth, $cols - 4);
+        if ($outerWidth < 20) {
+            $outerWidth = 20;
         }
         
-        $dash_count = $outer_width - mb_strlen($hdr) - 5;
-        if ($dash_count < 2) {
-            $dash_count = 2;
+        $dashCount = $outerWidth - mb_strlen($hdr) - 5;
+        if ($dashCount < 2) {
+            $dashCount = 2;
         }
         
-        $top_border = ($is_plain ? '+- ' : '╭─ ') . self::color("\e[31m", $hdr) . " " . str_repeat($is_plain ? '-' : '─', $dash_count) . ($is_plain ? '+' : '╮');
-        self::line($top_border);
+        $topBorder = ($isPlain ? '+- ' : '╭─ ') . self::color("\e[31m", $hdr) . " " . str_repeat($isPlain ? '-' : '─', $dashCount) . ($isPlain ? '+' : '╮');
+        self::line($topBorder);
         
         foreach ($lines as $line) {
-            $inner_width = $outer_width - 6;
-            if (mb_strlen($line) > $inner_width) {
-                $line = mb_substr($line, 0, $inner_width);
+            $innerWidth = $outerWidth - 6;
+            if (mb_strlen($line) > $innerWidth) {
+                $line = mb_substr($line, 0, $innerWidth);
             }
-            $padding = str_repeat(' ', $inner_width - mb_strlen($line));
-            self::line(($is_plain ? '|  ' : '│  ') . $line . $padding . ($is_plain ? '  |' : '  │'));
+            $padding = str_repeat(' ', $innerWidth - mb_strlen($line));
+            self::line(($isPlain ? '|  ' : '│  ') . $line . $padding . ($isPlain ? '  |' : '  │'));
         }
         
-        $bottom_border = ($is_plain ? '+-' : '╰─') . str_repeat($is_plain ? '-' : '─', $outer_width - 4) . ($is_plain ? '-+' : '─╯');
-        self::line($bottom_border);
+        $bottomBorder = ($isPlain ? '+-' : '╰─') . str_repeat($isPlain ? '-' : '─', $outerWidth - 4) . ($isPlain ? '-+' : '─╯');
+        self::line($bottomBorder);
     }
 
     /**
@@ -347,11 +347,11 @@ final class Cli {
      */
     public static function didYouMean(string $input, array $candidates): void {
         $best = null;
-        $best_dist = 4;
+        $bestDist = 4;
         foreach ($candidates as $candidate) {
             $dist = levenshtein($input, $candidate);
-            if ($dist < $best_dist) {
-                $best_dist = $dist;
+            if ($dist < $bestDist) {
+                $bestDist = $dist;
                 $best = $candidate;
             }
         }
@@ -382,7 +382,7 @@ final class Cli {
         if (self::isTty()) {
             $cols = (int)(shell_exec('tput cols 2>/dev/null') ?: 80);
         }
-        if (self::$force_plain || !self::isTty()) {
+        if (self::$forcePlain || !self::isTty()) {
             $char = '-';
         }
         self::line(str_repeat($char, $cols));
@@ -404,7 +404,7 @@ final class Cli {
      * @param string $text Text to colorize.
      */
     private static function color(string $code, string $text): string {
-        if (self::$force_plain || !self::isTty()) {
+        if (self::$forcePlain || !self::isTty()) {
             return $text;
         }
         return $code . $text . "\e[0m";

@@ -23,7 +23,7 @@ use Skim\Worker\Resettable;
 final class I18n implements \Skim\Worker\Resettable {
     private static string  $locale      = 'en';
     private static string  $fallback    = 'en';
-    private static string  $lang_path   = '';
+    private static string  $langPath   = '';
     private static array   $loaded      = [];
     private static mixed   $loader      = null;
 
@@ -56,7 +56,7 @@ final class I18n implements \Skim\Worker\Resettable {
      * @param string $path Absolute path to the lang directory.
      */
     public static function setPath(string $path): void {
-        self::$lang_path = rtrim($path, '/');
+        self::$langPath = rtrim($path, '/');
     }
 
     /**
@@ -145,7 +145,7 @@ final class I18n implements \Skim\Worker\Resettable {
             return self::$loaded[$locale][$file];
         }
 
-        $path = (self::$lang_path ?: basePath('lang')) . "/{$locale}/{$file}.php";
+        $path = (self::$langPath ?: basePath('lang')) . "/{$locale}/{$file}.php";
 
         if (!is_file($path)) {
             return null;

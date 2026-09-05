@@ -230,4 +230,15 @@ describe('model::where() query scope', function(): void {
         expect(count($page->items))->toBe(2);
     });
 
+    test('paginate() exposes camelCase navigation properties', function(): void {
+        $page = TestUser::where([])->paginate(page: 1, perPage: 2);
+        expect($page->perPage)->toBe(2);
+        expect($page->current)->toBe(1);
+        expect($page->hasNext)->toBeTrue();
+        expect($page->hasPrev)->toBeFalse();
+        $last = TestUser::where([])->paginate(page: 2, perPage: 2);
+        expect($last->hasNext)->toBeFalse();
+        expect($last->hasPrev)->toBeTrue();
+    });
+
 });

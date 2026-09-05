@@ -22,8 +22,8 @@ namespace Skim\Core;
  * #AI:class
  */
 class Request {
-    private array $route_params = [];
-    private ?array $json_body   = null;
+    private array $routeParams = [];
+    private ?array $jsonBody   = null;
 
     public function __construct(
         private readonly array $query,
@@ -118,15 +118,15 @@ class Request {
      *   $data = $req->json(); // ['name' => 'John', 'age' => 30]
      */
     public function json(): array {
-        if ($this->json_body !== null) {
-            return $this->json_body;
+        if ($this->jsonBody !== null) {
+            return $this->jsonBody;
         }
         $ct = $this->header('Content-Type') ?? '';
         if (!str_contains($ct, 'application/json')) {
-            return $this->json_body = [];
+            return $this->jsonBody = [];
         }
         $decoded = json_decode($this->rawBody, true);
-        return $this->json_body = is_array($decoded) ? $decoded : [];
+        return $this->jsonBody = is_array($decoded) ? $decoded : [];
     }
 
     /**
@@ -251,7 +251,7 @@ class Request {
      * @param array $params Route parameter key-value pairs.
      */
     public function setRouteParams(array $params): void {
-        $this->route_params = $params;
+        $this->routeParams = $params;
     }
 
     /**
@@ -264,14 +264,14 @@ class Request {
      * @param mixed  $default Returned when the param is absent.
      */
     public function param(string $key, mixed $default = null): mixed {
-        return $this->route_params[$key] ?? $default;
+        return $this->routeParams[$key] ?? $default;
     }
 
     /**
      * Returns all route parameters as a flat array. #AI:allParams
      */
     public function allParams(): array {
-        return $this->route_params;
+        return $this->routeParams;
     }
 
     /**

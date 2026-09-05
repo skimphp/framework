@@ -170,10 +170,10 @@ final class ExtensionManager {
      * @throws \RuntimeException On circular dependency.
      */
     private static function topologicalSort(array $extensions): array {
-        $by_name    = [];
+        $byName    = [];
         $providers  = [];
         foreach ($extensions as $ext) {
-            $by_name[$ext['name']] = $ext;
+            $byName[$ext['name']] = $ext;
             $providers[$ext['name']] = $ext['name'];
             foreach (array_merge($ext['provides'], $ext['capabilities']) as $cap) {
                 $providers[$cap] = $ext['name'];
@@ -184,7 +184,7 @@ final class ExtensionManager {
         $visited  = [];
         $visiting = [];
 
-        $visit = function(array $ext) use (&$visit, &$sorted, &$visited, &$visiting, $by_name, $providers): void {
+        $visit = function(array $ext) use (&$visit, &$sorted, &$visited, &$visiting, $byName, $providers): void {
             $name = $ext['name'];
             if (isset($visited[$name])) {
                 return;
@@ -194,9 +194,9 @@ final class ExtensionManager {
             }
             $visiting[$name] = true;
             foreach ($ext['requires'] as $req) {
-                $dep_name = $providers[$req] ?? null;
-                if ($dep_name !== null && isset($by_name[$dep_name])) {
-                    $visit($by_name[$dep_name]);
+                $depName = $providers[$req] ?? null;
+                if ($depName !== null && isset($byName[$depName])) {
+                    $visit($byName[$depName]);
                 }
             }
             unset($visiting[$name]);

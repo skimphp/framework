@@ -19,7 +19,7 @@ namespace Skim\Core;
  * #AI:class
  */
 class Response {
-    private int    $status_code = 200;
+    private int    $statusCode = 200;
     private array  $headers     = ['Content-Type' => 'text/html; charset=utf-8'];
     private string $body        = '';
     private bool   $sent        = false;
@@ -33,7 +33,7 @@ class Response {
      */
     #[\NoDiscard]
     public function status(int $code): static {
-        $this->status_code = $code;
+        $this->statusCode = $code;
         return $this;
     }
 
@@ -48,7 +48,7 @@ class Response {
      */
     public function json(mixed $data, int $status = 0): static {
         if ($status > 0) {
-            $this->status_code = $status;
+            $this->statusCode = $status;
         }
         $this->headers['Content-Type'] = 'application/json';
         $this->body                    = (string) json_encode($data, \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES);
@@ -139,7 +139,7 @@ class Response {
         if ($url === '') {
             return $this;
         }
-        $this->status_code = $this->status_code === 200 ? 302 : $this->status_code;
+        $this->statusCode = $this->statusCode === 200 ? 302 : $this->statusCode;
         $this->headers['Location'] = $url;
         $this->body                = '';
         return $this;
@@ -190,16 +190,16 @@ class Response {
         foreach ($this->headers as $name => $value) {
             header("{$name}: {$value}");
         }
-        http_response_code($this->status_code);
+        http_response_code($this->statusCode);
 
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
 
-        $driver_class = $driver ?? config('realtime.driver');
-        if ($driver_class !== null) {
+        $driverClass = $driver ?? config('realtime.driver');
+        if ($driverClass !== null) {
             $app = \Skim\Core\App::instance();
-            $instance = $app->make($driver_class);
+            $instance = $app->make($driverClass);
         } else {
             $instance = new \Skim\Realtime\Sse();
         }
@@ -277,13 +277,13 @@ class Response {
             foreach ($this->headers as $name => $value) {
                 header("{$name}: {$value}");
             }
-            http_response_code($this->status_code);
+            http_response_code($this->statusCode);
             readfile($file);
             return;
         }
 
         if (!headers_sent()) {
-            http_response_code($this->status_code);
+            http_response_code($this->statusCode);
             foreach ($this->headers as $name => $value) {
                 header("{$name}: {$value}");
             }
@@ -295,7 +295,7 @@ class Response {
      * Returns the current HTTP status code. #AI:getStatus
      */
     public function getStatus(): int {
-        return $this->status_code;
+        return $this->statusCode;
     }
 
     /**

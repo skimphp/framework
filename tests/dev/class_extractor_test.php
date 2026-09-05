@@ -253,8 +253,8 @@ describe('class_extractor — fixture: cache facade (full #AI block)', function 
 
     it('extracts flushAll() warning field', function () {
         $result    = $this->extractor->extract($this->fixture);
-        $flush_all = findMethod($result->methods, 'flushAll');
-        expect($flush_all->warnings)->not->toBeEmpty();
+        $flushAll = findMethod($result->methods, 'flushAll');
+        expect($flushAll->warnings)->not->toBeEmpty();
     });
 
     it('extracts tags() throws_details field', function () {

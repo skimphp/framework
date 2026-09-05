@@ -63,7 +63,7 @@ final class ErrorPage {
         $file    = $e->getFile();
         $line    = $e->getLine();
 
-        $frames_sectioned = self::parseFrames($e);
+        $framesSectioned = self::parseFrames($e);
 
         return [
             'page_title'      => "Error — {$class}",
@@ -75,10 +75,10 @@ final class ErrorPage {
             'code_lines'      => self::codeContext($file, $line),
             'line_start'      => max(1, $line - self::CONTEXT_LINES),
             'line_end'        => $line + self::CONTEXT_LINES,
-            'frames_app'      => $frames_sectioned['app'],
-            'frames_pipeline' => $frames_sectioned['pipeline'],
-            'frames_fw'       => $frames_sectioned['framework'],
-            'frame_count'     => $frames_sectioned['count'],
+            'frames_app'      => $framesSectioned['app'],
+            'frames_pipeline' => $framesSectioned['pipeline'],
+            'frames_fw'       => $framesSectioned['framework'],
+            'frame_count'     => $framesSectioned['count'],
             'env_server'      => self::collectServerEnv(),
             'env_vars'        => self::collectEnvVars(),
             'request'         => self::collectRequest(),
@@ -139,9 +139,9 @@ final class ErrorPage {
         $pipeline = [];
         $framework = [];
 
-        $error_origin_idx = 0;
+        $errorOriginIdx = 0;
         $app[] = [
-            'idx'      => $error_origin_idx,
+            'idx'      => $errorOriginIdx,
             'file'     => $e->getFile(),
             'line'     => $e->getLine(),
             'class'    => '',
@@ -222,26 +222,26 @@ final class ErrorPage {
         }
 
         $normalized = str_replace('\\', '/', $file);
-        $in_vendor  = str_contains($normalized, '/vendor/');
-        $in_dev     = str_contains($normalized, '/src/Dev/');
-        $in_core    = str_contains($normalized, '/src/Core/');
+        $inVendor  = str_contains($normalized, '/vendor/');
+        $inDev     = str_contains($normalized, '/src/Dev/');
+        $inCore    = str_contains($normalized, '/src/Core/');
 
-        $class_norm = $class !== '' ? ltrim(str_replace('\\', '/', $class), '/') : '';
-        $is_mw      = $class_norm !== '' && (
-            str_contains(strtolower($class_norm), '/middleware/') ||
-            str_contains(strtolower($class_norm), 'middleware\\') ||
-            str_ends_with(strtolower($class_norm), '_middleware') ||
-            str_ends_with(strtolower($class_norm), 'middleware')
+        $classNorm = $class !== '' ? ltrim(str_replace('\\', '/', $class), '/') : '';
+        $isMw      = $classNorm !== '' && (
+            str_contains(strtolower($classNorm), '/middleware/') ||
+            str_contains(strtolower($classNorm), 'middleware\\') ||
+            str_ends_with(strtolower($classNorm), '_middleware') ||
+            str_ends_with(strtolower($classNorm), 'middleware')
         );
-        $is_skim_class = $class !== '' && (
-            str_starts_with(strtolower($class_norm), 'skim/') ||
-            str_starts_with(strtolower($class_norm), 'skim\\')
+        $isSkimClass = $class !== '' && (
+            str_starts_with(strtolower($classNorm), 'skim/') ||
+            str_starts_with(strtolower($classNorm), 'skim\\')
         );
 
-        if ($is_mw) {
+        if ($isMw) {
             return 'pipeline';
         }
-        if ($in_vendor || $in_dev || $in_core || $is_skim_class) {
+        if ($inVendor || $inDev || $inCore || $isSkimClass) {
             return 'framework';
         }
         return 'app';
@@ -347,9 +347,9 @@ final class ErrorPage {
         // PHP 9 will make that an Error. So check isInternal() up front and
         // skip the bind entirely for those — fall back to get_object_vars()
         // which covers dynamic properties on stdClass.
-        $is_internal = (new \ReflectionClass($obj))->isInternal();
+        $isInternal = (new \ReflectionClass($obj))->isInternal();
 
-        if ($is_internal) {
+        if ($isInternal) {
             $all = [];
             foreach (get_object_vars($obj) as $name => $value) {
                 $all[] = [
@@ -568,7 +568,7 @@ final class ErrorPage {
      */
     private static function collectBindingsList(): array {
         $rows = [];
-        foreach (\Skim\Core\App::instance()->bindings_snapshot as $snap) {
+        foreach (\Skim\Core\App::instance()->bindingsSnapshot as $snap) {
             $rows[] = [
                 'abstract' => $snap['abstract'],
                 'factory'  => $snap['factory_kind'],
@@ -605,13 +605,13 @@ final class ErrorPage {
 
             // Classify by the class's own source file, not the call site.
             try {
-                $class_file = (new \ReflectionClass($class))->getFileName() ?: $file;
+                $classFile = (new \ReflectionClass($class))->getFileName() ?: $file;
             }
             catch (\Throwable) {
-                $class_file = $file;
+                $classFile = $file;
             }
 
-            if (self::classifyFrame($class_file, $class, $t['function'] ?? '') !== 'app') {
+            if (self::classifyFrame($classFile, $class, $t['function'] ?? '') !== 'app') {
                 continue;
             }
             if ($fallback === null) {
@@ -637,15 +637,15 @@ final class ErrorPage {
         $visited[$class] = true;
 
         $resolved       = self::isResolvable($class);
-        $is_resolved    = self::isInResolvedList($class);
-        $has_ctor       = false;
+        $isResolved    = self::isInResolvedList($class);
+        $hasCtor       = false;
         $children       = [];
 
         try {
             $ref  = new \ReflectionClass($class);
             $ctor = $ref->getConstructor();
             if ($ctor !== null) {
-                $has_ctor = true;
+                $hasCtor = true;
                 if ($depth < 4) {
                     foreach ($ctor->getParameters() as $p) {
                         $type = $p->getType();
@@ -664,18 +664,18 @@ final class ErrorPage {
         catch (\Throwable) {
         }
 
-        $ref_label = match (true) {
-            $is_resolved       => '✓ resolved',
+        $refLabel = match (true) {
+            $isResolved       => '✓ resolved',
             $resolved === false => 'failed',
-            $has_ctor           => 'resolving…',
+            $hasCtor           => 'resolving…',
             default             => 'no ctor',
         };
 
         return [
             'cls'      => $class,
-            'ref'      => $ref_label,
-            'resolved' => $is_resolved,
-            'failed'   => $resolved === false && !$is_resolved,
+            'ref'      => $refLabel,
+            'resolved' => $isResolved,
+            'failed'   => $resolved === false && !$isResolved,
             'children' => $children,
         ];
     }
@@ -763,7 +763,7 @@ final class ErrorPage {
         $items = [];
         $env   = getenv();
 
-        $show_keys = [
+        $showKeys = [
             'APP_ENV', 'APP_DEBUG', 'APP_URL', 'APP_KEY',
             'DB_CONNECTION', 'DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD',
             'CACHE_DRIVER', 'REDIS_HOST', 'REDIS_PASSWORD',
@@ -771,19 +771,19 @@ final class ErrorPage {
             'MAIL_MAILER', 'MAIL_HOST',
         ];
 
-        foreach ($show_keys as $key) {
+        foreach ($showKeys as $key) {
             $val = $env[$key] ?? null;
             if ($val === null || $val === false) {
                 continue;
             }
 
-            $is_secret = self::isSecretKey($key);
+            $isSecret = self::isSecretKey($key);
             $items[] = [
                 'key'          => $key,
-                'value'        => $is_secret ? str_repeat('•', min(strlen($val), 28)) : (string)$val,
-                'class'        => $is_secret ? '' : self::envValueClass($key, (string)$val),
-                'secret'       => $is_secret,
-                'secret_value' => $is_secret ? (string)$val : '',
+                'value'        => $isSecret ? str_repeat('•', min(strlen($val), 28)) : (string)$val,
+                'class'        => $isSecret ? '' : self::envValueClass($key, (string)$val),
+                'secret'       => $isSecret,
+                'secret_value' => $isSecret ? (string)$val : '',
             ];
         }
 
@@ -813,23 +813,23 @@ final class ErrorPage {
             ],
         ];
 
-        $header_items = [];
-        $header_keys  = [
+        $headerItems = [];
+        $headerKeys  = [
             'HTTP_ACCEPT' => 'accept', 'HTTP_ACCEPT_ENCODING' => 'accept-encoding',
             'HTTP_ACCEPT_LANGUAGE' => 'accept-language', 'HTTP_USER_AGENT' => 'user-agent',
             'HTTP_REFERER' => 'referer', 'CONTENT_TYPE' => 'content-type',
             'HTTP_X_REQUESTED_WITH' => 'x-requested-with',
         ];
-        foreach ($header_keys as $server_key => $label) {
-            $val = $s[$server_key] ?? null;
-            $header_items[] = [
+        foreach ($headerKeys as $serverKey => $label) {
+            $val = $s[$serverKey] ?? null;
+            $headerItems[] = [
                 'key'   => $label,
                 'value' => $val !== null ? (string)$val : '—',
                 'class' => $val !== null ? ($label === 'referer' ? 'blue' : '') : 'muted',
             ];
         }
         if (isset($s['HTTP_AUTHORIZATION'])) {
-            $header_items[] = [
+            $headerItems[] = [
                 'key'          => 'authorization',
                 'value'        => str_repeat('•', 36),
                 'class'        => '',
@@ -837,15 +837,15 @@ final class ErrorPage {
                 'secret_value' => $s['HTTP_AUTHORIZATION'],
             ];
         }
-        $sections['headers'] = ['title' => 'Headers', 'items' => $header_items];
+        $sections['headers'] = ['title' => 'Headers', 'items' => $headerItems];
 
         $sections['get']  = self::superglobalSection('$_GET',  $_GET);
         $sections['post'] = self::superglobalSection('$_POST', $_POST);
 
-        $cookie_items = [];
+        $cookieItems = [];
         foreach ($_COOKIE as $k => $v) {
             $tail = mb_substr((string)$v, -4);
-            $cookie_items[] = [
+            $cookieItems[] = [
                 'key'          => (string)$k,
                 'value'        => '••••' . $tail,
                 'class'        => '',
@@ -855,7 +855,7 @@ final class ErrorPage {
         }
         $sections['cookies'] = [
             'title' => '$_COOKIE',
-            'items' => $cookie_items,
+            'items' => $cookieItems,
             'empty_note' => 'no cookies',
         ];
 
@@ -870,17 +870,17 @@ final class ErrorPage {
         $msg = $e->getMessage();
 
         if (preg_match('/Call to undefined method\s+(.+?)::(\w+)\(\)/', $msg, $m)) {
-            $class_name  = $m[1];
-            $called_name = $m[2];
+            $className  = $m[1];
+            $calledName = $m[2];
 
-            if (class_exists($class_name)) {
+            if (class_exists($className)) {
                 try {
-                    $ref     = new \ReflectionClass($class_name);
+                    $ref     = new \ReflectionClass($className);
                     $methods = array_map(fn(\ReflectionMethod $rm) => $rm->getName(), $ref->getMethods());
 
                     $similar = [];
                     foreach ($methods as $method) {
-                        $dist = levenshtein($called_name, $method);
+                        $dist = levenshtein($calledName, $method);
                         if ($dist <= 5 && $dist > 0) {
                             $similar[] = ['name' => $method, 'distance' => $dist];
                         }
@@ -892,13 +892,13 @@ final class ErrorPage {
                         $solutions[] = [
                             'type'    => 'suggestion',
                             'title'   => "Did you mean {$best}()?",
-                            'body'    => "Class {$class_name} doesn't have a {$called_name}() method, "
+                            'body'    => "Class {$className} doesn't have a {$calledName}() method, "
                                        . "but there is a method with a similar name: {$best}() "
                                        . "(Levenshtein distance: {$similar[0]['distance']}).",
                             'similar' => $similar,
                             'methods' => $methods,
-                            'class'   => $class_name,
-                            'called'  => $called_name,
+                            'class'   => $className,
+                            'called'  => $calledName,
                         ];
                     }
                 }
@@ -920,13 +920,13 @@ final class ErrorPage {
         $line    = $e->getLine();
         $trace   = htmlspecialchars($e->getTraceAsString(), ENT_QUOTES, 'UTF-8');
 
-        $render_error_html = '';
+        $renderErrorHtml = '';
         if ($renderError !== null) {
-            $re_class   = htmlspecialchars(get_class($renderError), ENT_QUOTES, 'UTF-8');
-            $re_message = htmlspecialchars($renderError->getMessage(), ENT_QUOTES, 'UTF-8');
-            $re_file    = htmlspecialchars($renderError->getFile(), ENT_QUOTES, 'UTF-8');
-            $re_line    = $renderError->getLine();
-            $render_error_html = "<h3>Render error</h3><pre><strong style='color:#f38ba8'>{$re_class}</strong>: {$re_message}\nat {$re_file}:{$re_line}</pre>";
+            $reClass   = htmlspecialchars(get_class($renderError), ENT_QUOTES, 'UTF-8');
+            $reMessage = htmlspecialchars($renderError->getMessage(), ENT_QUOTES, 'UTF-8');
+            $reFile    = htmlspecialchars($renderError->getFile(), ENT_QUOTES, 'UTF-8');
+            $reLine    = $renderError->getLine();
+            $renderErrorHtml = "<h3>Render error</h3><pre><strong style='color:#f38ba8'>{$reClass}</strong>: {$reMessage}\nat {$reFile}:{$reLine}</pre>";
         }
 
         echo <<<HTML
@@ -937,7 +937,7 @@ final class ErrorPage {
         <body><div class="h"><strong style="color:#f38ba8">{$class}</strong><br>{$message}<br>
         <small style="color:#a6e3a1">{$file}:{$line}</small></div>
         <h3>Stack trace</h3><pre>{$trace}</pre>
-        {$render_error_html}
+        {$renderErrorHtml}
         <p style="color:#64748b;font-size:12px">⚠ Error page template failed — showing fallback</p>
         </body></html>
         HTML;
@@ -1025,9 +1025,9 @@ final class ErrorPage {
             return '';
         }
 
-        static $kw_set = null;
-        if ($kw_set === null) {
-            $kw_set = [
+        static $kwSet = null;
+        if ($kwSet === null) {
+            $kwSet = [
                 'abstract', 'and', 'as', 'break', 'callable', 'case', 'catch', 'class',
                 'clone', 'const', 'continue', 'declare', 'default', 'do', 'echo', 'else',
                 'elseif', 'enum', 'extends', 'final', 'finally', 'fn', 'for', 'foreach',
@@ -1098,7 +1098,7 @@ final class ErrorPage {
                 }
                 $word = substr($code, $i, $j - $i);
                 $lower = strtolower($word);
-                if (in_array($lower, $kw_set, true)) {
+                if (in_array($lower, $kwSet, true)) {
                     $out .= '<span class="kw">' . htmlspecialchars($word, ENT_QUOTES, 'UTF-8') . '</span>';
                 }
                 else {

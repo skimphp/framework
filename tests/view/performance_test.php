@@ -22,17 +22,17 @@ describe('fragment render performance', function(): void {
         for ($i = 0; $i < $runs; $i++) {
             \Skim\View\View::render('pages/dashboard', $data, 'stats_widget');
         }
-        $fragment_time = microtime(true) - $t1;
+        $fragmentTime = microtime(true) - $t1;
 
         $t2 = microtime(true);
         for ($i = 0; $i < $runs; $i++) {
             \Skim\View\View::render('pages/dashboard', $data);
         }
-        $full_time = microtime(true) - $t2;
+        $fullTime = microtime(true) - $t2;
 
-        $ratio = $full_time / max($fragment_time, 0.00001);
+        $ratio = $fullTime / max($fragmentTime, 0.00001);
         expect($ratio)->toBeGreaterThan(1.5,
-            "Fragment render ({$fragment_time}s) should be faster than full render ({$full_time}s), ratio was {$ratio}"
+            "Fragment render ({$fragmentTime}s) should be faster than full render ({$fullTime}s), ratio was {$ratio}"
         );
     });
 

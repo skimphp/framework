@@ -31,19 +31,19 @@ final class QueryBuilder {
      * @return array{string, array<string, mixed>} [built SQL, PDO params] ready for prepare + execute.
      */
     public static function build(string $sql, array $params): array {
-        $pdo_params = [];
+        $pdoParams = [];
 
         if (isset($params['set'])) {
             [$clause, $extra] = self::buildSet($params['set']);
             $sql = str_replace('%set%', $clause, $sql);
-            $pdo_params += $extra;
+            $pdoParams += $extra;
             unset($params['set']);
         }
 
         if (isset($params['values'])) {
             [$clause, $extra] = self::buildValues($params['values']);
             $sql = str_replace('%values%', $clause, $sql);
-            $pdo_params += $extra;
+            $pdoParams += $extra;
             unset($params['values']);
         }
 
@@ -78,11 +78,11 @@ final class QueryBuilder {
 
         foreach ($params as $key => $val) {
             if (str_starts_with((string) $key, ':') && $val !== null) {
-                $pdo_params[$key] = $val;
+                $pdoParams[$key] = $val;
             }
         }
 
-        return [$sql, $pdo_params];
+        return [$sql, $pdoParams];
     }
 
     /**
@@ -106,15 +106,15 @@ final class QueryBuilder {
         $parts = [];
 
         if (!empty($conditions['or'])) {
-            $or_groups = [];
+            $orGroups = [];
             foreach ($conditions['or'] as $group) {
                 $filtered = array_filter((array) $group);
                 if ($filtered !== []) {
-                    $or_groups[] = '(' . implode(' AND ', $filtered) . ')';
+                    $orGroups[] = '(' . implode(' AND ', $filtered) . ')';
                 }
             }
-            if ($or_groups !== []) {
-                $parts[] = '(' . implode(' OR ', $or_groups) . ')';
+            if ($orGroups !== []) {
+                $parts[] = '(' . implode(' OR ', $orGroups) . ')';
             }
         }
 
@@ -141,7 +141,7 @@ final class QueryBuilder {
      */
     public static function buildSet(array $data): array {
         $parts      = [];
-        $pdo_params = [];
+        $pdoParams = [];
 
         foreach ($data as $col => $val) {
             if ($val === null) {
@@ -152,10 +152,10 @@ final class QueryBuilder {
                 continue;
             }
             $parts[]               = "{$col} = :{$col}";
-            $pdo_params[":{$col}"] = $val;
+            $pdoParams[":{$col}"] = $val;
         }
 
-        return ['SET ' . implode(', ', $parts), $pdo_params];
+        return ['SET ' . implode(', ', $parts), $pdoParams];
     }
 
     /**
@@ -166,15 +166,15 @@ final class QueryBuilder {
      */
     public static function buildValues(array $data): array {
         $cols       = array_keys($data);
-        $pdo_params = [];
+        $pdoParams = [];
 
         foreach ($data as $col => $val) {
-            $pdo_params[":{$col}"] = $val;
+            $pdoParams[":{$col}"] = $val;
         }
 
         return [
             '(' . implode(', ', $cols) . ') VALUES (:' . implode(', :', $cols) . ')',
-            $pdo_params,
+            $pdoParams,
         ];
     }
 

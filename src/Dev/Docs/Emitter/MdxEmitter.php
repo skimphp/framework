@@ -47,11 +47,11 @@ class MdxEmitter {
             if ($subdir === '') {
                 $subdir = 'other';
             }
-            $target_dir = $outputDir . '/' . $subdir;
-            if (!is_dir($target_dir)) {
-                mkdir($target_dir, 0755, recursive: true);
+            $targetDir = $outputDir . '/' . $subdir;
+            if (!is_dir($targetDir)) {
+                mkdir($targetDir, 0755, recursive: true);
             }
-            $path = $target_dir . '/' . $file;
+            $path = $targetDir . '/' . $file;
             if (file_put_contents($path, $this->renderClass($class)) === false) {
                 throw new \RuntimeException("mdx_emitter: cannot write {$path}");
             }
@@ -59,9 +59,9 @@ class MdxEmitter {
         }
 
         if ($classes !== []) {
-            $index_path = $outputDir . '/index.mdx';
-            if (file_put_contents($index_path, $this->renderIndex($classes)) === false) {
-                throw new \RuntimeException("mdx_emitter: cannot write {$index_path}");
+            $indexPath = $outputDir . '/index.mdx';
+            if (file_put_contents($indexPath, $this->renderIndex($classes)) === false) {
+                throw new \RuntimeException("mdx_emitter: cannot write {$indexPath}");
             }
             $count++;
         }
@@ -79,13 +79,13 @@ class MdxEmitter {
     }
 
     private function mdxFileName(array $class, array $duplicates): string {
-        $class_name = (string) ($class['title'] ?? $class['class_name'] ?? 'class');
-        if (!isset($duplicates[$class_name])) {
-            return $this->slug($class_name) . '.mdx';
+        $className = (string) ($class['title'] ?? $class['class_name'] ?? 'class');
+        if (!isset($duplicates[$className])) {
+            return $this->slug($className) . '.mdx';
         }
         $file = basename((string) ($class['source_path'] ?? $class['file'] ?? 'class'));
         $source = preg_replace('/(?:\.md)?\.php$/', '', $file) ?? $file;
-        return $this->slug($class_name . '-' . $source) . '.mdx';
+        return $this->slug($className . '-' . $source) . '.mdx';
     }
 
     private function uniqueMdxFileName(string $file, array &$filenames): string {
@@ -142,7 +142,7 @@ class MdxEmitter {
         }
         $annotated = 0;
         foreach ($class['methods'] ?? [] as $m) {
-            $is_annotated = ($m['contract'] ?? '') !== ''
+            $isAnnotated = ($m['contract'] ?? '') !== ''
                 || ($m['contracts'] ?? []) !== []
                 || ($m['param_details'] ?? []) !== []
                 || ($m['return_detail'] ?? []) !== []
@@ -163,7 +163,7 @@ class MdxEmitter {
                 || ($m['perf'] ?? '') !== ''
                 || ($m['group'] ?? '') !== ''
                 || ($m['frequency'] ?? '') !== '';
-            if ($is_annotated) {
+            if ($isAnnotated) {
                 $annotated++;
             }
         }
@@ -199,17 +199,17 @@ class MdxEmitter {
             '',
         ];
         
-        foreach ($groups as $dir => $group_classes) {
+        foreach ($groups as $dir => $groupClasses) {
             $label = ucfirst($dir);
             $lines[] = "## {$label} Module";
             $lines[] = '';
             $lines[] = '| Class / Facade | Description | Coverage | Quick Links |';
             $lines[] = '| :--- | :--- | :--- | :--- |';
             
-            foreach ($group_classes as $class) {
-                $slug_class = $class['_mdx_file'];
-                $class_title = $class['title'] ?? $class['class_name'] ?? 'class';
-                $class_link = "[`{$class_title}`](./{$dir}/{$slug_class})";
+            foreach ($groupClasses as $class) {
+                $slugClass = $class['_mdx_file'];
+                $classTitle = $class['title'] ?? $class['class_name'] ?? 'class';
+                $classLink = "[`{$classTitle}`](./{$dir}/{$slugClass})";
                 
                 $desc = $this->oneLine((string) ($class['description'] ?? $class['summary'] ?? ''));
                 if ($desc === '') {
@@ -220,17 +220,17 @@ class MdxEmitter {
                 
                 $coverage = $this->getCoverageIndicator($class);
                 
-                $section_links = [];
+                $sectionLinks = [];
                 foreach ($class['section_order'] ?? [] as $section) {
                     if ($section === 'Architecture' || $section === 'Driver Model') {
                         continue;
                     }
-                    $sec_slug = $this->slug($section);
-                    $section_links[] = "[{$section}](./{$dir}/{$slug_class}#{$sec_slug})";
+                    $secSlug = $this->slug($section);
+                    $sectionLinks[] = "[{$section}](./{$dir}/{$slugClass}#{$secSlug})";
                 }
-                $quick_links = count($section_links) > 0 ? implode(' • ', $section_links) : '—';
+                $quickLinks = count($sectionLinks) > 0 ? implode(' • ', $sectionLinks) : '—';
                 
-                $lines[] = "| {$class_link} | {$desc} | `{$coverage}` | {$quick_links} |";
+                $lines[] = "| {$classLink} | {$desc} | `{$coverage}` | {$quickLinks} |";
             }
             $lines[] = '';
         }

@@ -130,11 +130,11 @@ abstract class Command {
      */
     public function help(): void {
         \Skim\Cli\Cli::bold("Usage:");
-        $usage_str = $this->name;
+        $usageStr = $this->name;
         if ($this->usage !== '') {
-            $usage_str .= ' ' . $this->usage;
+            $usageStr .= ' ' . $this->usage;
         }
-        \Skim\Cli\Cli::line("  php skim " . $usage_str);
+        \Skim\Cli\Cli::line("  php skim " . $usageStr);
         if ($this->description !== '') {
             \Skim\Cli\Cli::line();
             \Skim\Cli\Cli::bold("Description:");

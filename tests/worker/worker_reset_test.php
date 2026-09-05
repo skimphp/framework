@@ -133,7 +133,7 @@ describe('resettable contract guard', function (): void {
     // Process-scoped state (config, env, db connection pool, persistent caches,
     // model metadata) intentionally stays put and must NOT be listed.
     test('all interface-reset request-state facades implement resettable', function (): void {
-        $request_state_facades = [
+        $requestStateFacades = [
             \Skim\Events\Event::class,
             \Skim\View\View::class,
             \Skim\Session\Session::class,
@@ -141,7 +141,7 @@ describe('resettable contract guard', function (): void {
             \Skim\View\ComponentCollector::class,
         ];
 
-        foreach ($request_state_facades as $facade) {
+        foreach ($requestStateFacades as $facade) {
             expect(is_subclass_of($facade, \Skim\Worker\Resettable::class))->toBeTrue(
                 "{$facade} holds per-request state and must implement skim\\worker\\resettable"
             );

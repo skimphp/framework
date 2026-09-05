@@ -29,8 +29,8 @@ class PendingRequest {
     private array $headers = [];
     private array $session = [];
     private array $cookies = [];
-    private bool $follow_redirects = false;
-    private bool $skip_middleware = false;
+    private bool $followRedirects = false;
+    private bool $skipMiddleware = false;
 
     public function __construct(private readonly \Skim\Core\App $app) {}
 
@@ -83,7 +83,7 @@ class PendingRequest {
      */
     public function followingRedirects(): static {
         $clone = clone $this;
-        $clone->follow_redirects = true;
+        $clone->followRedirects = true;
         return $clone;
     }
 
@@ -92,7 +92,7 @@ class PendingRequest {
      */
     public function withoutMiddleware(): static {
         $clone = clone $this;
-        $clone->skip_middleware = true;
+        $clone->skipMiddleware = true;
         return $clone;
     }
 
@@ -171,9 +171,9 @@ class PendingRequest {
             }
         }
 
-        $response = new \Skim\Testing\HttpResponse($app->dispatch($req, new \Skim\Core\Response(), skipMiddleware: $this->skip_middleware));
+        $response = new \Skim\Testing\HttpResponse($app->dispatch($req, new \Skim\Core\Response(), skipMiddleware: $this->skipMiddleware));
 
-        if ($this->follow_redirects && $response->isRedirect()) {
+        if ($this->followRedirects && $response->isRedirect()) {
             return $this->get((string) $response->header('Location'));
         }
 

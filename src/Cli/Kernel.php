@@ -63,7 +63,7 @@ final class Kernel {
     ];
 
     private bool $quiet;
-    private bool $no_ansi;
+    private bool $noAnsi;
     private bool $agent;
 
     /**
@@ -79,46 +79,46 @@ final class Kernel {
     public function run(\Skim\Cli\ArgvParser $input): int {
         $this->agent   = $input->hasFlag('agent');
         $this->quiet   = $this->agent || $input->hasFlag('quiet', 'q');
-        $this->no_ansi = $this->agent || $input->hasFlag('no-ansi');
+        $this->noAnsi = $this->agent || $input->hasFlag('no-ansi');
 
         if ($input->hasFlag('version', 'V')) {
             echo "SKIM Framework CLI v" . self::VERSION . "\n";
             return 0;
         }
 
-        if ($this->no_ansi) {
+        if ($this->noAnsi) {
             \Skim\Cli\Cli::forcePlain(true);
         }
 
-        $command_name = $input->command;
+        $commandName = $input->command;
 
         while (true) {
-            $class = $this->resolve($command_name);
+            $class = $this->resolve($commandName);
 
             if ($class !== null) {
-                return $this->dispatch($class, $command_name, $input);
+                return $this->dispatch($class, $commandName, $input);
             }
 
-            if ($command_name === 'help' || $command_name === 'list') {
+            if ($commandName === 'help' || $commandName === 'list') {
                 $selected = $this->showHelp();
                 if ($selected === null) {
                     return 0;
                 }
-                $command_name = $selected;
+                $commandName = $selected;
                 continue;
             }
 
             if ($this->agent) {
-                fwrite(STDERR, "error\tunknown_command\t{$command_name}\n");
-                $suggestion = $this->closestCommand($command_name, array_keys($this->allCommands()));
+                fwrite(STDERR, "error\tunknown_command\t{$commandName}\n");
+                $suggestion = $this->closestCommand($commandName, array_keys($this->allCommands()));
                 if ($suggestion !== null) {
                     fwrite(STDERR, "suggestion\t{$suggestion}\n");
                 }
                 return 1;
             }
 
-            \Skim\Cli\Cli::errorBox('Error', "Unknown command: {$command_name}");
-            \Skim\Cli\Cli::didYouMean($command_name, array_keys($this->allCommands()));
+            \Skim\Cli\Cli::errorBox('Error', "Unknown command: {$commandName}");
+            \Skim\Cli\Cli::didYouMean($commandName, array_keys($this->allCommands()));
             return 1;
         }
     }
@@ -155,8 +155,8 @@ final class Kernel {
         if (defined('SKIM_DEV') && SKIM_DEV) {
             $commands = array_merge($commands, self::DEV_COMMANDS);
         }
-        $user_commands = \Skim\Core\Config::get('app.commands', []);
-        return array_merge($commands, $user_commands);
+        $userCommands = \Skim\Core\Config::get('app.commands', []);
+        return array_merge($commands, $userCommands);
     }
 
     /**
@@ -178,13 +178,13 @@ final class Kernel {
             $this->printHeader();
         }
 
-        $start_time = microtime(true);
+        $startTime = microtime(true);
 
         try {
             $code = $cmd->handle();
             if (\Skim\Cli\Cli::isTty() && !$this->quiet) {
                 \Skim\Cli\Cli::newline();
-                \Skim\Cli\Cli::duration($start_time);
+                \Skim\Cli\Cli::duration($startTime);
             }
             return (int) $code;
         } catch (\Throwable $e) {
@@ -215,9 +215,9 @@ final class Kernel {
             return null;
         }
 
-        $is_interactive = \Skim\Cli\Cli::isTty() && !$this->no_ansi && !$this->quiet;
+        $isInteractive = \Skim\Cli\Cli::isTty() && !$this->noAnsi && !$this->quiet;
 
-        if ($is_interactive) {
+        if ($isInteractive) {
             $this->printHeader();
             $menu = new \Skim\Cli\InteractiveMenu($groups);
             return $menu->run();
@@ -256,11 +256,11 @@ final class Kernel {
      */
     private function closestCommand(string $input, array $candidates): ?string {
         $best = null;
-        $best_dist = 4;
+        $bestDist = 4;
         foreach ($candidates as $candidate) {
             $dist = levenshtein($input, $candidate);
-            if ($dist < $best_dist) {
-                $best_dist = $dist;
+            if ($dist < $bestDist) {
+                $bestDist = $dist;
                 $best = $candidate;
             }
         }
@@ -282,10 +282,10 @@ final class Kernel {
             $cmd = new $class();
             $cmd->configureForName($name);
 
-            $group_key   = $cmd->getGroup();
-            $group_label = self::GROUP_ORDER[$group_key] ?? ucfirst($group_key);
+            $groupKey   = $cmd->getGroup();
+            $groupLabel = self::GROUP_ORDER[$groupKey] ?? ucfirst($groupKey);
 
-            $grouped[$group_label][] = [
+            $grouped[$groupLabel][] = [
                 'name'        => $name,
                 'usage'       => $cmd->getUsage(),
                 'description' => $cmd->getDescription(),

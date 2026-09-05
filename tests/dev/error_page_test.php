@@ -115,7 +115,7 @@ describe('error_page::render()', function(): void {
     test('hero badge sits on the same line as the message', function(): void {
         $html = captureErrorPage(new \RuntimeException('test'));
         // badge-err appears before the message in the hero-msg container
-        $hero_msg = (string) preg_match('/<div class="hero-msg">.*?<\/div>/s', $html, $m);
+        $heroMsg = (string) preg_match('/<div class="hero-msg">.*?<\/div>/s', $html, $m);
         expect($m[0] ?? '')->toContain('class="badge-err"');
         expect($m[0] ?? '')->toContain('test');
     });
@@ -149,9 +149,9 @@ describe('error_page::render()', function(): void {
         // should give us access to private/protected state without ever calling
         // any setter or instantiating anything.
         $obj = new class {
-            public string    $public_a  = 'pub';
-            protected int   $protected_b = 99;
-            private ?string $private_c  = 'secret';
+            public string    $publicA  = 'pub';
+            protected int   $protectedB = 99;
+            private ?string $privateC  = 'secret';
         };
 
         $ref   = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
@@ -159,9 +159,9 @@ describe('error_page::render()', function(): void {
         $rows   = $method->invoke(null, $obj);
 
         $keys = array_column($rows, 'key');
-        expect($keys)->toContain('public_a');
-        expect($keys)->toContain('protected_b (p)');
-        expect($keys)->toContain('private_c (p)');
+        expect($keys)->toContain('publicA');
+        expect($keys)->toContain('protectedB (p)');
+        expect($keys)->toContain('privateC (p)');
     });
 
     test('all_props() respects the 8-row cap with _more hint', function(): void {
@@ -334,37 +334,37 @@ describe('error_page noise detection', function(): void {
         $method = $ref->getMethod('isNoise');
         // The closure belongs to Skim\Core\App::dispatch but is invoked
         // from a user middleware file. Trace reports the caller file.
-        $is_noise = $method->invoke(
+        $isNoise = $method->invoke(
             null,
             '/app/src/Middleware/ToolbarMiddleware.php',
             'Skim\\Core\\App',
             '{closure:Skim\\Core\\App::dispatch():483}',
         );
-        expect($is_noise)->toBeTrue();
+        expect($isNoise)->toBeTrue();
     });
 
     test('marks framework method calls (e.g. app::run) as noise from caller file', function(): void {
         $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('isNoise');
-        $is_noise = $method->invoke(
+        $isNoise = $method->invoke(
             null,
             '/app/public/index.php',
             'Skim\\Core\\App',
             'run',
         );
-        expect($is_noise)->toBeTrue();
+        expect($isNoise)->toBeTrue();
     });
 
     test('does NOT mark user code as noise', function(): void {
         $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('isNoise');
-        $is_noise = $method->invoke(
+        $isNoise = $method->invoke(
             null,
             '/app/app/controllers/home.php',
             'App\\Controllers\\HomeController',
             'index',
         );
-        expect($is_noise)->toBeFalse();
+        expect($isNoise)->toBeFalse();
     });
 
     test('middleware classes are classified as `pipeline` (not noise, not app, not framework)', function(): void {

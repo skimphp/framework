@@ -87,16 +87,16 @@ describe('pipeline — short-circuit', function(): void {
         $pipeline  = new \Skim\Core\Pipeline();
         $req       = \Skim\Core\Request::make();
         $res       = new \Skim\Core\Response();
-        $core_ran  = false;
+        $coreRan  = false;
 
         $blocker = makeShortCircuitMiddleware(401);
 
-        $result = $pipeline->run($req, $res, [$blocker], function() use (&$core_ran, $res): \Skim\Core\Response {
-            $core_ran = true;
+        $result = $pipeline->run($req, $res, [$blocker], function() use (&$coreRan, $res): \Skim\Core\Response {
+            $coreRan = true;
             return $res;
         });
 
-        expect($core_ran)->toBeFalse();
+        expect($coreRan)->toBeFalse();
         expect($result->getStatus())->toBe(401);
     });
 

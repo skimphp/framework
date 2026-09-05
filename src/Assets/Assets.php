@@ -19,8 +19,8 @@ namespace Skim\Assets;
  */
 final class Assets {
     private static ?array  $manifest    = null;
-    private static string  $vite_url    = 'http://localhost:5173';
-    private static string  $public_path = '';
+    private static string  $viteUrl    = 'http://localhost:5173';
+    private static string  $publicPath = '';
 
     /**
      * Returns the URL for a given asset path. #AI:url
@@ -35,7 +35,7 @@ final class Assets {
         $path = ltrim($path, '/');
 
         if ((bool) \Skim\Core\Config::get('app.debug', false)) {
-            return self::$vite_url . '/' . $path;
+            return self::$viteUrl . '/' . $path;
         }
 
         $manifest = self::manifest();
@@ -43,8 +43,8 @@ final class Assets {
             throw new \RuntimeException("Asset '{$path}' not found in Vite manifest.");
         }
 
-        $build_path = (string) \Skim\Core\Config::get('assets.build_path', '/build');
-        return rtrim($build_path, '/') . '/' . $manifest[$path]['file'];
+        $buildPath = (string) \Skim\Core\Config::get('assets.build_path', '/build');
+        return rtrim($buildPath, '/') . '/' . $manifest[$path]['file'];
     }
 
     /**
@@ -56,10 +56,10 @@ final class Assets {
      */
     public static function js(string $path): string {
         $url     = self::url($path);
-        $dev_hmr = (bool) \Skim\Core\Config::get('app.debug', false)
-            ? '<script type="module" src="' . self::$vite_url . '/@vite/client"></script>' . "\n"
+        $devHmr = (bool) \Skim\Core\Config::get('app.debug', false)
+            ? '<script type="module" src="' . self::$viteUrl . '/@vite/client"></script>' . "\n"
             : '';
-        return $dev_hmr . '<script type="module" src="' . e($url) . '"></script>';
+        return $devHmr . '<script type="module" src="' . e($url) . '"></script>';
     }
 
     /**
@@ -83,7 +83,7 @@ final class Assets {
      * @param string $url Vite dev server base URL.
      */
     public static function setViteUrl(string $url): void {
-        self::$vite_url = rtrim($url, '/');
+        self::$viteUrl = rtrim($url, '/');
     }
 
     /**
@@ -113,10 +113,10 @@ final class Assets {
             return self::$manifest;
         }
 
-        $path = (self::$public_path ?: basePath('public')) . '/build/.vite/manifest.json';
+        $path = (self::$publicPath ?: basePath('public')) . '/build/.vite/manifest.json';
 
         if (!is_file($path)) {
-            $path = (self::$public_path ?: basePath('public')) . '/build/manifest.json';
+            $path = (self::$publicPath ?: basePath('public')) . '/build/manifest.json';
         }
 
         if (!is_file($path)) {

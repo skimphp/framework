@@ -22,10 +22,10 @@ namespace Skim\Db;
  * #AI:class
  */
 abstract class MerryModel extends \Skim\Db\Model {
-    protected static array $has_many     = [];
-    protected static array $has_one      = [];
-    protected static array $belongs_to   = [];
-    protected static array $many_to_many = [];
+    protected static array $hasMany     = [];
+    protected static array $hasOne      = [];
+    protected static array $belongsTo   = [];
+    protected static array $manyToMany = [];
 
     private array $relations = [];
 
@@ -51,17 +51,17 @@ abstract class MerryModel extends \Skim\Db\Model {
             $models = static::eagerLoad($models, $name);
 
             if ($nested !== null) {
-                $related_all = [];
+                $relatedAll = [];
                 foreach ($models as $model) {
                     $related = $model->relations[$name] ?? [];
                     foreach ((is_array($related) ? $related : [$related]) as $r) {
                         if ($r instanceof \Skim\Db\MerryModel) {
-                            $related_all[] = $r;
+                            $relatedAll[] = $r;
                         }
                     }
                 }
-                if ($related_all !== []) {
-                    static::with($related_all, $nested);
+                if ($relatedAll !== []) {
+                    static::with($relatedAll, $nested);
                 }
             }
         }
@@ -93,7 +93,7 @@ abstract class MerryModel extends \Skim\Db\Model {
      * @throws \InvalidArgumentException If relation is not many_to_many.
      */
     public function attach(string $relation, array $ids): void {
-        $def = static::$many_to_many[$relation]
+        $def = static::$manyToMany[$relation]
             ?? throw new \InvalidArgumentException("Relation '{$relation}' is not a many_to_many.");
 
         foreach ($ids as $id) {
@@ -117,7 +117,7 @@ abstract class MerryModel extends \Skim\Db\Model {
      * @throws \InvalidArgumentException If relation is not many_to_many.
      */
     public function detach(string $relation, array $ids = []): void {
-        $def = static::$many_to_many[$relation]
+        $def = static::$manyToMany[$relation]
             ?? throw new \InvalidArgumentException("Relation '{$relation}' is not a many_to_many.");
 
         if ($ids === []) {
@@ -158,17 +158,17 @@ abstract class MerryModel extends \Skim\Db\Model {
             return $models;
         }
 
-        if (isset(static::$has_many[$name])) {
-            return static::eagerHasMany($models, $name, static::$has_many[$name]);
+        if (isset(static::$hasMany[$name])) {
+            return static::eagerHasMany($models, $name, static::$hasMany[$name]);
         }
-        if (isset(static::$has_one[$name])) {
-            return static::eagerHasOne($models, $name, static::$has_one[$name]);
+        if (isset(static::$hasOne[$name])) {
+            return static::eagerHasOne($models, $name, static::$hasOne[$name]);
         }
-        if (isset(static::$belongs_to[$name])) {
-            return static::eagerBelongsTo($models, $name, static::$belongs_to[$name]);
+        if (isset(static::$belongsTo[$name])) {
+            return static::eagerBelongsTo($models, $name, static::$belongsTo[$name]);
         }
-        if (isset(static::$many_to_many[$name])) {
-            return static::eagerManyToMany($models, $name, static::$many_to_many[$name]);
+        if (isset(static::$manyToMany[$name])) {
+            return static::eagerManyToMany($models, $name, static::$manyToMany[$name]);
         }
 
         throw new \InvalidArgumentException("Relation '{$name}' not defined on " . static::class);
@@ -215,9 +215,9 @@ abstract class MerryModel extends \Skim\Db\Model {
         $class   = $def['class'];
         $fk      = $def['fk'];
         $pk      = $def['pk'] ?? 'id';
-        $fk_vals = array_unique(array_filter(array_column(array_map(fn($m) => $m->toArray(), $models), $fk)));
-        $in      = implode(',', array_fill(0, count($fk_vals), '?'));
-        $related = $class::raw("SELECT * FROM {$class::getTable()} WHERE {$pk} IN ({$in})", $fk_vals);
+        $fkVals = array_unique(array_filter(array_column(array_map(fn($m) => $m->toArray(), $models), $fk)));
+        $in      = implode(',', array_fill(0, count($fkVals), '?'));
+        $related = $class::raw("SELECT * FROM {$class::getTable()} WHERE {$pk} IN ({$in})", $fkVals);
 
         $map = [];
         foreach ($related as $r) {
@@ -243,9 +243,9 @@ abstract class MerryModel extends \Skim\Db\Model {
 
         $map = [];
         foreach ($rows as $row) {
-            $owner_id  = $row[$fk];
+            $ownerId  = $row[$fk];
             unset($row[$fk]);
-            $map[$owner_id][] = $class::hydrateOne($row);
+            $map[$ownerId][] = $class::hydrateOne($row);
         }
         foreach ($models as $m) {
             $m->relations[$name] = $map[$m->{static::$primary}] ?? [];
@@ -254,20 +254,20 @@ abstract class MerryModel extends \Skim\Db\Model {
     }
 
     private function lazyLoad(string $name): mixed {
-        if (isset(static::$has_many[$name])) {
-            $def = static::$has_many[$name];
+        if (isset(static::$hasMany[$name])) {
+            $def = static::$hasMany[$name];
             return $def['class']::where([$def['fk'] => $this->id])->all();
         }
-        if (isset(static::$has_one[$name])) {
-            $def = static::$has_one[$name];
+        if (isset(static::$hasOne[$name])) {
+            $def = static::$hasOne[$name];
             return $def['class']::findBy($def['fk'], $this->id);
         }
-        if (isset(static::$belongs_to[$name])) {
-            $def = static::$belongs_to[$name];
+        if (isset(static::$belongsTo[$name])) {
+            $def = static::$belongsTo[$name];
             return $def['class']::find($this->{$def['fk']});
         }
-        if (isset(static::$many_to_many[$name])) {
-            return $this->loadPivot($name, static::$many_to_many[$name]);
+        if (isset(static::$manyToMany[$name])) {
+            return $this->loadPivot($name, static::$manyToMany[$name]);
         }
         throw new \InvalidArgumentException("Relation '{$name}' not defined on " . static::class);
     }

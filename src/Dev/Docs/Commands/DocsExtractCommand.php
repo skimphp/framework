@@ -40,14 +40,14 @@ class DocsExtractCommand extends \Skim\Cli\Command {
         $scanner = new \Skim\Dev\Docs\Extractor\ProjectScanner();
 
         try {
-            $scan_paths = $paths->scanPaths();
-            if ($paths->hasSourceOverride() && !is_dir($scan_paths[0])) {
-                $this->error('Source directory not found: ' . $scan_paths[0]);
+            $scanPaths = $paths->scanPaths();
+            if ($paths->hasSourceOverride() && !is_dir($scanPaths[0])) {
+                $this->error('Source directory not found: ' . $scanPaths[0]);
                 return 1;
             }
 
             $classes = $paths->hasSourceOverride()
-                ? $scanner->scanPaths($scan_paths)
+                ? $scanner->scanPaths($scanPaths)
                 : $scanner->scan();
         } catch (\Throwable $e) {
             $this->error('Scan failed: ' . $e->getMessage());
@@ -58,20 +58,20 @@ class DocsExtractCommand extends \Skim\Cli\Command {
 
         $registry            = new \Skim\Ext\ExtRegistry(basePath());
         $extensions          = $registry->installed();
-        $capability_map      = [];
-        $installed_names     = [];
+        $capabilityMap      = [];
+        $installedNames     = [];
         foreach ($extensions as $ext) {
-            $installed_names[] = $ext['name'];
+            $installedNames[] = $ext['name'];
             foreach ($ext['capability_details'] as $cap => $info) {
-                $capability_map[$cap] ??= array_merge(['provided_by' => $ext['name']], (array) $info);
+                $capabilityMap[$cap] ??= array_merge(['provided_by' => $ext['name']], (array) $info);
             }
             foreach ($ext['capabilities'] as $cap) {
-                $capability_map[$cap] ??= ['provided_by' => $ext['name']];
+                $capabilityMap[$cap] ??= ['provided_by' => $ext['name']];
             }
         }
 
         try {
-            (new \Skim\Dev\Docs\Emitter\JsonEmitter())->emit($classes, $output, $capability_map, $installed_names);
+            (new \Skim\Dev\Docs\Emitter\JsonEmitter())->emit($classes, $output, $capabilityMap, $installedNames);
         } catch (\Throwable $e) {
             $this->error('Write failed: ' . $e->getMessage());
             return 1;

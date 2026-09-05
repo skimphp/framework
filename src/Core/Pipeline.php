@@ -25,7 +25,7 @@ namespace Skim\Core;
  */
 class Pipeline {
     /** @var array<class-string, \Skim\Core\Middleware> */
-    private static array $instance_cache = [];
+    private static array $instanceCache = [];
     /**
      * Clears the middleware singleton cache. Called between requests in worker mode.
      *
@@ -36,7 +36,7 @@ class Pipeline {
      * #AI:reset_instance_cache
      */
     public static function resetInstanceCache(): void {
-        self::$instance_cache = [];
+        self::$instanceCache = [];
     }
 
     /**
@@ -141,7 +141,7 @@ class Pipeline {
             return $entry;
         }
         if (is_string($entry)) {
-            return self::$instance_cache[$entry] ??= new $entry();
+            return self::$instanceCache[$entry] ??= new $entry();
         }
 
         // ['class' => ..., 'args' => [...]]

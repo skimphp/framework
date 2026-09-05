@@ -19,23 +19,23 @@ namespace Skim\Http;
  * #AI:class
  */
 class Client {
-    private array  $default_headers = ['Content-Type' => 'application/json'];
+    private array  $defaultHeaders = ['Content-Type' => 'application/json'];
     private int    $timeout         = 10;
-    private bool   $verify_ssl      = true;
-    private ?string $base_url       = null;
+    private bool   $verifySsl      = true;
+    private ?string $baseUrl       = null;
 
     public function __construct(array $options = []) {
         if (isset($options['base_url'])) {
-            $this->base_url = rtrim($options['base_url'], '/');
+            $this->baseUrl = rtrim($options['base_url'], '/');
         }
         if (isset($options['timeout'])) {
             $this->timeout = (int) $options['timeout'];
         }
         if (isset($options['verify_ssl'])) {
-            $this->verify_ssl = (bool) $options['verify_ssl'];
+            $this->verifySsl = (bool) $options['verify_ssl'];
         }
         if (isset($options['headers'])) {
-            $this->default_headers = array_merge($this->default_headers, $options['headers']);
+            $this->defaultHeaders = array_merge($this->defaultHeaders, $options['headers']);
         }
     }
 
@@ -114,11 +114,11 @@ class Client {
     }
 
     private function send(string $method, string $url, ?array $body, array $extraHeaders): \Skim\Http\HttpResponse {
-        $full_url = $this->base_url !== null ? $this->base_url . '/' . ltrim($url, '/') : $url;
-        $headers  = array_merge($this->default_headers, $extraHeaders);
+        $fullUrl = $this->baseUrl !== null ? $this->baseUrl . '/' . ltrim($url, '/') : $url;
+        $headers  = array_merge($this->defaultHeaders, $extraHeaders);
         $content  = $body !== null ? json_encode($body) : null;
 
-        $header_lines = array_map(
+        $headerLines = array_map(
             fn($k, $v) => "{$k}: {$v}",
             array_keys($headers),
             array_values($headers),
@@ -127,19 +127,19 @@ class Client {
         $opts = [
             'http' => [
                 'method'        => $method,
-                'header'        => implode("\r\n", $header_lines),
+                'header'        => implode("\r\n", $headerLines),
                 'content'       => $content,
                 'timeout'       => $this->timeout,
                 'ignore_errors' => true,
             ],
             'ssl' => [
-                'verify_peer'      => $this->verify_ssl,
-                'verify_peer_name' => $this->verify_ssl,
+                'verify_peer'      => $this->verifySsl,
+                'verify_peer_name' => $this->verifySsl,
             ],
         ];
 
         $ctx  = stream_context_create($opts);
-        $raw  = @file_get_contents($full_url, false, $ctx);
+        $raw  = @file_get_contents($fullUrl, false, $ctx);
         $meta = $http_response_header ?? [];
 
         return \Skim\Http\HttpResponse::fromStream($raw === false ? '' : $raw, $meta);

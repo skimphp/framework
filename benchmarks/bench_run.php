@@ -240,11 +240,11 @@ exit($correctness_ok ? 0 : 1);
 function runBenchInproc(string $script, callable $parse, array $envVars = []): array {
     $stdout = [];
     $rc     = 0;
-    $env_prefix = '';
+    $envPrefix = '';
     foreach ($envVars as $k => $v) {
-        $env_prefix .= escapeshellarg($k) . '=' . escapeshellarg((string) $v) . ' ';
+        $envPrefix .= escapeshellarg($k) . '=' . escapeshellarg((string) $v) . ' ';
     }
-    exec(sprintf('%sphp %s 2>&1', $env_prefix, escapeshellarg($script)), $stdout, $rc);
+    exec(sprintf('%sphp %s 2>&1', $envPrefix, escapeshellarg($script)), $stdout, $rc);
     $out = implode("\n", $stdout);
     echo $out . "\n";
     $result           = $parse($out);

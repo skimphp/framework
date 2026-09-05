@@ -46,14 +46,14 @@ class QueueCommand extends \Skim\Cli\Command {
      * is reached, or a restart signal is received.
      */
     private function work(): int {
-        $queue_name = $this->arg(1, 'default');
+        $queueName = $this->arg(1, 'default');
         $sleep      = (int) $this->flag('sleep', 3);
-        $max_jobs   = (int) $this->flag('max-jobs', 0);
+        $maxJobs   = (int) $this->flag('max-jobs', 0);
 
-        $this->info("Starting worker on queue '{$queue_name}' (sleep={$sleep}s)");
+        $this->info("Starting worker on queue '{$queueName}' (sleep={$sleep}s)");
         $this->muted('Press Ctrl+C to stop gracefully.');
 
-        $w = new \Skim\Queue\Worker(queue: $queue_name, sleep: $sleep, maxJobs: $max_jobs);
+        $w = new \Skim\Queue\Worker(queue: $queueName, sleep: $sleep, maxJobs: $maxJobs);
         $w->work();
 
         $this->success('Worker stopped.');

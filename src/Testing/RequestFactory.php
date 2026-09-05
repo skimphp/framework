@@ -54,15 +54,15 @@ class RequestFactory {
         array  $cookies  = [],
         array  $files    = [],
     ): \Skim\Core\Request {
-        $no_prefix = ['content-type' => 'CONTENT_TYPE', 'content-length' => 'CONTENT_LENGTH'];
-        $server_headers = [];
+        $noPrefix = ['content-type' => 'CONTENT_TYPE', 'content-length' => 'CONTENT_LENGTH'];
+        $serverHeaders = [];
         foreach ($headers as $k => $v) {
             $lower = strtolower($k);
-            $server_headers[$no_prefix[$lower] ?? ('HTTP_' . strtoupper(str_replace('-', '_', $k)))] = $v;
+            $serverHeaders[$noPrefix[$lower] ?? ('HTTP_' . strtoupper(str_replace('-', '_', $k)))] = $v;
         }
         $server = array_merge(
             ['REQUEST_METHOD' => strtoupper($method), 'REQUEST_URI' => $path],
-            $server_headers,
+            $serverHeaders,
         );
 
         return new \Skim\Core\Request(

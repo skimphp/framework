@@ -48,8 +48,8 @@ final class ArgvParser {
         $args    = [];
         $flags   = [];
 
-        $command_raw = 'help';
-        $found_cmd   = false;
+        $commandRaw = 'help';
+        $foundCmd   = false;
 
         foreach ($tokens as $token) {
             if (str_starts_with($token, '--')) {
@@ -62,22 +62,22 @@ final class ArgvParser {
                 }
             } elseif (str_starts_with($token, '-') && strlen($token) > 1) {
                 $flags[substr($token, 1)] = true;
-            } elseif (!$found_cmd) {
-                $command_raw = $token;
-                $found_cmd   = true;
+            } elseif (!$foundCmd) {
+                $commandRaw = $token;
+                $foundCmd   = true;
             } else {
                 $args[] = $token;
             }
         }
 
-        if (str_contains($command_raw, ':')) {
-            $sub = substr($command_raw, strpos($command_raw, ':') + 1);
+        if (str_contains($commandRaw, ':')) {
+            $sub = substr($commandRaw, strpos($commandRaw, ':') + 1);
             if (empty($args) || $args[0] !== $sub) {
                 array_unshift($args, $sub);
             }
         }
 
-        return new self($command_raw, $args, $flags);
+        return new self($commandRaw, $args, $flags);
     }
 
     /**

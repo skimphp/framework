@@ -26,7 +26,7 @@ namespace Skim\Validation;
  */
 class Validate {
     // Instance-level custom rules registry — safe for FrankenPHP worker mode.
-    private array $custom_rules = [];
+    private array $customRules = [];
 
     private array $rules;
 
@@ -60,7 +60,7 @@ class Validate {
      * @param string   $message Default error message (`:field` is replaced).
      */
     public function extend(string $name, callable $fn, string $message = 'Invalid.'): static {
-        $this->custom_rules[$name] = ['fn' => $fn, 'message' => $message];
+        $this->customRules[$name] = ['fn' => $fn, 'message' => $message];
         return $this;
     }
 
@@ -79,54 +79,54 @@ class Validate {
 
         foreach ($this->rules as $field => $rules) {
             $value     = $data[$field] ?? null;
-            $rule_list = is_string($rules) ? explode('|', $rules) : $rules;
-            $field_ok  = true;
+            $ruleList = is_string($rules) ? explode('|', $rules) : $rules;
+            $fieldOk  = true;
 
             // Extract rule name strings for cast() — skip objects/callables
-            $field_rules_strings = array_map(
+            $fieldRulesStrings = array_map(
                 fn($r) => is_string($r) ? explode(':', $r, 2)[0] : '',
-                $rule_list,
+                $ruleList,
             );
 
             // Nullable shortcut: if field is nullable and value is null, skip all rules
-            $is_nullable = in_array('nullable', $field_rules_strings, true);
-            if ($is_nullable && $value === null) {
+            $isNullable = in_array('nullable', $fieldRulesStrings, true);
+            if ($isNullable && $value === null) {
                 $validated[$field] = null;
                 continue;
             }
 
-            foreach ($rule_list as $rule_item) {
+            foreach ($ruleList as $ruleItem) {
                 // Rule object (implements rule interface)
-                if ($rule_item instanceof \Skim\Validation\Rule) {
-                    $ok = $rule_item->validate($value, $field, $data);
+                if ($ruleItem instanceof \Skim\Validation\Rule) {
+                    $ok = $ruleItem->validate($value, $field, $data);
                     if (!$ok) {
-                        $errors[$field][] = $rule_item->message($field);
-                        $field_ok = false;
+                        $errors[$field][] = $ruleItem->message($field);
+                        $fieldOk = false;
                     }
                     continue;
                 }
 
                 // One-off callable (but not a string — strings are rule names)
-                if (is_callable($rule_item) && !is_string($rule_item)) {
-                    $ok = (bool) $rule_item($value);
+                if (is_callable($ruleItem) && !is_string($ruleItem)) {
+                    $ok = (bool) $ruleItem($value);
                     if (!$ok) {
                         $errors[$field][] = "The {$field} is invalid.";
-                        $field_ok = false;
+                        $fieldOk = false;
                     }
                     continue;
                 }
 
                 // String rule — existing apply_rule() path
-                $error = $this->applyRule((string) $rule_item, $field, $value, $data);
+                $error = $this->applyRule((string) $ruleItem, $field, $value, $data);
                 if ($error !== null) {
                     $errors[$field][] = $error;
-                    $field_ok = false;
+                    $fieldOk = false;
                 }
             }
 
             // Include field in validated() if it passed, or if not required and absent
-            if ($field_ok) {
-                $validated[$field] = $this->cast($field_rules_strings, $value);
+            if ($fieldOk) {
+                $validated[$field] = $this->cast($fieldRulesStrings, $value);
             }
         }
 
@@ -180,10 +180,10 @@ class Validate {
     }
 
     private function applyCustom(string $rule, string $field, mixed $value): ?string {
-        if (!isset($this->custom_rules[$rule])) {
+        if (!isset($this->customRules[$rule])) {
             return null;   // unknown rules silently pass — prevents accidental lockouts
         }
-        $entry = $this->custom_rules[$rule];
+        $entry = $this->customRules[$rule];
         if (!(bool)($entry['fn'])($value)) {
             return str_replace(':field', $field, $entry['message']);
         }

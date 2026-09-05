@@ -18,9 +18,9 @@ use Skim\Dev\RequestTrace;
  */
 final class LeakDetector {
     private static string $mode = 'off';    // off | warn | strict
-    private static int $request_n = 0;
+    private static int $requestN = 0;
     private static int $warmup = 10;
-    private static int $ob_baseline = 0;
+    private static int $obBaseline = 0;
     private static array $window = [];       // ring buffer of metric samples
     private static array $findings = [];    // strict-mode accumulator (deduped)
     private static array $reported = [];    // dedupe set for warn mode
@@ -35,7 +35,7 @@ final class LeakDetector {
 
     public static function begin(): void {
         if (self::$mode === 'off') return;
-        self::$ob_baseline = ob_get_level();
+        self::$obBaseline = ob_get_level();
     }
 
     /**
@@ -43,13 +43,13 @@ final class LeakDetector {
      */
     public static function check(\Skim\Core\App $app): void {
         if (self::$mode === 'off') return;
-        self::$request_n++;
+        self::$requestN++;
 
         // --- 1. Hard invariants (immediate, deterministic) ---
         self::checkHardInvariants($app);
 
         // --- 2. Soft growth trends (after warmup window) ---
-        if (self::$request_n > self::$warmup) {
+        if (self::$requestN > self::$warmup) {
             self::checkGrowthTrends($app);
         }
     }
@@ -61,7 +61,7 @@ final class LeakDetector {
         }
 
         // output buffer level must match baseline
-        if (ob_get_level() !== self::$ob_baseline) {
+        if (ob_get_level() !== self::$obBaseline) {
             self::report('hard.ob_level', 'Output buffer level mismatch after end_request');
         }
 
@@ -127,11 +127,11 @@ final class LeakDetector {
     }
 
     private static function report(string $key, string $message): void {
-        $dedupe_key = $key . ':' . md5($message);
-        if (isset(self::$reported[$dedupe_key])) return;
-        self::$reported[$dedupe_key] = true;
+        $dedupeKey = $key . ':' . md5($message);
+        if (isset(self::$reported[$dedupeKey])) return;
+        self::$reported[$dedupeKey] = true;
 
-        $finding = ['key' => $key, 'message' => $message, 'request_n' => self::$request_n];
+        $finding = ['key' => $key, 'message' => $message, 'request_n' => self::$requestN];
 
         if (self::$mode === 'strict') {
             self::$findings[] = $finding;
@@ -150,8 +150,8 @@ final class LeakDetector {
 
     public static function reset(): void {
         self::$mode = 'off';
-        self::$request_n = 0;
-        self::$ob_baseline = 0;
+        self::$requestN = 0;
+        self::$obBaseline = 0;
         self::$window = [];
         self::$findings = [];
         self::$reported = [];

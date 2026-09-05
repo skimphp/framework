@@ -21,7 +21,7 @@ namespace Skim\Dev;
  */
 final class RequestTrace {
     private static ?array  $current    = null;
-    private static float   $start_time = 0.0;
+    private static float   $startTime = 0.0;
     private static bool    $enabled    = false;
 
     /**
@@ -55,7 +55,7 @@ final class RequestTrace {
         if (!self::$enabled) {
             return;
         }
-        self::$start_time = microtime(true);
+        self::$startTime = microtime(true);
         self::$current = [
             'request_id'        => $requestId,
             'method'            => $method,
@@ -80,7 +80,7 @@ final class RequestTrace {
             return;
         }
         self::$current['timeline'][] = array_merge(
-            ['t' => round(microtime(true) - self::$start_time, 6), 'event' => $event],
+            ['t' => round(microtime(true) - self::$startTime, 6), 'event' => $event],
             $context,
         );
     }
@@ -97,7 +97,7 @@ final class RequestTrace {
             return;
         }
         self::$current['errors'][] = [
-            't'       => round(microtime(true) - self::$start_time, 6),
+            't'       => round(microtime(true) - self::$startTime, 6),
             'class'   => get_class($e),
             'message' => $e->getMessage(),
         ];
@@ -130,7 +130,7 @@ final class RequestTrace {
             return [];
         }
         self::$current['status']      = $status;
-        self::$current['duration_ms'] = round((microtime(true) - self::$start_time) * 1000, 2);
+        self::$current['duration_ms'] = round((microtime(true) - self::$startTime) * 1000, 2);
         $trace         = self::$current;
         self::$current = null;
         return $trace;
@@ -153,7 +153,7 @@ final class RequestTrace {
      */
     public static function reset(): void {
         self::$current    = null;
-        self::$start_time = 0.0;
+        self::$startTime = 0.0;
     }
 }
 

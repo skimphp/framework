@@ -19,15 +19,15 @@ namespace Skim\Cli;
  */
 final class InteractiveMenu {
     private array $groups;
-    private array $group_expanded = [];
-    private array $flat_items = [];
-    private int $selected_index = 0;
-    private bool $search_mode = false;
-    private string $search_query = '';
-    private bool $force_plain = false;
-    private ?string $original_tty_settings = null;
-    private int $last_rendered_lines = 0;
-    private ?string $selected_command = null;
+    private array $groupExpanded = [];
+    private array $flatItems = [];
+    private int $selectedIndex = 0;
+    private bool $searchMode = false;
+    private string $searchQuery = '';
+    private bool $forcePlain = false;
+    private ?string $originalTtySettings = null;
+    private int $lastRenderedLines = 0;
+    private ?string $selectedCommand = null;
 
     /**
      * @param array $groups Ordered array of group records with 'label' and 'commands' keys.
@@ -71,24 +71,24 @@ final class InteractiveMenu {
                     pcntl_signal_dispatch();
                 }
 
-                $raw_key = $this->readKey();
-                if ($raw_key === '') {
+                $rawKey = $this->readKey();
+                if ($rawKey === '') {
                     continue;
                 }
 
-                $key = $this->decodeKey($raw_key);
+                $key = $this->decodeKey($rawKey);
 
-                if ($key === 'q' && !$this->search_mode) {
+                if ($key === 'q' && !$this->searchMode) {
                     $this->clearMenu();
                     return null;
                 }
 
                 if ($key === 'esc') {
-                    if ($this->search_mode) {
-                        $this->search_mode = false;
-                        $this->search_query = '';
+                    if ($this->searchMode) {
+                        $this->searchMode = false;
+                        $this->searchQuery = '';
                         $this->rebuildFlatItems();
-                        $this->selected_index = 0;
+                        $this->selectedIndex = 0;
                     } else {
                         $this->clearMenu();
                         return null;
@@ -99,9 +99,9 @@ final class InteractiveMenu {
 
                 $this->handleKey($key);
 
-                if ($this->selected_command !== null) {
-                    $cmd = $this->selected_command;
-                    $this->selected_command = null;
+                if ($this->selectedCommand !== null) {
+                    $cmd = $this->selectedCommand;
+                    $this->selectedCommand = null;
                     $this->clearMenu();
                     return $cmd;
                 }
@@ -117,8 +117,8 @@ final class InteractiveMenu {
      * Moves cursor up over the rendered menu and erases it. #AI:clearMenu
      */
     private function clearMenu(): void {
-        if ($this->last_rendered_lines > 0) {
-            echo "\e[" . $this->last_rendered_lines . "A";
+        if ($this->lastRenderedLines > 0) {
+            echo "\e[" . $this->lastRenderedLines . "A";
         }
         echo "\e[J";
     }
@@ -129,21 +129,21 @@ final class InteractiveMenu {
      * @param string $key Decoded key name (up, down, left, right, enter, etc.).
      */
     private function handleKey(string $key): void {
-        $item = $this->flat_items[$this->selected_index] ?? null;
+        $item = $this->flatItems[$this->selectedIndex] ?? null;
 
         if ($key === 'up') {
-            $this->selected_index = max(0, $this->selected_index - 1);
+            $this->selectedIndex = max(0, $this->selectedIndex - 1);
             return;
         }
 
         if ($key === 'down') {
-            $this->selected_index = min(count($this->flat_items) - 1, $this->selected_index + 1);
+            $this->selectedIndex = min(count($this->flatItems) - 1, $this->selectedIndex + 1);
             return;
         }
 
         if ($key === 'right') {
             if ($item && $item['type'] === 'group') {
-                $this->group_expanded[$item['group_idx']] = true;
+                $this->groupExpanded[$item['group_idx']] = true;
                 $this->rebuildFlatItems();
             }
             return;
@@ -152,12 +152,12 @@ final class InteractiveMenu {
         if ($key === 'left') {
             if ($item) {
                 if ($item['type'] === 'group') {
-                    $this->group_expanded[$item['group_idx']] = false;
+                    $this->groupExpanded[$item['group_idx']] = false;
                     $this->rebuildFlatItems();
                 } elseif ($item['type'] === 'command') {
-                    foreach ($this->flat_items as $idx => $fit) {
+                    foreach ($this->flatItems as $idx => $fit) {
                         if ($fit['type'] === 'group' && $fit['group_idx'] === $item['group_idx']) {
-                            $this->selected_index = $idx;
+                            $this->selectedIndex = $idx;
                             break;
                         }
                     }
@@ -170,32 +170,32 @@ final class InteractiveMenu {
             if ($item) {
                 if ($item['type'] === 'group') {
                     $idx = $item['group_idx'];
-                    $this->group_expanded[$idx] = !($this->group_expanded[$idx] ?? false);
+                    $this->groupExpanded[$idx] = !($this->groupExpanded[$idx] ?? false);
                     $this->rebuildFlatItems();
                 } elseif ($item['type'] === 'command') {
-                    $this->selected_command = $item['name'];
+                    $this->selectedCommand = $item['name'];
                 }
             }
             return;
         }
 
-        if (!$this->search_mode && ($key === '/' || $key === ':')) {
-            $this->search_mode = true;
-            $this->search_query = '';
+        if (!$this->searchMode && ($key === '/' || $key === ':')) {
+            $this->searchMode = true;
+            $this->searchQuery = '';
             $this->rebuildFlatItems();
-            $this->selected_index = 0;
+            $this->selectedIndex = 0;
             return;
         }
 
-        if ($this->search_mode) {
+        if ($this->searchMode) {
             if ($key === 'backspace') {
-                $this->search_query = mb_substr($this->search_query, 0, -1);
+                $this->searchQuery = mb_substr($this->searchQuery, 0, -1);
                 $this->rebuildFlatItems();
-                $this->selected_index = 0;
+                $this->selectedIndex = 0;
             } elseif (strlen($key) === 1 && ord($key) >= 32 && ord($key) <= 126) {
-                $this->search_query .= $key;
+                $this->searchQuery .= $key;
                 $this->rebuildFlatItems();
-                $this->selected_index = 0;
+                $this->selectedIndex = 0;
             }
         }
     }
@@ -204,17 +204,17 @@ final class InteractiveMenu {
      * Rebuilds the flat item list from groups, filtered by search query when active. #AI:rebuildFlatItems
      */
     private function rebuildFlatItems(): void {
-        $this->flat_items = [];
-        if ($this->search_mode) {
-            foreach ($this->groups as $g_idx => $g) {
-                foreach ($g['commands'] as $c_idx => $cmd) {
-                    if ($this->search_query === '' || 
-                        str_contains(strtolower($cmd['name']), strtolower($this->search_query)) || 
-                        str_contains(strtolower($cmd['description']), strtolower($this->search_query))) {
-                        $this->flat_items[] = [
+        $this->flatItems = [];
+        if ($this->searchMode) {
+            foreach ($this->groups as $gIdx => $g) {
+                foreach ($g['commands'] as $cIdx => $cmd) {
+                    if ($this->searchQuery === '' ||
+                        str_contains(strtolower($cmd['name']), strtolower($this->searchQuery)) ||
+                        str_contains(strtolower($cmd['description']), strtolower($this->searchQuery))) {
+                        $this->flatItems[] = [
                             'type' => 'command',
-                            'group_idx' => $g_idx,
-                            'cmd_idx' => $c_idx,
+                            'group_idx' => $gIdx,
+                            'cmd_idx' => $cIdx,
                             'name' => $cmd['name'],
                             'usage' => $cmd['usage'] ?? '',
                             'description' => $cmd['description'] ?? '',
@@ -223,19 +223,19 @@ final class InteractiveMenu {
                 }
             }
         } else {
-            foreach ($this->groups as $g_idx => $g) {
-                $this->flat_items[] = [
+            foreach ($this->groups as $gIdx => $g) {
+                $this->flatItems[] = [
                     'type' => 'group',
-                    'group_idx' => $g_idx,
+                    'group_idx' => $gIdx,
                     'label' => $g['label'],
                 ];
-                $is_expanded = $this->group_expanded[$g_idx] ?? false;
-                if ($is_expanded) {
-                    foreach ($g['commands'] as $c_idx => $cmd) {
-                        $this->flat_items[] = [
+                $isExpanded = $this->groupExpanded[$gIdx] ?? false;
+                if ($isExpanded) {
+                    foreach ($g['commands'] as $cIdx => $cmd) {
+                        $this->flatItems[] = [
                             'type' => 'command',
-                            'group_idx' => $g_idx,
-                            'cmd_idx' => $c_idx,
+                            'group_idx' => $gIdx,
+                            'cmd_idx' => $cIdx,
                             'name' => $cmd['name'],
                             'usage' => $cmd['usage'] ?? '',
                             'description' => $cmd['description'] ?? '',
@@ -245,8 +245,8 @@ final class InteractiveMenu {
             }
         }
 
-        if ($this->selected_index >= count($this->flat_items)) {
-            $this->selected_index = max(0, count($this->flat_items) - 1);
+        if ($this->selectedIndex >= count($this->flatItems)) {
+            $this->selectedIndex = max(0, count($this->flatItems) - 1);
         }
     }
 
@@ -254,72 +254,72 @@ final class InteractiveMenu {
      * Renders the full menu to stdout, overwriting the previous frame. #AI:render
      */
     private function render(): void {
-        if ($this->force_plain) {
+        if ($this->forcePlain) {
             return;
         }
 
-        if ($this->last_rendered_lines > 0) {
-            echo "\e[" . $this->last_rendered_lines . "A";
+        if ($this->lastRenderedLines > 0) {
+            echo "\e[" . $this->lastRenderedLines . "A";
         }
         echo "\e[J";
 
         $output = '';
 
-        if ($this->search_mode) {
+        if ($this->searchMode) {
             $output .= "\e[38;5;245mSEARCH RESULTS\e[0m\n";
-            if (empty($this->flat_items)) {
-                $output .= "  \e[2mNo commands match '{$this->search_query}'\e[0m\n";
+            if (empty($this->flatItems)) {
+                $output .= "  \e[2mNo commands match '{$this->searchQuery}'\e[0m\n";
             } else {
-                foreach ($this->flat_items as $idx => $item) {
-                    $cmd_focused = ($idx === $this->selected_index);
-                    $prefix = $cmd_focused ? "\e[38;5;141m❯\e[0m " : '  ';
-                    $cmd_name = str_pad($item['name'], 20);
-                    $cmd_name_str = "\e[97m" . $cmd_name . "\e[0m";
+                foreach ($this->flatItems as $idx => $item) {
+                    $cmdFocused = ($idx === $this->selectedIndex);
+                    $prefix = $cmdFocused ? "\e[38;5;141m❯\e[0m " : '  ';
+                    $cmdName = str_pad($item['name'], 20);
+                    $cmdNameStr = "\e[97m" . $cmdName . "\e[0m";
                     $usage = $item['usage'] !== '' ? " \e[2m" . $item['usage'] . "\e[0m" : '';
                     $desc = $item['description'] !== '' ? "   \e[2m" . $item['description'] . "\e[0m" : '';
                     
-                    $row_text = $prefix . $cmd_name_str . $usage . $desc;
-                    if ($cmd_focused) {
-                        $row_text = "\e[48;5;235m" . str_pad($row_text, 80) . "\e[0m";
+                    $rowText = $prefix . $cmdNameStr . $usage . $desc;
+                    if ($cmdFocused) {
+                        $rowText = "\e[48;5;235m" . str_pad($rowText, 80) . "\e[0m";
                     }
-                    $output .= "  " . $row_text . "\n";
+                    $output .= "  " . $rowText . "\n";
                 }
             }
         } else {
-            $last_g_idx = -1;
-            foreach ($this->flat_items as $idx => $item) {
-                $focused = ($idx === $this->selected_index);
+            $lastGIdx = -1;
+            foreach ($this->flatItems as $idx => $item) {
+                $focused = ($idx === $this->selectedIndex);
 
                 if ($item['type'] === 'group') {
-                    $g_idx = $item['group_idx'];
-                    if ($last_g_idx !== -1) {
+                    $gIdx = $item['group_idx'];
+                    if ($lastGIdx !== -1) {
                         $output .= "\n";
                     }
-                    $last_g_idx = $g_idx;
+                    $lastGIdx = $gIdx;
 
-                    $is_expanded = $this->group_expanded[$g_idx] ?? false;
-                    $arrow = $is_expanded ? '▼' : '▶';
+                    $isExpanded = $this->groupExpanded[$gIdx] ?? false;
+                    $arrow = $isExpanded ? '▼' : '▶';
                     $prefix = $focused ? "\e[38;5;141m❯\e[0m " : '  ';
-                    $arrow_str = "\e[38;5;141m" . $arrow . "\e[0m";
-                    $label_str = $focused ? "\e[1;97m" . strtoupper($item['label']) . "\e[0m" : "\e[1;38;5;245m" . strtoupper($item['label']) . "\e[0m";
+                    $arrowStr = "\e[38;5;141m" . $arrow . "\e[0m";
+                    $labelStr = $focused ? "\e[1;97m" . strtoupper($item['label']) . "\e[0m" : "\e[1;38;5;245m" . strtoupper($item['label']) . "\e[0m";
 
-                    $row_text = $prefix . $label_str . ' ' . $arrow_str;
+                    $rowText = $prefix . $labelStr . ' ' . $arrowStr;
                     if ($focused) {
-                        $row_text = "\e[48;5;235m" . str_pad($row_text, 80) . "\e[0m";
+                        $rowText = "\e[48;5;235m" . str_pad($rowText, 80) . "\e[0m";
                     }
-                    $output .= $row_text . "\n";
+                    $output .= $rowText . "\n";
                 } elseif ($item['type'] === 'command') {
                     $prefix = $focused ? "  \e[38;5;141m❯\e[0m " : '    ';
-                    $cmd_name = str_pad($item['name'], 20);
-                    $cmd_name_str = "\e[97m" . $cmd_name . "\e[0m";
+                    $cmdName = str_pad($item['name'], 20);
+                    $cmdNameStr = "\e[97m" . $cmdName . "\e[0m";
                     $usage = $item['usage'] !== '' ? " \e[2m" . $item['usage'] . "\e[0m" : '';
                     $desc = $item['description'] !== '' ? "   \e[2m" . $item['description'] . "\e[0m" : '';
 
-                    $row_text = $prefix . $cmd_name_str . $usage . $desc;
+                    $rowText = $prefix . $cmdNameStr . $usage . $desc;
                     if ($focused) {
-                        $row_text = "\e[48;5;235m" . str_pad($row_text, 80) . "\e[0m";
+                        $rowText = "\e[48;5;235m" . str_pad($rowText, 80) . "\e[0m";
                     }
-                    $output .= $row_text . "\n";
+                    $output .= $rowText . "\n";
                 }
             }
         }
@@ -330,23 +330,23 @@ final class InteractiveMenu {
         }
         $divider = "\e[2m" . str_repeat('─', $cols) . "\e[0m";
         
-        $selected_item = $this->flat_items[$this->selected_index] ?? null;
-        if ($this->search_mode) {
-            $prompt = "\e[38;5;141m❯\e[0m php skim " . $this->search_query . "\e[5m_\e[0m";
+        $selectedItem = $this->flatItems[$this->selectedIndex] ?? null;
+        if ($this->searchMode) {
+            $prompt = "\e[38;5;141m❯\e[0m php skim " . $this->searchQuery . "\e[5m_\e[0m";
         } else {
-            $cmd_part = '';
-            if ($selected_item && $selected_item['type'] === 'command') {
-                $cmd_part = $selected_item['name'] . '_';
+            $cmdPart = '';
+            if ($selectedItem && $selectedItem['type'] === 'command') {
+                $cmdPart = $selectedItem['name'] . '_';
             }
-            $prompt = "\e[38;5;141m❯\e[0m php skim " . $cmd_part;
+            $prompt = "\e[38;5;141m❯\e[0m php skim " . $cmdPart;
         }
 
-        $status_bar = "\e[2m↑↓\e[0m navigate   \e[2m→\e[0m expand   \e[2m←\e[0m collapse   \e[2m/\e[0m search   \e[2menter\e[0m run   \e[2mq\e[0m quit";
+        $statusBar = "\e[2m↑↓\e[0m navigate   \e[2m→\e[0m expand   \e[2m←\e[0m collapse   \e[2m/\e[0m search   \e[2menter\e[0m run   \e[2mq\e[0m quit";
 
-        $output .= "\n" . $prompt . "\n" . $divider . "\n" . $status_bar . "\n";
+        $output .= "\n" . $prompt . "\n" . $divider . "\n" . $statusBar . "\n";
 
         echo $output;
-        $this->last_rendered_lines = substr_count($output, "\n");
+        $this->lastRenderedLines = substr_count($output, "\n");
     }
 
     /**
@@ -393,7 +393,7 @@ final class InteractiveMenu {
      * Puts the terminal into raw mode for character-by-character input. #AI:setupTty
      */
     private function setupTty(): void {
-        $this->original_tty_settings = shell_exec('stty -g');
+        $this->originalTtySettings = shell_exec('stty -g');
         system('stty -echo -icanon min 1 time 0');
         echo "\e[?25l";
     }
@@ -403,8 +403,8 @@ final class InteractiveMenu {
      */
     private function restoreTty(): void {
         echo "\e[?25h";
-        if ($this->original_tty_settings !== null && trim($this->original_tty_settings) !== '') {
-            system('stty ' . escapeshellarg(trim($this->original_tty_settings)));
+        if ($this->originalTtySettings !== null && trim($this->originalTtySettings) !== '') {
+            system('stty ' . escapeshellarg(trim($this->originalTtySettings)));
         } else {
             system('stty echo icanon');
         }

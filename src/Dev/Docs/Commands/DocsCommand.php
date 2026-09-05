@@ -54,18 +54,18 @@ class DocsCommand extends \Skim\Cli\Command {
 
     private function watchMode(): int {
         $this->info('Watch mode — press Ctrl+C to stop.');
-        $scan_paths = \Skim\Dev\Docs\Value\DocsGenerationPaths::fromFlags($this->flags)->scanPaths();
-        $last_hash  = $this->mtimeHash($scan_paths);
+        $scanPaths = \Skim\Dev\Docs\Value\DocsGenerationPaths::fromFlags($this->flags)->scanPaths();
+        $lastHash  = $this->mtimeHash($scanPaths);
 
         $this->build();
 
         while (true) {
             sleep(2);
-            $current = $this->mtimeHash($scan_paths);
-            if ($current !== $last_hash) {
+            $current = $this->mtimeHash($scanPaths);
+            if ($current !== $lastHash) {
                 $this->muted('Change detected — rebuilding…');
                 $this->build();
-                $last_hash = $current;
+                $lastHash = $current;
             }
         }
     }

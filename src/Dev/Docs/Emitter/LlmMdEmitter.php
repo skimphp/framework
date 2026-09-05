@@ -36,11 +36,11 @@ class LlmMdEmitter {
         $lines = ['# LLM context', '', '> Auto-generated from source annotations. Do not edit manually.  ', "> Generated: {$generated}", ''];
 
         if ($frameworkLlmMd !== null && file_exists($frameworkLlmMd)) {
-            $framework_content = file_get_contents($frameworkLlmMd);
-            if ($framework_content !== false) {
+            $frameworkContent = file_get_contents($frameworkLlmMd);
+            if ($frameworkContent !== false) {
                 $lines[] = '## Framework (skim)';
                 $lines[] = '';
-                $lines[] = $framework_content;
+                $lines[] = $frameworkContent;
                 $lines[] = '';
                 $lines[] = '---';
                 $lines[] = '';
@@ -90,10 +90,10 @@ class LlmMdEmitter {
 
         $methods = $class['methods'] ?? [];
         $groups = $this->groupMethods($methods, $class['section_order'] ?? []);
-        foreach ($groups as $group => $group_methods) {
+        foreach ($groups as $group => $groupMethods) {
             $lines[] = "### {$group}";
             $lines[] = '';
-            foreach ($group_methods as $method) {
+            foreach ($groupMethods as $method) {
                 $lines = array_merge($lines, $this->renderMethod($method));
             }
         }
@@ -111,8 +111,8 @@ class LlmMdEmitter {
         foreach ($method['invariants'] ?? [] as $invariant) {
             $lines[] = '- **Invariant:** ' . $this->clean((string) $invariant);
         }
-        foreach ($method['non_goals'] ?? [] as $non_goal) {
-            $lines[] = '- **Non-goal:** ' . $this->clean((string) $non_goal);
+        foreach ($method['non_goals'] ?? [] as $nonGoal) {
+            $lines[] = '- **Non-goal:** ' . $this->clean((string) $nonGoal);
         }
 
         foreach ($method['param_details'] ?? [] as $param) {

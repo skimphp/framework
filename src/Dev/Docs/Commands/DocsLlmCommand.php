@@ -33,29 +33,29 @@ class DocsLlmCommand extends \Skim\Cli\Command {
      */
     public function handle(): int {
         $paths     = \Skim\Dev\Docs\Value\DocsGenerationPaths::fromFlags($this->flags);
-        $json_path = $paths->jsonPath();
-        $md_path   = $paths->llmMdPath();
+        $jsonPath = $paths->jsonPath();
+        $mdPath   = $paths->llmMdPath();
 
         try {
-            $data = (new \Skim\Dev\Docs\Emitter\JsonEmitter())->load($json_path);
+            $data = (new \Skim\Dev\Docs\Emitter\JsonEmitter())->load($jsonPath);
         } catch (\Throwable $e) {
             $this->error($e->getMessage());
             return 1;
         }
 
-        $include_framework = (bool) config('docs.include_framework_context', false);
-        $framework_llm_md  = $include_framework
+        $includeFramework = (bool) config('docs.include_framework_context', false);
+        $frameworkLlmMd  = $includeFramework
             ? basePath('vendor/skim/framework/llm.md')
             : null;
 
         try {
-            (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit($data, $md_path, frameworkLlmMd: $framework_llm_md);
+            (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit($data, $mdPath, frameworkLlmMd: $frameworkLlmMd);
         } catch (\Throwable $e) {
             $this->error('Write failed: ' . $e->getMessage());
             return 1;
         }
 
-        $this->success("llm.md written → {$md_path}");
+        $this->success("llm.md written → {$mdPath}");
         return 0;
     }
 }

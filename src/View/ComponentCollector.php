@@ -28,9 +28,9 @@ use Skim\Worker\Resettable;
  */
 class ComponentCollector implements \Skim\Worker\Resettable {
     // Captured output between part() calls (the "main" slot)
-    private string $main_part = '';
+    private string $mainPart = '';
     // Named parts: name → captured HTML
-    private array $named_parts = [];
+    private array $namedParts = [];
     // Tracks which collector is currently active for nested components
     private static array $stack = [];
 
@@ -46,7 +46,7 @@ class ComponentCollector implements \Skim\Worker\Resettable {
         self::$stack[] = $this;
         ob_start();
         $render($this);
-        $this->main_part = (string) ob_get_clean();
+        $this->mainPart = (string) ob_get_clean();
         array_pop(self::$stack);
     }
 
@@ -69,14 +69,14 @@ class ComponentCollector implements \Skim\Worker\Resettable {
     public function capturePart(string $name, callable $render): void {
         ob_start();
         $render();
-        $this->named_parts[$name] = (string) ob_get_clean();
+        $this->namedParts[$name] = (string) ob_get_clean();
     }
 
     /**
      * Returns the main body captured outside named parts. #AI:getMain
      */
     public function getMain(): string {
-        return $this->main_part;
+        return $this->mainPart;
     }
 
     /**
@@ -86,7 +86,7 @@ class ComponentCollector implements \Skim\Worker\Resettable {
      * @param string $default Fallback HTML when the part is absent.
      */
     public function getPart(string $name, string $default = ''): string {
-        return $this->named_parts[$name] ?? $default;
+        return $this->namedParts[$name] ?? $default;
     }
 
     /**
@@ -95,7 +95,7 @@ class ComponentCollector implements \Skim\Worker\Resettable {
      * @param string $name Part identifier to check.
      */
     public function hasPart(string $name): bool {
-        return isset($this->named_parts[$name]);
+        return isset($this->namedParts[$name]);
     }
 
     /**

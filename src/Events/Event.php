@@ -27,7 +27,7 @@ final class Event implements \Skim\Worker\Resettable {
     // first reset_request() call and restored on every subsequent reset so boot-time
     // listeners survive across worker requests while request-time listeners are dropped.
     /** @var array<string, list<array{fn: callable, once: bool, priority: int}>>|null */
-    private static ?array $persistent_listeners = null;
+    private static ?array $persistentListeners = null;
 
     /**
      * Captures the current listener registry as the boot-time snapshot. #AI:capture_boot_snapshot
@@ -37,7 +37,7 @@ final class Event implements \Skim\Worker\Resettable {
      * listeners survive while request-time listeners are dropped.
      */
     public static function captureBootSnapshot(): void {
-        self::$persistent_listeners = self::$listeners;
+        self::$persistentListeners = self::$listeners;
     }
 
     /**
@@ -49,7 +49,7 @@ final class Event implements \Skim\Worker\Resettable {
      * listeners registered during a request are dropped.
      */
     public static function resetRequest(): void {
-        self::$listeners = self::$persistent_listeners ?? [];
+        self::$listeners = self::$persistentListeners ?? [];
     }
 
     /**
@@ -154,7 +154,7 @@ final class Event implements \Skim\Worker\Resettable {
     public static function off(?string $event = null): void {
         if ($event === null) {
             self::$listeners = [];
-            self::$persistent_listeners = null;
+            self::$persistentListeners = null;
         } else {
             unset(self::$listeners[$event]);
         }

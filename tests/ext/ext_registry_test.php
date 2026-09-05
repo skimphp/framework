@@ -85,14 +85,14 @@ describe('ext_registry', function(): void {
             'extra' => ['skim' => ['extension' => 'skim\\auth\\auth_extension']],
         ]));
 
-        $cache_path = $root . '/.skim/config_cache/extensions.php';
-        expect(is_file($cache_path))->toBeFalse();
+        $cachePath = $root . '/.skim/config_cache/extensions.php';
+        expect(is_file($cachePath))->toBeFalse();
 
         $registry = new \Skim\Ext\ExtRegistry($root);
         $registry->installed();
 
-        expect(is_file($cache_path))->toBeTrue();
-        $cached = require $cache_path;
+        expect(is_file($cachePath))->toBeTrue();
+        $cached = require $cachePath;
         expect($cached)->toBeArray()->toHaveCount(1);
         expect($cached[0]['name'])->toBe('skim/auth');
     });
@@ -134,17 +134,17 @@ describe('ext_registry', function(): void {
         ]));
 
         // Create a subdirectory that is NOT base_path
-        $sub_root = $root . '/subproject';
-        mkdir($sub_root . '/vendor/skim/auth', 0777, true);
-        file_put_contents($sub_root . '/vendor/skim/auth/composer.json', json_encode([
+        $subRoot = $root . '/subproject';
+        mkdir($subRoot . '/vendor/skim/auth', 0777, true);
+        file_put_contents($subRoot . '/vendor/skim/auth/composer.json', json_encode([
             'name' => 'skim/auth',
             'extra' => ['skim' => ['extension' => 'skim\\auth\\auth_extension']],
         ]));
 
-        $cache_path = $sub_root . '/.skim/config_cache/extensions.php';
-        $registry = new \Skim\Ext\ExtRegistry($sub_root);
+        $cachePath = $subRoot . '/.skim/config_cache/extensions.php';
+        $registry = new \Skim\Ext\ExtRegistry($subRoot);
         $registry->installed();
 
-        expect(is_file($cache_path))->toBeTrue('Cache is written for any project root');
+        expect(is_file($cachePath))->toBeTrue('Cache is written for any project root');
     });
 });

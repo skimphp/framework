@@ -21,10 +21,10 @@ namespace Skim\Db;
  */
 class QueryScope {
     private array  $conditions = [];
-    private array  $pdo_params = [];
+    private array  $pdoParams = [];
     private ?string $order      = null;
-    private ?int    $limit_val  = null;
-    private ?int    $offset_val = null;
+    private ?int    $limitVal  = null;
+    private ?int    $offsetVal = null;
 
     public function __construct(private readonly string $modelClass) {}
 
@@ -41,14 +41,14 @@ class QueryScope {
     public function where(string|array $condition, array $params = []): static {
         if (is_array($condition)) {
             foreach ($condition as $col => $val) {
-                $placeholder           = ':qw_' . $col . '_' . count($this->pdo_params);
+                $placeholder           = ':qw_' . $col . '_' . count($this->pdoParams);
                 $this->conditions[]    = "{$col} = {$placeholder}";
-                $this->pdo_params[$placeholder] = $val;
+                $this->pdoParams[$placeholder] = $val;
             }
         } else {
             $this->conditions[] = $condition;
             foreach ($params as $k => $v) {
-                $this->pdo_params[$k] = $v;
+                $this->pdoParams[$k] = $v;
             }
         }
         return $this;
@@ -72,7 +72,7 @@ class QueryScope {
      */
     #[\NoDiscard]
     public function limit(int $n): static {
-        $this->limit_val = $n;
+        $this->limitVal = $n;
         return $this;
     }
 
@@ -83,7 +83,7 @@ class QueryScope {
      */
     #[\NoDiscard]
     public function offset(int $n): static {
-        $this->offset_val = $n;
+        $this->offsetVal = $n;
         return $this;
     }
 
@@ -111,7 +111,7 @@ class QueryScope {
         $table = $class::getTable();
         return (int) \Skim\Db\Db::val(
             "SELECT COUNT(*) FROM {$table} %where%",
-            array_merge(['where' => $this->conditions], $this->pdo_params),
+            array_merge(['where' => $this->conditions], $this->pdoParams),
             connection: $class::getConnection(),
         );
     }
@@ -138,7 +138,7 @@ class QueryScope {
      * Used internally by model::deleteWhere() to build scoped DELETE queries.
      */
     public function toBuilderParams(): array {
-        return array_merge(['where' => $this->conditions], $this->pdo_params);
+        return array_merge(['where' => $this->conditions], $this->pdoParams);
     }
 
     // --- internals ---
@@ -147,16 +147,16 @@ class QueryScope {
         /** @var \Skim\Db\Model $class */
         $class  = $this->modelClass;
         $table  = $class::getTable();
-        $params = array_merge(['where' => $this->conditions], $this->pdo_params);
+        $params = array_merge(['where' => $this->conditions], $this->pdoParams);
 
         if ($this->order !== null) {
             $params['order_by'] = $this->order;
         }
-        if ($this->limit_val !== null) {
-            $params['limit'] = $this->limit_val;
+        if ($this->limitVal !== null) {
+            $params['limit'] = $this->limitVal;
         }
-        if ($this->offset_val !== null) {
-            $params['offset'] = $this->offset_val;
+        if ($this->offsetVal !== null) {
+            $params['offset'] = $this->offsetVal;
         }
 
         $result = \Skim\Db\Db::query(

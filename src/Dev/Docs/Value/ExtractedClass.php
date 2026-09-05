@@ -72,7 +72,7 @@ readonly class ExtractedClass {
         $symbol = $this->symbol !== '' ? $this->symbol : trim($this->namespace . '\\' . $this->className, '\\');
         $title = $this->title !== '' ? $this->title : $this->className;
         $description = $this->description !== '' ? $this->description : $this->summary;
-        $source_path = $this->sourcePath !== '' ? $this->sourcePath : $this->sourcePathFromFile();
+        $sourcePath = $this->sourcePath !== '' ? $this->sourcePath : $this->sourcePathFromFile();
 
         return [
             'symbol'       => $symbol,
@@ -80,7 +80,7 @@ readonly class ExtractedClass {
             'description'  => $description,
             'role'         => $this->owner,
             'layer'        => $this->layer,
-            'source_path'  => $source_path,
+            'source_path'  => $sourcePath,
             'badges'       => $this->badges,
             'intro'        => $this->intro !== '' ? $this->intro : $this->summary,
             'lifecycle'    => $this->lifecycle,

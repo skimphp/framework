@@ -45,54 +45,54 @@ class AnnotationParser {
     public function parse(string $docblock): array {
         $lines  = $this->stripLines($docblock);
         $result = [];
-        $current_key   = null;
-        $current_value = '';
+        $currentKey   = null;
+        $currentValue = '';
 
         foreach ($lines as $line) {
             if (str_starts_with($line, '#AI')) {
-                if ($current_key !== null) {
-                    $result[$current_key][] = trim($current_value);
-                    $current_key = null;
-                    $current_value = '';
+                if ($currentKey !== null) {
+                    $result[$currentKey][] = trim($currentValue);
+                    $currentKey = null;
+                    $currentValue = '';
                 }
-                $hash_tags = $this->parseHashAi($line);
-                foreach ($hash_tags as $k => $v) {
+                $hashTags = $this->parseHashAi($line);
+                foreach ($hashTags as $k => $v) {
                     $result[$k][] = $v;
                 }
                 continue;
             }
 
             if (preg_match_all('/@ai[.-](\w+)\s+([^@#]*)/', $line, $matches, PREG_SET_ORDER)) {
-                if ($current_key !== null) {
-                    $result[$current_key][] = trim($current_value);
-                    $current_key = null;
-                    $current_value = '';
+                if ($currentKey !== null) {
+                    $result[$currentKey][] = trim($currentValue);
+                    $currentKey = null;
+                    $currentValue = '';
                 }
-                $last_match = array_pop($matches);
+                $lastMatch = array_pop($matches);
                 foreach ($matches as $match) {
                     $result[$match[1]][] = trim($match[2]);
                 }
-                $current_key = $last_match[1];
-                $current_value = trim($last_match[2]);
+                $currentKey = $lastMatch[1];
+                $currentValue = trim($lastMatch[2]);
             } elseif (str_starts_with($line, '@')) {
-                if ($current_key !== null) {
-                    $result[$current_key][] = trim($current_value);
-                    $current_key   = null;
-                    $current_value = '';
+                if ($currentKey !== null) {
+                    $result[$currentKey][] = trim($currentValue);
+                    $currentKey   = null;
+                    $currentValue = '';
                 }
-            } elseif ($current_key !== null && $line !== '') {
-                $current_value .= ' ' . $line;
+            } elseif ($currentKey !== null && $line !== '') {
+                $currentValue .= ' ' . $line;
             } else {
-                if ($current_key !== null) {
-                    $result[$current_key][] = trim($current_value);
-                    $current_key   = null;
-                    $current_value = '';
+                if ($currentKey !== null) {
+                    $result[$currentKey][] = trim($currentValue);
+                    $currentKey   = null;
+                    $currentValue = '';
                 }
             }
         }
 
-        if ($current_key !== null) {
-            $result[$current_key][] = trim($current_value);
+        if ($currentKey !== null) {
+            $result[$currentKey][] = trim($currentValue);
         }
 
         return $result;
@@ -108,9 +108,9 @@ class AnnotationParser {
      */
     public function parseInline(string $source): array {
         $lines = explode("\n", $source);
-        $summary_lines = [];
-        $tag_lines = [];
-        $in_tags = false;
+        $summaryLines = [];
+        $tagLines = [];
+        $inTags = false;
 
         foreach ($lines as $line) {
             if (!preg_match('/^\s*\/\/(.*)$/', $line, $matches)) {
@@ -120,74 +120,74 @@ class AnnotationParser {
             $trimmed = trim($content);
 
             if (str_starts_with($trimmed, '@ai.') || str_starts_with($trimmed, '@ai-') || str_starts_with($trimmed, '#AI')) {
-                $in_tags = true;
+                $inTags = true;
             }
 
-            if ($in_tags) {
+            if ($inTags) {
                 if ($trimmed !== '') {
-                    $tag_lines[] = $trimmed;
+                    $tagLines[] = $trimmed;
                 }
             } else {
-                $summary_lines[] = $trimmed;
+                $summaryLines[] = $trimmed;
             }
         }
 
         $result = [];
-        $current_key   = null;
-        $current_value = '';
+        $currentKey   = null;
+        $currentValue = '';
 
-        foreach ($tag_lines as $line) {
+        foreach ($tagLines as $line) {
             if (str_starts_with($line, '#AI')) {
-                if ($current_key !== null) {
-                    $result[$current_key][] = trim($current_value);
-                    $current_key = null;
-                    $current_value = '';
+                if ($currentKey !== null) {
+                    $result[$currentKey][] = trim($currentValue);
+                    $currentKey = null;
+                    $currentValue = '';
                 }
-                $hash_tags = $this->parseHashAi($line);
-                foreach ($hash_tags as $k => $v) {
+                $hashTags = $this->parseHashAi($line);
+                foreach ($hashTags as $k => $v) {
                     $result[$k][] = $v;
                 }
                 continue;
             }
 
             if (preg_match_all('/@ai[.-](\w+)\s+([^@#]*)/', $line, $matches, PREG_SET_ORDER)) {
-                if ($current_key !== null) {
-                    $result[$current_key][] = trim($current_value);
-                    $current_key = null;
-                    $current_value = '';
+                if ($currentKey !== null) {
+                    $result[$currentKey][] = trim($currentValue);
+                    $currentKey = null;
+                    $currentValue = '';
                 }
-                $last_match = array_pop($matches);
+                $lastMatch = array_pop($matches);
                 foreach ($matches as $match) {
                     $result[$match[1]][] = trim($match[2]);
                 }
-                $current_key = $last_match[1];
-                $current_value = trim($last_match[2]);
+                $currentKey = $lastMatch[1];
+                $currentValue = trim($lastMatch[2]);
             } elseif (str_starts_with($line, '@')) {
-                if ($current_key !== null) {
-                    $result[$current_key][] = trim($current_value);
-                    $current_key   = null;
-                    $current_value = '';
+                if ($currentKey !== null) {
+                    $result[$currentKey][] = trim($currentValue);
+                    $currentKey   = null;
+                    $currentValue = '';
                 }
-            } elseif ($current_key !== null && $line !== '') {
-                $current_value .= ' ' . $line;
+            } elseif ($currentKey !== null && $line !== '') {
+                $currentValue .= ' ' . $line;
             } else {
-                if ($current_key !== null) {
-                    $result[$current_key][] = trim($current_value);
-                    $current_key   = null;
-                    $current_value = '';
+                if ($currentKey !== null) {
+                    $result[$currentKey][] = trim($currentValue);
+                    $currentKey   = null;
+                    $currentValue = '';
                 }
             }
         }
 
-        if ($current_key !== null) {
-            $result[$current_key][] = trim($current_value);
+        if ($currentKey !== null) {
+            $result[$currentKey][] = trim($currentValue);
         }
 
-        while (count($summary_lines) > 0 && end($summary_lines) === '') {
-            array_pop($summary_lines);
+        while (count($summaryLines) > 0 && end($summaryLines) === '') {
+            array_pop($summaryLines);
         }
 
-        $summary = implode("\n", $summary_lines);
+        $summary = implode("\n", $summaryLines);
         $result['summary'] = trim($summary);
 
         return $result;
@@ -225,9 +225,9 @@ class AnnotationParser {
                 if (!str_contains($part, ':')) {
                     continue;
                 }
-                [$key, $raw_value] = explode(':', $part, 2);
+                [$key, $rawValue] = explode(':', $part, 2);
                 $key = trim($key);
-                $val = $this->coerceValue($raw_value);
+                $val = $this->coerceValue($rawValue);
                 if (static::$strict && !in_array($key, self::VOCABULARY, true)) {
                     throw new \UnexpectedValueException("Unknown #AI key: {$key}");
                 }
@@ -281,8 +281,8 @@ class AnnotationParser {
             if (!str_contains($part, ':')) {
                 continue;
             }
-            [$key, $raw_value] = explode(':', $part, 2);
-            $record[trim($key)] = $this->coerceValue($raw_value);
+            [$key, $rawValue] = explode(':', $part, 2);
+            $record[trim($key)] = $this->coerceValue($rawValue);
         }
 
         return $record;
@@ -324,23 +324,23 @@ class AnnotationParser {
     public function splitTopLevel(string $value, string $delimiter): array {
         $items = [];
         $buffer = '';
-        $square_depth = 0;
-        $brace_depth = 0;
+        $squareDepth = 0;
+        $braceDepth = 0;
         $length = strlen($value);
 
         for ($i = 0; $i < $length; $i++) {
             $char = $value[$i];
             if ($char === '[') {
-                $square_depth++;
+                $squareDepth++;
             } elseif ($char === ']') {
-                $square_depth = max(0, $square_depth - 1);
+                $squareDepth = max(0, $squareDepth - 1);
             } elseif ($char === '{') {
-                $brace_depth++;
+                $braceDepth++;
             } elseif ($char === '}') {
-                $brace_depth = max(0, $brace_depth - 1);
+                $braceDepth = max(0, $braceDepth - 1);
             }
 
-            if ($char === $delimiter && $square_depth === 0 && $brace_depth === 0) {
+            if ($char === $delimiter && $squareDepth === 0 && $braceDepth === 0) {
                 $item = trim($buffer);
                 if ($item !== '') {
                     $items[] = $item;
@@ -367,20 +367,20 @@ class AnnotationParser {
      * @return string Summary text, or empty string if none found.
      */
     public function extractSummary(string $docblock): string {
-        $summary_lines = [];
+        $summaryLines = [];
         foreach ($this->stripLines($docblock) as $line) {
             if (str_starts_with($line, '@') || str_starts_with($line, '#AI')) {
                 break;
             }
-            $summary_lines[] = $line;
+            $summaryLines[] = $line;
         }
-        while (count($summary_lines) > 0 && trim(reset($summary_lines)) === '') {
-            array_shift($summary_lines);
+        while (count($summaryLines) > 0 && trim(reset($summaryLines)) === '') {
+            array_shift($summaryLines);
         }
-        while (count($summary_lines) > 0 && trim(end($summary_lines)) === '') {
-            array_pop($summary_lines);
+        while (count($summaryLines) > 0 && trim(end($summaryLines)) === '') {
+            array_pop($summaryLines);
         }
-        return implode("\n", $summary_lines);
+        return implode("\n", $summaryLines);
     }
 
     /**
@@ -392,85 +392,85 @@ class AnnotationParser {
     public function extractExamples(string $docblock): array {
         $lines = explode("\n", $docblock);
         $examples = [];
-        $current_example = null;
-        $indent_to_strip = null;
+        $currentExample = null;
+        $indentToStrip = null;
 
         foreach ($lines as $line) {
-            $clean_line = $line;
+            $cleanLine = $line;
             // Remove leading /** or */
-            $clean_line = preg_replace('#^\s*/\*\*|^\s*\*/#', '', $clean_line);
+            $cleanLine = preg_replace('#^\s*/\*\*|^\s*\*/#', '', $cleanLine);
             // Remove leading asterisk and up to one space if present
-            $clean_line = preg_replace('#^\s*\*\s?#', '', $clean_line);
+            $cleanLine = preg_replace('#^\s*\*\s?#', '', $cleanLine);
 
             // Check for an Example header: "Example:" or "Example: Some label"
-            if (preg_match('/^\s*Example:\s*(.*)$/i', $clean_line, $matches)) {
-                if ($current_example !== null) {
-                    $examples[] = $current_example;
+            if (preg_match('/^\s*Example:\s*(.*)$/i', $cleanLine, $matches)) {
+                if ($currentExample !== null) {
+                    $examples[] = $currentExample;
                 }
                 $label = trim($matches[1]);
-                $current_example = [
+                $currentExample = [
                     'label' => $label !== '' ? $label : 'Basic usage',
                     'lines' => []
                 ];
-                $indent_to_strip = null;
+                $indentToStrip = null;
                 continue;
             }
 
-            if ($current_example !== null) {
-                $trimmed = trim($clean_line);
+            if ($currentExample !== null) {
+                $trimmed = trim($cleanLine);
                 // Check if we hit a docblock tag or #AI
                 if (str_starts_with($trimmed, '@') || str_starts_with($trimmed, '#AI') || str_starts_with($trimmed, '#ai')) {
-                    $examples[] = $current_example;
-                    $current_example = null;
+                    $examples[] = $currentExample;
+                    $currentExample = null;
                     continue;
                 }
 
                 if ($trimmed !== '') {
                     // If it starts with non-space, it marks the end of the example block
-                    if (preg_match('/^\S/', $clean_line)) {
-                        $examples[] = $current_example;
-                        $current_example = null;
+                    if (preg_match('/^\S/', $cleanLine)) {
+                        $examples[] = $currentExample;
+                        $currentExample = null;
                         continue;
                     }
 
                     // Determine indentation to strip based on the first non-empty line
-                    if ($indent_to_strip === null) {
-                        preg_match('/^(\s*)/', $clean_line, $spaces);
-                        $indent_to_strip = strlen($spaces[1] ?? '');
+                    if ($indentToStrip === null) {
+                        preg_match('/^(\s*)/', $cleanLine, $spaces);
+                        $indentToStrip = strlen($spaces[1] ?? '');
                     }
 
                     // Strip the base indentation
-                    if ($indent_to_strip > 0) {
-                        if (str_starts_with($clean_line, str_repeat(' ', $indent_to_strip))) {
-                            $clean_line = substr($clean_line, $indent_to_strip);
+                    if ($indentToStrip > 0) {
+                        if (str_starts_with($cleanLine, str_repeat(' ', $indentToStrip))) {
+                            $cleanLine = substr($cleanLine, $indentToStrip);
                         } else {
-                            $clean_line = ltrim($clean_line);
+                            $cleanLine = ltrim($cleanLine);
                         }
                     }
-                    $current_example['lines'][] = $clean_line;
+                    $currentExample['lines'][] = $cleanLine;
                 } else {
-                    $current_example['lines'][] = '';
+                    $currentExample['lines'][] = '';
                 }
             }
         }
 
-        if ($current_example !== null) {
-            $examples[] = $current_example;
+        if ($currentExample !== null) {
+            $examples[] = $currentExample;
         }
 
         $processed = [];
         foreach ($examples as $ex) {
-            $code_lines = $ex['lines'];
-            while (count($code_lines) > 0 && trim(end($code_lines)) === '') {
-                array_pop($code_lines);
+            $codeLines = $ex['lines'];
+            while (count($codeLines) > 0 && trim(end($codeLines)) === '') {
+                array_pop($codeLines);
             }
-            while (count($code_lines) > 0 && trim(reset($code_lines)) === '') {
-                array_shift($code_lines);
+            while (count($codeLines) > 0 && trim(reset($codeLines)) === '') {
+                array_shift($codeLines);
             }
-            if (count($code_lines) > 0) {
+            if (count($codeLines) > 0) {
                 $processed[] = [
                     'label' => $ex['label'],
-                    'code' => implode("\n", $code_lines)
+                    'code' => implode("\n", $codeLines)
                 ];
             }
         }

@@ -29,10 +29,10 @@ class McpServeCommand extends \Skim\Cli\Command {
      * @return int Exit code from the child process, or 1 on pre-flight failure.
      */
     public function handle(): int {
-        $json_path = config('docs.output.json', basePath('llm.json'));
+        $jsonPath = config('docs.output.json', basePath('llm.json'));
 
-        if (!file_exists($json_path)) {
-            $this->error("llm.json not found at {$json_path} — run 'php skim docs:extract' first.");
+        if (!file_exists($jsonPath)) {
+            $this->error("llm.json not found at {$jsonPath} — run 'php skim docs:extract' first.");
             return 1;
         }
 
@@ -52,7 +52,7 @@ class McpServeCommand extends \Skim\Cli\Command {
      * Priority: native binary → node bundle → null.
      */
     private function resolveRunner(): ?string {
-        $project_dir = escapeshellarg(basePath());
+        $projectDir = escapeshellarg(basePath());
 
         // 1. Native binary (installed via mcp:install)
         $native = basePath('.skim/bin/skim-mcp');
@@ -60,7 +60,7 @@ class McpServeCommand extends \Skim\Cli\Command {
             $native .= '.exe';
         }
         if (file_exists($native) && $this->isNativeRunnable($native)) {
-            return escapeshellarg($native) . ' --project-dir=' . $project_dir;
+            return escapeshellarg($native) . ' --project-dir=' . $projectDir;
         }
 
         // 2. Node.js bundle (Docker, CI, or dev without native binary)
@@ -68,7 +68,7 @@ class McpServeCommand extends \Skim\Cli\Command {
         if ($node !== null) {
             $bundle = $this->findBundle();
             if ($bundle !== null) {
-                return escapeshellarg($node) . ' ' . escapeshellarg($bundle) . ' --project-dir=' . $project_dir;
+                return escapeshellarg($node) . ' ' . escapeshellarg($bundle) . ' --project-dir=' . $projectDir;
             }
         }
 
@@ -134,13 +134,13 @@ class McpServeCommand extends \Skim\Cli\Command {
      */
     private function findExecutable(string $name): ?string {
         $paths = explode(PATH_SEPARATOR, getenv('PATH') ?: '');
-        $is_win = PHP_OS_FAMILY === 'Windows';
+        $isWin = PHP_OS_FAMILY === 'Windows';
         foreach ($paths as $dir) {
-            $candidate = $dir . DIRECTORY_SEPARATOR . $name . ($is_win ? '.exe' : '');
+            $candidate = $dir . DIRECTORY_SEPARATOR . $name . ($isWin ? '.exe' : '');
             if (is_executable($candidate)) return $candidate;
         }
         // Also check `which` / `where` via shell
-        $cmd = $is_win ? "where {$name} 2>nul" : "which {$name} 2>/dev/null";
+        $cmd = $isWin ? "where {$name} 2>nul" : "which {$name} 2>/dev/null";
         $output = shell_exec($cmd);
         if ($output) {
             $path = trim($output);

@@ -43,68 +43,68 @@ class DocsValidateCommand extends \Skim\Cli\Command {
             return 1;
         }
 
-        $total_methods    = 0;
+        $totalMethods    = 0;
         $annotated        = 0;
-        $missing_rows     = [];
-        $ref_errors       = [];
+        $missingRows     = [];
+        $refErrors       = [];
 
-        $class_index = $this->buildClassIndex($classes);
+        $classIndex = $this->buildClassIndex($classes);
 
         foreach ($classes as $class) {
-            foreach ($this->validateClassReferences($class, $class_index) as $error) {
-                $ref_errors[] = $error;
+            foreach ($this->validateClassReferences($class, $classIndex) as $error) {
+                $refErrors[] = $error;
             }
             foreach ($class->methods as $method) {
-                $total_methods++;
-                $has_annotation = $method->contracts    !== []
+                $totalMethods++;
+                $hasAnnotation = $method->contracts    !== []
                     || $method->invariants   !== []
                     || $method->nonGoals    !== []
                     || $method->sideEffects !== [];
-                if ($has_annotation) {
+                if ($hasAnnotation) {
                     $annotated++;
                 } else {
-                    $missing_rows[] = [
+                    $missingRows[] = [
                         'class'  => $class->className,
                         'method' => $method->name,
                         'file'   => str_replace(basePath() . '/', '', $class->file),
                     ];
                 }
-                foreach ($this->validateMethodReferences($class, $method, $class_index) as $error) {
-                    $ref_errors[] = $error;
+                foreach ($this->validateMethodReferences($class, $method, $classIndex) as $error) {
+                    $refErrors[] = $error;
                 }
             }
         }
 
-        if ($ref_errors !== []) {
+        if ($refErrors !== []) {
             $this->warn('Reference validation errors:');
-            \Skim\Cli\Cli::table(['file', 'error'], $ref_errors);
+            \Skim\Cli\Cli::table(['file', 'error'], $refErrors);
             $this->line();
         }
 
-        if ($missing_rows !== []) {
+        if ($missingRows !== []) {
             $this->warn('Methods missing @ai.* annotations:');
-            \Skim\Cli\Cli::table(['class', 'method', 'file'], $missing_rows);
+            \Skim\Cli\Cli::table(['class', 'method', 'file'], $missingRows);
             $this->line();
         }
 
-        $coverage  = $total_methods > 0 ? $annotated / $total_methods : 1.0;
+        $coverage  = $totalMethods > 0 ? $annotated / $totalMethods : 1.0;
         $pct       = (int) round($coverage * 100);
-        $threshold_pct = (int) round($threshold * 100);
+        $thresholdPct = (int) round($threshold * 100);
 
-        $this->line("Coverage: {$annotated}/{$total_methods} methods annotated ({$pct}%)");
-        $this->line("Threshold: {$threshold_pct}%");
+        $this->line("Coverage: {$annotated}/{$totalMethods} methods annotated ({$pct}%)");
+        $this->line("Threshold: {$thresholdPct}%");
 
-        if ($ref_errors !== []) {
+        if ($refErrors !== []) {
             $this->error('Reference validation failed — failing build.');
             return 1;
         }
 
         if ($coverage < $threshold) {
-            $this->error("Coverage {$pct}% is below threshold {$threshold_pct}% — failing build.");
+            $this->error("Coverage {$pct}% is below threshold {$thresholdPct}% — failing build.");
             return 1;
         }
 
-        $this->success("Coverage {$pct}% meets threshold {$threshold_pct}%.");
+        $this->success("Coverage {$pct}% meets threshold {$thresholdPct}%.");
         return 0;
     }
 
@@ -153,27 +153,27 @@ class DocsValidateCommand extends \Skim\Cli\Command {
 
         foreach ($method->seeAlso as $ref) {
             if (str_contains($ref, '::')) {
-                [$target_class, $target_method] = explode('::', $ref, 2);
-                if (!isset($index[strtolower($target_class)])) {
+                [$targetClass, $targetMethod] = explode('::', $ref, 2);
+                if (!isset($index[strtolower($targetClass)])) {
                     $errors[] = ['file' => $file, 'error' => "dangling see_also: {$class->className}::{$method->name} -> {$ref} (class not found)"];
                 } else {
-                    $target = $index[strtolower($target_class)];
-                    $method_names = array_map(fn(\Skim\Dev\Docs\Value\ExtractedMethod $m) => strtolower($m->name), $target->methods);
-                    if (!in_array(strtolower($target_method), $method_names, true)) {
+                    $target = $index[strtolower($targetClass)];
+                    $methodNames = array_map(fn(\Skim\Dev\Docs\Value\ExtractedMethod $m) => strtolower($m->name), $target->methods);
+                    if (!in_array(strtolower($targetMethod), $methodNames, true)) {
                         $errors[] = ['file' => $file, 'error' => "dangling see_also: {$class->className}::{$method->name} -> {$ref} (method not found)"];
                     }
                 }
             } else {
-                $method_names = array_map(fn(\Skim\Dev\Docs\Value\ExtractedMethod $m) => strtolower($m->name), $class->methods);
-                if (!in_array(strtolower($ref), $method_names, true)) {
+                $methodNames = array_map(fn(\Skim\Dev\Docs\Value\ExtractedMethod $m) => strtolower($m->name), $class->methods);
+                if (!in_array(strtolower($ref), $methodNames, true)) {
                     $errors[] = ['file' => $file, 'error' => "dangling see_also: {$class->className}::{$method->name} -> {$ref} (method not found)"];
                 }
             }
         }
 
         foreach ($method->aliases as $alias) {
-            $method_names = array_map(fn(\Skim\Dev\Docs\Value\ExtractedMethod $m) => strtolower($m->name), $class->methods);
-            if (in_array(strtolower($alias), $method_names, true)) {
+            $methodNames = array_map(fn(\Skim\Dev\Docs\Value\ExtractedMethod $m) => strtolower($m->name), $class->methods);
+            if (in_array(strtolower($alias), $methodNames, true)) {
                 $errors[] = ['file' => $file, 'error' => "alias collision: {$class->className}::{$method->name} aliases '{$alias}' collides with real method name"];
             }
         }

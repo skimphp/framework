@@ -39,71 +39,71 @@ final class Toolbar {
 		$summary = \Skim\Dev\Profiler::summary();
 		$events  = \Skim\Dev\Profiler::events();
 
-		$db_count   = $summary['db']['count'];
-		$db_ms      = $summary['db']['ms'];
-		$db_warn    = $db_count > 20 ? ' warn-tab' : '';
-		$db_rows    = array_filter($events, fn($e) => $e['type'] === 'db');
-		$db_html    = self::buildDbRows($db_rows);
+		$dbCount   = $summary['db']['count'];
+		$dbMs      = $summary['db']['ms'];
+		$dbWarn    = $dbCount > 20 ? ' warn-tab' : '';
+		$dbRows    = array_filter($events, fn($e) => $e['type'] === 'db');
+		$dbHtml    = self::buildDbRows($dbRows);
 
-		$cache_hits  = $summary['cache']['hits'];
-		$cache_miss  = $summary['cache']['misses'];
-		$cache_total = $cache_hits + $cache_miss;
-		$cache_ratio = $cache_total > 0
-			? round($cache_hits / $cache_total * 100, 1) . '%'
+		$cacheHits  = $summary['cache']['hits'];
+		$cacheMiss  = $summary['cache']['misses'];
+		$cacheTotal = $cacheHits + $cacheMiss;
+		$cacheRatio = $cacheTotal > 0
+			? round($cacheHits / $cacheTotal * 100, 1) . '%'
 			: '—';
-		$cache_tab_label = "{$cache_hits}h/{$cache_miss}m";
-		$cache_rows  = array_filter($events, fn($e) => $e['type'] === 'cache');
-		$cache_kv    = self::buildCacheRows($cache_rows);
-		$cache_driver = '';
-		foreach ($cache_rows as $e) {
-			if (!empty($e['driver'])) { $cache_driver = $e['driver']; break; }
+		$cacheTabLabel = "{$cacheHits}h/{$cacheMiss}m";
+		$cacheRows  = array_filter($events, fn($e) => $e['type'] === 'cache');
+		$cacheKv    = self::buildCacheRows($cacheRows);
+		$cacheDriver = '';
+		foreach ($cacheRows as $e) {
+			if (!empty($e['driver'])) { $cacheDriver = $e['driver']; break; }
 		}
-		if ($cache_driver === '') {
-			$cache_driver = \Skim\Core\Config::get('cache.driver', '—');
+		if ($cacheDriver === '') {
+			$cacheDriver = \Skim\Core\Config::get('cache.driver', '—');
 		}
 
-		$view_count  = $summary['views'];
-		$view_rows   = array_filter($events, fn($e) => $e['type'] === 'view');
-		$view_html   = self::buildViewRows($view_rows);
+		$viewCount  = $summary['views'];
+		$viewRows   = array_filter($events, fn($e) => $e['type'] === 'view');
+		$viewHtml   = self::buildViewRows($viewRows);
 
-		$total_ms = isset($_SERVER['REQUEST_TIME_FLOAT'])
+		$totalMs = isset($_SERVER['REQUEST_TIME_FLOAT'])
 			? round((microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']) * 1000, 1)
-			: $db_ms;
+			: $dbMs;
 
-		$timeline_html = self::buildTimeline($summary, $total_ms);
+		$timelineHtml = self::buildTimeline($summary, $totalMs);
 
-		$log_count = $summary['logs'];
-		$log_html  = self::buildLogRows($events);
+		$logCount = $summary['logs'];
+		$logHtml  = self::buildLogRows($events);
 
-		$peak_mem = round(memory_get_peak_usage(true) / 1024 / 1024, 1);
-		$ms_class = $total_ms > 200 ? 'warn' : ($total_ms > 100 ? '' : 'ok');
+		$peakMem = round(memory_get_peak_usage(true) / 1024 / 1024, 1);
+		$msClass = $totalMs > 200 ? 'warn' : ($totalMs > 100 ? '' : 'ok');
 
 		$method  = $req->method();
 		$path    = $req->path();
-		$req_html = self::buildRequestPanel($req);
+		$reqHtml = self::buildRequestPanel($req);
 
 		try {
 			return \Skim\Dev\DevView::render('toolbar', [
 				'method'          => $method,
 				'path'            => $path,
-				'db_count'        => $db_count,
-				'db_warn'         => $db_warn,
-				'db_html'         => $db_html,
-				'cache_hits'      => $cache_hits,
-				'cache_miss'      => $cache_miss,
-				'cache_ratio'     => $cache_ratio,
-				'cache_tab_label' => $cache_tab_label,
-				'cache_driver'    => $cache_driver,
-				'cache_kv'        => $cache_kv,
-				'view_count'      => $view_count,
-				'view_html'       => $view_html,
-				'total_ms'        => $total_ms,
-				'timeline_html'   => $timeline_html,
-				'log_count'       => $log_count,
-				'log_html'        => $log_html,
-				'peak_mem'        => $peak_mem,
-				'ms_class'        => $ms_class,
-				'req_html'        => $req_html,
+				'db_count'        => $dbCount,
+				'db_warn'         => $dbWarn,
+				'db_html'         => $dbHtml,
+				'cache_hits'      => $cacheHits,
+				'cache_miss'      => $cacheMiss,
+				'cache_ratio'     => $cacheRatio,
+				'cache_tab_label' => $cacheTabLabel,
+				'cache_driver'    => $cacheDriver,
+				'cache_kv'        => $cacheKv,
+				'view_count'      => $viewCount,
+				'view_html'       => $viewHtml,
+				'total_ms'        => $totalMs,
+				'timeline_html'   => $timelineHtml,
+				'log_count'       => $logCount,
+				'log_html'        => $logHtml,
+				'peak_mem'        => $peakMem,
+				'ms_class'        => $msClass,
+				'req_html'        => $reqHtml,
 				'custom_panels'   => \Skim\Dev\Profiler::panels(),
 			]);
 		}
@@ -125,22 +125,22 @@ final class Toolbar {
 		$remote   = htmlspecialchars($s['REMOTE_ADDR'] ?? '—', ENT_QUOTES, 'UTF-8');
 		$fwd      = htmlspecialchars($s['HTTP_X_FORWARDED_FOR'] ?? '—', ENT_QUOTES, 'UTF-8');
 
-		$scheme_class = $scheme === 'https' ? 'ok' : 'warn';
-		$qs_out   = $qs !== '' ? $qs : '—';
-		$qs_class = $qs !== '' ? '' : 'muted';
+		$schemeClass = $scheme === 'https' ? 'ok' : 'warn';
+		$qsOut   = $qs !== '' ? $qs : '—';
+		$qsClass = $qs !== '' ? '' : 'muted';
 
-		$php_full   = htmlspecialchars(PHP_VERSION, ENT_QUOTES, 'UTF-8');
+		$phpFull   = htmlspecialchars(PHP_VERSION, ENT_QUOTES, 'UTF-8');
 		$sapi       = htmlspecialchars(PHP_SAPI, ENT_QUOTES, 'UTF-8');
 		$software   = htmlspecialchars($s['SERVER_SOFTWARE'] ?? '—', ENT_QUOTES, 'UTF-8');
-		$srv_name   = htmlspecialchars($s['SERVER_NAME']     ?? '—', ENT_QUOTES, 'UTF-8');
-		$doc_root   = htmlspecialchars($s['DOCUMENT_ROOT']   ?? '—', ENT_QUOTES, 'UTF-8');
+		$srvName   = htmlspecialchars($s['SERVER_NAME']     ?? '—', ENT_QUOTES, 'UTF-8');
+		$docRoot   = htmlspecialchars($s['DOCUMENT_ROOT']   ?? '—', ENT_QUOTES, 'UTF-8');
 		$script     = htmlspecialchars(basename($s['SCRIPT_FILENAME'] ?? '—'), ENT_QUOTES, 'UTF-8');
-		$mem_limit  = htmlspecialchars(ini_get('memory_limit')     ?: '—', ENT_QUOTES, 'UTF-8');
-		$max_exec   = htmlspecialchars(ini_get('max_execution_time') ?: '—', ENT_QUOTES, 'UTF-8');
+		$memLimit  = htmlspecialchars(ini_get('memory_limit')     ?: '—', ENT_QUOTES, 'UTF-8');
+		$maxExec   = htmlspecialchars(ini_get('max_execution_time') ?: '—', ENT_QUOTES, 'UTF-8');
 		$opcache    = function_exists('opcache_get_status') ? 'enabled' : 'disabled';
-		$opcache_cl = $opcache === 'enabled' ? 'ok' : 'warn';
+		$opcacheCl = $opcache === 'enabled' ? 'ok' : 'warn';
 
-		$raw_headers = [
+		$rawHeaders = [
 			'accept'           => $s['HTTP_ACCEPT']           ?? null,
 			'accept-encoding'  => $s['HTTP_ACCEPT_ENCODING']  ?? null,
 			'accept-language'  => $s['HTTP_ACCEPT_LANGUAGE']  ?? null,
@@ -150,57 +150,57 @@ final class Toolbar {
 			'authorization'    => isset($s['HTTP_AUTHORIZATION']) ? '••••••••' : null,
 			'x-requested-with' => $s['HTTP_X_REQUESTED_WITH'] ?? null,
 		];
-		$header_rows = '';
-		foreach ($raw_headers as $key => $val) {
+		$headerRows = '';
+		foreach ($rawHeaders as $key => $val) {
 			$v     = $val !== null ? htmlspecialchars($val, ENT_QUOTES, 'UTF-8') : null;
 			$cls   = $v !== null ? '' : 'muted';
 			$show  = $v !== null ? $v : '—';
 			if (mb_strlen($show) > 40) {
 				$show = mb_substr($show, 0, 37) . '…';
 			}
-			$header_rows .= "<div class=\"kv\"><span class=\"kv-k\">{$key}</span><span class=\"kv-v {$cls}\">{$show}</span></div>";
+			$headerRows .= "<div class=\"kv\"><span class=\"kv-k\">{$key}</span><span class=\"kv-v {$cls}\">{$show}</span></div>";
 		}
 
-		$get_html = '';
+		$getHtml = '';
 		if (!empty($_GET)) {
-			$get_html .= '<table class="param-table">';
+			$getHtml .= '<table class="param-table">';
 			foreach ($_GET as $k => $v) {
 				$k = htmlspecialchars((string)$k, ENT_QUOTES, 'UTF-8');
 				$v = htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
-				$get_html .= "<tr><td>{$k}</td><td>{$v}</td></tr>";
+				$getHtml .= "<tr><td>{$k}</td><td>{$v}</td></tr>";
 			}
-			$get_html .= '</table>';
+			$getHtml .= '</table>';
 		} else {
-			$get_html = '<div class="empty-note">no $_GET params</div>';
+			$getHtml = '<div class="empty-note">no $_GET params</div>';
 		}
 
-		$post_html = '';
+		$postHtml = '';
 		if (!empty($_POST)) {
-			$post_html .= '<table class="param-table">';
+			$postHtml .= '<table class="param-table">';
 			foreach ($_POST as $k => $v) {
 				$k = htmlspecialchars((string)$k, ENT_QUOTES, 'UTF-8');
 				$v = htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
-				$post_html .= "<tr><td>{$k}</td><td>{$v}</td></tr>";
+				$postHtml .= "<tr><td>{$k}</td><td>{$v}</td></tr>";
 			}
-			$post_html .= '</table>';
+			$postHtml .= '</table>';
 		} else {
-			$post_html = '<div class="empty-note">no $_POST params</div>';
+			$postHtml = '<div class="empty-note">no $_POST params</div>';
 		}
 
-		$cookie_html = '';
+		$cookieHtml = '';
 		if (!empty($_COOKIE)) {
-			$cookie_html .= '<table class="param-table">';
+			$cookieHtml .= '<table class="param-table">';
 			foreach ($_COOKIE as $k => $v) {
 				$k    = htmlspecialchars((string)$k, ENT_QUOTES, 'UTF-8');
 				$tail = htmlspecialchars(mb_substr((string)$v, -4), ENT_QUOTES, 'UTF-8');
-				$cookie_html .= "<tr><td>{$k}</td><td style=\"color:#d2a8ff\">••••{$tail}</td></tr>";
+				$cookieHtml .= "<tr><td>{$k}</td><td style=\"color:#d2a8ff\">••••{$tail}</td></tr>";
 			}
-			$cookie_html .= '</table>';
+			$cookieHtml .= '</table>';
 		} else {
-			$cookie_html = '<div class="empty-note">no cookies</div>';
+			$cookieHtml = '<div class="empty-note">no cookies</div>';
 		}
 
-		$max_exec_label = is_numeric($max_exec) ? "{$max_exec}s" : $max_exec;
+		$maxExecLabel = is_numeric($maxExec) ? "{$maxExec}s" : $maxExec;
 
 		return <<<HTML
         <div class="req-grid">
@@ -208,9 +208,9 @@ final class Toolbar {
                 <div class="req-head">request</div>
                 <div class="kv"><span class="kv-k">method</span><span class="kv-v blue">{$method}</span></div>
                 <div class="kv"><span class="kv-k">uri</span><span class="kv-v">{$uri}</span></div>
-                <div class="kv"><span class="kv-k">query string</span><span class="kv-v {$qs_class}">{$qs_out}</span></div>
+                <div class="kv"><span class="kv-k">query string</span><span class="kv-v {$qsClass}">{$qsOut}</span></div>
                 <div class="kv"><span class="kv-k">protocol</span><span class="kv-v">{$protocol}</span></div>
-                <div class="kv"><span class="kv-k">scheme</span><span class="kv-v {$scheme_class}">{$scheme}</span></div>
+                <div class="kv"><span class="kv-k">scheme</span><span class="kv-v {$schemeClass}">{$scheme}</span></div>
                 <div class="kv"><span class="kv-k">host</span><span class="kv-v">{$host}</span></div>
                 <div class="kv"><span class="kv-k">port</span><span class="kv-v">{$port}</span></div>
                 <div class="kv"><span class="kv-k">remote addr</span><span class="kv-v">{$remote}</span></div>
@@ -218,27 +218,27 @@ final class Toolbar {
             </div>
             <div class="req-section">
                 <div class="req-head">server &amp; php</div>
-                <div class="kv"><span class="kv-k">php version</span><span class="kv-v ok">{$php_full}</span></div>
+                <div class="kv"><span class="kv-k">php version</span><span class="kv-v ok">{$phpFull}</span></div>
                 <div class="kv"><span class="kv-k">sapi</span><span class="kv-v">{$sapi}</span></div>
                 <div class="kv"><span class="kv-k">server software</span><span class="kv-v">{$software}</span></div>
-                <div class="kv"><span class="kv-k">server name</span><span class="kv-v">{$srv_name}</span></div>
-                <div class="kv"><span class="kv-k">document root</span><span class="kv-v">{$doc_root}</span></div>
+                <div class="kv"><span class="kv-k">server name</span><span class="kv-v">{$srvName}</span></div>
+                <div class="kv"><span class="kv-k">document root</span><span class="kv-v">{$docRoot}</span></div>
                 <div class="kv"><span class="kv-k">script filename</span><span class="kv-v">{$script}</span></div>
-                <div class="kv"><span class="kv-k">memory limit</span><span class="kv-v">{$mem_limit}</span></div>
-                <div class="kv"><span class="kv-k">max exec time</span><span class="kv-v">{$max_exec_label}</span></div>
-                <div class="kv"><span class="kv-k">opcache</span><span class="kv-v {$opcache_cl}">{$opcache}</span></div>
+                <div class="kv"><span class="kv-k">memory limit</span><span class="kv-v">{$memLimit}</span></div>
+                <div class="kv"><span class="kv-k">max exec time</span><span class="kv-v">{$maxExecLabel}</span></div>
+                <div class="kv"><span class="kv-k">opcache</span><span class="kv-v {$opcacheCl}">{$opcache}</span></div>
             </div>
             <div class="req-section">
                 <div class="req-head">headers</div>
-                {$header_rows}
+                {$headerRows}
             </div>
             <div class="req-section">
                 <div class="req-head">get params</div>
-                {$get_html}
+                {$getHtml}
                 <div class="kv-section-head" style="margin-top:10px">post params</div>
-                {$post_html}
+                {$postHtml}
                 <div class="kv-section-head" style="margin-top:10px">cookies</div>
-                {$cookie_html}
+                {$cookieHtml}
             </div>
         </div>
         HTML;
@@ -256,10 +256,10 @@ final class Toolbar {
 			$i++;
 			$sql      = htmlspecialchars($e['sql'], ENT_QUOTES, 'UTF-8');
 			$ms       = (int)$e['ms'];
-			$ms_class = $ms >= 100 ? 'slow' : ($ms >= 30 ? 'med' : 'fast');
+			$msClass = $ms >= 100 ? 'slow' : ($ms >= 30 ? 'med' : 'fast');
 			$first    = preg_split('/\s+/', ltrim($e['sql']), 2)[0] ?? '';
 			$type     = htmlspecialchars(strtoupper($first) ?: 'SELECT', ENT_QUOTES, 'UTF-8');
-			$type_style = match ($type) {
+			$typeStyle = match ($type) {
 				'INSERT' => 'color:#d2a8ff',
 				'UPDATE' => 'color:#f59e0b',
 				'DELETE' => 'color:#ef4444',
@@ -269,9 +269,9 @@ final class Toolbar {
 			$html .= <<<ROW
             <div class="q-row" onclick="skimToggleQ({$i})">
                 <div class="qc qn">{$i}</div>
-                <div class="qc qm {$ms_class}">{$ms}ms</div>
+                <div class="qc qm {$msClass}">{$ms}ms</div>
                 <div class="qc qs">{$sql}</div>
-                <div class="qc qt" style="{$type_style}">{$type}</div>
+                <div class="qc qt" style="{$typeStyle}">{$type}</div>
             </div>
             <div class="q-expand" id="skim-ex-{$i}"><pre>{$sql}</pre></div>
             ROW;
@@ -317,14 +317,14 @@ final class Toolbar {
 	}
 
 	private static function buildTimeline(array $summary, float $totalMs): string {
-		$db_ms   = (float)($summary['db']['ms']  ?? 0);
-		$view_ms = (float)($summary['view_ms']   ?? 0);
-		$other   = max(0.0, $totalMs - $db_ms - $view_ms);
+		$dbMs   = (float)($summary['db']['ms']  ?? 0);
+		$viewMs = (float)($summary['view_ms']   ?? 0);
+		$other   = max(0.0, $totalMs - $dbMs - $viewMs);
 		$total   = max(1.0, $totalMs);
 
 		$phases = [
-			'db queries'  => ['ms' => $db_ms,   'color' => '#f59e0b'],
-			'view render' => ['ms' => $view_ms, 'color' => '#d2a8ff'],
+			'db queries'  => ['ms' => $dbMs,   'color' => '#f59e0b'],
+			'view render' => ['ms' => $viewMs, 'color' => '#d2a8ff'],
 			'other'       => ['ms' => $other,   'color' => '#64748b'],
 		];
 
@@ -343,12 +343,12 @@ final class Toolbar {
             ROW;
 		}
 
-		$total_display = round($totalMs, 1);
+		$totalDisplay = round($totalMs, 1);
 		$html .= <<<TOTAL
         <div class="tl-row" style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">
             <span class="tl-lbl" style="color:var(--tb-text);font-weight:600">total</span>
             <div class="tl-wrap"><div class="tl-bar" style="width:100%;background:#3b82f6"></div></div>
-            <span class="tl-ms" style="color:var(--tb-warn);font-weight:600">{$total_display}ms</span>
+            <span class="tl-ms" style="color:var(--tb-warn);font-weight:600">{$totalDisplay}ms</span>
         </div>
         TOTAL;
 
@@ -363,7 +363,7 @@ final class Toolbar {
 		$html = '';
 		foreach ($events as $e) {
 			$type = $e['type'] ?? 'info';
-			$tag_class = match ($type) {
+			$tagClass = match ($type) {
 				'db'    => 'tag-db',
 				'cache' => 'tag-cache',
 				'view'  => 'tag-view',
@@ -374,7 +374,7 @@ final class Toolbar {
 			$html .= <<<ROW
             <div class="log-row">
                 <span class="log-time">{$t}ms</span>
-                <span class="log-tag {$tag_class}">{$type}</span>
+                <span class="log-tag {$tagClass}">{$type}</span>
                 <span class="log-msg">{$msg}</span>
             </div>
             ROW;

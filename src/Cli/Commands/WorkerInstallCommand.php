@@ -24,8 +24,8 @@ class WorkerInstallCommand extends \Skim\Cli\Command {
     public function handle(): int {
         $root = SKIM_ROOT;
 
-        $worker_source = __DIR__ . '/../../../public/worker.php';
-        if (!is_file($worker_source)) {
+        $workerSource = __DIR__ . '/../../../public/worker.php';
+        if (!is_file($workerSource)) {
             $this->error('public/worker.php not found — cannot install worker files.');
             return 1;
         }
@@ -34,9 +34,9 @@ class WorkerInstallCommand extends \Skim\Cli\Command {
             mkdir($root . '/docker', 0755, true);
         }
 
-        $worker_dest = $root . '/public/worker.php';
-        if (!is_file($worker_dest)) {
-            copy($worker_source, $worker_dest);
+        $workerDest = $root . '/public/worker.php';
+        if (!is_file($workerDest)) {
+            copy($workerSource, $workerDest);
         }
 
         file_put_contents($root . '/Caddyfile', $this->caddyfile());

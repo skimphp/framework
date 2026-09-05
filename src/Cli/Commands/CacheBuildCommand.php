@@ -33,28 +33,28 @@ class CacheBuildCommand extends \Skim\Cli\Command {
      * WHY: Pure arrays allow OPcache shared-memory hit with zero parse overhead.
      */
     public function handle(): int {
-        $cache_dir = storagePath('config_cache');
-        if (!is_dir($cache_dir)) {
-            mkdir($cache_dir, 0755, true);
+        $cacheDir = storagePath('config_cache');
+        if (!is_dir($cacheDir)) {
+            mkdir($cacheDir, 0755, true);
         }
 
         \Skim\Core\Env::reset();
         \Skim\Core\Env::load(basePath('.env'));
         file_put_contents(
-            $cache_dir . '/env.php',
+            $cacheDir . '/env.php',
             '<?php return ' . var_export(\Skim\Core\Env::all(), true) . ';'
         );
 
         \Skim\Core\Config::reset();
         \Skim\Core\Config::load(basePath('config'));
         file_put_contents(
-            $cache_dir . '/config.php',
+            $cacheDir . '/config.php',
             '<?php return ' . var_export(\Skim\Core\Config::all(), true) . ';'
         );
 
         $exts = \Skim\Ext\ExtRegistry::all();
         file_put_contents(
-            $cache_dir . '/extensions.php',
+            $cacheDir . '/extensions.php',
             '<?php return ' . var_export($exts, true) . ';'
         );
 

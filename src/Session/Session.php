@@ -60,10 +60,10 @@ final class Session implements \Skim\Worker\Resettable {
      */
     public static function get(string $key, mixed $default = null): mixed {
         self::start();
-        $flash_key = '__flash__' . $key;
-        if (self::driver()->has($flash_key)) {
-            $val = self::driver()->get($flash_key);
-            self::driver()->delete($flash_key);
+        $flashKey = '__flash__' . $key;
+        if (self::driver()->has($flashKey)) {
+            $val = self::driver()->get($flashKey);
+            self::driver()->delete($flashKey);
             return $val ?? $default;
         }
         return self::driver()->get($key, $default);

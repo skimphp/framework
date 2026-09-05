@@ -32,7 +32,7 @@ abstract class Model {
     protected static array  $guarded    = ['id', 'created_at', 'updated_at'];
     protected static array  $casts      = [];
 
-    private array $dirty_cols = [];
+    private array $dirtyCols = [];
     private array $attributes = [];
 
     // --- factory methods ---
@@ -239,7 +239,7 @@ abstract class Model {
         foreach ($row as $col => $val) {
             $m->setRaw($col, $val);
         }
-        $m->dirty_cols = [];
+        $m->dirtyCols = [];
         return $m;
     }
 
@@ -275,9 +275,9 @@ abstract class Model {
      * Cache key: schema:{table}:{connection} — flush with cache::flush('schema:').
      */
     public static function schema(): array {
-        $cache_key = 'schema:' . static::$table . ':' . static::$connection;
+        $cacheKey = 'schema:' . static::$table . ':' . static::$connection;
 
-        $cached = \Skim\Cache\Cache::get($cache_key);
+        $cached = \Skim\Cache\Cache::get($cacheKey);
         if ($cached !== null) {
             return $cached;
         }
@@ -292,7 +292,7 @@ abstract class Model {
             default  => [],
         };
 
-        \Skim\Cache\Cache::set($cache_key, $cols, 3600);
+        \Skim\Cache\Cache::set($cacheKey, $cols, 3600);
         return $cols;
     }
 
@@ -347,11 +347,11 @@ abstract class Model {
 
     private function setAttribute(string $key, mixed $value): void {
         if (isset($this->attributes[$key]) && $this->attributes[$key] !== $value) {
-            if (!in_array($key, $this->dirty_cols, true)) {
-                $this->dirty_cols[] = $key;
+            if (!in_array($key, $this->dirtyCols, true)) {
+                $this->dirtyCols[] = $key;
             }
         } elseif (!isset($this->attributes[$key])) {
-            $this->dirty_cols[] = $key;
+            $this->dirtyCols[] = $key;
         }
 
         $this->attributes[$key] = $this->cast($key, $value);
@@ -391,16 +391,16 @@ abstract class Model {
 
         $pdo = \Skim\Db\Db::pdo(static::$connection);
         $this->setRaw(static::$primary, (int) $pdo->lastInsertId());
-        $this->dirty_cols = [];
+        $this->dirtyCols = [];
     }
 
     private function doUpdate(): void {
-        if ($this->dirty_cols === []) {
+        if ($this->dirtyCols === []) {
             return;
         }
 
         $set = [];
-        foreach ($this->dirty_cols as $col) {
+        foreach ($this->dirtyCols as $col) {
             if (!in_array($col, static::$guarded, true)) {
                 $set[$col] = $this->attributes[$col];
             }
@@ -417,7 +417,7 @@ abstract class Model {
             connection: static::$connection,
         );
 
-        $this->dirty_cols = [];
+        $this->dirtyCols = [];
     }
 
     private static function scopeToParams(\Skim\Db\QueryScope $scope): array {

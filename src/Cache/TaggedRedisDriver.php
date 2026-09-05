@@ -70,12 +70,12 @@ final class TaggedRedisDriver {
      */
     public function flush(): bool {
         foreach ($this->tags as $tag) {
-            $tag_key = $this->prefix . 'tag:' . $tag;
-            $members = $this->redis->smembers($tag_key);
+            $tagKey = $this->prefix . 'tag:' . $tag;
+            $members = $this->redis->smembers($tagKey);
             if ($members) {
                 $this->redis->del(...$members);
             }
-            $this->redis->del($tag_key);
+            $this->redis->del($tagKey);
         }
         return true;
     }

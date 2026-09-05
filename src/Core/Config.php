@@ -132,23 +132,23 @@ final class Config {
      * falls back to scanning the config directory.
      */
     private static function loadCompiledCache(): bool {
-        $cache_path = storagePath('config_cache/config.php');
-        if (!is_file($cache_path)) {
+        $cachePath = storagePath('config_cache/config.php');
+        if (!is_file($cachePath)) {
             return false;
         }
 
         $debug = \Skim\Core\Env::get('APP_DEBUG', false);
         if ($debug) {
-            $config_dir = basePath('config');
-            $cache_time = filemtime($cache_path);
-            foreach (glob($config_dir . '/*.php') ?: [] as $file) {
-                if (filemtime($file) > $cache_time) {
+            $configDir = basePath('config');
+            $cacheTime = filemtime($cachePath);
+            foreach (glob($configDir . '/*.php') ?: [] as $file) {
+                if (filemtime($file) > $cacheTime) {
                     return false;
                 }
             }
         }
 
-        self::$data   = require $cache_path;
+        self::$data   = require $cachePath;
         self::$booted = true;
         return true;
     }

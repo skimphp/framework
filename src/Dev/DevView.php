@@ -25,13 +25,13 @@ namespace Skim\Dev;
  */
 final class DevView {
     // layout name declared by child template via layout()
-    private ?string $layout_name = null;
+    private ?string $layoutName = null;
 
     // slot_name → captured HTML content
     private array $slots = [];
 
     // currently open slot name, null when no capture active
-    private ?string $active_slot = null;
+    private ?string $activeSlot = null;
 
     private function __construct(
         private readonly string $viewsPath,
@@ -55,13 +55,13 @@ final class DevView {
 
         $html = $ctx->renderFile($template);
 
-        if ($ctx->layout_name !== null) {
+        if ($ctx->layoutName !== null) {
             if (!isset($ctx->slots['content'])) {
                 $ctx->slots['content'] = $html;
             }
             $layout       = new self($path, $ctx->data);
             $layout->slots = $ctx->slots;
-            return $layout->renderFile($ctx->layout_name);
+            return $layout->renderFile($ctx->layoutName);
         }
 
         return $html;
@@ -89,7 +89,7 @@ final class DevView {
      * @param string $name Layout template path relative to src/dev/views/, no extension.
      */
     public function layout(string $name): void {
-        $this->layout_name = $name;
+        $this->layoutName = $name;
     }
 
     /**
@@ -101,7 +101,7 @@ final class DevView {
      * @param string $name Slot identifier used by the layout to retrieve content.
      */
     public function start(string $name): void {
-        $this->active_slot = $name;
+        $this->activeSlot = $name;
         ob_start();
     }
 
@@ -111,11 +111,11 @@ final class DevView {
      * @throws \LogicException If called without a matching start().
      */
     public function end(): void {
-        if ($this->active_slot === null) {
+        if ($this->activeSlot === null) {
             throw new \LogicException('end() called without matching start()');
         }
-        $this->slots[$this->active_slot] = (string) ob_get_clean();
-        $this->active_slot               = null;
+        $this->slots[$this->activeSlot] = (string) ob_get_clean();
+        $this->activeSlot               = null;
     }
 
     /**
@@ -137,9 +137,9 @@ final class DevView {
     public static function shortPath(string $file): string {
         $root = defined('SKIM_ROOT') ? \SKIM_ROOT : dirname(__DIR__, 2);
         $normalized = str_replace('\\', '/', $file);
-        $root_norm  = str_replace('\\', '/', rtrim($root, '/'));
-        if (str_starts_with($normalized, $root_norm)) {
-            return ltrim(substr($normalized, strlen($root_norm)), '/');
+        $rootNorm  = str_replace('\\', '/', rtrim($root, '/'));
+        if (str_starts_with($normalized, $rootNorm)) {
+            return ltrim(substr($normalized, strlen($rootNorm)), '/');
         }
         return basename($file);
     }
@@ -167,17 +167,17 @@ final class DevView {
      * @throws \RuntimeException If the template file does not exist.
      */
     public function renderFile(string $template): string {
-        $template_path = $this->viewsPath . '/' . ltrim($template, '/') . '.php';
+        $templatePath = $this->viewsPath . '/' . ltrim($template, '/') . '.php';
 
-        if (!is_file($template_path)) {
-            throw new \RuntimeException("Dev view template not found: {$template} ({$template_path})");
+        if (!is_file($templatePath)) {
+            throw new \RuntimeException("Dev view template not found: {$template} ({$templatePath})");
         }
 
-        $local_data = (array) $this->data;
-        extract($local_data, \EXTR_SKIP);
+        $localData = (array) $this->data;
+        extract($localData, \EXTR_SKIP);
 
         ob_start();
-        include $template_path;
+        include $templatePath;
         return (string) ob_get_clean();
     }
 }

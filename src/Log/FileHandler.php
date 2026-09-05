@@ -18,19 +18,19 @@ namespace Skim\Log;
  * #AI:class
  */
 final class FileHandler implements \Skim\Log\LogHandler {
-    private static array $level_order = [
+    private static array $levelOrder = [
         'debug' => 0, 'info' => 1, 'notice' => 2, 'warning' => 3,
         'error' => 4, 'critical' => 5, 'alert' => 6, 'emergency' => 7,
     ];
 
-    private int $min_level;
+    private int $minLevel;
 
     public function __construct(
         private readonly string $path,
         private readonly string $level = 'debug',
         private readonly int    $days  = 14,
     ) {
-        $this->min_level = self::$level_order[$level] ?? 0;
+        $this->minLevel = self::$levelOrder[$level] ?? 0;
         $dir = dirname($this->path);
         if (!is_dir($dir)) {
             mkdir($dir, 0755, true);
@@ -48,17 +48,17 @@ final class FileHandler implements \Skim\Log\LogHandler {
      * @param array  $context Arbitrary metadata, JSON-encoded in output.
      */
     public function write(string $level, string $message, array $context): void {
-        if ((self::$level_order[$level] ?? 0) < $this->min_level) {
+        if ((self::$levelOrder[$level] ?? 0) < $this->minLevel) {
             return;
         }
 
-        $ctx_str  = $context !== [] ? ' ' . json_encode($context) : '';
+        $ctxStr  = $context !== [] ? ' ' . json_encode($context) : '';
         $line     = sprintf(
             "[%s] %s: %s%s\n",
             date('Y-m-d H:i:s'),
             strtoupper($level),
             $message,
-            $ctx_str,
+            $ctxStr,
         );
 
         @file_put_contents($this->logFile(), $line, \FILE_APPEND | \LOCK_EX);

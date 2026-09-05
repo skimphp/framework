@@ -64,9 +64,9 @@ describe('migrator::run()', function(): void {
 
         $mig = new \Skim\Db\Migrator($dir);
         $mig->run();
-        $ran_again = $mig->run();   // second call should return []
+        $ranAgain = $mig->run();   // second call should return []
 
-        expect($ran_again)->toBeEmpty();
+        expect($ranAgain)->toBeEmpty();
 
         array_map('unlink', glob($dir . '/*.php') ?: []);
         rmdir($dir);

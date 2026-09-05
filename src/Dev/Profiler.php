@@ -111,18 +111,18 @@ final class Profiler {
      * Groups events by type and computes counts and totals.
      */
     public static function summary(): array {
-        $db_events    = array_filter(self::$events, fn($e) => $e['type'] === 'db');
-        $cache_events = array_filter(self::$events, fn($e) => $e['type'] === 'cache');
-        $view_events  = array_filter(self::$events, fn($e) => $e['type'] === 'view');
+        $dbEvents    = array_filter(self::$events, fn($e) => $e['type'] === 'db');
+        $cacheEvents = array_filter(self::$events, fn($e) => $e['type'] === 'cache');
+        $viewEvents  = array_filter(self::$events, fn($e) => $e['type'] === 'view');
 
         return [
-            'db'      => ['count' => count($db_events), 'ms' => round(array_sum(array_column($db_events, 'ms')), 2)],
+            'db'      => ['count' => count($dbEvents), 'ms' => round(array_sum(array_column($dbEvents, 'ms')), 2)],
             'cache'   => [
-                'hits'   => count(array_filter($cache_events, fn($e) => $e['hit'])),
-                'misses' => count(array_filter($cache_events, fn($e) => !$e['hit'])),
+                'hits'   => count(array_filter($cacheEvents, fn($e) => $e['hit'])),
+                'misses' => count(array_filter($cacheEvents, fn($e) => !$e['hit'])),
             ],
-            'views'   => count($view_events),
-            'view_ms' => round(array_sum(array_column(array_values($view_events), 'ms')), 2),
+            'views'   => count($viewEvents),
+            'view_ms' => round(array_sum(array_column(array_values($viewEvents), 'ms')), 2),
             'logs'    => count(array_filter(self::$events, fn($e) => $e['type'] === 'log')),
         ];
     }
