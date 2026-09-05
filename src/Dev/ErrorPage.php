@@ -128,7 +128,7 @@ final class ErrorPage {
      *
      * - 'app'      : user application frames (controllers, services, repos).
      * - 'pipeline' : middleware frames (skipped: dev errors are usually not in MW).
-     * - 'framework': skim\core, vendor, src/dev, src/middleware internal noise.
+     * - 'framework': Skim\Core, vendor, src/dev, src/middleware internal noise.
      *
      * Each frame carries file, line, class, function, type, a search index,
      * the section label, and (when applicable) reflected argument values

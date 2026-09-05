@@ -143,7 +143,7 @@ describe('resettable contract guard', function (): void {
 
         foreach ($requestStateFacades as $facade) {
             expect(is_subclass_of($facade, \Skim\Worker\Resettable::class))->toBeTrue(
-                "{$facade} holds per-request state and must implement skim\\worker\\resettable"
+                "{$facade} holds per-request state and must implement Skim\Worker\Resettable"
             );
         }
     });

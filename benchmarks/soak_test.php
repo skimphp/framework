@@ -8,17 +8,17 @@ define('SKIM_ROOT', dirname(__DIR__));
 require SKIM_ROOT . '/vendor/autoload.php';
 
 // Isolate from any previously-loaded state.
-\skim\core\config::reset();
-\skim\core\env::reset();
+\Skim\Core\Config::reset();
+\Skim\Core\Env::reset();
 
-use skim\core\app;
-use skim\core\request;
-use skim\core\response;
-use skim\events\event;
-use skim\view\view;
-use skim\view\component_collector;
-use skim\worker\leak_detector;
-use skim\worker\worker_reset;
+use Skim\Core\App;
+use Skim\Core\Request;
+use Skim\Core\Response;
+use Skim\Events\Event;
+use Skim\View\View;
+use Skim\View\Component_collector;
+use Skim\Worker\Leak_detector;
+use Skim\Worker\Worker_reset;
 
 $app = app::testInstance([
     'app.debug' => false,
@@ -34,7 +34,7 @@ $app->router->get('/user/@id:int', function(request $req, response $res, string 
 });
 
 $app->router->post('/contact', function(): mixed {
-    $result = \skim\validation\validate::make([
+    $result = \Skim\Validation\Validate::make([
         'email' => ['required', 'email'],
         'message' => ['required', 'string', 'min:5'],
     ])->check([
@@ -60,7 +60,7 @@ $app->router->get('/view', function(): array {
 });
 
 $app->router->get('/component', function(): array {
-    $collector = new \skim\view\component_collector();
+    $collector = new \Skim\View\Component_collector();
     component_collector::push($collector);
     // simulate a component render that throws occasionally
     if (random_int(1, 100) === 1) {

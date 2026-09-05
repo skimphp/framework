@@ -20,7 +20,7 @@ $port        = (int) ($argv[3] ?? 9999);
 $address     = "127.0.0.1:{$port}";
 
 // Boot the app once, just like a worker process would.
-$app = skim\core\app::instance();
+$app = Skim\Core\App::instance();
 $app->router->get('/bench', fn() => ['ok' => true, 'time' => microtime(true), 'id' => $_GET['id'] ?? null]);
 $app->boot();
 $app->bootExtensions();
@@ -91,8 +91,8 @@ while (microtime(true) < $end_time || count($clients) > 0) {
             $_COOKIE = [];
             $_FILES = [];
 
-            $req = skim\core\request::fromGlobals();
-            $res = new skim\core\response();
+            $req = Skim\Core\Request::fromGlobals();
+            $res = new Skim\Core\Response();
 
             ob_start();
             try {

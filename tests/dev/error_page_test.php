@@ -42,7 +42,7 @@ describe('ErrorPage::render()', function(): void {
         // in the code-box component and cause a false positive.
         $fixture = realpath(__DIR__ . '/../Fixtures/Dev/CleanPathFixture.php');
         require_once $fixture;
-        $e = CleanPathFixture::throwRuntime();
+        $e = \Tests\Fixtures\Dev\CleanPathFixture::throwRuntime();
         $html = captureErrorPage($e);
         expect($html)->not->toContain("string(");
         expect($html)->not->toMatch('/string\(\d+\)/');
@@ -54,7 +54,7 @@ describe('ErrorPage::render()', function(): void {
         // in the code-box component and cause false positives.
         $fixture = realpath(__DIR__ . '/../Fixtures/Dev/CleanPathFixture.php');
         require_once $fixture;
-        $e = CleanPathFixture::throwRuntime();
+        $e = \Tests\Fixtures\Dev\CleanPathFixture::throwRuntime();
         $html = captureErrorPage($e);
         expect($html)->not->toContain('/src/Dev/Views/');
         expect($html)->not->toContain('error_page.php');
@@ -305,7 +305,7 @@ describe('ErrorPage::render()', function(): void {
     test('syntax highlighting emits well-formed <span> tags', function(): void {
         $fixture = realpath(__DIR__ . '/../Fixtures/Dev/CleanPathFixture.php');
         require_once $fixture;
-        $e = CleanPathFixture::throwRuntime();
+        $e = \Tests\Fixtures\Dev\CleanPathFixture::throwRuntime();
         $html = captureErrorPage($e);
         file_put_contents('/tmp/highlight-dump.html', $html);
         expect($html)->not->toMatch('/<span class=<span/');

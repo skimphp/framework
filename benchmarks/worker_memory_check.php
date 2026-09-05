@@ -8,10 +8,10 @@ define('SKIM_ROOT', dirname(__DIR__));
 require SKIM_ROOT . '/vendor/autoload.php';
 
 // Isolate from any previously-loaded config/env state (mirrors Pest bootstrap).
-\skim\core\config::reset();
-\skim\core\env::reset();
+\Skim\Core\Config::reset();
+\Skim\Core\Env::reset();
 
-$app = skim\core\app::testInstance([
+$app = Skim\Core\App::testInstance([
     'app.debug' => false,
     'app.view.default_layout' => null,
 ]);
@@ -21,30 +21,30 @@ $app->router->get('/bench', fn() => 'ok');
 $app->router->get('/boom', fn() => throw new \RuntimeException('handler blew up'));
 
 // Boot-time listener that MUST survive every reset.
-skim\events\event::on('boot.ping', fn() => null);
+Skim\Events\Event::on('boot.ping', fn() => null);
 
 $app->boot();
 $app->bootExtensions();
 $app->freeze();
 
 // Mirror public/worker.php — REQUIRED for event-accumulation assertions.
-skim\events\event::captureBootSnapshot();
+Skim\Events\Event::captureBootSnapshot();
 
 $initial = memory_get_usage(true);
 $peak_delta = 0;
-$boot_listener_baseline = skim\events\event::listenerCount('boot.ping');
+$boot_listener_baseline = Skim\Events\Event::listenerCount('boot.ping');
 
 for ($i = 0; $i < 100; $i++) {
     $app->beginRequest();
 
     // Simulate request-scoped mutation.
     $app->set('user.name', 'alice-' . $i);
-    \skim\view\view::share('title', 'test-' . $i);
-    \skim\events\event::on('req.ping', fn() => null);
+    \Skim\View\View::share('title', 'test-' . $i);
+    \Skim\Events\Event::on('req.ping', fn() => null);
 
     $uri = ($i === 50) ? '/boom' : '/bench';
-    $req = skim\core\request::make('GET', $uri);
-    $res = new skim\core\response();
+    $req = Skim\Core\Request::make('GET', $uri);
+    $res = new Skim\Core\Response();
 
     try {
         $app->dispatch($req, $res);
@@ -61,19 +61,19 @@ for ($i = 0; $i < 100; $i++) {
         fwrite(STDERR, "FAIL: user scope leaked at iteration {$i}\n");
         exit(1);
     }
-    if (\skim\view\view::getShared('title') !== null) {
+    if (\Skim\View\View::getShared('title') !== null) {
         fwrite(STDERR, "FAIL: view shared data leaked at iteration {$i}\n");
         exit(1);
     }
-    if (\skim\events\event::listenerCount('boot.ping') !== $boot_listener_baseline) {
+    if (\Skim\Events\Event::listenerCount('boot.ping') !== $boot_listener_baseline) {
         fwrite(STDERR, "FAIL: boot listener count changed at iteration {$i}\n");
         exit(1);
     }
-    if (\skim\events\event::listenerCount('req.ping') !== 0) {
+    if (\Skim\Events\Event::listenerCount('req.ping') !== 0) {
         fwrite(STDERR, "FAIL: request listener leaked at iteration {$i}\n");
         exit(1);
     }
-    if (\skim\view\component_collector::current() !== null) {
+    if (\Skim\View\Component_collector::current() !== null) {
         fwrite(STDERR, "FAIL: component_collector stack leaked at iteration {$i}\n");
         exit(1);
     }

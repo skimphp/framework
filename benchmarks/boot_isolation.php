@@ -6,7 +6,7 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 $start = hrtime(true);
-$app = skim\core\app::instance();
+$app = Skim\Core\App::instance();
 $ms = (hrtime(true) - $start) / 1e6;
 
 echo "boot_isolation: {$ms} ms\n";

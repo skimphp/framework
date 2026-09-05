@@ -7,9 +7,9 @@ function sampleMdxData(): array {
         'generated_at' => '2026-01-01T00:00:00+00:00',
         'classes'      => [
             [
-                'class_name' => 'request',
-                'namespace'  => 'skim\\core',
-                'file'       => '/src/core/request.php',
+                'class_name' => 'Request',
+                'namespace'  => 'Skim\\Core',
+                'file'       => '/src/Core/Request.php',
                 'summary'    => 'HTTP request abstraction.',
                 'lifecycle'  => 'per-request',
                 'owner'      => 'platform',
@@ -17,7 +17,7 @@ function sampleMdxData(): array {
                     [
                         'name'         => 'get',
                         'signature'    => 'public function get(string $key, mixed $default): mixed',
-                        'owner'        => 'skim\\core\\request',
+                        'owner'        => 'Skim\\Core\\Request',
                         'contracts'    => ['returns query param by key'],
                         'invariants'   => [],
                         'non_goals'    => ['does not validate types'],
@@ -29,9 +29,9 @@ function sampleMdxData(): array {
                 ],
             ],
             [
-                'class_name' => 'response',
-                'namespace'  => 'skim\\core',
-                'file'       => '/src/core/response.php',
+                'class_name' => 'Response',
+                'namespace'  => 'Skim\\Core',
+                'file'       => '/src/Core/Response.php',
                 'summary'    => 'Fluent HTTP response builder.',
                 'lifecycle'  => '',
                 'owner'      => '',
@@ -72,8 +72,8 @@ describe('MdxEmitter', function(): void {
     test('preserves duplicate class names with source file suffixes', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_duplicate_' . uniqid();
         $data = sampleMdxData();
-        $data['classes'][1]['class_name'] = 'request';
-        $data['classes'][1]['file'] = '/src/core/response.php';
+        $data['classes'][1]['class_name'] = 'Request';
+        $data['classes'][1]['file'] = '/src/Core/Response.php';
 
         $count = (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit($data, $dir);
 
@@ -90,8 +90,8 @@ describe('MdxEmitter', function(): void {
     test('preserves duplicate class names with duplicate source basenames', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_duplicate_basename_' . uniqid();
         $data = sampleMdxData();
-        $data['classes'][1]['class_name'] = 'request';
-        $data['classes'][1]['file'] = '/other/core/request.php';
+        $data['classes'][1]['class_name'] = 'Request';
+        $data['classes'][1]['file'] = '/other/Core/Request.php';
 
         $count = (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit($data, $dir);
 
@@ -110,7 +110,7 @@ describe('MdxEmitter', function(): void {
         (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit(sampleMdxData(), $dir);
         $content = file_get_contents($dir . '/core/request.mdx');
 
-        expect($content)->toContain('title: request');
+        expect($content)->toContain('title: Request');
         expect($content)->toContain('HTTP request abstraction.');
 
         array_map('unlink', glob($dir . '/core/*.mdx'));
@@ -167,9 +167,9 @@ describe('MdxEmitter', function(): void {
             'generated_at' => '2026-01-01T00:00:00+00:00',
             'classes'      => [
                 [
-                    'class_name' => 'escaper',
-                    'namespace'  => 'skim\\core',
-                    'file'       => '/src/core/escaper.php',
+                    'class_name' => 'Escaper',
+                    'namespace'  => 'Skim\\Core',
+                    'file'       => '/src/Core/Escaper.php',
                     'summary'    => 'Handles <tags> and {braces} properly, but `keeps <tag> inside backticks`.',
                     'lifecycle'  => '',
                     'owner'      => '',
@@ -177,7 +177,7 @@ describe('MdxEmitter', function(): void {
                         [
                             'name'         => 'run',
                             'signature'    => 'public function run(): void',
-                            'owner'        => 'skim\\core\\escaper',
+                            'owner'        => 'Skim\\Core\\Escaper',
                             'contracts'    => ['processes <input> and {values} in description, but `ignores <tag>`'],
                             'invariants'   => [],
                             'non_goals'    => [],

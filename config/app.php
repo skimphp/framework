@@ -29,18 +29,18 @@ return [
     ],
 
     'commands' => [
-        'ext:install' => \skim\cli\commands\ext_install_command::class,
-        'ext:list'    => \skim\cli\commands\ext_list_command::class,
-        'ext:manifest' => \skim\cli\commands\ext_manifest_command::class,
+        'ext:install' => \Skim\Cli\Commands\ExtInstallCommand::class,
+        'ext:list'    => \Skim\Cli\Commands\ExtListCommand::class,
+        'ext:manifest' => \Skim\Cli\Commands\ExtManifestCommand::class,
 
         ...(env('APP_ENV') !== 'production' ? [
-            'docs'          => \skim\dev\docs\commands\docs_command::class,
-            'docs:extract'  => \skim\dev\docs\commands\docs_extract_command::class,
-            'docs:llm'      => \skim\dev\docs\commands\docs_llm_command::class,
-            'docs:site'     => \skim\dev\docs\commands\docs_site_command::class,
-            'docs:validate' => \skim\dev\docs\commands\docs_validate_command::class,
-            'mcp:install'   => \skim\cli\commands\mcp_install_command::class,
-            'mcp:serve'     => \skim\dev\docs\commands\mcp_serve_command::class,
+            'docs'          => \Skim\Dev\Docs\Commands\DocsCommand::class,
+            'docs:extract'  => \Skim\Dev\Docs\Commands\DocsExtractCommand::class,
+            'docs:llm'      => \Skim\Dev\Docs\Commands\DocsLlmCommand::class,
+            'docs:site'     => \Skim\Dev\Docs\Commands\DocsSiteCommand::class,
+            'docs:validate' => \Skim\Dev\Docs\Commands\DocsValidateCommand::class,
+            'mcp:install'   => \Skim\Cli\Commands\McpInstallCommand::class,
+            'mcp:serve'     => \Skim\Dev\Docs\Commands\McpServeCommand::class,
         ] : []),
     ],
 ];

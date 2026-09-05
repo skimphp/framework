@@ -54,9 +54,9 @@ describe('JsonEmitter — emit()', function(): void {
 
     test('serializes new ExtractedClass fields into classes array', function (): void {
         $cls = new \Skim\Dev\Docs\Value\ExtractedClass(
-            className:   'cache',
-            namespace:    'skim\\cache',
-            file:         '/src/cache.php',
+            className:   'Cache',
+            namespace:    'Skim\\Cache',
+            file:         '/src/Cache/Cache.php',
             layer:        'cache',
             entryPoints: ['remember', 'get'],
             invariants:   ['driver reused until reset'],
@@ -75,12 +75,12 @@ describe('JsonEmitter — emit()', function(): void {
         $method = new \Skim\Dev\Docs\Value\ExtractedMethod(
             name:      'remember',
             signature: 'public static function remember(): mixed',
-            owner:     'skim\\cache\\cache',
+            owner:     'Skim\\Cache\\Cache',
             group:     'Read API',
             calls:     ['has', 'get', 'set'],
             warnings:  ['may compute expensive callback'],
         );
-        $cls = new \Skim\Dev\Docs\Value\ExtractedClass('cache', 'skim\\cache', '/src/cache.php', methods: [$method]);
+        $cls = new \Skim\Dev\Docs\Value\ExtractedClass('Cache', 'Skim\\Cache', '/src/Cache/Cache.php', methods: [$method]);
         $path = sys_get_temp_dir() . '/skim_llm_new_method_fields_' . uniqid() . '.json';
         (new \Skim\Dev\Docs\Emitter\JsonEmitter())->emit([$cls], $path);
         $data = json_decode(file_get_contents($path), true);

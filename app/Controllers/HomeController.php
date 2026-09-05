@@ -30,7 +30,7 @@ class HomeController {
 
 #AI:class
 #AI symbol: App\Controllers\HomeController
-#AI source_path: src/App/Controllers/HomeController.php
+#AI source_path: app/Controllers/HomeController.php
 #AI title: HomeController
 #AI description: Default landing page controller for new SKIM applications.
 #AI role: starter controller

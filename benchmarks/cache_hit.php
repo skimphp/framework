@@ -3,18 +3,18 @@
 define('SKIM_ROOT', dirname(__DIR__));
 require SKIM_ROOT . '/vendor/autoload.php';
 
-\skim\core\env::reset();
-\skim\core\config::reset();
+\Skim\Core\Env::reset();
+\Skim\Core\Config::reset();
 
-\skim\core\env::get('APP_NAME');
-\skim\core\config::get('app.name');
+\Skim\Core\Env::get('APP_NAME');
+\Skim\Core\Config::get('app.name');
 
 $iterations = 10000;
 
 $start = hrtime(true);
 for ($i = 0; $i < $iterations; $i++) {
-    \skim\core\env::get('APP_NAME');
-    \skim\core\config::get('app.name');
+    \Skim\Core\Env::get('APP_NAME');
+    \Skim\Core\Config::get('app.name');
 }
 $end = (hrtime(true) - $start) / 1e6;
 $per_call = $end / ($iterations * 2);

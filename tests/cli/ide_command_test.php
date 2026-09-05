@@ -4,8 +4,8 @@ use Skim\Db\Db;
 use Skim\Cli\Commands\IdeCommand;
 
 describe('IdeCommand schema generation with SQLite', function(): void {
-    $modelsDir = basePath('app/models');
-    $modelFile = $modelsDir . '/post.php';
+    $modelsDir = basePath('app/Models');
+    $modelFile = $modelsDir . '/Post.php';
     $helperFile = storagePath('ide-helper.php');
     $hadModelsDir = false;
     $hadHelperFile = false;
@@ -26,7 +26,7 @@ describe('IdeCommand schema generation with SQLite', function(): void {
             is_active BOOLEAN
         )');
 
-        // Prepare app/models directory
+        // Prepare app/Models directory
         if (is_dir($modelsDir)) {
             $hadModelsDir = true;
         } else {
@@ -41,8 +41,8 @@ describe('IdeCommand schema generation with SQLite', function(): void {
 
         // Write a test model
         file_put_contents($modelFile, '<?php
-namespace app\models;
-class post extends \Skim\Db\Model {
+namespace App\Models;
+class Post extends \Skim\Db\Model {
     protected static string $table = "posts";
 }
 ');
@@ -85,8 +85,8 @@ class post extends \Skim\Db\Model {
         expect(file_exists($helperFile))->toBeTrue();
 
         $content = file_get_contents($helperFile);
-        expect($content)->toContain('namespace app\models;');
-        expect($content)->toContain('class post {');
+        expect($content)->toContain('namespace App\Models;');
+        expect($content)->toContain('class Post {');
         expect($content)->toContain('public string $title;');
         expect($content)->toContain('public ?int $id;');
         expect($content)->toContain('public ?int $views;');

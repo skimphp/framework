@@ -7,15 +7,15 @@ define('SKIM_ROOT', dirname(__DIR__));
 require SKIM_ROOT . '/vendor/autoload.php';
 
 // Isolate from any previously-loaded config/env state (mirrors Pest bootstrap).
-\skim\core\config::reset();
-\skim\core\env::reset();
+\Skim\Core\Config::reset();
+\Skim\Core\Env::reset();
 
-use skim\core\app;
-use skim\core\request;
-use skim\core\response;
-use skim\events\event;
-use skim\view\view;
-use skim\view\component_collector;
+use Skim\Core\App;
+use Skim\Core\Request;
+use Skim\Core\Response;
+use Skim\Events\Event;
+use Skim\View\View;
+use Skim\View\Component_collector;
 
 $results = [
     'isolation' => false,

@@ -7,9 +7,9 @@ describe('ExtractedClass::toArray', function () {
 
     it('includes all new fields in serialized output', function () {
         $cls = new \Skim\Dev\Docs\Value\ExtractedClass(
-            className:   'cache',
-            namespace:    'skim\\cache',
-            file:         '/app/src/cache/cache.php',
+            className:   'Cache',
+            namespace:    'Skim\\Cache',
+            file:         '/app/src/Cache/Cache.php',
             summary:      'Static cache facade.',
             lifecycle:    'driver resolved lazily',
             layer:        'cache',

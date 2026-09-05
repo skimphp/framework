@@ -8,7 +8,7 @@ require_once __DIR__ . '/../Fixtures/Realtime/SilentSse.php';
 describe('datastar::signals()', function(): void {
 
     test('emits datastar-patch-signals with json signals', function(): void {
-        $ds = new \Skim\Realtime\Datastar(new SilentSse());
+        $ds = new \Skim\Realtime\Datastar(new \Tests\Fixtures\Realtime\SilentSse());
         ob_start();
         $ds->signals(['loading' => false, 'count' => 3]);
         $output = ob_get_clean();
@@ -17,7 +17,7 @@ describe('datastar::signals()', function(): void {
     });
 
     test('adds onlyIfMissing line when flag is true', function(): void {
-        $ds = new \Skim\Realtime\Datastar(new SilentSse());
+        $ds = new \Skim\Realtime\Datastar(new \Tests\Fixtures\Realtime\SilentSse());
         ob_start();
         $ds->signals(['theme' => 'dark'], onlyIfMissing: true);
         $output = ob_get_clean();
@@ -30,7 +30,7 @@ describe('datastar::signals()', function(): void {
 describe('datastar::patch()', function(): void {
 
     test('emits datastar-patch-elements with selector and mode', function(): void {
-        $ds = new \Skim\Realtime\Datastar(new SilentSse());
+        $ds = new \Skim\Realtime\Datastar(new \Tests\Fixtures\Realtime\SilentSse());
         ob_start();
         $ds->patch('<div id="x">hi</div>', '#x', 'inner');
         $output = ob_get_clean();
@@ -44,7 +44,7 @@ describe('datastar::patch()', function(): void {
     });
 
     test('omits selector and mode when defaults are used', function(): void {
-        $ds = new \Skim\Realtime\Datastar(new SilentSse());
+        $ds = new \Skim\Realtime\Datastar(new \Tests\Fixtures\Realtime\SilentSse());
         ob_start();
         $ds->patch('<span>ok</span>');
         $output = ob_get_clean();
@@ -56,7 +56,7 @@ describe('datastar::patch()', function(): void {
     });
 
     test('prefixes every line of multiline html with elements', function(): void {
-        $ds = new \Skim\Realtime\Datastar(new SilentSse());
+        $ds = new \Skim\Realtime\Datastar(new \Tests\Fixtures\Realtime\SilentSse());
         ob_start();
         $ds->patch("<div>\n  hello\n</div>", '#box');
         $output = ob_get_clean();
@@ -75,7 +75,7 @@ describe('datastar::patch()', function(): void {
 describe('datastar::remove()', function(): void {
 
     test('emits datastar-patch-elements with mode remove', function(): void {
-        $ds = new \Skim\Realtime\Datastar(new SilentSse());
+        $ds = new \Skim\Realtime\Datastar(new \Tests\Fixtures\Realtime\SilentSse());
         ob_start();
         $ds->remove('#toast');
         $output = ob_get_clean();
@@ -92,7 +92,7 @@ describe('datastar::remove()', function(): void {
 describe('datastar::run()', function(): void {
 
     test('appends a script element to body', function(): void {
-        $ds = new \Skim\Realtime\Datastar(new SilentSse());
+        $ds = new \Skim\Realtime\Datastar(new \Tests\Fixtures\Realtime\SilentSse());
         ob_start();
         $ds->run("alert('ok')");
         $output = ob_get_clean();

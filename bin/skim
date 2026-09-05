@@ -49,12 +49,12 @@ define('SKIM_ROOT', dirname($autoload, 2));
 
 // Framework dev mode: true when running inside the framework source repo itself,
 // false when installed as a Composer dependency in a user project.
-define('SKIM_DEV', is_file(SKIM_ROOT . '/src/cli/kernel.php'));
+define('SKIM_DEV', is_file(SKIM_ROOT . '/src/Cli/Kernel.php'));
 
-\skim\core\env::load(SKIM_ROOT . '/.env');
-\skim\core\config::load(SKIM_ROOT . '/config');
+\Skim\Core\Env::load(SKIM_ROOT . '/.env');
+\Skim\Core\Config::load(SKIM_ROOT . '/config');
 
-$input  = \skim\cli\argv_parser::parse($argv);
-$kernel = new \skim\cli\kernel();
+$input  = \Skim\Cli\ArgvParser::parse($argv);
+$kernel = new \Skim\Cli\Kernel();
 
 exit($kernel->run($input));

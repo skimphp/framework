@@ -229,7 +229,7 @@ $e = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
       <div class="fw-collapsed" id="fw-toggle" onclick="toggleFwFrames()">
         <i class="ti ti-chevron-right" id="fw-chevron"></i>
         <span id="fw-toggle-label">Show <?= count($frames_fw) ?> framework frame<?= count($frames_fw) === 1 ? '' : 's' ?></span>
-        <span style="margin-left:auto;font-size:11px;color:var(--muted)">skim\core\* &middot; vendor\*</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted)">Skim\Core\* &middot; vendor\*</span>
       </div>
       <div id="fw-frames" class="hidden">
         <?php foreach ($frames_fw as $f): ?>

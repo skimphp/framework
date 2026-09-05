@@ -7,9 +7,9 @@ function sampleLlmData(): array {
         'generated_at' => '2026-01-01T00:00:00+00:00',
         'classes'      => [
             [
-                'class_name' => 'cache',
-                'namespace'  => 'skim\\cache',
-                'file'       => '/src/cache/cache.php',
+                'class_name' => 'Cache',
+                'namespace'  => 'Skim\Cache',
+                'file'       => '/src/Cache/Cache.php',
                 'summary'    => 'Static cache facade.',
                 'lifecycle'  => 'boot',
                 'owner'      => 'platform',
@@ -17,7 +17,7 @@ function sampleLlmData(): array {
                     [
                         'name'         => 'get',
                         'signature'    => 'public static function get(string $key, mixed $default): mixed',
-                        'owner'        => 'skim\\cache\\cache',
+                        'owner'        => 'Skim\Cache\Cache',
                         'contracts'    => ['returns default when key absent'],
                         'invariants'   => ['never throws on miss'],
                         'non_goals'    => ['does not warm the cache'],
@@ -45,7 +45,7 @@ describe('LlmMdEmitter', function(): void {
         $path = sys_get_temp_dir() . '/skim_llm_md_' . uniqid() . '.md';
         (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sampleLlmData(), $path);
         $content = file_get_contents($path);
-        expect($content)->toContain('## `skim\\cache\\cache` — cache');
+        expect($content)->toContain('## `Skim\Cache\Cache` — Cache');
         unlink($path);
     });
 
