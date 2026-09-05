@@ -32,42 +32,42 @@ abstract class Command {
     protected string $usage       = '';
 
     /**
-     * Returns the registered command name. #AI:get_name
+     * Returns the registered command name. #AI:getName
      */
-    public function get_name(): string {
+    public function getName(): string {
         return $this->name;
     }
 
     /**
-     * Returns the command description for help display. #AI:get_description
+     * Returns the command description for help display. #AI:getDescription
      */
-    public function get_description(): string {
+    public function getDescription(): string {
         return $this->description;
     }
 
     /**
-     * Returns the command group for categorized help listing. #AI:get_group
+     * Returns the command group for categorized help listing. #AI:getGroup
      */
-    public function get_group(): string {
+    public function getGroup(): string {
         return $this->group;
     }
 
     /**
-     * Returns the usage string for help display. #AI:get_usage
+     * Returns the usage string for help display. #AI:getUsage
      */
-    public function get_usage(): string {
+    public function getUsage(): string {
         return $this->usage;
     }
 
     /**
-     * Auto-fills name, group, description, and usage from the registered command name. #AI:configure_for_name
+     * Auto-fills name, group, description, and usage from the registered command name. #AI:configureForName
      *
      * Called by the kernel before dispatch. Only sets values that are still at
      * their defaults — subclass overrides are preserved.
      *
      * @param string $name The registered command name (e.g. 'migrate:down').
      */
-    public function configure_for_name(string $name): void {
+    public function configureForName(string $name): void {
         if ($this->name === '') {
             $this->name = $name;
         }
@@ -148,14 +148,14 @@ abstract class Command {
     abstract public function handle(): int;
 
     /**
-     * Injects parsed argv args and flags before handle() is called. #AI:set_input
+     * Injects parsed argv args and flags before handle() is called. #AI:setInput
      *
      * Called by the kernel after resolving the command class.
      *
      * @param array $args  Positional arguments after the command name.
      * @param array $flags Parsed flags (--flag=value or --flag as true).
      */
-    public function set_input(array $args, array $flags): void {
+    public function setInput(array $args, array $flags): void {
         $this->args  = $args;
         $this->flags = $flags;
     }
@@ -218,38 +218,38 @@ abstract class Command {
 #AI section_order: [Metadata Access; Configuration; Command Execution; Input Access; Output Helpers]
 #AI architectural_notes: Abstract base class — never instantiated directly. Subclasses implement handle() and optionally override $name, $description, $group, $usage properties.
 
-#AI:get_name
+#AI:getName
 #AI group: Metadata Access
 #AI frequency: low
-#AI signature: public function get_name(): string
+#AI signature: public function getName(): string
 #AI contract: Returns the registered command name as set by configure_for_name().
 #AI return_detail: {type: string | desc: Command name (e.g. 'migrate:down').}
 
-#AI:get_description
+#AI:getDescription
 #AI group: Metadata Access
 #AI frequency: low
-#AI signature: public function get_description(): string
+#AI signature: public function getDescription(): string
 #AI contract: Returns the command description for help display.
 #AI return_detail: {type: string | desc: Human-readable description.}
 
-#AI:get_group
+#AI:getGroup
 #AI group: Metadata Access
 #AI frequency: low
-#AI signature: public function get_group(): string
+#AI signature: public function getGroup(): string
 #AI contract: Returns the command group for categorized help listing.
 #AI return_detail: {type: string | desc: Group key (e.g. 'database', 'queue', 'general').}
 
-#AI:get_usage
+#AI:getUsage
 #AI group: Metadata Access
 #AI frequency: low
-#AI signature: public function get_usage(): string
+#AI signature: public function getUsage(): string
 #AI contract: Returns the usage string for help display.
 #AI return_detail: {type: string | desc: Usage string (e.g. '[--steps=N]').}
 
-#AI:configure_for_name
+#AI:configureForName
 #AI group: Configuration
 #AI frequency: internal
-#AI signature: public function configure_for_name(string $name): void
+#AI signature: public function configureForName(string $name): void
 #AI contract: Auto-fills name, group, description, and usage from the registered command name. Only sets values still at defaults — subclass property overrides are preserved.
 #AI param_details: [{name: $name | type: string | required: true | desc: Registered command name (e.g. 'migrate:down').}]
 
@@ -266,10 +266,10 @@ abstract class Command {
 #AI contract: Implements the command logic. Must return a POSIX exit code (0 = success, 1+ = error).
 #AI return_detail: {type: int | desc: POSIX exit code. 0 for success, 1+ for error.}
 
-#AI:set_input
+#AI:setInput
 #AI group: Input Access
 #AI frequency: internal
-#AI signature: public function set_input(array $args, array $flags): void
+#AI signature: public function setInput(array $args, array $flags): void
 #AI contract: Injects parsed argv args and flags. Called by the kernel before handle().
 #AI param_details: [{name: $args | type: array | required: true | desc: Positional arguments after the command name.}; {name: $flags | type: array | required: true | desc: Parsed flags (--flag=value or --flag as true).}]
 

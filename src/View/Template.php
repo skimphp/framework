@@ -29,10 +29,10 @@ class Template {
     private ?string $active_slot  = null;
     private bool    $fragment_mode = false; // true = ignore layout() calls
 
-    public function __construct(string $views_path, array $data = [], private readonly ?string $default_layout = null, bool $fragment_mode = false) {
-        $this->views_path = rtrim($views_path, '/');
+    public function __construct(string $viewsPath, array $data = [], private readonly ?string $defaultLayout = null, bool $fragmentMode = false) {
+        $this->views_path = rtrim($viewsPath, '/');
         $this->data       = $data;
-        $this->fragment_mode = $fragment_mode;
+        $this->fragment_mode = $fragmentMode;
     }
 
     /**
@@ -45,7 +45,7 @@ class Template {
      * @param array  $extra    Additional data merged for this partial only.
      */
     public function include(string $template, array $extra = []): string {
-        return (new self($this->views_path, array_merge($this->data, $extra), null))->render_file($template);
+        return (new self($this->views_path, array_merge($this->data, $extra), null))->renderFile($template);
     }
 
     /**
@@ -106,11 +106,11 @@ class Template {
     }
 
     /**
-     * Alias for end() — familiar section API. #AI:end_section
+     * Alias for end() — familiar section API. #AI:endSection
      *
      * @throws \LogicException If called without a matching section().
      */
-    public function end_section(): void {
+    public function endSection(): void {
         $this->end();
     }
 
@@ -127,11 +127,11 @@ class Template {
     }
 
     /**
-     * Checks if a named slot was captured. #AI:has_section
+     * Checks if a named slot was captured. #AI:hasSection
      *
      * @param string $name Slot identifier to check.
      */
-    public function has_section(string $name): bool {
+    public function hasSection(string $name): bool {
         return isset($this->slots[$name]);
     }
 
@@ -146,7 +146,7 @@ class Template {
     }
 
     /**
-     * Renders a template file and optionally wraps it in a layout. #AI:render_file
+     * Renders a template file and optionally wraps it in a layout. #AI:renderFile
      *
      * Resolves .html or .php extension, extracts data as local variables,
      * and applies the layout system. Non-slot output becomes the 'content' slot.
@@ -154,7 +154,7 @@ class Template {
      * @param string $template Template path relative to views root.
      * @throws \Skim\View\Exceptions\ViewException If the template file is not found.
      */
-    public function render_file(string $template): string {
+    public function renderFile(string $template): string {
         $base = $this->views_path . '/' . ltrim($template, '/');
         $file = is_file($base . '.html') ? $base . '.html' : $base . '.php';
 
@@ -169,8 +169,8 @@ class Template {
         include $file;
         $content = (string) ob_get_clean();
 
-        if ($this->layout_name === null && $this->default_layout !== null) {
-            $this->layout_name = $this->default_layout;
+        if ($this->layout_name === null && $this->defaultLayout !== null) {
+            $this->layout_name = $this->defaultLayout;
         }
 
         // If a layout was declared, wrap content and render layout
@@ -181,7 +181,7 @@ class Template {
             }
             $layout = new self($this->views_path, $this->data, null);
             $layout->slots = $this->slots;
-            return $layout->render_file($this->layout_name);
+            return $layout->renderFile($this->layout_name);
         }
 
         return $content;
@@ -253,10 +253,10 @@ class Template {
 #AI param_details: [{name: $name | type: string | required: true | desc: Slot identifier used by the layout to retrieve content.}]
 #AI side_effects: [Starts output buffering via ob_start()]
 
-#AI:end_section
+#AI:endSection
 #AI group: Layout System
 #AI frequency: medium
-#AI signature: public function end_section(): void
+#AI signature: public function endSection(): void
 #AI contract: Alias for end() — provides a familiar end_section() API for Laravel/Symfony developers.
 #AI throws_details: [{type: \LogicException | desc: If called without a matching section().}]
 #AI side_effects: [Ends output buffering via ob_get_clean()]
@@ -269,10 +269,10 @@ class Template {
 #AI param_details: [{name: $name | type: string | required: true | desc: Slot identifier matching a previous start() call.}; {name: $default | type: string | required: false | desc: Default value returned when slot is not captured.}]
 #AI return_detail: {type: string | desc: Captured slot HTML or default value.}
 
-#AI:has_section
+#AI:hasSection
 #AI group: Layout System
 #AI frequency: low
-#AI signature: public function has_section(string $name): bool
+#AI signature: public function hasSection(string $name): bool
 #AI contract: Checks if a named slot was captured by a previous start()/end() pair.
 #AI param_details: [{name: $name | type: string | required: true | desc: Slot identifier to check.}]
 #AI return_detail: {type: bool | desc: True if the slot exists, false otherwise.}
@@ -285,10 +285,10 @@ class Template {
 #AI param_details: [{name: $name | type: string | required: true | desc: Slot identifier matching a previous start() call.}; {name: $default | type: string | required: false | desc: Default value returned when slot is not captured.}]
 #AI return_detail: {type: string | desc: Captured slot HTML or default value.}
 
-#AI:render_file
+#AI:renderFile
 #AI group: Rendering
 #AI frequency: internal
-#AI signature: public function render_file(string $template): string
+#AI signature: public function renderFile(string $template): string
 #AI contract: Renders a template file, resolves .html/.php extension, extracts data as local variables, and applies the layout system.
 #AI param_details: [{name: $template | type: string | required: true | desc: Template path relative to views root.}]
 #AI return_detail: {type: string | desc: Fully rendered HTML with layout applied.}

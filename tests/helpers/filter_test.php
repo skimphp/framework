@@ -25,14 +25,14 @@ describe('filter::int()', function(): void {
     });
 
     test('int_positive rejects zero and negative', function(): void {
-        expect(\Skim\Helpers\Filter::int_positive('0'))->toBeFalse();
-        expect(\Skim\Helpers\Filter::int_positive('-1'))->toBeFalse();
-        expect(\Skim\Helpers\Filter::int_positive('1'))->toBe(1);
+        expect(\Skim\Helpers\Filter::intPositive('0'))->toBeFalse();
+        expect(\Skim\Helpers\Filter::intPositive('-1'))->toBeFalse();
+        expect(\Skim\Helpers\Filter::intPositive('1'))->toBe(1);
     });
 
     test('int_natural accepts zero', function(): void {
-        expect(\Skim\Helpers\Filter::int_natural('0'))->toBe(0);
-        expect(\Skim\Helpers\Filter::int_natural('-1'))->toBeFalse();
+        expect(\Skim\Helpers\Filter::intNatural('0'))->toBe(0);
+        expect(\Skim\Helpers\Filter::intNatural('-1'))->toBeFalse();
     });
 
     test('returns false for float string', function(): void {
@@ -131,22 +131,22 @@ describe('filter::in()', function(): void {
 
 });
 
-describe('filter::arr_int()', function(): void {
+describe('filter::arrInt()', function(): void {
 
     test('filters out non-numeric values', function(): void {
-        expect(\Skim\Helpers\Filter::arr_int([1, 'x', '3', null, 0]))->toBe([1, 3, 0]);
+        expect(\Skim\Helpers\Filter::arrInt([1, 'x', '3', null, 0]))->toBe([1, 3, 0]);
     });
 
     test('arr_int_positive filters out zero and negative', function(): void {
-        expect(\Skim\Helpers\Filter::arr_int_positive([0, 1, -1, 2]))->toBe([1, 2]);
+        expect(\Skim\Helpers\Filter::arrIntPositive([0, 1, -1, 2]))->toBe([1, 2]);
     });
 
 });
 
-describe('filter::arr_in()', function(): void {
+describe('filter::arrIn()', function(): void {
 
     test('returns only values present in allowed list', function(): void {
-        expect(\Skim\Helpers\Filter::arr_in(['a', 'x', 'b'], ['a', 'b', 'c']))->toBe(['a', 'b']);
+        expect(\Skim\Helpers\Filter::arrIn(['a', 'x', 'b'], ['a', 'b', 'c']))->toBe(['a', 'b']);
     });
 
 });

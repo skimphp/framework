@@ -44,7 +44,7 @@ final class NullMarker {
 #AI fallback: none
 #AI test_seam: none needed — pure value object
 #AI invariants: [plain null in %set% skips the column; null_marker in %set% sets column to NULL; constructor is private — always use db::null() or null_marker::make()]
-#AI core_behaviors: [query_builder::build_set() checks instanceof null_marker to emit literal NULL]
+#AI core_behaviors: [query_builder::buildSet() checks instanceof null_marker to emit literal NULL]
 #AI warnings: []
 #AI notes: Never instantiate directly. Always use `db::null()` which delegates to `null_marker::make()`.
 #AI scope_items: []
@@ -53,8 +53,8 @@ final class NullMarker {
 #AI config_reads: []
 #AI non_goals: [Does not handle typed NULLs; Does not participate in INSERT %values%]
 #AI side_effects: []
-#AI flow: db::null() -> null_marker::make() -> query_builder::build_set() detects instanceof -> emits "col = NULL"
-#AI lifecycle_steps: [db::null(); -> null_marker::make(); -> passed in %set% array; -> query_builder::build_set() instanceof check; -> emits col = NULL]
+#AI flow: db::null() -> null_marker::make() -> query_builder::buildSet() detects instanceof -> emits "col = NULL"
+#AI lifecycle_steps: [db::null(); -> null_marker::make(); -> passed in %set% array; -> query_builder::buildSet() instanceof check; -> emits col = NULL]
 #AI section_order: [Factory; Architecture]
 #AI architectural_notes: The sentinel pattern avoids ambiguity between "skip this column" and "set to NULL" in partial updates.
 

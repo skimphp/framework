@@ -12,9 +12,9 @@ namespace Skim\Cache;
  *
  * Example:
  *   class custom_driver implements driver { ... }
- *   cache::set_driver(new custom_driver());
+ *   cache::setDriver(new custom_driver());
  *
- * Testing: implement this interface in a test double and inject via cache::set_driver().
+ * Testing: implement this interface in a test double and inject via cache::setDriver().
  *
  * #AI:class
  */
@@ -70,14 +70,14 @@ interface Driver {
     public function flush(string $prefix): bool;
 
     /**
-     * Clears the entire cache backend unconditionally. #AI:flush_all
+     * Clears the entire cache backend unconditionally. #AI:flushAll
      *
      * WARNING: Destroys ALL cached data visible to this driver.
      * Prefer prefix-scoped flush('prefix:') in production.
      *
      * @return bool True if backend confirmed flush.
      */
-    public function flush_all(): bool;
+    public function flushAll(): bool;
 }
 
 #AI:class
@@ -90,7 +90,7 @@ interface Driver {
 #AI badges: [interface; cache; driver; contract]
 #AI intro: `Skim\Cache\Driver` is the interface every cache backend must implement. The cache facade resolves the configured driver and delegates all operations through it. Swapping backends requires only a config change or a `set_driver()` call in tests.
 #AI lifecycle: implemented by concrete drivers, resolved by cache facade
-#AI test_seam: implement interface in test double, inject via cache::set_driver()
+#AI test_seam: implement interface in test double, inject via cache::setDriver()
 #AI invariants: [get() returns $default on miss; set() overwrites existing keys; null TTL means no expiry; flush() requires non-empty prefix; flush_all() clears everything]
 #AI section_order: [Read API; Write API; Invalidation]
 #AI architectural_notes: PSR-16 SimpleCache subset — only the methods SKIM actually uses. All drivers implement this; swap driver in config without changing app code.
@@ -135,10 +135,10 @@ interface Driver {
 #AI param_details: [{name: $prefix | type: string | required: true | desc: Key prefix to match.}]
 #AI return_detail: {type: bool | desc: True if backend confirmed invalidation.}
 
-#AI:flush_all
+#AI:flushAll
 #AI group: Invalidation
 #AI frequency: low
-#AI signature: public function flush_all(): bool
+#AI signature: public function flushAll(): bool
 #AI contract: Clears the entire cache backend unconditionally.
 #AI return_detail: {type: bool | desc: True if backend confirmed flush.}
 #AI warnings: [Destroys ALL cached data visible to this driver; Prefer prefix-scoped flush in production]

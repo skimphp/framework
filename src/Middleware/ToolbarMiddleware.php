@@ -44,20 +44,20 @@ class ToolbarMiddleware implements \Skim\Core\Middleware {
             return $result;
         }
 
-        if ($req->is_json() || $req->is_ajax() || $req->is_htmx()) {
+        if ($req->isJson() || $req->isAjax() || $req->isHtmx()) {
             return $result;
         }
 
-        $ct = $result->get_headers()['Content-Type'] ?? '';
+        $ct = $result->getHeaders()['Content-Type'] ?? '';
         if (!str_contains($ct, 'text/html')) {
             return $result;
         }
 
-        $html = $result->get_body();
+        $html = $result->getBody();
         if (str_contains($html, '</body>')) {
             $bar  = \Skim\Dev\Toolbar::render($req);
             $html = str_replace('</body>', $bar . '</body>', $html);
-            $result->set_body($html)->with_header('X-Debug', 'toolbar-injected');
+            $result->setBody($html)->withHeader('X-Debug', 'toolbar-injected');
         }
 
         return $result;

@@ -48,7 +48,7 @@ abstract class MerryModel extends \Skim\Db\Model {
             $name    = $parts[0];
             $nested  = $parts[1] ?? null;
 
-            $models = static::eager_load($models, $name);
+            $models = static::eagerLoad($models, $name);
 
             if ($nested !== null) {
                 $related_all = [];
@@ -80,7 +80,7 @@ abstract class MerryModel extends \Skim\Db\Model {
         if (array_key_exists($name, $this->relations)) {
             return $this->relations[$name];
         }
-        return $this->relations[$name] = $this->lazy_load($name);
+        return $this->relations[$name] = $this->lazyLoad($name);
     }
 
     // --- pivot operations (many-to-many) ---
@@ -153,34 +153,34 @@ abstract class MerryModel extends \Skim\Db\Model {
 
     // --- internals ---
 
-    private static function eager_load(array $models, string $name): array {
+    private static function eagerLoad(array $models, string $name): array {
         if ($models === []) {
             return $models;
         }
 
         if (isset(static::$has_many[$name])) {
-            return static::eager_has_many($models, $name, static::$has_many[$name]);
+            return static::eagerHasMany($models, $name, static::$has_many[$name]);
         }
         if (isset(static::$has_one[$name])) {
-            return static::eager_has_one($models, $name, static::$has_one[$name]);
+            return static::eagerHasOne($models, $name, static::$has_one[$name]);
         }
         if (isset(static::$belongs_to[$name])) {
-            return static::eager_belongs_to($models, $name, static::$belongs_to[$name]);
+            return static::eagerBelongsTo($models, $name, static::$belongs_to[$name]);
         }
         if (isset(static::$many_to_many[$name])) {
-            return static::eager_many_to_many($models, $name, static::$many_to_many[$name]);
+            return static::eagerManyToMany($models, $name, static::$many_to_many[$name]);
         }
 
         throw new \InvalidArgumentException("Relation '{$name}' not defined on " . static::class);
     }
 
-    private static function eager_has_many(array $models, string $name, array $def): array {
+    private static function eagerHasMany(array $models, string $name, array $def): array {
         /** @var \Skim\Db\Model $class */
         $class   = $def['class'];
         $fk      = $def['fk'];
-        $pks     = array_unique(array_column(array_map(fn($m) => $m->to_array(), $models), static::$primary));
+        $pks     = array_unique(array_column(array_map(fn($m) => $m->toArray(), $models), static::$primary));
         $in      = implode(',', array_fill(0, count($pks), '?'));
-        $related = $class::raw("SELECT * FROM {$class::get_table()} WHERE {$fk} IN ({$in})", $pks);
+        $related = $class::raw("SELECT * FROM {$class::getTable()} WHERE {$fk} IN ({$in})", $pks);
 
         $map = [];
         foreach ($related as $r) {
@@ -192,13 +192,13 @@ abstract class MerryModel extends \Skim\Db\Model {
         return $models;
     }
 
-    private static function eager_has_one(array $models, string $name, array $def): array {
+    private static function eagerHasOne(array $models, string $name, array $def): array {
         /** @var \Skim\Db\Model $class */
         $class   = $def['class'];
         $fk      = $def['fk'];
-        $pks     = array_unique(array_column(array_map(fn($m) => $m->to_array(), $models), static::$primary));
+        $pks     = array_unique(array_column(array_map(fn($m) => $m->toArray(), $models), static::$primary));
         $in      = implode(',', array_fill(0, count($pks), '?'));
-        $related = $class::raw("SELECT * FROM {$class::get_table()} WHERE {$fk} IN ({$in})", $pks);
+        $related = $class::raw("SELECT * FROM {$class::getTable()} WHERE {$fk} IN ({$in})", $pks);
 
         $map = [];
         foreach ($related as $r) {
@@ -210,14 +210,14 @@ abstract class MerryModel extends \Skim\Db\Model {
         return $models;
     }
 
-    private static function eager_belongs_to(array $models, string $name, array $def): array {
+    private static function eagerBelongsTo(array $models, string $name, array $def): array {
         /** @var \Skim\Db\Model $class */
         $class   = $def['class'];
         $fk      = $def['fk'];
         $pk      = $def['pk'] ?? 'id';
-        $fk_vals = array_unique(array_filter(array_column(array_map(fn($m) => $m->to_array(), $models), $fk)));
+        $fk_vals = array_unique(array_filter(array_column(array_map(fn($m) => $m->toArray(), $models), $fk)));
         $in      = implode(',', array_fill(0, count($fk_vals), '?'));
-        $related = $class::raw("SELECT * FROM {$class::get_table()} WHERE {$pk} IN ({$in})", $fk_vals);
+        $related = $class::raw("SELECT * FROM {$class::getTable()} WHERE {$pk} IN ({$in})", $fk_vals);
 
         $map = [];
         foreach ($related as $r) {
@@ -229,15 +229,15 @@ abstract class MerryModel extends \Skim\Db\Model {
         return $models;
     }
 
-    private static function eager_many_to_many(array $models, string $name, array $def): array {
+    private static function eagerManyToMany(array $models, string $name, array $def): array {
         $class   = $def['class'];
         $pivot   = $def['pivot'];
         $fk      = $def['fk'];
         $rfk     = $def['rfk'];
-        $pks     = array_unique(array_column(array_map(fn($m) => $m->to_array(), $models), static::$primary));
+        $pks     = array_unique(array_column(array_map(fn($m) => $m->toArray(), $models), static::$primary));
         $in      = implode(',', array_fill(0, count($pks), '?'));
         $rows    = \Skim\Db\Db::all(
-            "SELECT p.{$fk}, r.* FROM {$pivot} p JOIN {$class::get_table()} r ON p.{$rfk} = r.id WHERE p.{$fk} IN ({$in})",
+            "SELECT p.{$fk}, r.* FROM {$pivot} p JOIN {$class::getTable()} r ON p.{$rfk} = r.id WHERE p.{$fk} IN ({$in})",
             $pks, connection: static::$connection,
         );
 
@@ -245,7 +245,7 @@ abstract class MerryModel extends \Skim\Db\Model {
         foreach ($rows as $row) {
             $owner_id  = $row[$fk];
             unset($row[$fk]);
-            $map[$owner_id][] = $class::hydrate_one($row);
+            $map[$owner_id][] = $class::hydrateOne($row);
         }
         foreach ($models as $m) {
             $m->relations[$name] = $map[$m->{static::$primary}] ?? [];
@@ -253,35 +253,35 @@ abstract class MerryModel extends \Skim\Db\Model {
         return $models;
     }
 
-    private function lazy_load(string $name): mixed {
+    private function lazyLoad(string $name): mixed {
         if (isset(static::$has_many[$name])) {
             $def = static::$has_many[$name];
             return $def['class']::where([$def['fk'] => $this->id])->all();
         }
         if (isset(static::$has_one[$name])) {
             $def = static::$has_one[$name];
-            return $def['class']::find_by($def['fk'], $this->id);
+            return $def['class']::findBy($def['fk'], $this->id);
         }
         if (isset(static::$belongs_to[$name])) {
             $def = static::$belongs_to[$name];
             return $def['class']::find($this->{$def['fk']});
         }
         if (isset(static::$many_to_many[$name])) {
-            return $this->load_pivot($name, static::$many_to_many[$name]);
+            return $this->loadPivot($name, static::$many_to_many[$name]);
         }
         throw new \InvalidArgumentException("Relation '{$name}' not defined on " . static::class);
     }
 
-    private function load_pivot(string $name, array $def): array {
+    private function loadPivot(string $name, array $def): array {
         $class = $def['class'];
         $pivot = $def['pivot'];
         $fk    = $def['fk'];
         $rfk   = $def['rfk'];
         $rows  = \Skim\Db\Db::all(
-            "SELECT r.* FROM {$pivot} p JOIN {$class::get_table()} r ON p.{$rfk} = r.id WHERE p.{$fk} = :fk",
+            "SELECT r.* FROM {$pivot} p JOIN {$class::getTable()} r ON p.{$rfk} = r.id WHERE p.{$fk} = :fk",
             [':fk' => $this->id], connection: static::$connection,
         );
-        return $class::hydrate_many($rows);
+        return $class::hydrateMany($rows);
     }
 }
 

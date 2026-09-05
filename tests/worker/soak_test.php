@@ -12,12 +12,12 @@ use Skim\Worker\WorkerReset;
 beforeEach(function (): void {
     \Skim\Events\Event::off();
     \Skim\View\View::reset();
-    \Skim\View\ComponentCollector::reset_request();
+    \Skim\View\ComponentCollector::resetRequest();
     \Skim\Worker\LeakDetector::reset();
 });
 
-function boot_soak_app(): \Skim\Core\App {
-    $app = \Skim\Core\App::test_instance([
+function bootSoakApp(): \Skim\Core\App {
+    $app = \Skim\Core\App::testInstance([
         'app.debug' => false,
         'app.view.default_layout' => null,
         'app.leak_detection' => 'strict',
@@ -73,46 +73,46 @@ function boot_soak_app(): \Skim\Core\App {
     \Skim\Events\Event::on('boot.warm', fn() => null);
 
     $app->boot();
-    $app->boot_extensions();
+    $app->bootExtensions();
     $app->freeze();
 
-    \Skim\Events\Event::capture_boot_snapshot();
+    \Skim\Events\Event::captureBootSnapshot();
     \Skim\Worker\LeakDetector::configure('strict');
 
     return $app;
 }
 
-function soak_run_once(\Skim\Core\App $app, string $uri, string $method = 'GET', array $data = []): void {
-    $app->begin_request();
+function soakRunOnce(\Skim\Core\App $app, string $uri, string $method = 'GET', array $data = []): void {
+    $app->beginRequest();
     try {
         $req = \Skim\Core\Request::make($method, $uri, $data);
         $app->dispatch($req, new \Skim\Core\Response());
     } catch (\Throwable $e) {
         ob_start();
-        $app->handle_exception($e);
+        $app->handleException($e);
         ob_end_clean();
     } finally {
-        $app->end_request();
+        $app->endRequest();
     }
 }
 
 describe('soak test — 1000 mixed requests', function (): void {
 
     test('zero leak findings after realistic workload', function (): void {
-        $app = boot_soak_app();
+        $app = bootSoakApp();
 
         $routes = ['/home', '/user/42', '/event', '/view', '/component'];
         $errors_expected = 0;
 
         for ($i = 0; $i < 1000; $i++) {
             if ($i % 20 === 0) {
-                soak_run_once($app, '/contact', 'POST');
+                soakRunOnce($app, '/contact', 'POST');
             } elseif ($i % 50 === 0) {
-                soak_run_once($app, '/boom');
+                soakRunOnce($app, '/boom');
                 $errors_expected++;
             } else {
                 $uri = $routes[$i % count($routes)] . '?req=' . $i;
-                soak_run_once($app, $uri);
+                soakRunOnce($app, $uri);
             }
         }
 
@@ -125,13 +125,13 @@ describe('soak test — 1000 mixed requests', function (): void {
     });
 
     test('memory stays bounded under mixed workload', function (): void {
-        $app = boot_soak_app();
+        $app = bootSoakApp();
 
         $routes = ['/home', '/user/42', '/event', '/view', '/component'];
 
         // Warmup
         for ($i = 0; $i < 10; $i++) {
-            soak_run_once($app, $routes[$i % count($routes)]);
+            soakRunOnce($app, $routes[$i % count($routes)]);
         }
 
         $baseline = memory_get_usage(true);
@@ -139,11 +139,11 @@ describe('soak test — 1000 mixed requests', function (): void {
 
         for ($i = 0; $i < 1000; $i++) {
             if ($i % 20 === 0) {
-                soak_run_once($app, '/contact', 'POST');
+                soakRunOnce($app, '/contact', 'POST');
             } elseif ($i % 50 === 0) {
-                soak_run_once($app, '/boom');
+                soakRunOnce($app, '/boom');
             } else {
-                soak_run_once($app, $routes[$i % count($routes)]);
+                soakRunOnce($app, $routes[$i % count($routes)]);
             }
             $peak_delta = max($peak_delta, memory_get_usage(true) - $baseline);
         }

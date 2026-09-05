@@ -81,11 +81,11 @@ final class ArgvParser {
     }
 
     /**
-     * Returns true when any of the given flag names is set. #AI:has_flag
+     * Returns true when any of the given flag names is set. #AI:hasFlag
      *
      * @param string ...$names Flag names to test (without leading dashes).
      */
-    public function has_flag(string ...$names): bool {
+    public function hasFlag(string ...$names): bool {
         foreach ($names as $name) {
             if (isset($this->flags[$name])) {
                 return true;
@@ -127,10 +127,10 @@ final class ArgvParser {
 #AI param_details: [{name: $argv | type: array | required: true | desc: Raw $argv as received by PHP. argv[0] is the script name and is stripped automatically.}]
 #AI return_detail: {type: self | desc: Immutable value object with command, args, and flags properties.}
 
-#AI:has_flag
+#AI:hasFlag
 #AI group: Flag Access
 #AI frequency: medium
-#AI signature: public function has_flag(string ...$names): bool
+#AI signature: public function hasFlag(string ...$names): bool
 #AI contract: Returns true when any of the given flag names is set in the parsed flags array. Accepts variadic names for convenience (e.g. checking both 'quiet' and 'q').
 #AI param_details: [{name: $names | type: string | required: true | desc: Flag names to test, without leading dashes. Variadic — pass one or more names.}]
 #AI return_detail: {type: bool | desc: True if at least one of the given flag names is present.}

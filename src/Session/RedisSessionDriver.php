@@ -39,7 +39,7 @@ final class RedisSessionDriver implements \Skim\Session\SessionDriver {
      */
     public function start(): void {
         // Read existing session ID from cookie
-        $this->id = $_COOKIE['PHPSESSID'] ?? $this->generate_id();
+        $this->id = $_COOKIE['PHPSESSID'] ?? $this->generateId();
 
         $raw = $this->redis()->get($this->prefix . $this->id);
 
@@ -112,7 +112,7 @@ final class RedisSessionDriver implements \Skim\Session\SessionDriver {
      */
     public function regenerate(): void {
         $this->redis()->del($this->prefix . $this->id);
-        $this->id = $this->generate_id();
+        $this->id = $this->generateId();
         $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
                || (($_SERVER['SERVER_PORT'] ?? 80) == 443);
         setcookie('PHPSESSID', $this->id, [
@@ -153,7 +153,7 @@ final class RedisSessionDriver implements \Skim\Session\SessionDriver {
         );
     }
 
-    private function generate_id(): string {
+    private function generateId(): string {
         return bin2hex(random_bytes(32));
     }
 

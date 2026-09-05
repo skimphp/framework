@@ -52,7 +52,7 @@ final class IdeLink {
      * Returns the list of supported IDE identifiers. #AI:supported
      *
      * Order matches the canonical display order. Use this to populate config
-     * pickers, documentation, or `ide_link::is_supported()` validation.
+     * pickers, documentation, or `ide_link::isSupported()` validation.
      *
      * @return string[] IDE identifier keys (e.g. ['phpstorm', 'vscode', ...]).
      */
@@ -70,9 +70,9 @@ final class IdeLink {
     }
 
     /**
-     * Returns true when the given IDE identifier has a registered URL scheme. #AI:is_supported
+     * Returns true when the given IDE identifier has a registered URL scheme. #AI:isSupported
      */
-    public static function is_supported(string $ide): bool {
+    public static function isSupported(string $ide): bool {
         return isset(self::NAMES[$ide]);
     }
 
@@ -180,10 +180,10 @@ final class IdeLink {
 #AI param_details: [{name: $ide | type: string | required: true | desc: IDE identifier from supported().}]
 #AI return_detail: {type: string | desc: Display name (e.g. 'PhpStorm', 'VS Code') or the identifier when unknown.}
 
-#AI:is_supported
+#AI:isSupported
 #AI group: Registry
 #AI frequency: low
-#AI signature: public static function is_supported(string $ide): bool
+#AI signature: public static function isSupported(string $ide): bool
 #AI contract: Returns true when the given IDE identifier has a registered URL scheme.
 #AI param_details: [{name: $ide | type: string | required: true | desc: IDE identifier to check.}]
 #AI return_detail: {type: bool | desc: True when the IDE is in the registry.}

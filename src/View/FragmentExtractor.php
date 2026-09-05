@@ -38,9 +38,9 @@ class FragmentExtractor {
      */
     public static function extract(string $html, string $name): string {
         $tokens = self::tokenize($html);
-        self::validate_no_nesting($tokens);
+        self::validateNoNesting($tokens);
 
-        return self::extract_by_name($html, $tokens, $name);
+        return self::extractByName($html, $tokens, $name);
     }
 
     /**
@@ -67,14 +67,14 @@ class FragmentExtractor {
     }
 
     /**
-     * Validates flat fragment structure — no nesting, no mismatched markers. #AI:validate_no_nesting
+     * Validates flat fragment structure — no nesting, no mismatched markers. #AI:validateNoNesting
      *
      * Depth must never exceed 1 (flat fragments only) and must return to 0.
      *
      * @param array $tokens Token list from tokenize().
      * @throws \Skim\View\Exceptions\ViewException On nested fragments, unmatched @end, or unclosed @fragment.
      */
-    private static function validate_no_nesting(array $tokens): void {
+    private static function validateNoNesting(array $tokens): void {
         $depth = 0;
 
         foreach ($tokens as $token) {
@@ -97,14 +97,14 @@ class FragmentExtractor {
     }
 
     /**
-     * Extracts content between the named @fragment and its closing @end. #AI:extract_by_name
+     * Extracts content between the named @fragment and its closing @end. #AI:extractByName
      *
      * @param string $html   Original HTML string.
      * @param array  $tokens Validated token list.
      * @param string $name   Fragment identifier to extract.
      * @throws \Skim\View\Exceptions\ViewException When the named fragment is not found.
      */
-    private static function extract_by_name(string $html, array $tokens, string $name): string {
+    private static function extractByName(string $html, array $tokens, string $name): string {
         foreach ($tokens as $i => $token) {
             if ($token['type'] === 'fragment' && $token['name'] === $name) {
                 $start     = $token['offset'] + $token['length'];
@@ -162,18 +162,18 @@ class FragmentExtractor {
 #AI param_details: [{name: $html | type: string | required: true | desc: Rendered HTML string.}]
 #AI return_detail: {type: array | desc: List of token arrays.}
 
-#AI:validate_no_nesting
+#AI:validateNoNesting
 #AI group: Validation
 #AI frequency: internal
-#AI signature: private static function validate_no_nesting(array $tokens): void
+#AI signature: private static function validateNoNesting(array $tokens): void
 #AI contract: Validates that fragments are flat (depth <= 1) and all markers are balanced.
 #AI param_details: [{name: $tokens | type: array | required: true | desc: Token list from tokenize().}]
 #AI throws_details: [{type: view_exception | desc: On nested fragments, unmatched @end, or unclosed @fragment.}]
 
-#AI:extract_by_name
+#AI:extractByName
 #AI group: Extraction API
 #AI frequency: internal
-#AI signature: private static function extract_by_name(string $html, array $tokens, string $name): string
+#AI signature: private static function extractByName(string $html, array $tokens, string $name): string
 #AI contract: Locates the named @fragment token and returns the substring between it and the following @end token.
 #AI param_details: [{name: $html | type: string | required: true | desc: Original HTML string.}; {name: $tokens | type: array | required: true | desc: Validated token list.}; {name: $name | type: string | required: true | desc: Fragment identifier to extract.}]
 #AI return_detail: {type: string | desc: Trimmed fragment content.}

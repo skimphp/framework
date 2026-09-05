@@ -14,32 +14,32 @@ use Skim\Worker\Resettable;
 use Skim\Worker\WorkerReset;
 
 beforeEach(function (): void {
-    \Skim\Cache\Cache::set_driver(new \Skim\Cache\ArrayDriver());
+    \Skim\Cache\Cache::setDriver(new \Skim\Cache\ArrayDriver());
     \Skim\Events\Event::off();
     \Skim\I18n\I18n::reset();
     \Skim\Session\Session::reset();
     \Skim\View\View::reset();
-    \Skim\View\ComponentCollector::reset_request();
+    \Skim\View\ComponentCollector::resetRequest();
 });
 
 describe('worker_reset::apply()', function (): void {
 
     test('clears event listeners', function (): void {
         \Skim\Events\Event::on('test', fn() => null);
-        expect(\Skim\Events\Event::listener_count('test'))->toBe(1);
+        expect(\Skim\Events\Event::listenerCount('test'))->toBe(1);
 
         \Skim\Worker\WorkerReset::apply(ob_get_level());
 
-        expect(\Skim\Events\Event::listener_count('test'))->toBe(0);
+        expect(\Skim\Events\Event::listenerCount('test'))->toBe(0);
     });
 
     test('resets i18n locale to fallback', function (): void {
         \Skim\I18n\I18n::locale('fr');
-        expect(\Skim\I18n\I18n::current_locale())->toBe('fr');
+        expect(\Skim\I18n\I18n::currentLocale())->toBe('fr');
 
         \Skim\Worker\WorkerReset::apply(ob_get_level());
 
-        expect(\Skim\I18n\I18n::current_locale())->toBe('en');
+        expect(\Skim\I18n\I18n::currentLocale())->toBe('en');
     });
 
     test('resets session driver and started flag', function (): void {
@@ -55,7 +55,7 @@ describe('worker_reset::apply()', function (): void {
             public function id(): string { return $this->sid; }
         };
 
-        \Skim\Session\Session::set_driver($driver);
+        \Skim\Session\Session::setDriver($driver);
         \Skim\Session\Session::start();
         expect(\Skim\Session\Session::id())->toBe('test-sid');
 
@@ -67,11 +67,11 @@ describe('worker_reset::apply()', function (): void {
 
     test('clears view shared data', function (): void {
         \Skim\View\View::share('user', 'Alice');
-        expect(\Skim\View\View::get_shared('user'))->toBe('Alice');
+        expect(\Skim\View\View::getShared('user'))->toBe('Alice');
 
         \Skim\Worker\WorkerReset::apply(ob_get_level());
 
-        expect(\Skim\View\View::get_shared('user'))->toBeNull();
+        expect(\Skim\View\View::getShared('user'))->toBeNull();
     });
 
     test('clears middleware instance cache', function (): void {
@@ -107,9 +107,9 @@ describe('worker_reset::apply()', function (): void {
         \Skim\Worker\WorkerReset::apply(ob_get_level());
 
         $class = 'late_resettable_' . str_replace('.', '', uniqid('', true));
-        eval("class {$class} implements \\skim\\worker\\resettable {
+        eval("class {$class} implements \\Skim\\Worker\\Resettable {
             public static bool \$was_reset = false;
-            public static function reset_request(): void { static::\$was_reset = true; }
+            public static function resetRequest(): void { static::\$was_reset = true; }
         }");
 
         \Skim\Worker\WorkerReset::apply(ob_get_level());

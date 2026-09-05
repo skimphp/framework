@@ -9,7 +9,7 @@ describe('extension CLI commands', function(): void {
     $remove = null;
 
     beforeEach(function() use (&$root, &$remove): void {
-        \Skim\Cli\Cli::force_plain(true);
+        \Skim\Cli\Cli::forcePlain(true);
         $root = sys_get_temp_dir() . '/skim_ext_command_' . bin2hex(random_bytes(4));
         mkdir($root . '/vendor/skim/mailer', 0777, true);
 

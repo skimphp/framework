@@ -47,7 +47,7 @@ class RouteEntry {
      */
     public function name(string $name): static {
         $this->name = $name;
-        $this->router->register_name($name, $this->pattern);
+        $this->router->registerName($name, $this->pattern);
         return $this;
     }
 
@@ -71,20 +71,20 @@ class RouteEntry {
     }
 
     /**
-     * Returns the assigned route name, or null if not set. #AI:get_name
+     * Returns the assigned route name, or null if not set. #AI:getName
      *
      * @return string|null The route name, or null if name() was never called.
      */
-    public function get_name(): ?string {
+    public function getName(): ?string {
         return $this->name;
     }
 
     /**
-     * Returns all appended middleware class-strings. #AI:get_middleware
+     * Returns all appended middleware class-strings. #AI:getMiddleware
      *
      * @return array Ordered list of middleware class-strings.
      */
-    public function get_middleware(): array {
+    public function getMiddleware(): array {
         return $this->middleware;
     }
 }
@@ -112,7 +112,7 @@ class RouteEntry {
 #AI contract: Assigns a unique name and registers it with the router for reverse URL generation via route(). Overwrites any previous registration for the same name.
 #AI param_details: [{name: $name | type: string | required: true | desc: Unique route name. Must be non-empty. Overwrites duplicates.}]
 #AI return_detail: {type: static | desc: $this for fluent chaining.}
-#AI side_effects: Calls $router->register_name($name, $pattern).
+#AI side_effects: Calls $router->registerName($name, $pattern).
 
 #AI:middleware
 #AI group: Configuration
@@ -123,16 +123,16 @@ class RouteEntry {
 #AI return_detail: {type: static | desc: $this for fluent chaining.}
 #AI notes: middleware is additive — call it multiple times to accumulate. Order within route middleware matches call order.
 
-#AI:get_name
+#AI:getName
 #AI group: Accessors
 #AI frequency: low
-#AI signature: public function get_name(): ?string
+#AI signature: public function getName(): ?string
 #AI contract: Returns the assigned route name or null if name() was never called.
 #AI return_detail: {type: ?string | desc: Route name or null.}
 
-#AI:get_middleware
+#AI:getMiddleware
 #AI group: Accessors
 #AI frequency: low
-#AI signature: public function get_middleware(): array
+#AI signature: public function getMiddleware(): array
 #AI contract: Returns all appended middleware class-strings in registration order.
 #AI return_detail: {type: array | desc: Ordered list of middleware class-strings.}

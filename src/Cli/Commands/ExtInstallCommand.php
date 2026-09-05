@@ -47,7 +47,7 @@ class ExtInstallCommand extends \Skim\Cli\Command {
      *   php skim ext:install skim/auth --prefix=myapp_
      */
     public function handle(): int {
-        $package = $this->resolve_package((string) $this->arg(0, ''));
+        $package = $this->resolvePackage((string) $this->arg(0, ''));
         if ($package === '') {
             $this->error('Usage: php skim ext:install <name|vendor/name>');
             return 1;
@@ -58,7 +58,7 @@ class ExtInstallCommand extends \Skim\Cli\Command {
         }
 
         $no_interaction = (bool) $this->flag('no-interaction', false);
-        $composer = $this->composer_require($package, $no_interaction);
+        $composer = $this->composerRequire($package, $no_interaction);
         if ($composer['code'] !== 0) {
             $this->error('Composer install failed.');
             if ($composer['output'] !== '') {
@@ -75,10 +75,10 @@ class ExtInstallCommand extends \Skim\Cli\Command {
             return 1;
         }
 
-        $config_path = $this->publish_config($extension);
+        $config_path = $this->publishConfig($extension);
         if ($config_path !== null) {
-            $prefix = $this->table_prefix($no_interaction);
-            $this->write_table_prefix($config_path, $prefix);
+            $prefix = $this->tablePrefix($no_interaction);
+            $this->writeTablePrefix($config_path, $prefix);
         }
 
         $migrator = $this->migrator();
@@ -88,7 +88,7 @@ class ExtInstallCommand extends \Skim\Cli\Command {
                 $this->success('Migrated: ' . $entry['filename']);
             }
         } catch (\Throwable $e) {
-            foreach ($migrator->rollback_session($migrator->applied_this_session()) as $filename) {
+            foreach ($migrator->rollbackSession($migrator->appliedThisSession()) as $filename) {
                 $this->warn('Rolled back: ' . $filename);
             }
             $this->error('Installation failed - changes rolled back.');
@@ -96,19 +96,19 @@ class ExtInstallCommand extends \Skim\Cli\Command {
             return 1;
         }
 
-        $this->print_env_additions($extension);
-        $this->print_post_install($extension);
+        $this->printEnvAdditions($extension);
+        $this->printPostInstall($extension);
 
         $this->success("{$package} installed successfully.");
         return 0;
     }
 
     /**
-     * Normalizes short names to vendor/package format. #AI:resolve_package
+     * Normalizes short names to vendor/package format. #AI:resolvePackage
      *
      * @param string $name Raw package name from CLI arg.
      */
-    private function resolve_package(string $name): string {
+    private function resolvePackage(string $name): string {
         $name = trim($name);
         if ($name === '') {
             return '';
@@ -138,15 +138,15 @@ class ExtInstallCommand extends \Skim\Cli\Command {
     }
 
     /**
-     * Runs composer require as a subprocess with optional streaming output. #AI:composer_require
+     * Runs composer require as a subprocess with optional streaming output. #AI:composerRequire
      *
      * @param string $package        Composer package name.
-     * @param bool   $no_interaction Suppress interactive prompts.
+     * @param bool   $noInteraction Suppress interactive prompts.
      * @return array{code:int,output:string}
      */
-    private function composer_require(string $package, bool $no_interaction): array {
+    private function composerRequire(string $package, bool $noInteraction): array {
         $cmd = ['composer', 'require', $package];
-        if ($no_interaction) {
+        if ($noInteraction) {
             $cmd[] = '--no-interaction';
         }
 
@@ -154,7 +154,7 @@ class ExtInstallCommand extends \Skim\Cli\Command {
             0 => ['pipe', 'r'],
             1 => ['pipe', 'w'],
             2 => ['pipe', 'w'],
-        ], $pipes, base_path());
+        ], $pipes, basePath());
 
         if (!is_resource($process)) {
             return ['code' => 1, 'output' => 'Unable to start composer.'];
@@ -165,7 +165,7 @@ class ExtInstallCommand extends \Skim\Cli\Command {
         stream_set_blocking($pipes[2], false);
 
         $output = '';
-        $stream_output = \Skim\Cli\Cli::is_tty() && !$no_interaction;
+        $stream_output = \Skim\Cli\Cli::isTty() && !$noInteraction;
 
         do {
             $chunk = stream_get_contents($pipes[1]);
@@ -201,19 +201,19 @@ class ExtInstallCommand extends \Skim\Cli\Command {
     }
 
     /**
-     * Copies extension config file to the project config directory. #AI:publish_config
+     * Copies extension config file to the project config directory. #AI:publishConfig
      *
      * @param array $extension Extension metadata from registry.
      * @return string|null Path to published config, or null if no config to publish.
      */
-    private function publish_config(array $extension): ?string {
-        $slug = $this->package_slug($extension['name']);
+    private function publishConfig(array $extension): ?string {
+        $slug = $this->packageSlug($extension['name']);
         $source = $extension['path'] . "/config/{$slug}.php";
         if (!is_file($source)) {
             return null;
         }
 
-        $destination = base_path("config/{$slug}.php");
+        $destination = basePath("config/{$slug}.php");
         if (is_file($destination)) {
             $this->info("config/{$slug}.php already exists - skipping");
             return $destination;
@@ -228,17 +228,17 @@ class ExtInstallCommand extends \Skim\Cli\Command {
     }
 
     /**
-     * Resolves table prefix from flag, interaction mode, or interactive prompt. #AI:table_prefix
+     * Resolves table prefix from flag, interaction mode, or interactive prompt. #AI:tablePrefix
      *
-     * @param bool $no_interaction Skip interactive prompts.
+     * @param bool $noInteraction Skip interactive prompts.
      */
-    private function table_prefix(bool $no_interaction): string {
+    private function tablePrefix(bool $noInteraction): string {
         $flag = $this->flag('prefix', null);
         if (is_string($flag) && $flag !== '') {
             return $flag;
         }
 
-        if ($no_interaction || !\Skim\Cli\Cli::is_tty()) {
+        if ($noInteraction || !\Skim\Cli\Cli::isTty()) {
             return 'skim_';
         }
 
@@ -246,31 +246,31 @@ class ExtInstallCommand extends \Skim\Cli\Command {
     }
 
     /**
-     * Writes the table_prefix value into the published config file. #AI:write_table_prefix
+     * Writes the table_prefix value into the published config file. #AI:writeTablePrefix
      *
-     * @param string $config_path Path to the published config file.
+     * @param string $configPath Path to the published config file.
      * @param string $prefix      Table prefix to write.
      */
-    private function write_table_prefix(string $config_path, string $prefix): void {
-        $config = require $config_path;
+    private function writeTablePrefix(string $configPath, string $prefix): void {
+        $config = require $configPath;
         if (!is_array($config)) {
             return;
         }
 
         $config['table_prefix'] = $prefix;
         $export = var_export($config, true);
-        file_put_contents($config_path, "<?php declare(strict_types=1);\n\nreturn {$export};\n");
+        file_put_contents($configPath, "<?php declare(strict_types=1);\n\nreturn {$export};\n");
     }
 
     /**
-     * Prints missing .env keys that the extension requires. #AI:print_env_additions
+     * Prints missing .env keys that the extension requires. #AI:printEnvAdditions
      *
      * @param array $extension Extension metadata with 'env' key.
      */
-    private function print_env_additions(array $extension): void {
+    private function printEnvAdditions(array $extension): void {
         $missing = array_values(array_filter(
             $extension['env'],
-            fn(string $key): bool => !$this->env_has($key),
+            fn(string $key): bool => !$this->envHas($key),
         ));
 
         if ($missing === []) {
@@ -286,11 +286,11 @@ class ExtInstallCommand extends \Skim\Cli\Command {
     }
 
     /**
-     * Prints post-install next steps from extension metadata. #AI:print_post_install
+     * Prints post-install next steps from extension metadata. #AI:printPostInstall
      *
      * @param array $extension Extension metadata with 'post_install' key.
      */
-    private function print_post_install(array $extension): void {
+    private function printPostInstall(array $extension): void {
         if ($extension['post_install'] === []) {
             return;
         }
@@ -303,12 +303,12 @@ class ExtInstallCommand extends \Skim\Cli\Command {
     }
 
     /**
-     * Checks if a key already exists in the .env file. #AI:env_has
+     * Checks if a key already exists in the .env file. #AI:envHas
      *
      * @param string $key Environment variable name to check.
      */
-    private function env_has(string $key): bool {
-        $path = base_path('.env');
+    private function envHas(string $key): bool {
+        $path = basePath('.env');
         if (!is_file($path)) {
             return false;
         }
@@ -324,11 +324,11 @@ class ExtInstallCommand extends \Skim\Cli\Command {
     }
 
     /**
-     * Converts a package name to a filesystem-safe slug. #AI:package_slug
+     * Converts a package name to a filesystem-safe slug. #AI:packageSlug
      *
      * @param string $package Composer package name.
      */
-    private function package_slug(string $package): string {
+    private function packageSlug(string $package): string {
         return str_replace(['/', '-'], '_', $package);
     }
 
@@ -336,7 +336,7 @@ class ExtInstallCommand extends \Skim\Cli\Command {
      * Returns the injected or default extension registry. #AI:registry
      */
     private function registry(): \Skim\Ext\ExtRegistry {
-        return $this->registry ?? new \Skim\Ext\ExtRegistry(base_path());
+        return $this->registry ?? new \Skim\Ext\ExtRegistry(basePath());
     }
 
     /**
@@ -387,10 +387,10 @@ class ExtInstallCommand extends \Skim\Cli\Command {
 #AI return_detail: {type: int | desc: 0 on success, 1 on any failure.}
 #AI warnings: [Migration failure triggers rollback of all migrations applied in this session]
 
-#AI:resolve_package
+#AI:resolvePackage
 #AI group: Installation Pipeline
 #AI frequency: internal
-#AI signature: private function resolve_package(string $name): string
+#AI signature: private function resolvePackage(string $name): string
 #AI contract: Normalizes short names to vendor/package format. Empty input returns empty string.
 #AI param_details: [{name: $name | type: string | required: true | desc: Raw package name from CLI arg.}]
 #AI return_detail: {type: string | desc: Normalized package name or empty string.}
@@ -401,56 +401,56 @@ class ExtInstallCommand extends \Skim\Cli\Command {
 #AI signature: private function preflight(): bool
 #AI contract: Verifies PHP >= 8.5 and database connectivity before proceeding with installation.
 
-#AI:composer_require
+#AI:composerRequire
 #AI group: Installation Pipeline
 #AI frequency: internal
-#AI signature: private function composer_require(string $package, bool $no_interaction): array
+#AI signature: private function composerRequire(string $package, bool $noInteraction): array
 #AI contract: Runs composer require as a subprocess. Streams output to TTY when interactive. Returns exit code and captured output.
-#AI param_details: [{name: $package | type: string | required: true | desc: Composer package name.}; {name: $no_interaction | type: bool | required: true | desc: Suppress interactive prompts.}]
+#AI param_details: [{name: $package | type: string | required: true | desc: Composer package name.}; {name: $noInteraction | type: bool | required: true | desc: Suppress interactive prompts.}]
 #AI return_detail: {type: array{code:int,output:string} | desc: Exit code and captured output.}
 
-#AI:publish_config
+#AI:publishConfig
 #AI group: Configuration
 #AI frequency: internal
-#AI signature: private function publish_config(array $extension): ?string
+#AI signature: private function publishConfig(array $extension): ?string
 #AI contract: Copies extension config file to the project config directory. Skips if config already exists.
 #AI param_details: [{name: $extension | type: array | required: true | desc: Extension metadata from registry.}]
 #AI return_detail: {type: ?string | desc: Path to published config, or null if no config to publish.}
 
-#AI:table_prefix
+#AI:tablePrefix
 #AI group: Configuration
 #AI frequency: internal
-#AI signature: private function table_prefix(bool $no_interaction): string
+#AI signature: private function tablePrefix(bool $noInteraction): string
 #AI contract: Resolves table prefix from --prefix flag, non-interactive default, or interactive prompt.
 
-#AI:write_table_prefix
+#AI:writeTablePrefix
 #AI group: Configuration
 #AI frequency: internal
-#AI signature: private function write_table_prefix(string $config_path, string $prefix): void
+#AI signature: private function writeTablePrefix(string $configPath, string $prefix): void
 #AI contract: Writes the table_prefix value into the published config file.
 
-#AI:print_env_additions
+#AI:printEnvAdditions
 #AI group: Installation Pipeline
 #AI frequency: internal
-#AI signature: private function print_env_additions(array $extension): void
+#AI signature: private function printEnvAdditions(array $extension): void
 #AI contract: Prints missing .env keys that the extension requires.
 
-#AI:print_post_install
+#AI:printPostInstall
 #AI group: Installation Pipeline
 #AI frequency: internal
-#AI signature: private function print_post_install(array $extension): void
+#AI signature: private function printPostInstall(array $extension): void
 #AI contract: Prints post-install next steps from extension metadata.
 
-#AI:env_has
+#AI:envHas
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private function env_has(string $key): bool
+#AI signature: private function envHas(string $key): bool
 #AI contract: Checks if a key already exists in the .env file.
 
-#AI:package_slug
+#AI:packageSlug
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private function package_slug(string $package): string
+#AI signature: private function packageSlug(string $package): string
 #AI contract: Converts a package name to a filesystem-safe slug by replacing / and - with _.
 
 #AI:registry

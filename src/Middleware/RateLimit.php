@@ -55,9 +55,9 @@ class RateLimit implements \Skim\Core\Middleware {
             $count     = (int) ($results[2] ?? 0);
             $remaining = max(0, $this->limit - $count);
 
-            $res->with_header('X-RateLimit-Limit',     (string) $this->limit)
-                ->with_header('X-RateLimit-Remaining', (string) $remaining)
-                ->with_header('X-RateLimit-Reset',     (string) (int) ($now + $this->window));
+            $res->withHeader('X-RateLimit-Limit',     (string) $this->limit)
+                ->withHeader('X-RateLimit-Remaining', (string) $remaining)
+                ->withHeader('X-RateLimit-Reset',     (string) (int) ($now + $this->window));
 
             if ($count > $this->limit) {
                 return $res->status(429)->json(['error' => 'Too Many Requests']);

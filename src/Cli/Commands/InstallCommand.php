@@ -35,7 +35,7 @@ class InstallCommand extends \Skim\Cli\Command {
         \Skim\Cli\Cli::bold('SKIM Framework Installer');
         \Skim\Cli\Cli::line();
 
-        $env_path = base_path('.env');
+        $env_path = basePath('.env');
         $force    = (bool) $this->flag('force', false);
 
         if (file_exists($env_path) && !$force) {
@@ -50,7 +50,7 @@ class InstallCommand extends \Skim\Cli\Command {
         $app_name  = \Skim\Cli\Cli::ask('Application name', 'SKIM App');
         $app_env   = \Skim\Cli\Cli::choice('Environment', ['local', 'staging', 'production'], 'local');
         $app_debug = ($app_env === 'local') ? 'true' : 'false';
-        $app_key   = $this->generate_key();
+        $app_key   = $this->generateKey();
 
         \Skim\Cli\Cli::line();
         \Skim\Cli\Cli::info('[ Database ]');
@@ -59,7 +59,7 @@ class InstallCommand extends \Skim\Cli\Command {
         if ($db_driver === 'sqlite') {
             $db_host = '';
             $db_port = '';
-            $db_name = \Skim\Cli\Cli::ask('SQLite file path', base_path('database/app.sqlite'));
+            $db_name = \Skim\Cli\Cli::ask('SQLite file path', basePath('database/app.sqlite'));
             $db_user = '';
             $db_pass = '';
         } else {
@@ -92,7 +92,7 @@ class InstallCommand extends \Skim\Cli\Command {
         $log_channel = \Skim\Cli\Cli::choice('Log channel', ['file', 'null'], 'file');
         $log_level   = \Skim\Cli\Cli::choice('Log level', ['debug', 'info', 'warning', 'error'], 'debug');
 
-        $env = $this->build_env([
+        $env = $this->buildEnv([
             'APP_NAME'     => "\"{$app_name}\"",
             'APP_ENV'      => $app_env,
             'APP_DEBUG'    => $app_debug,
@@ -119,14 +119,14 @@ class InstallCommand extends \Skim\Cli\Command {
         \Skim\Core\Env::reset();
         \Skim\Core\Env::load($env_path);
         \Skim\Core\Config::reset();
-        \Skim\Core\Config::load(base_path('config'));
+        \Skim\Core\Config::load(basePath('config'));
 
         if (!$this->flag('no-migrate', false)) {
             \Skim\Cli\Cli::line();
             $run_mig = \Skim\Cli\Cli::confirm('Run migrations now?', true);
             if ($run_mig) {
                 $migrate = new \Skim\Cli\Commands\MigrateCommand();
-                $migrate->set_input([], []);
+                $migrate->setInput([], []);
                 return $migrate->handle();
             }
         }
@@ -137,19 +137,19 @@ class InstallCommand extends \Skim\Cli\Command {
     }
 
     /**
-     * Generates a base64-encoded 32-byte APP_KEY. #AI:generate_key
+     * Generates a base64-encoded 32-byte APP_KEY. #AI:generateKey
      */
-    private function generate_key(): string {
+    private function generateKey(): string {
         $bytes = random_bytes(32);
         return 'base64:' . base64_encode($bytes);
     }
 
     /**
-     * Formats key-value pairs as .env file content. #AI:build_env
+     * Formats key-value pairs as .env file content. #AI:buildEnv
      *
      * @param array $vars Associative array of ENV_KEY => value pairs.
      */
-    private function build_env(array $vars): string {
+    private function buildEnv(array $vars): string {
         $lines = [];
         foreach ($vars as $key => $value) {
             $lines[] = "{$key}={$value}";
@@ -191,17 +191,17 @@ class InstallCommand extends \Skim\Cli\Command {
 #AI return_detail: {type: int | desc: 0 on success or cancellation, 1 on migration failure.}
 #AI warnings: [Overwrites .env when --force is passed or user confirms overwrite]
 
-#AI:generate_key
+#AI:generateKey
 #AI group: Key Generation
 #AI frequency: internal
-#AI signature: private function generate_key(): string
+#AI signature: private function generateKey(): string
 #AI contract: Generates a base64-encoded 32-byte cryptographic key for APP_KEY.
 #AI return_detail: {type: string | desc: Key in format 'base64:<encoded>'.}
 
-#AI:build_env
+#AI:buildEnv
 #AI group: Environment Building
 #AI frequency: internal
-#AI signature: private function build_env(array $vars): string
+#AI signature: private function buildEnv(array $vars): string
 #AI contract: Formats key-value pairs as .env file content with one KEY=VALUE per line.
 #AI param_details: [{name: $vars | type: array | required: true | desc: Associative array of ENV_KEY => value pairs.}]
 #AI return_detail: {type: string | desc: Formatted .env file content.}

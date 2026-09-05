@@ -84,26 +84,26 @@ describe('event::off()', function(): void {
         \Skim\Events\Event::on('x', fn() => null);
         \Skim\Events\Event::on('y', fn() => null);
         \Skim\Events\Event::off();
-        expect(\Skim\Events\Event::listener_count('x'))->toBe(0);
-        expect(\Skim\Events\Event::listener_count('y'))->toBe(0);
+        expect(\Skim\Events\Event::listenerCount('x'))->toBe(0);
+        expect(\Skim\Events\Event::listenerCount('y'))->toBe(0);
     });
 
 });
 
-describe('event::reset_request()', function(): void {
+describe('event::resetRequest()', function(): void {
 
     test('capture_boot_snapshot preserves boot-time listeners across resets', function(): void {
         \Skim\Events\Event::off(); // clear snapshot for a clean slate
         $bootCalls = 0;
         \Skim\Events\Event::on('boot.event', function() use (&$bootCalls): void { $bootCalls++; });
 
-        \Skim\Events\Event::capture_boot_snapshot(); // explicit boot snapshot
+        \Skim\Events\Event::captureBootSnapshot(); // explicit boot snapshot
 
         // Request-time listener registered after snapshot should NOT survive the next reset.
         $reqCalls = 0;
         \Skim\Events\Event::on('req.event', function() use (&$reqCalls): void { $reqCalls++; });
 
-        \Skim\Events\Event::reset_request(); // restore snapshot, drop req.event
+        \Skim\Events\Event::resetRequest(); // restore snapshot, drop req.event
 
         \Skim\Events\Event::emit('boot.event', null);
         \Skim\Events\Event::emit('req.event', null);
@@ -114,7 +114,7 @@ describe('event::reset_request()', function(): void {
 
     test('snapshot is cleared by off() so it does not leak between tests', function(): void {
         \Skim\Events\Event::off();
-        expect(\Skim\Events\Event::listener_count('boot.event'))->toBe(0);
+        expect(\Skim\Events\Event::listenerCount('boot.event'))->toBe(0);
     });
 
 });

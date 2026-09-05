@@ -24,32 +24,32 @@ describe('app boot lifecycle', function (): void {
         expect($first)->toBe($second);
     });
 
-    test('app::test_instance() creates isolated instance', function (): void {
+    test('app::testInstance() creates isolated instance', function (): void {
         $singleton = \Skim\Core\App::instance();
-        $isolated  = \Skim\Core\App::test_instance(['app.debug' => false]);
+        $isolated  = \Skim\Core\App::testInstance(['app.debug' => false]);
 
         expect($isolated)->toBeInstanceOf(\Skim\Core\App::class)
             ->and($isolated)->not->toBe($singleton);
     });
 
     test('dispatch() triggers ensureBooted and returns 404 for unknown route', function (): void {
-        $app = \Skim\Core\App::test_instance(['app.debug' => false]);
+        $app = \Skim\Core\App::testInstance(['app.debug' => false]);
         $req = \Skim\Core\Request::make('GET', '/nonexistent-route');
         $res = $app->dispatch($req, new \Skim\Core\Response());
 
         expect($res)->toBeInstanceOf(\Skim\Core\Response::class)
-            ->and($res->get_status())->toBe(404);
+            ->and($res->getStatus())->toBe(404);
     });
 
     test('dispatch() returns 405 for method mismatch', function (): void {
-        $app = \Skim\Core\App::test_instance(['app.debug' => false]);
+        $app = \Skim\Core\App::testInstance(['app.debug' => false]);
         $app->boot();
         $app->router->get('/only-get', fn() => 'ok');
 
         $req = \Skim\Core\Request::make('POST', '/only-get');
         $res = $app->dispatch($req, new \Skim\Core\Response());
 
-        expect($res->get_status())->toBe(405);
+        expect($res->getStatus())->toBe(405);
     });
 
 });

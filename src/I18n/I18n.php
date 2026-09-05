@@ -28,9 +28,9 @@ final class I18n implements \Skim\Worker\Resettable {
     private static mixed   $loader      = null;
 
     /**
-     * Resets the locale to fallback between requests in worker mode. #AI:reset_request
+     * Resets the locale to fallback between requests in worker mode. #AI:resetRequest
      */
-    public static function reset_request(): void {
+    public static function resetRequest(): void {
         self::$locale = self::$fallback;
     }
 
@@ -44,18 +44,18 @@ final class I18n implements \Skim\Worker\Resettable {
     }
 
     /**
-     * Returns the current active locale string. #AI:current_locale
+     * Returns the current active locale string. #AI:currentLocale
      */
-    public static function current_locale(): string {
+    public static function currentLocale(): string {
         return self::$locale;
     }
 
     /**
-     * Sets the path to the lang/ directory containing locale subdirectories. #AI:set_path
+     * Sets the path to the lang/ directory containing locale subdirectories. #AI:setPath
      *
      * @param string $path Absolute path to the lang directory.
      */
-    public static function set_path(string $path): void {
+    public static function setPath(string $path): void {
         self::$lang_path = rtrim($path, '/');
     }
 
@@ -93,14 +93,14 @@ final class I18n implements \Skim\Worker\Resettable {
     }
 
     /**
-     * Injects a custom translation loader callable. #AI:set_loader
+     * Injects a custom translation loader callable. #AI:setLoader
      *
      * The loader receives (locale, key) and must return a string or null.
      * Use to integrate symfony/translation or database-backed translations.
      *
      * @param callable $loader Function(string $locale, string $key): ?string.
      */
-    public static function set_loader(callable $loader): void {
+    public static function setLoader(callable $loader): void {
         self::$loader = $loader;
     }
 
@@ -124,7 +124,7 @@ final class I18n implements \Skim\Worker\Resettable {
         $parts = explode('.', $key);
         $file  = array_shift($parts);
 
-        $translations = self::load_file($locale, $file);
+        $translations = self::loadFile($locale, $file);
         if ($translations === null) {
             return null;
         }
@@ -140,12 +140,12 @@ final class I18n implements \Skim\Worker\Resettable {
         return is_string($current) ? $current : null;
     }
 
-    private static function load_file(string $locale, string $file): ?array {
+    private static function loadFile(string $locale, string $file): ?array {
         if (isset(self::$loaded[$locale][$file])) {
             return self::$loaded[$locale][$file];
         }
 
-        $path = (self::$lang_path ?: base_path('lang')) . "/{$locale}/{$file}.php";
+        $path = (self::$lang_path ?: basePath('lang')) . "/{$locale}/{$file}.php";
 
         if (!is_file($path)) {
             return null;
@@ -187,17 +187,17 @@ final class I18n implements \Skim\Worker\Resettable {
 #AI param_details: [{name: $locale | type: string | required: true | desc: Locale code, e.g. 'fr', 'es', 'de'.}]
 #AI side_effects: [Mutates static locale state]
 
-#AI:current_locale
+#AI:currentLocale
 #AI group: Configuration
 #AI frequency: low
-#AI signature: public static function current_locale(): string
+#AI signature: public static function currentLocale(): string
 #AI contract: Returns the currently active locale string.
 #AI return_detail: {type: string | desc: Current locale code.}
 
-#AI:set_path
+#AI:setPath
 #AI group: Configuration
 #AI frequency: low
-#AI signature: public static function set_path(string $path): void
+#AI signature: public static function setPath(string $path): void
 #AI contract: Sets the base path to the lang/ directory containing locale subdirectories.
 #AI param_details: [{name: $path | type: string | required: true | desc: Absolute path to the lang directory.}]
 #AI side_effects: [Mutates static lang_path state]
@@ -210,10 +210,10 @@ final class I18n implements \Skim\Worker\Resettable {
 #AI param_details: [{name: $key | type: string | required: true | desc: Dot-notation translation key, e.g. 'auth.login.title'.}; {name: $params | type: array | required: false | desc: Interpolation params (:name => value) and pluralization (count => int).}]
 #AI return_detail: {type: string | desc: Translated and interpolated string, or the key itself on miss.}
 
-#AI:set_loader
+#AI:setLoader
 #AI group: Testing Hooks
 #AI frequency: low
-#AI signature: public static function set_loader(callable $loader): void
+#AI signature: public static function setLoader(callable $loader): void
 #AI contract: Injects a custom translation loader that bypasses file-based loading. The callable receives (locale, key) and returns string or null.
 #AI param_details: [{name: $loader | type: callable | required: true | desc: Function(string $locale, string $key): ?string.}]
 #AI side_effects: [Mutates static loader state]
@@ -225,9 +225,9 @@ final class I18n implements \Skim\Worker\Resettable {
 #AI contract: Clears all state: locale, fallback, loaded files, and custom loader. Use in test tearDown().
 #AI side_effects: [Clears all static state]
 
-#AI:reset_request
+#AI:resetRequest
 #AI group: Testing Hooks
 #AI frequency: internal
-#AI signature: public static function reset_request(): void
+#AI signature: public static function resetRequest(): void
 #AI contract: Resets the locale to fallback between requests in worker mode.
 #AI side_effects: [Mutates static $locale to $fallback value]

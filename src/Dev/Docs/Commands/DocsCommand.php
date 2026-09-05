@@ -31,7 +31,7 @@ class DocsCommand extends \Skim\Cli\Command {
         $watch = (bool) $this->flag('watch', false);
 
         if ($watch) {
-            return $this->watch_mode();
+            return $this->watchMode();
         }
 
         return $this->build();
@@ -43,7 +43,7 @@ class DocsCommand extends \Skim\Cli\Command {
             new \Skim\Dev\Docs\Commands\DocsLlmCommand(),
             new \Skim\Dev\Docs\Commands\DocsSiteCommand(),
         ] as $cmd) {
-            $cmd->set_input($this->args, $this->flags);
+            $cmd->setInput($this->args, $this->flags);
             $code = $cmd->handle();
             if ($code !== 0) {
                 return $code;
@@ -52,16 +52,16 @@ class DocsCommand extends \Skim\Cli\Command {
         return 0;
     }
 
-    private function watch_mode(): int {
+    private function watchMode(): int {
         $this->info('Watch mode — press Ctrl+C to stop.');
-        $scan_paths = \Skim\Dev\Docs\Value\DocsGenerationPaths::from_flags($this->flags)->scan_paths();
-        $last_hash  = $this->mtime_hash($scan_paths);
+        $scan_paths = \Skim\Dev\Docs\Value\DocsGenerationPaths::fromFlags($this->flags)->scanPaths();
+        $last_hash  = $this->mtimeHash($scan_paths);
 
         $this->build();
 
         while (true) {
             sleep(2);
-            $current = $this->mtime_hash($scan_paths);
+            $current = $this->mtimeHash($scan_paths);
             if ($current !== $last_hash) {
                 $this->muted('Change detected — rebuilding…');
                 $this->build();
@@ -71,11 +71,11 @@ class DocsCommand extends \Skim\Cli\Command {
     }
 
     /**
-     * Returns md5 of concatenated mtimes for change detection in watch mode. #AI:mtime_hash
+     * Returns md5 of concatenated mtimes for change detection in watch mode. #AI:mtimeHash
      *
      * @param string[] $paths Directories to scan recursively for .php files.
      */
-    private function mtime_hash(array $paths): string {
+    private function mtimeHash(array $paths): string {
         $mtimes = [];
         foreach ($paths as $path) {
             if (!is_dir($path)) {
@@ -127,10 +127,10 @@ class DocsCommand extends \Skim\Cli\Command {
 #AI contract: Dispatches to watch mode when --watch flag is set, otherwise runs a one-shot full build pipeline.
 #AI return_detail: {type: int | desc: 0 on success, first non-zero exit code from any sub-command on failure.}
 
-#AI:mtime_hash
+#AI:mtimeHash
 #AI group: Watch Mode
 #AI frequency: internal
-#AI signature: private function mtime_hash(array $paths): string
+#AI signature: private function mtimeHash(array $paths): string
 #AI contract: Computes an md5 hash of sorted file:mtimes pairs across all .php files in the given directories. Used to detect any file change between polling intervals.
 #AI param_details: [{name: $paths | type: string[] | required: true | desc: Directories to scan recursively for .php files.}]
 #AI return_detail: {type: string | desc: MD5 hash representing the current mtime state of all .php files.}

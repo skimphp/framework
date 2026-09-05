@@ -3,24 +3,24 @@
 use Skim\Core\App;
 
 beforeEach(function(): void {
-    \Skim\Core\App::test_instance(); // resets the singleton
+    \Skim\Core\App::testInstance(); // resets the singleton
 });
 
 describe('app DI tracing', function(): void {
 
     test('tracing is off by default', function(): void {
-        $a = \Skim\Core\App::test_instance();
+        $a = \Skim\Core\App::testInstance();
         expect($a->tracing)->toBeFalse();
     });
 
     test('enable_tracing() flips the flag and clears state', function(): void {
-        $a = \Skim\Core\App::test_instance();
+        $a = \Skim\Core\App::testInstance();
         $a->tracing        = true;
         $a->resolve_stack  = [['id' => 'stale', 'time' => 0.0]];
         $a->failed_at      = 'stale';
         $a->partial_args   = ['stale'];
 
-        $a->enable_tracing();
+        $a->enableTracing();
 
         expect($a->tracing)->toBeTrue();
         expect($a->resolve_stack)->toBe([]);
@@ -29,9 +29,9 @@ describe('app DI tracing', function(): void {
     });
 
     test('disable_tracing() clears state and flips the flag off', function(): void {
-        $a = \Skim\Core\App::test_instance();
-        $a->enable_tracing();
-        $a->disable_tracing();
+        $a = \Skim\Core\App::testInstance();
+        $a->enableTracing();
+        $a->disableTracing();
 
         expect($a->tracing)->toBeFalse();
         expect($a->resolve_stack)->toBe([]);
@@ -40,9 +40,9 @@ describe('app DI tracing', function(): void {
     });
 
     test('resolve_stack records in-flight chain when tracing is on', function(): void {
-        $a = \Skim\Core\App::test_instance();
+        $a = \Skim\Core\App::testInstance();
         $a->bind('svc.a', fn() => 'A');
-        $a->enable_tracing();
+        $a->enableTracing();
 
         $a->make('svc.a');
 
@@ -51,11 +51,11 @@ describe('app DI tracing', function(): void {
     });
 
     test('failed_at is captured when a binding throws', function(): void {
-        $a = \Skim\Core\App::test_instance();
+        $a = \Skim\Core\App::testInstance();
         $a->bind('svc.bad', function() {
             throw new \RuntimeException('boom');
         });
-        $a->enable_tracing();
+        $a->enableTracing();
 
         try {
             $a->make('svc.bad');
@@ -70,7 +70,7 @@ describe('app DI tracing', function(): void {
     });
 
     test('bindings_snapshot is captured after boot()', function(): void {
-        $a = \Skim\Core\App::test_instance(['app.debug' => true]);
+        $a = \Skim\Core\App::testInstance(['app.debug' => true]);
         $a->bind('svc.foo', fn() => new \stdClass());
         $a->bind('svc.bar', fn() => new \stdClass());
         $a->boot();
@@ -82,11 +82,11 @@ describe('app DI tracing', function(): void {
     });
 
     test('snapshot_bindings() records factory_kind and priority', function(): void {
-        $a = \Skim\Core\App::test_instance();
+        $a = \Skim\Core\App::testInstance();
         $a->bind('svc.closure', fn() => null);
         $a->bind(\stdClass::class, fn() => new \stdClass(), priority: 100);
 
-        $snap = $a->snapshot_bindings();
+        $snap = $a->snapshotBindings();
 
         $closure_row = null;
         $class_row   = null;
@@ -108,7 +108,7 @@ describe('app DI tracing', function(): void {
     });
 
     test('tracing is allocation-free when disabled (no array push)', function(): void {
-        $a = \Skim\Core\App::test_instance();
+        $a = \Skim\Core\App::testInstance();
         $a->bind('svc.simple', fn() => 'ok');
         $a->tracing = false;
 
@@ -120,30 +120,30 @@ describe('app DI tracing', function(): void {
     });
 
     test('resolved_services() returns the sorted list of resolved abstracts', function(): void {
-        $a = \Skim\Core\App::test_instance();
+        $a = \Skim\Core\App::testInstance();
         $a->bind('svc.alpha', fn() => 'A');
         $a->bind('svc.beta',  fn() => 'B');
         $a->bind('svc.gamma', fn() => 'C');
 
         // nothing resolved yet
-        expect($a->resolved_services())->toBe([]);
+        expect($a->resolvedServices())->toBe([]);
 
         $a->make('svc.gamma');
         $a->make('svc.alpha');
 
-        expect($a->resolved_services())->toBe(['svc.alpha', 'svc.gamma']);
+        expect($a->resolvedServices())->toBe(['svc.alpha', 'svc.gamma']);
     });
 
     test('resolved_services() returns empty after a fresh test_instance()', function(): void {
         // The Pest beforeEach resets via test_instance() — must clear $resolved.
-        $a = \Skim\Core\App::test_instance();
+        $a = \Skim\Core\App::testInstance();
         $a->bind('svc.foo', fn() => 'foo');
         $a->make('svc.foo');
-        expect($a->resolved_services())->toBe(['svc.foo']);
+        expect($a->resolvedServices())->toBe(['svc.foo']);
 
         // Re-bootstrap — should be empty again
-        $a2 = \Skim\Core\App::test_instance();
-        expect($a2->resolved_services())->toBe([]);
+        $a2 = \Skim\Core\App::testInstance();
+        expect($a2->resolvedServices())->toBe([]);
     });
 
 });

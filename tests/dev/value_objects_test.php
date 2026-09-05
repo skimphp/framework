@@ -7,20 +7,20 @@ describe('extracted_class::to_array', function () {
 
     it('includes all new fields in serialized output', function () {
         $cls = new \Skim\Dev\Docs\Value\ExtractedClass(
-            class_name:   'cache',
+            className:   'cache',
             namespace:    'skim\\cache',
             file:         '/app/src/cache/cache.php',
             summary:      'Static cache facade.',
             lifecycle:    'driver resolved lazily',
             layer:        'cache',
             owns:         ['driver instance'],
-            entry_points: ['remember', 'get', 'set'],
-            config_reads: ['cache.driver', 'cache.ttl'],
+            entryPoints: ['remember', 'get', 'set'],
+            configReads: ['cache.driver', 'cache.ttl'],
             invariants:   ['driver reused until reset'],
-            side_effects: ['writes static driver instance'],
-            non_goals:    ['does not expose backend-specific APIs'],
+            sideEffects: ['writes static driver instance'],
+            nonGoals:    ['does not expose backend-specific APIs'],
         );
-        $arr = $cls->to_array();
+        $arr = $cls->toArray();
         expect($arr)->toHaveKey('layer')
             ->and($arr)->toHaveKey('owns')
             ->and($arr)->toHaveKey('entry_points')
@@ -35,19 +35,19 @@ describe('extracted_class::to_array', function () {
         $m1 = new \Skim\Dev\Docs\Value\ExtractedMethod('get', 'public function get(): mixed', 'ns\\cls', contracts: ['returns value']);
         $m2 = new \Skim\Dev\Docs\Value\ExtractedMethod('noop', 'public function noop(): void', 'ns\\cls');
         $cls = new \Skim\Dev\Docs\Value\ExtractedClass('cls', 'ns', '/f.php', methods: [$m1, $m2]);
-        expect($cls->annotated_method_count())->toBe(1);
+        expect($cls->annotatedMethodCount())->toBe(1);
     });
 
     it('annotated_method_count() returns 0 when no methods annotated', function(): void {
         $m1    = new \Skim\Dev\Docs\Value\ExtractedMethod(name: 'a', signature: '', owner: '');
         $m2    = new \Skim\Dev\Docs\Value\ExtractedMethod(name: 'b', signature: '', owner: '');
         $class = new \Skim\Dev\Docs\Value\ExtractedClass('cls', '', '', methods: [$m1, $m2]);
-        expect($class->annotated_method_count())->toBe(0);
+        expect($class->annotatedMethodCount())->toBe(0);
     });
 
     it('annotated_method_count() returns 0 for class with no methods', function(): void {
         $class = new \Skim\Dev\Docs\Value\ExtractedClass('cls', '', '');
-        expect($class->annotated_method_count())->toBe(0);
+        expect($class->annotatedMethodCount())->toBe(0);
     });
 
 });
@@ -68,7 +68,7 @@ describe('extracted_method::to_array', function () {
             warnings:     [],
             examples:     ['cache miss computes and stores value'],
         );
-        $arr = $m->to_array();
+        $arr = $m->toArray();
         expect($arr)->toHaveKey('group')
             ->and($arr)->toHaveKey('frequency')
             ->and($arr)->toHaveKey('inputs')

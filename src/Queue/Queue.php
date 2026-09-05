@@ -13,7 +13,7 @@ namespace Skim\Queue;
  * Example:
  *   queue::push(new send_email_job($user_id));
  *   queue::push(new generate_report_job($id), queue: 'reports');
- *   queue::push_many([$job1, $job2], 'default');
+ *   queue::pushMany([$job1, $job2], 'default');
  *
  * Testing: Use set_redis() to inject a mock Redis instance, flush() to clear queues.
  *
@@ -34,7 +34,7 @@ final class Queue {
      * @param string $queue Queue name for multi-queue support (default: 'default').
      */
     public static function push(\Skim\Queue\Job $job, string $queue = 'default'): void {
-        $payload = self::serialize_job($job, $queue);
+        $payload = self::serializeJob($job, $queue);
         $delay   = $job->delay();
 
         if ($delay > 0) {
@@ -46,7 +46,7 @@ final class Queue {
     }
 
     /**
-     * Pushes multiple jobs atomically via Redis pipeline. #AI:push_many
+     * Pushes multiple jobs atomically via Redis pipeline. #AI:pushMany
      *
      * All jobs use the same queue name. Delayed jobs in the batch are not
      * supported — use push() individually for delayed jobs.
@@ -54,17 +54,17 @@ final class Queue {
      * @param array  $jobs  Array of job instances.
      * @param string $queue Queue name for all jobs.
      */
-    public static function push_many(array $jobs, string $queue = 'default'): void {
+    public static function pushMany(array $jobs, string $queue = 'default'): void {
         $pipe = self::redis()->pipeline();
         foreach ($jobs as $job) {
-            $payload = self::serialize_job($job, $queue);
+            $payload = self::serializeJob($job, $queue);
             $pipe->lpush('skim:queue:' . $queue, $payload);
         }
         $pipe->execute();
     }
 
     /**
-     * Moves due delayed jobs from sorted set to their target queue. #AI:promote_delayed
+     * Moves due delayed jobs from sorted set to their target queue. #AI:promoteDelayed
      *
      * Called by the worker on each loop iteration. Scans the delayed sorted set
      * for jobs whose execute_at timestamp has passed and LPUSHes them to the
@@ -72,7 +72,7 @@ final class Queue {
      *
      * @return int Number of jobs promoted.
      */
-    public static function promote_delayed(): int {
+    public static function promoteDelayed(): int {
         $now   = time();
         $jobs  = self::redis()->zrangebyscore(self::$delayed_key, '-inf', (string) $now);
         $count = 0;
@@ -98,19 +98,19 @@ final class Queue {
     }
 
     /**
-     * Injects a mock Redis instance for testing. #AI:set_redis
+     * Injects a mock Redis instance for testing. #AI:setRedis
      *
      * Use in PHPUnit to bypass the real Redis connection. Call redis() reset
      * in tearDown() to restore normal behavior.
      *
      * Example:
-     *   queue::set_redis($mock_redis);
+     *   queue::setRedis($mock_redis);
      *   // ... run tests ...
      *   // reset in tearDown
      *
      * @param \Redis $redis Mock or fake Redis instance.
      */
-    public static function set_redis(\Redis $redis): void {
+    public static function setRedis(\Redis $redis): void {
         self::$redis = $redis;
     }
 
@@ -126,12 +126,12 @@ final class Queue {
     }
 
     /**
-     * Serializes a job into a JSON payload for Redis storage. #AI:serialize_job
+     * Serializes a job into a JSON payload for Redis storage. #AI:serializeJob
      *
      * @param \Skim\Queue\Job $job Job instance to serialize.
      * @param string $queue Queue name embedded in the payload.
      */
-    public static function serialize_job(\Skim\Queue\Job $job, string $queue): string {
+    public static function serializeJob(\Skim\Queue\Job $job, string $queue): string {
         return (string) json_encode([
             'class'    => get_class($job),
             'payload'  => serialize($job),
@@ -206,18 +206,18 @@ final class Queue {
 #AI param_details: [{name: $job | type: job | required: true | desc: Job instance to enqueue. Must be serializable.}; {name: $queue | type: string | required: false | desc: Queue name for multi-queue support.}]
 #AI side_effects: Writes to Redis list or sorted set.
 
-#AI:push_many
+#AI:pushMany
 #AI group: Enqueue
 #AI frequency: medium
-#AI signature: public static function push_many(array $jobs, string $queue = 'default'): void
+#AI signature: public static function pushMany(array $jobs, string $queue = 'default'): void
 #AI contract: Pushes multiple jobs atomically via Redis pipeline. All jobs use the same queue. Does not support delayed jobs.
 #AI param_details: [{name: $jobs | type: array | required: true | desc: Array of job instances.}; {name: $queue | type: string | required: false | desc: Queue name for all jobs.}]
 #AI side_effects: Writes multiple entries to Redis list via pipeline.
 
-#AI:promote_delayed
+#AI:promoteDelayed
 #AI group: Delayed Jobs
 #AI frequency: internal
-#AI signature: public static function promote_delayed(): int
+#AI signature: public static function promoteDelayed(): int
 #AI contract: Moves due delayed jobs from the sorted set to their target queue. Called by worker on each loop iteration.
 #AI return_detail: {type: int | desc: Number of jobs promoted.}
 #AI side_effects: Moves entries from sorted set to Redis lists.
@@ -230,10 +230,10 @@ final class Queue {
 #AI param_details: [{name: $queue | type: string | required: false | desc: Queue name.}]
 #AI return_detail: {type: int | desc: Number of pending jobs.}
 
-#AI:set_redis
+#AI:setRedis
 #AI group: Testing Hooks
 #AI frequency: low
-#AI signature: public static function set_redis(\Redis $redis): void
+#AI signature: public static function setRedis(\Redis $redis): void
 #AI contract: Injects a mock Redis instance for testing. Bypasses config-based connection.
 #AI param_details: [{name: $redis | type: \Redis | required: true | desc: Mock or fake Redis instance.}]
 #AI side_effects: Replaces static Redis connection.
@@ -247,10 +247,10 @@ final class Queue {
 #AI warnings: [Destroys all pending jobs in the queue — already-processing jobs are not affected]
 #AI side_effects: Deletes Redis queue key.
 
-#AI:serialize_job
+#AI:serializeJob
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: public static function serialize_job(job $job, string $queue): string
+#AI signature: public static function serializeJob(job $job, string $queue): string
 #AI contract: Serializes a job into a JSON payload containing class name, serialized payload, queue, tries, attempts, and timestamp.
 #AI param_details: [{name: $job | type: job | required: true | desc: Job instance to serialize.}; {name: $queue | type: string | required: true | desc: Queue name embedded in the payload.}]
 #AI return_detail: {type: string | desc: JSON-encoded payload string.}

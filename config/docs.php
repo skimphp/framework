@@ -2,7 +2,7 @@
 
 return [
     'scan_paths' => [
-        base_path('src'),
+        basePath('src'),
     ],
 
     // When true, prepends vendor/skim/framework/llm.md into the generated llm.md.
@@ -11,9 +11,9 @@ return [
     'include_framework_context' => false,
 
     'output' => [
-        'json'    => base_path('llm.json'),
-        'llm_md'  => base_path('llm.md'),
-        'mdx_dir' => base_path('docs/src/content/docs/api'),
+        'json'    => basePath('llm.json'),
+        'llm_md'  => basePath('llm.md'),
+        'mdx_dir' => basePath('docs/src/content/docs/api'),
     ],
 
     'validate' => [

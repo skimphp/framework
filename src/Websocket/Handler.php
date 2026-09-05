@@ -31,35 +31,35 @@ namespace Skim\Websocket;
  */
 interface Handler {
     /**
-     * Called when a WebSocket handshake succeeds and the connection is open. #AI:on_open
+     * Called when a WebSocket handshake succeeds and the connection is open. #AI:onOpen
      *
      * Store $conn->id() or call $conn->join() to track connections in rooms.
      *
      * @param \Skim\Websocket\Connection $conn The newly opened connection.
      */
-    public function on_open(\Skim\Websocket\Connection $conn): void;
+    public function onOpen(\Skim\Websocket\Connection $conn): void;
 
     /**
-     * Called on every inbound message from the client. #AI:on_message
+     * Called on every inbound message from the client. #AI:onMessage
      *
      * The $message is the raw string payload — decode JSON yourself.
      *
      * @param \Skim\Websocket\Connection $conn The sending connection.
      * @param string     $message Raw string payload from the client.
      */
-    public function on_message(\Skim\Websocket\Connection $conn, string $message): void;
+    public function onMessage(\Skim\Websocket\Connection $conn, string $message): void;
 
     /**
-     * Called when the client disconnects (orderly or error). #AI:on_close
+     * Called when the client disconnects (orderly or error). #AI:onClose
      *
      * Clean up room membership here — $conn is already closed.
      *
      * @param \Skim\Websocket\Connection $conn The closed connection.
      */
-    public function on_close(\Skim\Websocket\Connection $conn): void;
+    public function onClose(\Skim\Websocket\Connection $conn): void;
 
     /**
-     * Called on unhandled exception inside on_message or on_open. #AI:on_error
+     * Called on unhandled exception inside on_message or on_open. #AI:onError
      *
      * Log the error and optionally close the connection. Never rethrow —
      * the event loop would crash.
@@ -67,7 +67,7 @@ interface Handler {
      * @param \Skim\Websocket\Connection $conn The connection that caused the error.
      * @param \Throwable $e    The unhandled exception.
      */
-    public function on_error(\Skim\Websocket\Connection $conn, \Throwable $e): void;
+    public function onError(\Skim\Websocket\Connection $conn, \Throwable $e): void;
 }
 
 #AI:class
@@ -92,35 +92,35 @@ interface Handler {
 #AI non_goals: [Does not manage the WebSocket server; Does not handle HTTP upgrade; Does not provide authentication]
 #AI side_effects: [Handler implementations typically call connection::send/broadcast/join/leave]
 #AI flow: amphp server -> handler::on_open/on_message/on_close/on_error -> connection API
-#AI lifecycle_steps: [WebSocket handshake -> handler::on_open($conn); -> client message -> handler::on_message($conn, $msg); -> disconnect -> handler::on_close($conn); -> exception -> handler::on_error($conn, $e)]
+#AI lifecycle_steps: [WebSocket handshake -> handler::onOpen($conn); -> client message -> handler::onMessage($conn, $msg); -> disconnect -> handler::onClose($conn); -> exception -> handler::onError($conn, $e)]
 #AI section_order: [Handler API; Architecture]
 #AI architectural_notes: Interface kept minimal — four callbacks covering the full WebSocket lifecycle. The amphp server handles connection management, framing, and the event loop.
 
-#AI:on_open
+#AI:onOpen
 #AI group: Handler API
 #AI frequency: high
-#AI signature: public function on_open(connection $conn): void
+#AI signature: public function onOpen(connection $conn): void
 #AI contract: Called when a WebSocket handshake succeeds. Use to join rooms or track the connection.
 #AI param_details: [{name: $conn | type: connection | required: true | desc: The newly opened connection.}]
 
-#AI:on_message
+#AI:onMessage
 #AI group: Handler API
 #AI frequency: high
-#AI signature: public function on_message(connection $conn, string $message): void
+#AI signature: public function onMessage(connection $conn, string $message): void
 #AI contract: Called on every inbound message. The payload is a raw string — decode JSON yourself.
 #AI param_details: [{name: $conn | type: connection | required: true | desc: The sending connection.}; {name: $message | type: string | required: true | desc: Raw string payload from the client.}]
 
-#AI:on_close
+#AI:onClose
 #AI group: Handler API
 #AI frequency: high
-#AI signature: public function on_close(connection $conn): void
+#AI signature: public function onClose(connection $conn): void
 #AI contract: Called when the client disconnects. Clean up room membership — $conn is already closed.
 #AI param_details: [{name: $conn | type: connection | required: true | desc: The closed connection.}]
 
-#AI:on_error
+#AI:onError
 #AI group: Handler API
 #AI frequency: low
-#AI signature: public function on_error(connection $conn, \Throwable $e): void
+#AI signature: public function onError(connection $conn, \Throwable $e): void
 #AI contract: Called on unhandled exception in on_message or on_open. Log and optionally close. Never rethrow.
 #AI param_details: [{name: $conn | type: connection | required: true | desc: The connection that caused the error.}; {name: $e | type: \Throwable | required: true | desc: The unhandled exception.}]
 #AI warnings: [Never rethrow — the Revolt event loop would crash and kill all connections]

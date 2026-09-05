@@ -20,7 +20,7 @@ describe('log facade', function(): void {
 
     test('info() records correct level and message', function(): void {
         $spy = new SpyHandler();
-        \Skim\Log\Log::set_handler($spy);
+        \Skim\Log\Log::setHandler($spy);
         \Skim\Log\Log::info('User logged in', ['user_id' => 5]);
         expect($spy->records[0]['level'])->toBe('info');
         expect($spy->records[0]['message'])->toBe('User logged in');
@@ -29,14 +29,14 @@ describe('log facade', function(): void {
 
     test('error() records error level', function(): void {
         $spy = new SpyHandler();
-        \Skim\Log\Log::set_handler($spy);
+        \Skim\Log\Log::setHandler($spy);
         \Skim\Log\Log::error('DB connection failed');
         expect($spy->records[0]['level'])->toBe('error');
     });
 
     test('all level methods write with correct level', function(): void {
         $spy = new SpyHandler();
-        \Skim\Log\Log::set_handler($spy);
+        \Skim\Log\Log::setHandler($spy);
 
         \Skim\Log\Log::debug('d');
         \Skim\Log\Log::notice('n');
@@ -50,14 +50,14 @@ describe('log facade', function(): void {
     });
 
     test('null_handler discards all writes silently', function(): void {
-        \Skim\Log\Log::set_handler(new \Skim\Log\NullHandler());
+        \Skim\Log\Log::setHandler(new \Skim\Log\NullHandler());
         \Skim\Log\Log::error('should be discarded');
         expect(true)->toBeTrue();   // no exception thrown
     });
 
     test('custom handler receives context array', function(): void {
         $spy = new SpyHandler();
-        \Skim\Log\Log::set_handler($spy);
+        \Skim\Log\Log::setHandler($spy);
         \Skim\Log\Log::warning('Rate limit hit', ['ip' => '1.2.3.4', 'route' => '/api/v1/users']);
         expect($spy->records[0]['context'])->toBe(['ip' => '1.2.3.4', 'route' => '/api/v1/users']);
     });

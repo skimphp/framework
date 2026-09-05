@@ -9,9 +9,9 @@ namespace Skim\Dev\Docs\Value;
  * against config defaults. Null values preserve config/docs.php defaults.
  *
  * Example:
- *   $paths = docs_generation_paths::from_flags($this->flags);
- *   $json  = $paths->json_path();
- *   $scan  = $paths->scan_paths();
+ *   $paths = docs_generation_paths::fromFlags($this->flags);
+ *   $json  = $paths->jsonPath();
+ *   $scan  = $paths->scanPaths();
  *
  * Testing: Instantiate directly; no static state.
  *
@@ -21,82 +21,82 @@ final class DocsGenerationPaths {
     /**
      * Stores optional CLI source/output overrides. #AI:__construct
      *
-     * @param string|null $source_dir Override for docs.scan_paths; null preserves config default.
-     * @param string|null $output_dir Override for all output paths; null preserves config defaults.
+     * @param string|null $sourceDir Override for docs.scan_paths; null preserves config default.
+     * @param string|null $outputDir Override for all output paths; null preserves config defaults.
      */
     public function __construct(
-        private readonly ?string $source_dir = null,
-        private readonly ?string $output_dir = null,
+        private readonly ?string $sourceDir = null,
+        private readonly ?string $outputDir = null,
     ) {}
 
     /**
-     * Builds docs generation paths from CLI flags. #AI:from_flags
+     * Builds docs generation paths from CLI flags. #AI:fromFlags
      *
      * @param array $flags CLI flags array; reads 'source' and 'output' keys.
      */
-    public static function from_flags(array $flags): self {
+    public static function fromFlags(array $flags): self {
         return new self(
-            source_dir: self::flag_string($flags, 'source'),
-            output_dir: self::flag_string($flags, 'output'),
+            sourceDir: self::flagString($flags, 'source'),
+            outputDir: self::flagString($flags, 'output'),
         );
     }
 
     /**
-     * Returns explicit source override or config scan_paths. #AI:scan_paths
+     * Returns explicit source override or config scan_paths. #AI:scanPaths
      *
      * Relative source paths resolve from base_path().
      *
      * @return string[] Directories to scan.
      */
-    public function scan_paths(): array {
-        if ($this->source_dir !== null) {
-            return [$this->resolve_path($this->source_dir)];
+    public function scanPaths(): array {
+        if ($this->sourceDir !== null) {
+            return [$this->resolvePath($this->sourceDir)];
         }
 
         return config('docs.scan_paths', []);
     }
 
     /**
-     * Returns true when --source was supplied. #AI:has_source_override
+     * Returns true when --source was supplied. #AI:hasSourceOverride
      */
-    public function has_source_override(): bool {
-        return $this->source_dir !== null;
+    public function hasSourceOverride(): bool {
+        return $this->sourceDir !== null;
     }
 
     /**
-     * Returns llm.json output path, respecting --output override. #AI:json_path
+     * Returns llm.json output path, respecting --output override. #AI:jsonPath
      */
-    public function json_path(): string {
-        if ($this->output_dir !== null) {
-            return $this->output_path('llm.json');
+    public function jsonPath(): string {
+        if ($this->outputDir !== null) {
+            return $this->outputPath('llm.json');
         }
 
-        return config('docs.output.json', base_path('llm.json'));
+        return config('docs.output.json', basePath('llm.json'));
     }
 
     /**
-     * Returns llm.md output path, respecting --output override. #AI:llm_md_path
+     * Returns llm.md output path, respecting --output override. #AI:llmMdPath
      */
-    public function llm_md_path(): string {
-        if ($this->output_dir !== null) {
-            return $this->output_path('llm.md');
+    public function llmMdPath(): string {
+        if ($this->outputDir !== null) {
+            return $this->outputPath('llm.md');
         }
 
-        return config('docs.output.llm_md', base_path('llm.md'));
+        return config('docs.output.llm_md', basePath('llm.md'));
     }
 
     /**
-     * Returns MDX output directory, respecting --output override. #AI:mdx_dir
+     * Returns MDX output directory, respecting --output override. #AI:mdxDir
      */
-    public function mdx_dir(): string {
-        if ($this->output_dir !== null) {
-            return $this->resolve_path($this->output_dir);
+    public function mdxDir(): string {
+        if ($this->outputDir !== null) {
+            return $this->resolvePath($this->outputDir);
         }
 
-        return config('docs.output.mdx_dir', base_path('docs/src/content/docs/api'));
+        return config('docs.output.mdx_dir', basePath('docs/src/content/docs/api'));
     }
 
-    private static function flag_string(array $flags, string $name): ?string {
+    private static function flagString(array $flags, string $name): ?string {
         $value = $flags[$name] ?? null;
         if (!is_string($value)) {
             return null;
@@ -106,19 +106,19 @@ final class DocsGenerationPaths {
         return $value !== '' ? $value : null;
     }
 
-    private function output_path(string $file): string {
-        return rtrim($this->resolve_path((string) $this->output_dir), '/\\') . '/' . $file;
+    private function outputPath(string $file): string {
+        return rtrim($this->resolvePath((string) $this->outputDir), '/\\') . '/' . $file;
     }
 
-    private function resolve_path(string $path): string {
-        if ($this->is_absolute_path($path)) {
+    private function resolvePath(string $path): string {
+        if ($this->isAbsolutePath($path)) {
             return rtrim($path, '/\\');
         }
 
-        return base_path($path);
+        return basePath($path);
     }
 
-    private function is_absolute_path(string $path): bool {
+    private function isAbsolutePath(string $path): bool {
         return str_starts_with($path, '/') || preg_match('/^[A-Za-z]:[\\\\\/]/', $path) === 1;
     }
 }
@@ -150,48 +150,48 @@ final class DocsGenerationPaths {
 #AI:__construct
 #AI group: Construction
 #AI frequency: high
-#AI signature: public function __construct(?string $source_dir = null, ?string $output_dir = null)
+#AI signature: public function __construct(?string $sourceDir = null, ?string $outputDir = null)
 #AI contract: Stores optional CLI source/output overrides. Null values preserve config/docs.php defaults.
-#AI param_details: [{name: $source_dir | type: ?string | required: false | desc: Override for docs.scan_paths; null preserves config default.}; {name: $output_dir | type: ?string | required: false | desc: Override for all output paths; null preserves config defaults.}]
+#AI param_details: [{name: $sourceDir | type: ?string | required: false | desc: Override for docs.scan_paths; null preserves config default.}; {name: $outputDir | type: ?string | required: false | desc: Override for all output paths; null preserves config defaults.}]
 
-#AI:from_flags
+#AI:fromFlags
 #AI group: Construction
 #AI frequency: high
-#AI signature: public static function from_flags(array $flags): self
+#AI signature: public static function fromFlags(array $flags): self
 #AI contract: Builds a docs_generation_paths from CLI flags, reading 'source' and 'output' keys. Empty strings are treated as null.
 #AI param_details: [{name: $flags | type: array | required: true | desc: CLI flags array from command.}]
 
-#AI:scan_paths
+#AI:scanPaths
 #AI group: Path Resolution
 #AI frequency: high
-#AI signature: public function scan_paths(): array
+#AI signature: public function scanPaths(): array
 #AI contract: Returns the explicit source override as a single-element array, or falls back to config('docs.scan_paths'). Relative paths resolve from base_path().
 #AI return_detail: {type: string[] | desc: Directories to scan for .php files.}
 
-#AI:has_source_override
+#AI:hasSourceOverride
 #AI group: Path Resolution
 #AI frequency: medium
-#AI signature: public function has_source_override(): bool
+#AI signature: public function hasSourceOverride(): bool
 #AI contract: Returns true when --source was supplied, indicating the caller should use scan_paths() instead of the default config scan.
 #AI return_detail: {type: bool | desc: True if --source flag was provided.}
 
-#AI:json_path
+#AI:jsonPath
 #AI group: Path Resolution
 #AI frequency: high
-#AI signature: public function json_path(): string
+#AI signature: public function jsonPath(): string
 #AI contract: Returns the llm.json output path. When --output is set, returns DIR/llm.json; otherwise falls back to config.
 #AI return_detail: {type: string | desc: Absolute or relative path to llm.json.}
 
-#AI:llm_md_path
+#AI:llmMdPath
 #AI group: Path Resolution
 #AI frequency: medium
-#AI signature: public function llm_md_path(): string
+#AI signature: public function llmMdPath(): string
 #AI contract: Returns the llm.md output path. When --output is set, returns DIR/llm.md; otherwise falls back to config.
 #AI return_detail: {type: string | desc: Absolute or relative path to llm.md.}
 
-#AI:mdx_dir
+#AI:mdxDir
 #AI group: Path Resolution
 #AI frequency: medium
-#AI signature: public function mdx_dir(): string
+#AI signature: public function mdxDir(): string
 #AI contract: Returns the MDX output directory. When --output is set, returns the resolved output dir; otherwise falls back to config.
 #AI return_detail: {type: string | desc: Directory path for MDX file output.}

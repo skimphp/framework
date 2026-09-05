@@ -23,7 +23,7 @@ class Connection {
 
     public function __construct(
         private readonly string $id,
-        private readonly mixed  $raw_conn,    // amphp\websocket\WebsocketClient or mock
+        private readonly mixed  $rawConn,    // amphp\websocket\WebsocketClient or mock
     ) {}
 
     /**
@@ -43,8 +43,8 @@ class Connection {
      */
     public function send(string|array $message): void {
         $payload = is_array($message) ? (string) json_encode($message) : $message;
-        if (method_exists($this->raw_conn, 'sendText')) {
-            $this->raw_conn->sendText($payload);
+        if (method_exists($this->rawConn, 'sendText')) {
+            $this->rawConn->sendText($payload);
         }
     }
 
@@ -55,8 +55,8 @@ class Connection {
      * @param string $reason Human-readable close reason sent to client.
      */
     public function close(int $code = 1000, string $reason = ''): void {
-        if (method_exists($this->raw_conn, 'close')) {
-            $this->raw_conn->close($code, $reason);
+        if (method_exists($this->rawConn, 'close')) {
+            $this->rawConn->close($code, $reason);
         }
     }
 
@@ -93,11 +93,11 @@ class Connection {
      *
      * @param string       $room      Room to broadcast to.
      * @param string|array $message   Payload (arrays are JSON-encoded per connection).
-     * @param string|null  $except_id Connection ID to exclude from broadcast.
+     * @param string|null  $exceptId Connection ID to exclude from broadcast.
      */
-    public static function broadcast(string $room, string|array $message, ?string $except_id = null): void {
+    public static function broadcast(string $room, string|array $message, ?string $exceptId = null): void {
         foreach (self::$rooms[$room] ?? [] as $id => $conn) {
-            if ($except_id !== null && $id === $except_id) {
+            if ($exceptId !== null && $id === $exceptId) {
                 continue;
             }
             $conn->send($message);
@@ -105,20 +105,20 @@ class Connection {
     }
 
     /**
-     * Returns connection IDs of all connections in a room. #AI:room_ids
+     * Returns connection IDs of all connections in a room. #AI:roomIds
      *
      * @param string $room Room identifier to query.
      */
-    public static function room_ids(string $room): array {
+    public static function roomIds(string $room): array {
         return array_keys(self::$rooms[$room] ?? []);
     }
 
     /**
-     * Clears the entire room map (testing only). #AI:reset_rooms
+     * Clears the entire room map (testing only). #AI:resetRooms
      *
      * Call in tearDown() to prevent room state leaking between tests.
      */
-    public static function reset_rooms(): void {
+    public static function resetRooms(): void {
         self::$rooms = [];
     }
 }
@@ -144,8 +144,8 @@ class Connection {
 #AI config_reads: []
 #AI non_goals: [Does not handle WebSocket handshake; Does not manage connection lifecycle beyond close(); Does not provide cross-process room synchronization]
 #AI side_effects: [send() writes to the WebSocket; close() terminates the connection; join/leave mutate the static rooms array; broadcast() sends to multiple connections]
-#AI flow: handler::on_message() -> connection::send/broadcast/join/leave -> amphp WebSocket
-#AI lifecycle_steps: [WebSocket handshake -> new connection($id, $raw); -> handler::on_open($conn); -> $conn->join('room'); -> handler::on_message() -> $conn->send() or connection::broadcast()]
+#AI flow: handler::onMessage() -> connection::send/broadcast/join/leave -> amphp WebSocket
+#AI lifecycle_steps: [WebSocket handshake -> new connection($id, $raw); -> handler::onOpen($conn); -> $conn->join('room'); -> handler::onMessage() -> $conn->send() or connection::broadcast()]
 #AI section_order: [Connection API; Room Management; Broadcasting; Testing Hooks; Architecture]
 #AI architectural_notes: Rooms are intentionally process-scoped. For multi-server WebSocket deployments, layer Redis pub/sub on top of the room API.
 
@@ -191,22 +191,22 @@ class Connection {
 #AI:broadcast
 #AI group: Broadcasting
 #AI frequency: high
-#AI signature: public static function broadcast(string $room, string|array $message, ?string $except_id = null): void
+#AI signature: public static function broadcast(string $room, string|array $message, ?string $exceptId = null): void
 #AI contract: Sends a message to all connections in a room, optionally excluding one connection by ID.
-#AI param_details: [{name: $room | type: string | required: true | desc: Room to broadcast to.}; {name: $message | type: string|array | required: true | desc: Payload (arrays are JSON-encoded per connection).}; {name: $except_id | type: ?string | required: false | desc: Connection ID to exclude from broadcast.}]
+#AI param_details: [{name: $room | type: string | required: true | desc: Room to broadcast to.}; {name: $message | type: string|array | required: true | desc: Payload (arrays are JSON-encoded per connection).}; {name: $exceptId | type: ?string | required: false | desc: Connection ID to exclude from broadcast.}]
 #AI side_effects: [Sends to multiple WebSocket connections]
 
-#AI:room_ids
+#AI:roomIds
 #AI group: Room Management
 #AI frequency: low
-#AI signature: public static function room_ids(string $room): array
+#AI signature: public static function roomIds(string $room): array
 #AI contract: Returns connection IDs of all connections in a room.
 #AI param_details: [{name: $room | type: string | required: true | desc: Room identifier to query.}]
 #AI return_detail: {type: array | desc: Array of connection ID strings.}
 
-#AI:reset_rooms
+#AI:resetRooms
 #AI group: Testing Hooks
 #AI frequency: low
-#AI signature: public static function reset_rooms(): void
+#AI signature: public static function resetRooms(): void
 #AI contract: Clears the entire room map. Use in test tearDown() to prevent state leakage.
 #AI side_effects: [Clears the static rooms array]

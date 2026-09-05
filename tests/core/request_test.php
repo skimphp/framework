@@ -37,13 +37,13 @@ describe('request — json body', function(): void {
         $req = \Skim\Core\Request::make(
             method:   'POST',
             headers:  ['Content-Type' => 'application/json'],
-            raw_body: '{"name":"John","age":30}',
+            rawBody: '{"name":"John","age":30}',
         );
         expect($req->json())->toBe(['name' => 'John', 'age' => 30]);
     });
 
     test('json() returns empty array when Content-Type is not application/json', function(): void {
-        $req = \Skim\Core\Request::make('POST', '/', raw_body: '{"x":1}');
+        $req = \Skim\Core\Request::make('POST', '/', rawBody: '{"x":1}');
         expect($req->json())->toBe([]);
     });
 
@@ -51,7 +51,7 @@ describe('request — json body', function(): void {
         $req = \Skim\Core\Request::make(
             method:   'POST',
             headers:  ['Content-Type' => 'application/json'],
-            raw_body: 'not-json',
+            rawBody: 'not-json',
         );
         expect($req->json())->toBe([]);
     });
@@ -87,22 +87,22 @@ describe('request — detection helpers', function(): void {
 
     test('is_htmx() returns true when HX-Request header present', function(): void {
         $req = \Skim\Core\Request::make(headers: ['HX-Request' => 'true']);
-        expect($req->is_htmx())->toBeTrue();
+        expect($req->isHtmx())->toBeTrue();
     });
 
     test('is_htmx() returns false when header absent', function(): void {
         $req = \Skim\Core\Request::make();
-        expect($req->is_htmx())->toBeFalse();
+        expect($req->isHtmx())->toBeFalse();
     });
 
     test('is_json() returns true when Accept contains application/json', function(): void {
         $req = \Skim\Core\Request::make(headers: ['Accept' => 'application/json']);
-        expect($req->is_json())->toBeTrue();
+        expect($req->isJson())->toBeTrue();
     });
 
     test('is_datastar() returns true when datastar-request header present', function(): void {
         $req = \Skim\Core\Request::make(headers: ['datastar-request' => '1']);
-        expect($req->is_datastar())->toBeTrue();
+        expect($req->isDatastar())->toBeTrue();
     });
 
 });
@@ -111,7 +111,7 @@ describe('request — route params', function(): void {
 
     test('param() returns injected route segment', function(): void {
         $req = \Skim\Core\Request::make('GET', '/users/42');
-        $req->set_route_params(['id' => '42']);
+        $req->setRouteParams(['id' => '42']);
         expect($req->param('id'))->toBe('42');
     });
 

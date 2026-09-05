@@ -9,7 +9,7 @@ use Skim\Ext\ExtensionManager;
 /**
  * Singleton container and HTTP kernel: scoped key-value store, DI container, and middleware pipeline.
  *
- * Use as the application entry point (`app::instance()`) or test harness (`app::test_instance()`).
+ * Use as the application entry point (`app::instance()`) or test harness (`app::testInstance()`).
  * Three scopes isolate data: `sys.*` (framework, immutable after boot), `app.*` (config, frozen after boot),
  * `user.*` (per-request, mutable). The DI container resolves bindings as singletons with auto-wiring fallback.
  *
@@ -18,7 +18,7 @@ use Skim\Ext\ExtensionManager;
  *   $app->router->get('/', [home_controller::class, 'index']);
  *   $app->run();
  *
- * Testing: Use `app::test_instance(['db.driver' => 'memory'])` for isolated containers without env/config loading.
+ * Testing: Use `app::testInstance(['db.driver' => 'memory'])` for isolated containers without env/config loading.
  *
  * #AI:class
  */
@@ -42,7 +42,7 @@ class App {
     private array $resolved = [];
 
     // DI tracing — exposes in-flight resolution chain to error_page.
-    // Populated by make() when $tracing is on; read by error_page::collect_container()
+    // Populated by make() when $tracing is on; read by error_page::collectContainer()
     // after a binding fails so the panel can show the exact stack that was being built.
     //
     //   $resolve_stack — chronological list of ['id' => string, 'time' => float]
@@ -127,27 +127,27 @@ class App {
         if (self::$instance === null) {
             $root = defined('SKIM_ROOT') ? SKIM_ROOT : dirname(__DIR__, 2);
             self::$instance = new static($root);
-            self::$instance->router->set_mutation_guard(fn(): bool => !self::$instance->frozen);
+            self::$instance->router->setMutationGuard(fn(): bool => !self::$instance->frozen);
             self::$instance->set('sys.router', self::$instance->router);
         }
         return self::$instance;
     }
 
     /**
-     * Returns a fresh isolated container for tests (testing only). #AI:test_instance
+     * Returns a fresh isolated container for tests (testing only). #AI:testInstance
      *
      * Skips .env and config/*.php loading. Inject config directly via the `$config`
      * parameter. Never shares state with `app::instance()`.
      *
      * Example:
-     *   $app = app::test_instance(['db.driver' => 'memory', 'app.debug' => true]);
+     *   $app = app::testInstance(['db.driver' => 'memory', 'app.debug' => true]);
      *   $app->router->get('/test', fn() => 'ok');
      *   $res = $app->dispatch(request::make('GET', '/test'), new response());
      *
      * @param array $config Key-value pairs injected into app scope (e.g. `['db.driver' => 'memory']`).
      * @return static A fresh, unbooted container with router and pipeline ready.
      */
-    public static function test_instance(array $config = []): static {
+    public static function testInstance(array $config = []): static {
         $inst = new static(dirname(__DIR__, 2));
         $inst->request_ob_level = ob_get_level();
         foreach ($config as $key => $val) {
@@ -157,7 +157,7 @@ class App {
                 $inst->app_data[$key] = $val;
             }
         }
-        $inst->router->set_mutation_guard(fn(): bool => !$inst->frozen);
+        $inst->router->setMutationGuard(fn(): bool => !$inst->frozen);
         $inst->set('sys.router', $inst->router);
         return $inst;
     }
@@ -177,7 +177,7 @@ class App {
         $this->booted = true;
 
         if ($layout = \Skim\Core\Config::get('app.view.default_layout')) {
-            \Skim\View\View::set_default_layout((string) $layout);
+            \Skim\View\View::setDefaultLayout((string) $layout);
         }
 
         $this->extension_manager = \Skim\Ext\ExtensionManager::discover($this->root, $this);
@@ -186,20 +186,20 @@ class App {
         // Capture the bindings snapshot once at boot so the error page can list
         // every registered service even if the request blows up later. Cheap —
         // a single array_keys + a hash for type metadata.
-        $this->bindings_snapshot = $this->snapshot_bindings();
+        $this->bindings_snapshot = $this->snapshotBindings();
     }
 
     /**
      * Returns a metadata array of every currently-registered binding. #AI:snapshot_bindings
      *
-     * Used by error_page::collect_container() to render the "registered services"
+     * Used by error_page::collectContainer() to render the "registered services"
      * list in the Container panel. Captures [abstract, factory_kind, priority]
      * triples; never the factory closure itself (closures don't survive var_export
      * and would leak memory in the error page).
      *
      * @return array<int, array{abstract: string, factory_kind: string, priority: int}>
      */
-    public function snapshot_bindings(): array {
+    public function snapshotBindings(): array {
         $rows = [];
         foreach ($this->bindings as $abstract => $factory) {
             $rows[] = [
@@ -217,8 +217,8 @@ class App {
      *
      * No-op when request_trace is disabled — never throws.
      */
-    private function record_route_trace(array $route): void {
-        if (!\Skim\Dev\RequestTrace::is_enabled()) {
+    private function recordRouteTrace(array $route): void {
+        if (!\Skim\Dev\RequestTrace::isEnabled()) {
             return;
         }
 
@@ -320,11 +320,11 @@ class App {
                 . "(lifetime::Singleton, lifetime::Request or lifetime::Transient)."
             );
         }
-        $this->apply_binding($abstract, $factory, $priority, $lifetime ?? \Skim\Core\Lifetime::Singleton);
+        $this->applyBinding($abstract, $factory, $priority, $lifetime ?? \Skim\Core\Lifetime::Singleton);
     }
 
     /**
-     * Registers a request-scoped binding. #AI:bind_request
+     * Registers a request-scoped binding. #AI:bindRequest
      *
      * Behaves like bind() but the resolved singleton is cleared from the
      * container at the end of each request via end_request().
@@ -333,12 +333,12 @@ class App {
      * @param callable|string $factory  Callable receiving app, or class name for auto-wiring.
      * @param int|null        $priority Binding priority (higher wins).
      */
-    public function bind_request(string $abstract, callable|string $factory, ?int $priority = null): void {
-        $this->apply_binding($abstract, $factory, $priority, \Skim\Core\Lifetime::Request);
+    public function bindRequest(string $abstract, callable|string $factory, ?int $priority = null): void {
+        $this->applyBinding($abstract, $factory, $priority, \Skim\Core\Lifetime::Request);
     }
 
     /**
-     * Registers a transient binding — built fresh on every make() call. #AI:bind_transient
+     * Registers a transient binding — built fresh on every make() call. #AI:bindTransient
      *
      * Transient services are never cached in $resolved, so each make()
      * returns a new instance.
@@ -347,12 +347,12 @@ class App {
      * @param callable|string $factory  Callable receiving app, or class name for auto-wiring.
      * @param int|null        $priority Binding priority (higher wins).
      */
-    public function bind_transient(string $abstract, callable|string $factory, ?int $priority = null): void {
-        $this->apply_binding($abstract, $factory, $priority, \Skim\Core\Lifetime::Transient);
+    public function bindTransient(string $abstract, callable|string $factory, ?int $priority = null): void {
+        $this->applyBinding($abstract, $factory, $priority, \Skim\Core\Lifetime::Transient);
     }
 
     /**
-     * Performs the actual binding registration for a given lifetime. #AI:apply_binding
+     * Performs the actual binding registration for a given lifetime. #AI:applyBinding
      *
      * Shared by bind(), bind_request() and bind_transient(). Kept private and free
      * of the strict-DI check so the request/transient helpers (which pass an explicit
@@ -364,19 +364,19 @@ class App {
      * @param \Skim\Core\Lifetime $lifetime Resolved lifetime to apply.
      * @throws \LogicException If called after freeze().
      */
-    private function apply_binding(string $abstract, callable|string $factory, ?int $priority, \Skim\Core\Lifetime $lifetime): void {
-        $this->assert_mutable('bind services');
+    private function applyBinding(string $abstract, callable|string $factory, ?int $priority, \Skim\Core\Lifetime $lifetime): void {
+        $this->assertMutable('bind services');
 
-        $priority ??= $this->current_extension_priority();
+        $priority ??= $this->currentExtensionPriority();
         $current_priority = $this->binding_priorities[$abstract] ?? PHP_INT_MIN;
 
         if (isset($this->bindings[$abstract]) && $priority < $current_priority) {
             return;
         }
 
-        $this->bindings[$abstract] = $this->normalize_factory($factory);
+        $this->bindings[$abstract] = $this->normalizeFactory($factory);
         $this->binding_priorities[$abstract] = $priority;
-        $this->clear_lifetime_meta($abstract);
+        $this->clearLifetimeMeta($abstract);
 
         if ($lifetime === \Skim\Core\Lifetime::Request) {
             $this->request_scoped[$abstract] = true;
@@ -398,11 +398,11 @@ class App {
      * @throws \LogicException If called after `freeze()`.
      */
     public function decorate(string $abstract, callable $decorator, ?int $priority = null): void {
-        $this->assert_mutable('decorate services');
+        $this->assertMutable('decorate services');
 
         $this->decorators[$abstract][] = [
             'factory'  => $decorator,
-            'priority' => $priority ?? $this->current_extension_priority(),
+            'priority' => $priority ?? $this->currentExtensionPriority(),
             'order'    => ++$this->decorator_order,
         ];
 
@@ -437,7 +437,7 @@ class App {
 
         try {
             if (isset($this->bindings[$abstract])) {
-                $instance = $this->apply_decorators(
+                $instance = $this->applyDecorators(
                     $abstract,
                     ($this->bindings[$abstract])($this),
                 );
@@ -449,7 +449,7 @@ class App {
 
             // auto-wire via reflection
             if (class_exists($abstract)) {
-                $instance = $this->apply_decorators(
+                $instance = $this->applyDecorators(
                     $abstract,
                     $this->build($abstract),
                 );
@@ -464,7 +464,7 @@ class App {
         catch (\Throwable $e) {
             if ($tracking) {
                 $this->failed_at     = $abstract;
-                $this->partial_args  = $this->current_ctor_params($abstract);
+                $this->partial_args  = $this->currentCtorParams($abstract);
             }
             throw $e;
         }
@@ -476,7 +476,7 @@ class App {
     }
 
     /**
-     * Resolves a service fresh every time; never caches in $resolved. #AI:make_transient
+     * Resolves a service fresh every time; never caches in $resolved. #AI:makeTransient
      *
      * Mirrors make() but skips the singleton cache entirely, so the resolved
      * instance and its constructor-injected dependencies are rebuilt on every
@@ -487,12 +487,12 @@ class App {
      * @return mixed A freshly built (and possibly decorated) instance.
      * @throws \RuntimeException If no binding exists and the class cannot be auto-wired.
      */
-    public function make_transient(string $abstract): mixed {
+    public function makeTransient(string $abstract): mixed {
         if (isset($this->bindings[$abstract])) {
-            return $this->apply_decorators($abstract, ($this->bindings[$abstract])($this));
+            return $this->applyDecorators($abstract, ($this->bindings[$abstract])($this));
         }
         if (class_exists($abstract)) {
-            return $this->apply_decorators($abstract, $this->build($abstract));
+            return $this->applyDecorators($abstract, $this->build($abstract));
         }
         throw new \RuntimeException("No binding registered for '{$abstract}'");
     }
@@ -506,7 +506,7 @@ class App {
      *
      * @return string[] Constructor parameter names.
      */
-    private function current_ctor_params(string $class): array {
+    private function currentCtorParams(string $class): array {
         if (!class_exists($class)) {
             return [];
         }
@@ -531,7 +531,7 @@ class App {
      * by the error handler before render(), not at request time, so normal
      * requests pay nothing.
      */
-    public function enable_tracing(): void {
+    public function enableTracing(): void {
         $this->tracing        = true;
         $this->resolve_stack  = [];
         $this->failed_at      = null;
@@ -544,7 +544,7 @@ class App {
      * Safe to call between requests — resets the trace fields so a leftover
      * state from a previous request can't leak into a new one.
      */
-    public function disable_tracing(): void {
+    public function disableTracing(): void {
         $this->tracing        = false;
         $this->resolve_stack  = [];
         $this->failed_at      = null;
@@ -561,27 +561,27 @@ class App {
      *
      * @return string[] Sorted list of resolved abstract identifiers.
      */
-    public function resolved_services(): array {
+    public function resolvedServices(): array {
         $names = array_keys($this->resolved);
         sort($names);
         return $names;
     }
 
     /**
-     * Returns the list of abstracts registered with request lifetime. #AI:request_scoped_services
+     * Returns the list of abstracts registered with request lifetime. #AI:requestScopedServices
      *
      * @return string[] Abstract identifiers bound as request-scoped.
      */
-    public function request_scoped_services(): array {
+    public function requestScopedServices(): array {
         return array_keys($this->request_scoped);
     }
 
     /**
-     * Returns true when the user scope contains no keys. #AI:user_scope_empty
+     * Returns true when the user scope contains no keys. #AI:userScopeEmpty
      *
      * Used by the leak detector to verify end_request() cleared per-request state.
      */
-    public function user_scope_empty(): bool {
+    public function userScopeEmpty(): bool {
         return $this->user === [];
     }
 
@@ -596,7 +596,7 @@ class App {
      * @throws \LogicException If called after `freeze()`.
      */
     public function use(string $class, mixed ...$args): void {
-        $this->assert_mutable('register middleware');
+        $this->assertMutable('register middleware');
         $this->global_middleware[] = ['class' => $class, 'args' => $args];
     }
 
@@ -615,30 +615,30 @@ class App {
     }
 
     /**
-     * Returns true after mutation points have been frozen. #AI:is_frozen
+     * Returns true after mutation points have been frozen. #AI:isFrozen
      *
      * @return bool True if `freeze()` has been called.
      */
-    public function is_frozen(): bool {
+    public function isFrozen(): bool {
         return $this->frozen;
     }
 
     /**
-     * Returns whether debug mode is enabled. #AI:is_debug_mode
+     * Returns whether debug mode is enabled. #AI:isDebugMode
      */
-    public function is_debug_mode(): bool {
+    public function isDebugMode(): bool {
         return $this->debug_mode;
     }
 
     /**
-     * Runs a callback with a temporary extension context for priority resolution. #AI:with_extension_context
+     * Runs a callback with a temporary extension context for priority resolution. #AI:withExtensionContext
      *
      * Sets the active extension name and priority so that `bind()`, `decorate()`,
      * and similar calls inside `$callback` inherit the correct priority. Restores
      * the previous context even if the callback throws.
      *
      * Example:
-     *   $app->with_extension_context('auth', 50, function() use ($app) {
+     *   $app->withExtensionContext('auth', 50, function() use ($app) {
      *       $app->bind(auth_service::class, fn() => new jwt_auth());
      *   });
      *
@@ -647,7 +647,7 @@ class App {
      * @param callable $callback Executed with the extension context active.
      * @return mixed Whatever the callback returns.
      */
-    public function with_extension_context(string $name, int $priority, callable $callback): mixed {
+    public function withExtensionContext(string $name, int $priority, callable $callback): mixed {
         $previous = $this->extension_context;
         $this->extension_context = ['name' => $name, 'priority' => $priority];
 
@@ -658,12 +658,12 @@ class App {
         }
     }
     /**
-     * Begins a request in worker mode — enables profiler and request_trace if debug. #AI:begin_request
+     * Begins a request in worker mode — enables profiler and request_trace if debug. #AI:beginRequest
      *
      * Separated from run() so the worker entrypoint can call it once per request
      * without re-running the full boot sequence.
      */
-    public function begin_request(): void {
+    public function beginRequest(): void {
         $this->request_ob_level = ob_get_level();
         $this->debug_mode = (bool) $this->get('app.debug', false);
 
@@ -675,41 +675,41 @@ class App {
                 $_SERVER['REQUEST_METHOD'] ?? 'GET',
                 $_SERVER['REQUEST_URI'] ?? '/',
             );
-            \Skim\Dev\RequestTrace::set_extensions(
+            \Skim\Dev\RequestTrace::setExtensions(
                 array_column($this->get('sys.extensions', []), 'name')
             );
         }
 
-        if (\Skim\Worker\LeakDetector::is_active()) {
+        if (\Skim\Worker\LeakDetector::isActive()) {
             \Skim\Worker\LeakDetector::begin();
         }
     }
 
     /**
-     * Ends a request in worker mode — resets per-request state. #AI:end_request
+     * Ends a request in worker mode — resets per-request state. #AI:endRequest
      *
      * Clears user scope and request-scoped DI bindings, then runs the global
      * worker_reset orchestrator to clear static facades and output buffers.
      */
-    public function end_request(): void {
+    public function endRequest(): void {
         $this->user = [];
 
         foreach (array_keys($this->request_scoped) as $abstract) {
             unset($this->resolved[$abstract]);
         }
 
-        $this->disable_tracing();
+        $this->disableTracing();
         \Skim\Worker\WorkerReset::apply($this->request_ob_level);
 
-        if (\Skim\Worker\LeakDetector::is_active()) {
+        if (\Skim\Worker\LeakDetector::isActive()) {
             \Skim\Worker\LeakDetector::check($this);
         }
     }
 
     /**
-     * Handles an uncaught exception. Used by the global exception handler. #AI:handle_exception
+     * Handles an uncaught exception. Used by the global exception handler. #AI:handleException
      */
-    public function handle_exception(\Throwable $e): void {
+    public function handleException(\Throwable $e): void {
         if ($this->debug_mode) {
             \Skim\Dev\ErrorPage::render($e);
         } else {
@@ -731,7 +731,7 @@ class App {
         match (true) {
             $result instanceof \Skim\Core\Response => $result->send(),
             is_array($result) || is_object($result) => $fallback->json($result)->send(),
-            is_string($result) => $fallback->set_body($result)->send(),
+            is_string($result) => $fallback->setBody($result)->send(),
             $result === null => $fallback->send(),
             $result === false => $fallback->status(405)->send(),
             default => $fallback->send(),
@@ -752,30 +752,30 @@ class App {
      */
     public function run(): void {
         $this->ensureBooted();
-        $this->boot_extensions();
+        $this->bootExtensions();
         $this->freeze();
 
         set_exception_handler(function(\Throwable $e): void {
-            $this->handle_exception($e);
+            $this->handleException($e);
         });
 
-        $this->begin_request();
-        $req = \Skim\Core\Request::from_globals();
+        $this->beginRequest();
+        $req = \Skim\Core\Request::fromGlobals();
         $res = new \Skim\Core\Response();
 
         try {
             $result = $this->dispatch($req, $res);
 
             if ($this->debug_mode) {
-                $trace = \Skim\Dev\RequestTrace::finish($result->get_status());
+                $trace = \Skim\Dev\RequestTrace::finish($result->getStatus());
                 $this->sys['last_trace'] = $trace;
-            } elseif ($result->get_status() >= 500) {
-                error_log('[skim][request] ' . $req->method() . ' ' . $req->path() . ' ' . $result->get_status());
+            } elseif ($result->getStatus() >= 500) {
+                error_log('[skim][request] ' . $req->method() . ' ' . $req->path() . ' ' . $result->getStatus());
             }
 
             $this->emit($result, $res);
         } finally {
-            $this->end_request();
+            $this->endRequest();
         }
     }
 
@@ -783,7 +783,7 @@ class App {
      * Dispatches a request through the router and middleware pipeline. #AI:dispatch
      * @return \Skim\Core\Response The populated response (404 if no route, 405 if method not allowed).
      */
-    public function dispatch(\Skim\Core\Request $req, \Skim\Core\Response $res, bool $skip_middleware = false): \Skim\Core\Response {
+    public function dispatch(\Skim\Core\Request $req, \Skim\Core\Response $res, bool $skipMiddleware = false): \Skim\Core\Response {
         $this->ensureBooted();
 
         $previous = self::$instance;
@@ -801,14 +801,14 @@ class App {
             }
 
             if (!empty($route['params'])) {
-                $req->set_route_params($route['params']);
+                $req->setRouteParams($route['params']);
             }
 
             if ($this->debug_mode) {
-                $this->record_route_trace($route);
+                $this->recordRouteTrace($route);
             }
 
-            $middlewares = $skip_middleware
+            $middlewares = $skipMiddleware
                 ? []
                 : array_merge($this->global_middleware, $route['middleware'] ?? []);
 
@@ -817,11 +817,11 @@ class App {
                 if (is_array($handler) && $this->debug_mode) {
                     \Skim\Dev\RequestTrace::event('controller_called', ['class' => $handler[0], 'method' => $handler[1]]);
                 }
-                return $this->call_handler($handler, $req, $res, $route['params'] ?? []);
+                return $this->callHandler($handler, $req, $res, $route['params'] ?? []);
             });
 
             if ($this->debug_mode) {
-                $this->pipeline->record_pipeline_trace($req, $middlewares);
+                $this->pipeline->recordPipelineTrace($req, $middlewares);
             }
 
             if ($result instanceof \Skim\Core\Response) {
@@ -839,20 +839,20 @@ class App {
     }
 
     /**
-     * Resolves controller handler arguments via DI and route params. #AI:call_handler
+     * Resolves controller handler arguments via DI and route params. #AI:callHandler
      *
      * For closures, passes request/response and route params directly. For class-based
      * handlers, resolves the controller via `make_transient()` so a fresh instance is
      * built per request (worker-mode safe — no cross-request state leakage) and injects
      * constructor/method dependencies by type-hint, matching route params by name.
      */
-    private function call_handler(array|callable $handler, \Skim\Core\Request $req, \Skim\Core\Response $res, array $params): mixed {
+    private function callHandler(array|callable $handler, \Skim\Core\Request $req, \Skim\Core\Response $res, array $params): mixed {
         if (is_callable($handler) && !is_array($handler)) {
             return $handler($req, $res, ...$params);
         }
 
         [$class, $method] = $handler;
-        $controller = $this->make_transient($class);
+        $controller = $this->makeTransient($class);
 
         $ref    = new \ReflectionMethod($controller, $method);
         $args   = [];
@@ -910,11 +910,11 @@ class App {
         return $caps;
     }
     /**
-     * Boots extensions once via the extension manager. #AI:boot_extensions
+     * Boots extensions once via the extension manager. #AI:bootExtensions
      *
      * Idempotent — subsequent calls after the first are no-ops.
      */
-    public function boot_extensions(): void {
+    public function bootExtensions(): void {
         if ($this->extensions_booted) {
             return;
         }
@@ -934,23 +934,23 @@ class App {
     }
 
     /**
-     * Clears resolved cache and all lifetime flags for an abstract. #AI:clear_lifetime_meta
+     * Clears resolved cache and all lifetime flags for an abstract. #AI:clearLifetimeMeta
      *
      * Centralizes the lifetime transition so bind(), bind_request(), and
      * bind_transient() cannot leave stale request_scoped/transient flags
      * behind when an abstract is rebound with a different lifetime.
      */
-    private function clear_lifetime_meta(string $abstract): void {
+    private function clearLifetimeMeta(string $abstract): void {
         unset($this->resolved[$abstract], $this->request_scoped[$abstract], $this->transient[$abstract]);
     }
 
     /**
-     * Converts a string class name to an auto-wiring factory closure. #AI:normalize_factory
+     * Converts a string class name to an auto-wiring factory closure. #AI:normalizeFactory
      *
      * @param callable|string $factory Class name or callable.
      * @return callable Always returns a callable accepting `app`.
      */
-    private function normalize_factory(callable|string $factory): callable {
+    private function normalizeFactory(callable|string $factory): callable {
         if (is_string($factory)) {
             return fn(self $app): mixed => $app->build($factory);
         }
@@ -996,11 +996,11 @@ class App {
     }
 
     /**
-     * Applies registered decorators to a resolved service in priority then registration order. #AI:apply_decorators
+     * Applies registered decorators to a resolved service in priority then registration order. #AI:applyDecorators
      *
      * Returns the service unchanged when no decorators are registered for the abstract.
      */
-    private function apply_decorators(string $abstract, mixed $service): mixed {
+    private function applyDecorators(string $abstract, mixed $service): mixed {
         if (!isset($this->decorators[$abstract])) {
             return $service;
         }
@@ -1016,19 +1016,19 @@ class App {
     }
 
     /**
-     * Returns the priority from the active extension context, defaulting to 100. #AI:current_extension_priority
+     * Returns the priority from the active extension context, defaulting to 100. #AI:currentExtensionPriority
      */
-    private function current_extension_priority(): int {
+    private function currentExtensionPriority(): int {
         return (int) ($this->extension_context['priority'] ?? 100);
     }
 
     /**
-     * Throws if the app is frozen, preventing post-boot mutation. #AI:assert_mutable
+     * Throws if the app is frozen, preventing post-boot mutation. #AI:assertMutable
      *
      * @param string $action Human-readable action name for the error message.
      * @throws \LogicException If the app is frozen.
      */
-    private function assert_mutable(string $action): void {
+    private function assertMutable(string $action): void {
         if ($this->frozen) {
             $extension = $this->extension_context['name'] ?? 'unknown';
             error_log("[skim][invariant-violation] extension='{$extension}' attempted '{$action}' after freeze");
@@ -1060,7 +1060,7 @@ class App {
 #AI non_goals: [Does not handle HTTP transport (delegates to request/response); Does not manage database connections directly; Does not serialize or persist state across requests]
 #AI side_effects: [run() installs global exception handler and sends HTTP response; freeze() permanently locks mutation; set() may throw on sys.* overwrite in production; boot() initialises router, pipeline, and extensions once]
 #AI flow: app::instance() -> run() -> ensureBooted() -> boot() [router -> extensions] -> profiler/request_trace -> boot_extensions() -> freeze() -> dispatch() -> pipeline -> call_handler() -> response
-#AI lifecycle_steps: [app::instance(); -> run(); -> ensureBooted(); -> boot() [view layout + router + pipeline + extension_manager::discover + register]; -> profiler/request_trace enable (if debug); -> boot_extensions(); -> freeze(); -> request::from_globals(); -> dispatch(); -> pipeline::run(); -> call_handler(); -> response::send()]
+#AI lifecycle_steps: [app::instance(); -> run(); -> ensureBooted(); -> boot() [view layout + router + pipeline + extension_manager::discover + register]; -> profiler/request_trace enable (if debug); -> boot_extensions(); -> freeze(); -> request::fromGlobals(); -> dispatch(); -> pipeline::run(); -> call_handler(); -> response::send()]
 #AI section_order: [Lifecycle; Scoped Store; DI Container; Middleware; Request Dispatch; Extensions; Testing]
 #AI architectural_notes: The app class is intentionally a god object combining container, kernel, and store. This keeps the framework surface area small — one class to learn, one singleton to pass around. Extensions interact with app exclusively through `with_extension_context()` during boot, then the app freezes to prevent further mutation.
 
@@ -1072,10 +1072,10 @@ class App {
 #AI return_detail: {type: static | desc: The application instance (not yet booted).}
 #AI side_effects: [Creates the singleton on first call; does not trigger boot]
 
-#AI:test_instance
+#AI:testInstance
 #AI group: Testing
 #AI frequency: high
-#AI signature: public static function test_instance(array $config = []): static
+#AI signature: public static function testInstance(array $config = []): static
 #AI contract: Creates a fresh isolated container that skips .env and config/*.php loading. Config values are injected directly via the $config array. The returned instance has its own router, pipeline, and mutation guard but shares no state with app::instance().
 #AI param_details: [{name: $config | type: array | required: false | desc: Key-value pairs injected into app scope. Keys use dot notation without the app. prefix (e.g. 'db.driver' => 'memory').}]
 #AI return_detail: {type: static | desc: A fresh, unbooted container with router and pipeline ready.}
@@ -1140,27 +1140,27 @@ class App {
 #AI side_effects: [Caches resolved instance in $resolved array]
 #AI examples: [{label: Basic resolution | code: $app->bind(mailer::class, fn($app) => new smtp_mailer($app->get('app.mail')));\n$mailer = $app->make(mailer::class);}]
 
-#AI:make_transient
+#AI:makeTransient
 #AI group: DI Container
 #AI frequency: medium
-#AI signature: public function make_transient(string $abstract): mixed
+#AI signature: public function makeTransient(string $abstract): mixed
 #AI contract: Resolves a service fresh every time; never caches in $resolved. Mirrors make() but skips the singleton cache entirely, so the resolved instance and its constructor-injected dependencies are rebuilt on every call. Used for class-based controllers in worker mode so request-scoped state cannot leak across requests served by the same process.
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Class name or identifier to resolve.}]
 #AI return_detail: {type: mixed | desc: A freshly built (and possibly decorated) instance.}
 #AI throws_details: [{type: \RuntimeException | desc: If no binding exists and the class cannot be auto-wired.}]
 #AI side_effects: [Never writes to $resolved array]
 
-#AI:request_scoped_services
+#AI:requestScopedServices
 #AI group: DI Container
 #AI frequency: low
-#AI signature: public function request_scoped_services(): array
+#AI signature: public function requestScopedServices(): array
 #AI contract: Returns the list of abstracts registered with request lifetime. Used by the leak detector and tests to verify that request-scoped bindings are correctly tracked.
 #AI return_detail: {type: string[] | desc: Abstract identifiers bound as request-scoped.}
 
-#AI:user_scope_empty
+#AI:userScopeEmpty
 #AI group: Scoped Store
 #AI frequency: low
-#AI signature: public function user_scope_empty(): bool
+#AI signature: public function userScopeEmpty(): bool
 #AI contract: Returns true when the user scope contains no keys. Used by the leak detector to verify end_request() cleared per-request state.
 #AI return_detail: {type: bool | desc: True when $user array is empty.}
 
@@ -1181,22 +1181,22 @@ class App {
 #AI warnings: [Irreversible — no thaw() method exists. After freeze, bind(), decorate(), use(), and route registration all throw LogicException.]
 #AI side_effects: [Sets internal frozen flag to true]
 
-#AI:is_frozen
+#AI:isFrozen
 #AI group: Middleware
 #AI frequency: low
-#AI signature: public function is_frozen(): bool
+#AI signature: public function isFrozen(): bool
 #AI contract: Returns true after freeze() has been called.
 #AI return_detail: {type: bool | desc: True if the app mutation points are frozen.}
 
-#AI:with_extension_context
+#AI:withExtensionContext
 #AI group: Extensions
 #AI frequency: medium
-#AI signature: public function with_extension_context(string $name, int $priority, callable $callback): mixed
+#AI signature: public function withExtensionContext(string $name, int $priority, callable $callback): mixed
 #AI contract: Temporarily sets the active extension name and priority so that bind(), decorate(), and similar calls inside $callback inherit the correct priority. The previous extension context is restored in a finally block, even if the callback throws.
 #AI param_details: [{name: $name | type: string | required: true | desc: Extension identifier used for diagnostics and assert_mutable error messages.}; {name: $priority | type: int | required: true | desc: Priority applied to registrations (bind, decorate) inside the callback.}; {name: $callback | type: callable | required: true | desc: Executed with the extension context active. Return value is passed through.}]
 #AI return_detail: {type: mixed | desc: Whatever the callback returns.}
 #AI side_effects: [Temporarily mutates extension_context; restored in finally block]
-#AI examples: [{label: Extension registration | code: $app->with_extension_context('auth', 50, function() use ($app) {\n    $app->bind(auth_service::class, fn() => new jwt_auth());\n});}]
+#AI examples: [{label: Extension registration | code: $app->withExtensionContext('auth', 50, function() use ($app) {\n    $app->bind(auth_service::class, fn() => new jwt_auth());\n});}]
 
 #AI:run
 #AI group: Lifecycle
@@ -1210,17 +1210,17 @@ class App {
 #AI:dispatch
 #AI group: Request Dispatch
 #AI frequency: high
-#AI signature: public function dispatch(request $req, response $res, bool $skip_middleware = false): response
+#AI signature: public function dispatch(request $req, response $res, bool $skipMiddleware = false): response
 #AI contract: Dispatches a request through the router and middleware pipeline without sending headers or body. Calls ensureBooted() first to guarantee the framework is initialised. Returns 404 for unmatched routes, 405 for method mismatches. Temporarily sets this instance as the global singleton during dispatch and restores the previous instance in a finally block.
-#AI param_details: [{name: $req | type: request | required: true | desc: The request to dispatch.}; {name: $res | type: response | required: true | desc: The response object to populate.}; {name: $skip_middleware | type: bool | required: false | desc: When true, bypasses all global and route middleware. Useful for unit tests.}]
+#AI param_details: [{name: $req | type: request | required: true | desc: The request to dispatch.}; {name: $res | type: response | required: true | desc: The response object to populate.}; {name: $skipMiddleware | type: bool | required: false | desc: When true, bypasses all global and route middleware. Useful for unit tests.}]
 #AI return_detail: {type: response | desc: The populated response. Status 404 if no route matches, 405 if path matches but method does not.}
 #AI side_effects: [Temporarily replaces self::$instance during dispatch]
-#AI examples: [{label: Test dispatch | code: $req = request::make('GET', '/users/42');\n$res = $app->dispatch($req, new response(), skip_middleware: true);\nassert($res->get_status() === 200);}]
+#AI examples: [{label: Test dispatch | code: $req = request::make('GET', '/users/42');\n$res = $app->dispatch($req, new response(), skip_middleware: true);\nassert($res->getStatus() === 200);}]
 
-#AI:call_handler
+#AI:callHandler
 #AI group: Request Dispatch
 #AI frequency: internal
-#AI signature: private function call_handler(array|callable $handler, request $req, response $res, array $params): mixed
+#AI signature: private function callHandler(array|callable $handler, request $req, response $res, array $params): mixed
 #AI contract: Resolves controller handler arguments via DI and route params. For closures, passes request/response and route params directly. For class-based handlers, resolves the controller via make() and injects method dependencies by type-hint, matching route params by name.
 #AI param_details: [{name: $handler | type: array|callable | required: true | desc: Route handler — either a closure or [class, method] array.}; {name: $req | type: request | required: true | desc: Current request.}; {name: $res | type: response | required: true | desc: Current response.}; {name: $params | type: array | required: true | desc: Route parameters matched by the router.}]
 
@@ -1232,63 +1232,63 @@ class App {
 #AI return_detail: {type: array<string, array{provided_by: string}> | desc: Flat map of capability name to provider details.}
 #AI notes: Safe to call before or after freeze — reads sys.extensions which is set during extension discovery.
 
-#AI:boot_extensions
+#AI:bootExtensions
 #AI group: Extensions
 #AI frequency: internal
-#AI signature: public function boot_extensions(): void
+#AI signature: public function bootExtensions(): void
 #AI contract: Boots extensions once via the extension manager. Idempotent — subsequent calls after the first are no-ops.
 
-#AI:bind_request
+#AI:bindRequest
 #AI group: DI Container
 #AI frequency: medium
-#AI signature: public function bind_request(string $abstract, callable|string $factory, ?int $priority = null): void
+#AI signature: public function bindRequest(string $abstract, callable|string $factory, ?int $priority = null): void
 #AI contract: Registers a request-scoped binding. Behaves like bind() but the resolved singleton is cleared from the container at the end of each request via end_request().
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving app, or class name for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins).}]
 #AI side_effects: [Registers binding and marks it as request-scoped]
 
-#AI:bind_transient
+#AI:bindTransient
 #AI group: DI Container
 #AI frequency: medium
-#AI signature: public function bind_transient(string $abstract, callable|string $factory, ?int $priority = null): void
+#AI signature: public function bindTransient(string $abstract, callable|string $factory, ?int $priority = null): void
 #AI contract: Registers a transient binding — built fresh on every make() call. Never cached in $resolved.
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving app, or class name for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins).}]
 #AI side_effects: [Registers binding and marks it as transient]
 
-#AI:apply_binding
+#AI:applyBinding
 #AI group: DI Container
 #AI frequency: internal
-#AI signature: private function apply_binding(string $abstract, callable|string $factory, ?int $priority, lifetime $lifetime): void
+#AI signature: private function applyBinding(string $abstract, callable|string $factory, ?int $priority, lifetime $lifetime): void
 #AI contract: Performs the actual binding registration for a given lifetime. Shared by bind(), bind_request() and bind_transient(). Keeps the strict-DI check out of the request/transient helpers so they are never blocked by app.strict_di.
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type or identifier to bind.}; {name: $factory | type: callable|string | required: true | desc: Callable receiving app, or class name for auto-wiring.}; {name: $priority | type: ?int | required: false | desc: Binding priority (higher wins). Null uses current extension priority.}; {name: $lifetime | type: lifetime | required: true | desc: Resolved lifetime to apply.}]
 #AI throws_details: [{type: \LogicException | desc: If called after freeze().}]
 #AI side_effects: [Mutates bindings and binding_priorities arrays; Clears lifetime meta for the abstract]
 
-#AI:clear_lifetime_meta
+#AI:clearLifetimeMeta
 #AI group: DI Container
 #AI frequency: internal
-#AI signature: private function clear_lifetime_meta(string $abstract): void
+#AI signature: private function clearLifetimeMeta(string $abstract): void
 #AI contract: Clears resolved cache and all lifetime flags for an abstract. Centralizes lifetime transition so bind(), bind_request(), and bind_transient() cannot leave stale request_scoped/transient flags behind when an abstract is rebound with a different lifetime.
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract whose lifetime metadata should be cleared.}]
 #AI side_effects: [Unsets entries in $resolved, $request_scoped, and $transient arrays]
 
-#AI:begin_request
+#AI:beginRequest
 #AI group: Lifecycle
 #AI frequency: internal
-#AI signature: public function begin_request(): void
+#AI signature: public function beginRequest(): void
 #AI contract: Begins a request in worker mode — enables profiler and request_trace if debug. Separated from run() so the worker entrypoint can call it once per request without re-running the full boot sequence.
 #AI side_effects: [Enables profiler and request_trace when app.debug is true]
 
-#AI:end_request
+#AI:endRequest
 #AI group: Lifecycle
 #AI frequency: internal
-#AI signature: public function end_request(): void
+#AI signature: public function endRequest(): void
 #AI contract: Ends a request in worker mode — resets per-request state. Clears user scope and request-scoped DI bindings, then runs the global worker_reset orchestrator.
 #AI side_effects: [Clears user scope; clears request-scoped resolved singletons; disables tracing; runs worker_reset::apply()]
 
-#AI:handle_exception
+#AI:handleException
 #AI group: Lifecycle
 #AI frequency: internal
-#AI signature: public function handle_exception(\Throwable $e): void
+#AI signature: public function handleException(\Throwable $e): void
 #AI contract: Handles an uncaught exception. Used by the global exception handler installed in run(). Renders debug error page when debug_mode is true, otherwise returns 500.
 #AI param_details: [{name: $e | type: \Throwable | required: true | desc: The uncaught exception to handle.}]
 #AI side_effects: [Renders error_page or sends HTTP 500 response]
@@ -1308,17 +1308,17 @@ class App {
 #AI contract: Shuts down process-scoped resources before the worker exits. Closes all pooled database connections and clears the cache facade.
 #AI side_effects: [Resets db connection pool and cache driver]
 
-#AI:is_debug_mode
+#AI:isDebugMode
 #AI group: Lifecycle
 #AI frequency: low
-#AI signature: public function is_debug_mode(): bool
+#AI signature: public function isDebugMode(): bool
 #AI contract: Returns whether debug mode is enabled.
 #AI return_detail: {type: bool | desc: True when app.debug config is enabled.}
 
-#AI:normalize_factory
+#AI:normalizeFactory
 #AI group: DI Container
 #AI frequency: internal
-#AI signature: private function normalize_factory(callable|string $factory): callable
+#AI signature: private function normalizeFactory(callable|string $factory): callable
 #AI contract: Converts a string class name to an auto-wiring factory closure that calls build(). Passes callables through unchanged.
 #AI param_details: [{name: $factory | type: callable|string | required: true | desc: Class name string or callable.}]
 #AI return_detail: {type: callable | desc: Always a callable accepting an app instance.}
@@ -1331,24 +1331,24 @@ class App {
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Fully-qualified class name to instantiate.}]
 #AI throws_details: [{type: \RuntimeException | desc: If a constructor parameter has no binding and no default value.}]
 
-#AI:apply_decorators
+#AI:applyDecorators
 #AI group: DI Container
 #AI frequency: internal
-#AI signature: private function apply_decorators(string $abstract, mixed $service): mixed
+#AI signature: private function applyDecorators(string $abstract, mixed $service): mixed
 #AI contract: Applies registered decorators to a resolved service in ascending priority order, then registration order. Returns the service unchanged when no decorators exist for the abstract.
 #AI param_details: [{name: $abstract | type: string | required: true | desc: Abstract type used to look up decorators.}; {name: $service | type: mixed | required: true | desc: The resolved service to decorate.}]
 #AI return_detail: {type: mixed | desc: The decorated (or original) service.}
 
-#AI:current_extension_priority
+#AI:currentExtensionPriority
 #AI group: Extensions
 #AI frequency: internal
-#AI signature: private function current_extension_priority(): int
+#AI signature: private function currentExtensionPriority(): int
 #AI contract: Returns the priority from the active extension context set by with_extension_context(). Defaults to 100 when no context is active.
 
-#AI:assert_mutable
+#AI:assertMutable
 #AI group: Lifecycle
 #AI frequency: internal
-#AI signature: private function assert_mutable(string $action): void
+#AI signature: private function assertMutable(string $action): void
 #AI contract: Throws LogicException if the app is frozen, preventing post-boot mutation. Logs the violation with the active extension name for diagnostics.
 #AI param_details: [{name: $action | type: string | required: true | desc: Human-readable action name included in the error message and log.}]
 #AI throws_details: [{type: \LogicException | desc: If the app is frozen.}]

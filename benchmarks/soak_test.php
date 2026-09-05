@@ -20,7 +20,7 @@ use skim\view\component_collector;
 use skim\worker\leak_detector;
 use skim\worker\worker_reset;
 
-$app = app::test_instance([
+$app = app::testInstance([
     'app.debug' => false,
     'app.view.default_layout' => null,
     'app.leak_detection' => 'strict',
@@ -77,10 +77,10 @@ $app->router->get('/boom', fn() => throw new \RuntimeException('handler blew up'
 event::on('boot.warm', fn() => null);
 
 $app->boot();
-$app->boot_extensions();
+$app->bootExtensions();
 $app->freeze();
 
-event::capture_boot_snapshot();
+event::captureBootSnapshot();
 leak_detector::configure('strict');
 
 $routes = ['/home', '/user/42', '/event', '/view', '/component'];
@@ -91,7 +91,7 @@ $error_log = [];
 $start = microtime(true);
 
 for ($i = 0; $i < 1000; $i++) {
-    $app->begin_request();
+    $app->beginRequest();
 
     try {
         $uri = $routes[$i % count($routes)];
@@ -109,13 +109,13 @@ for ($i = 0; $i < 1000; $i++) {
         $app->dispatch($req, new response());
     } catch (\Throwable $e) {
         ob_start();
-        $app->handle_exception($e);
+        $app->handleException($e);
         ob_end_clean();
         $errors++;
         $key = get_class($e) . ': ' . $e->getMessage();
         $error_log[$key] = ($error_log[$key] ?? 0) + 1;
     } finally {
-        $app->end_request();
+        $app->endRequest();
     }
 }
 

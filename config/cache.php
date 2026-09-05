@@ -15,7 +15,7 @@ return [
     ],
 
     'file' => [
-        'path' => storage_path('cache'),
+        'path' => storagePath('cache'),
     ],
 
     // fallback: if Redis is unreachable, silently switch to file driver.

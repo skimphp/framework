@@ -4,14 +4,14 @@ use Skim\Dev\Docs\Extractor\ClassExtractor;
 
 describe('class_extractor — basic behavior', function(): void {
 
-    function write_php_fixture(string $code): string {
+    function writePhpFixture(string $code): string {
         $path = sys_get_temp_dir() . '/skim_extractor_test_' . uniqid() . '.php';
         file_put_contents($path, "<?php declare(strict_types=1);\n\n" . $code);
         return $path;
     }
 
     test('extracts class name, namespace and summary from docblock', function(): void {
-        $file = write_php_fixture(<<<'PHP'
+        $file = writePhpFixture(<<<'PHP'
         namespace app\services;
 
         /** Handles user authentication. */
@@ -24,13 +24,13 @@ describe('class_extractor — basic behavior', function(): void {
         unlink($file);
 
         expect($result)->not->toBeNull();
-        expect($result->class_name)->toBe('auth_service');
+        expect($result->className)->toBe('auth_service');
         expect($result->namespace)->toBe('app\services');
         expect($result->summary)->toBe('Handles user authentication.');
     });
 
     test('extracts only public methods', function(): void {
-        $file = write_php_fixture(<<<'PHP'
+        $file = writePhpFixture(<<<'PHP'
         namespace app;
 
         class my_class {
@@ -48,7 +48,7 @@ describe('class_extractor — basic behavior', function(): void {
     });
 
     test('extracts @ai.* tags from method docblocks', function(): void {
-        $file = write_php_fixture(<<<'PHP'
+        $file = writePhpFixture(<<<'PHP'
         namespace app;
 
         class my_service {
@@ -66,11 +66,11 @@ describe('class_extractor — basic behavior', function(): void {
         expect($result->methods)->toHaveCount(1);
         $method = $result->methods[0];
         expect($method->contracts)->toBe(['returns null when not found']);
-        expect($method->non_goals)->toBe(['does not cache']);
+        expect($method->nonGoals)->toBe(['does not cache']);
     });
 
     test('builds correct method signature string', function(): void {
-        $file = write_php_fixture(<<<'PHP'
+        $file = writePhpFixture(<<<'PHP'
         namespace app;
 
         class widget {
@@ -89,7 +89,7 @@ describe('class_extractor — basic behavior', function(): void {
     });
 
     test('returns null for file with no class', function(): void {
-        $file = write_php_fixture('function helper(): void {}');
+        $file = writePhpFixture('function helper(): void {}');
         $result = (new \Skim\Dev\Docs\Extractor\ClassExtractor())->extract($file);
         unlink($file);
         expect($result)->toBeNull();
@@ -111,7 +111,7 @@ describe('class_extractor — basic behavior', function(): void {
     });
 
     test('skips anonymous classes', function(): void {
-        $file = write_php_fixture(<<<'PHP'
+        $file = writePhpFixture(<<<'PHP'
         namespace app;
 
         $obj = new class {
@@ -130,7 +130,7 @@ describe('class_extractor — basic behavior', function(): void {
 // class_extractor — end-to-end fixture tests
 // ---------------------------------------------------------------------------
 
-function find_method(array $methods, string $name) {
+function findMethod(array $methods, string $name) {
     foreach ($methods as $m) {
         if ($m->name === $name) {
             return $m;
@@ -160,7 +160,7 @@ describe('class_extractor — fixture: array_driver', function () {
 
     it('extracts class_name and namespace', function () {
         $result = $this->extractor->extract($this->fixture);
-        expect($result->class_name)->toBe('ArrayDriver')
+        expect($result->className)->toBe('ArrayDriver')
             ->and($result->namespace)->toBe('Skim\\Cache');
     });
 
@@ -181,7 +181,7 @@ describe('class_extractor — fixture: array_driver', function () {
 
     it('builds correct method signature', function () {
         $result = $this->extractor->extract($this->fixture);
-        $get    = find_method($result->methods, 'get');
+        $get    = findMethod($result->methods, 'get');
         expect($get->signature)->toContain('public function get(')
             ->and($get->signature)->toContain('string $key')
             ->and($get->signature)->toContain('mixed $default')
@@ -209,15 +209,15 @@ describe('class_extractor — fixture: cache facade (full #AI block)', function 
 
     it('extracts class-level entry_points as array', function () {
         $result = $this->extractor->extract($this->fixture);
-        expect($result->entry_points)->toContain('remember')
-            ->and($result->entry_points)->toContain('get')
-            ->and($result->entry_points)->toContain('set');
+        expect($result->entryPoints)->toContain('remember')
+            ->and($result->entryPoints)->toContain('get')
+            ->and($result->entryPoints)->toContain('set');
     });
 
     it('extracts class-level config_reads as array', function () {
         $result = $this->extractor->extract($this->fixture);
-        expect($result->config_reads)->toContain('cache.driver')
-            ->and($result->config_reads)->toContain('cache.ttl');
+        expect($result->configReads)->toContain('cache.driver')
+            ->and($result->configReads)->toContain('cache.ttl');
     });
 
     it('extracts class-level invariants as array', function () {
@@ -228,53 +228,53 @@ describe('class_extractor — fixture: cache facade (full #AI block)', function 
 
     it('extracts class-level non_goals as array', function () {
         $result = $this->extractor->extract($this->fixture);
-        expect($result->non_goals)->not->toBeEmpty();
+        expect($result->nonGoals)->not->toBeEmpty();
     });
 
     it('extracts remember() method contracts from #AI lines in docblock', function () {
         $result   = $this->extractor->extract($this->fixture);
-        $remember = find_method($result->methods, 'remember');
+        $remember = findMethod($result->methods, 'remember');
         expect($remember->contracts)->not->toBeEmpty();
         expect(implode(' ', $remember->contracts))->toContain('stores the returned value');
     });
 
     it('extracts remember() param_details field', function () {
         $result   = $this->extractor->extract($this->fixture);
-        $remember = find_method($result->methods, 'remember');
-        expect($remember->param_details)->not->toBeEmpty();
+        $remember = findMethod($result->methods, 'remember');
+        expect($remember->paramDetails)->not->toBeEmpty();
     });
 
     it('extracts flush() warning field', function () {
         $result = $this->extractor->extract($this->fixture);
-        $flush  = find_method($result->methods, 'flush');
+        $flush  = findMethod($result->methods, 'flush');
         expect($flush->warnings)->not->toBeEmpty()
             ->and($flush->warnings[0])->toContain('Prefix is required');
     });
 
-    it('extracts flush_all() warning field', function () {
+    it('extracts flushAll() warning field', function () {
         $result    = $this->extractor->extract($this->fixture);
-        $flush_all = find_method($result->methods, 'flush_all');
+        $flush_all = findMethod($result->methods, 'flushAll');
         expect($flush_all->warnings)->not->toBeEmpty();
     });
 
     it('extracts tags() throws_details field', function () {
         $result = $this->extractor->extract($this->fixture);
-        $tags   = find_method($result->methods, 'tags');
-        expect($tags->throws_details)->not->toBeEmpty();
+        $tags   = findMethod($result->methods, 'tags');
+        expect($tags->throwsDetails)->not->toBeEmpty();
     });
 
     it('extracts set() param_details field', function () {
         $result = $this->extractor->extract($this->fixture);
-        $set    = find_method($result->methods, 'set');
-        expect($set->param_details)->not->toBeEmpty();
+        $set    = findMethod($result->methods, 'set');
+        expect($set->paramDetails)->not->toBeEmpty();
     });
 
     it('private methods are included when documented in detached #AI block', function () {
         $result = $this->extractor->extract($this->fixture);
         $names  = array_map(fn($m) => $m->name, $result->methods);
         // Private architecture methods documented in the detached #AI block ARE included
-        expect($names)->toContain('make_driver')
-            ->and($names)->toContain('resolve_driver');
+        expect($names)->toContain('makeDriver')
+            ->and($names)->toContain('resolveDriver');
     });
 
 });

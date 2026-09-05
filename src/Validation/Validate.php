@@ -117,7 +117,7 @@ class Validate {
                 }
 
                 // String rule — existing apply_rule() path
-                $error = $this->apply_rule((string) $rule_item, $field, $value, $data);
+                $error = $this->applyRule((string) $rule_item, $field, $value, $data);
                 if ($error !== null) {
                     $errors[$field][] = $error;
                     $field_ok = false;
@@ -135,8 +135,8 @@ class Validate {
 
     // --- rule evaluation ---
 
-    private function apply_rule(string $rule_str, string $field, mixed $value, array $data): ?string {
-        [$rule, $param] = array_pad(explode(':', $rule_str, 2), 2, null);
+    private function applyRule(string $ruleStr, string $field, mixed $value, array $data): ?string {
+        [$rule, $param] = array_pad(explode(':', $ruleStr, 2), 2, null);
 
         // Skip optional fields when value absent (empty/null) — unless 'required'
         if ($rule !== 'required' && ($value === null || $value === '')) {
@@ -175,11 +175,11 @@ class Validate {
             'regex'    => !preg_match((string)$param, (string)$value) ? "The {$field} format is invalid." : null,
             'same'     => ($value !== ($data[$param] ?? null)) ? "The {$field} must match {$param}." : null,
             'nullable' => null, // always passes — signals intent
-            default    => $this->apply_custom($rule, $field, $value),
+            default    => $this->applyCustom($rule, $field, $value),
         };
     }
 
-    private function apply_custom(string $rule, string $field, mixed $value): ?string {
+    private function applyCustom(string $rule, string $field, mixed $value): ?string {
         if (!isset($this->custom_rules[$rule])) {
             return null;   // unknown rules silently pass — prevents accidental lockouts
         }
@@ -193,15 +193,15 @@ class Validate {
     /**
      * Casts validated values to their PHP types based on declared rules. #AI:cast
      *
-     * @param array $rule_names Flat list of rule name strings for the field.
+     * @param array $ruleNames Flat list of rule name strings for the field.
      * @param mixed $value      The raw value from input data.
      */
-    private function cast(array $rule_names, mixed $value): mixed {
+    private function cast(array $ruleNames, mixed $value): mixed {
         return match (true) {
-            in_array('int', $rule_names, true)   => \Skim\Helpers\Filter::int($value) ?: $value,
-            in_array('float', $rule_names, true) => \Skim\Helpers\Filter::float($value) ?: $value,
-            in_array('bool', $rule_names, true)  => \Skim\Helpers\Filter::bool($value),
-            in_array('email', $rule_names, true) => \Skim\Helpers\Filter::email($value) ?: $value,
+            in_array('int', $ruleNames, true)   => \Skim\Helpers\Filter::int($value) ?: $value,
+            in_array('float', $ruleNames, true) => \Skim\Helpers\Filter::float($value) ?: $value,
+            in_array('bool', $ruleNames, true)  => \Skim\Helpers\Filter::bool($value),
+            in_array('email', $ruleNames, true) => \Skim\Helpers\Filter::email($value) ?: $value,
             default => $value,
         };
     }
@@ -261,7 +261,7 @@ class Validate {
 #AI:cast
 #AI group: Internal
 #AI frequency: high
-#AI signature: private function cast(array $rule_names, mixed $value): mixed
+#AI signature: private function cast(array $ruleNames, mixed $value): mixed
 #AI contract: Casts validated values to their PHP types based on declared rules. Returns typed value for int, float, bool, email rules; raw value otherwise.
-#AI param_details: [{name: $rule_names | type: array | required: true | desc: Flat list of rule name strings for the field.}; {name: $value | type: mixed | required: true | desc: The raw value from input data.}]
+#AI param_details: [{name: $ruleNames | type: array | required: true | desc: Flat list of rule name strings for the field.}; {name: $value | type: mixed | required: true | desc: The raw value from input data.}]
 #AI return_detail: {type: mixed | desc: Typed value based on rule declarations.}

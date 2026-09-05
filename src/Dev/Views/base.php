@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= htmlspecialchars($page_title ?? 'skim framework', ENT_QUOTES, 'UTF-8') ?></title>
-<?= \Skim\Dev\DevTheme::icon_font() ?>
+<?= \Skim\Dev\DevTheme::iconFont() ?>
 <style>
 <?= \Skim\Dev\DevTheme::css() ?>
 <?= $this->slot('page_css') ?>

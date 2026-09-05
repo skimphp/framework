@@ -28,7 +28,7 @@ if (!is_dir($results_dir)) {
 }
 
 $timestamp = gmdate('Y-m-d\TH-i-s\Z');
-$git       = git_info($root);
+$git       = gitInfo($root);
 $env       = [
     'php_version'  => PHP_VERSION,
     'sapi'         => PHP_SAPI,
@@ -40,7 +40,7 @@ $env       = [
 // Correctness gate (hard pass/fail)
 // ========================================================================
 echo "==> correctness_gate\n";
-$correctness = run_bench_inproc(
+$correctness = runBenchInproc(
     $root . '/benchmarks/correctness_gate.php',
     static function(string $stdout): array {
         $json = json_decode($stdout, true);
@@ -67,7 +67,7 @@ $performance = [];
 
 // --- 1. boot_isolation.php ---
 echo "==> boot_isolation\n";
-$performance['boot_isolation'] = run_bench_inproc(
+$performance['boot_isolation'] = runBenchInproc(
     $root . '/benchmarks/boot_isolation.php',
     static function(string $stdout): array {
         if (!preg_match('/boot_isolation:\s+([\d.]+)\s+ms/', $stdout, $m)) {
@@ -79,7 +79,7 @@ $performance['boot_isolation'] = run_bench_inproc(
 
 // --- 2. cache_hit.php ---
 echo "==> cache_hit\n";
-$performance['cache_hit'] = run_bench_inproc(
+$performance['cache_hit'] = runBenchInproc(
     $root . '/benchmarks/cache_hit.php',
     static function(string $stdout): array {
         if (!preg_match('/cache_hit:\s+([\d.]+)\s+ms per call/', $stdout, $m)) {
@@ -91,7 +91,7 @@ $performance['cache_hit'] = run_bench_inproc(
 
 // --- 3. http_warm.php (existing — 404 route) ---
 echo "==> http_warm\n";
-$performance['http_warm'] = run_bench_cli(
+$performance['http_warm'] = runBenchCli(
     $root . '/benchmarks/http_warm.php',
     [$base_url . '/', (string) $total_requests, (string) $concurrent],
     static function(string $stdout): array {
@@ -112,31 +112,31 @@ $performance['http_warm'] = run_bench_cli(
 
 // --- 4. http_hello.php (Hello World closure) ---
 echo "==> http_hello\n";
-$performance['http_hello'] = run_bench_cli(
+$performance['http_hello'] = runBenchCli(
     $root . '/benchmarks/http_hello.php',
     [$base_url . '/', (string) $total_requests, (string) $concurrent],
     static function(string $stdout): array {
-        return parse_json_line($stdout, 'http_hello') ?? ['error' => 'no_json_line'];
+        return parseJsonLine($stdout, 'http_hello') ?? ['error' => 'no_json_line'];
     },
 );
 
 // --- 5. http_json.php (JSON closure) ---
 echo "==> http_json\n";
-$performance['http_json'] = run_bench_cli(
+$performance['http_json'] = runBenchCli(
     $root . '/benchmarks/http_json.php',
     [$base_url . '/json', (string) $total_requests, (string) $concurrent],
     static function(string $stdout): array {
-        return parse_json_line($stdout, 'http_json') ?? ['error' => 'no_json_line'];
+        return parseJsonLine($stdout, 'http_json') ?? ['error' => 'no_json_line'];
     },
 );
 
 // --- 6. http_hello.php @ concurrency=1 ---
 echo "==> http_hello_1c\n";
-$performance['http_hello_1c'] = run_bench_cli(
+$performance['http_hello_1c'] = runBenchCli(
     $root . '/benchmarks/http_hello.php',
     [$base_url . '/', (string) $total_requests, '1'],
     static function(string $stdout): array {
-        $r = parse_json_line($stdout, 'http_hello') ?? ['error' => 'no_json_line'];
+        $r = parseJsonLine($stdout, 'http_hello') ?? ['error' => 'no_json_line'];
         $r['concurrency'] = 1;
         if (isset($r['avg_ms'])) {
             $r['single_worker_max_rps'] = (int) round(1000.0 / max($r['avg_ms'], 0.001));
@@ -147,11 +147,11 @@ $performance['http_hello_1c'] = run_bench_cli(
 
 // --- 7. http_json.php @ concurrency=1 ---
 echo "==> http_json_1c\n";
-$performance['http_json_1c'] = run_bench_cli(
+$performance['http_json_1c'] = runBenchCli(
     $root . '/benchmarks/http_json.php',
     [$base_url . '/json', (string) $total_requests, '1'],
     static function(string $stdout): array {
-        $r = parse_json_line($stdout, 'http_json') ?? ['error' => 'no_json_line'];
+        $r = parseJsonLine($stdout, 'http_json') ?? ['error' => 'no_json_line'];
         $r['concurrency'] = 1;
         if (isset($r['avg_ms'])) {
             $r['single_worker_max_rps'] = (int) round(1000.0 / max($r['avg_ms'], 0.001));
@@ -187,7 +187,7 @@ $archive_path = $results_dir . '/' . $timestamp . '.json';
 file_put_contents($archive_path, json_encode($record, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 file_put_contents($latest_path, json_encode($record, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 
-append_history($results_dir . '/history.jsonl', $record);
+appendHistory($results_dir . '/history.jsonl', $record);
 
 // --- print human summary ---
 echo "\n";
@@ -237,11 +237,11 @@ exit($correctness_ok ? 0 : 1);
 // helpers
 // ============================================================================
 
-function run_bench_inproc(string $script, callable $parse, array $env_vars = []): array {
+function runBenchInproc(string $script, callable $parse, array $envVars = []): array {
     $stdout = [];
     $rc     = 0;
     $env_prefix = '';
-    foreach ($env_vars as $k => $v) {
+    foreach ($envVars as $k => $v) {
         $env_prefix .= escapeshellarg($k) . '=' . escapeshellarg((string) $v) . ' ';
     }
     exec(sprintf('%sphp %s 2>&1', $env_prefix, escapeshellarg($script)), $stdout, $rc);
@@ -252,7 +252,7 @@ function run_bench_inproc(string $script, callable $parse, array $env_vars = [])
     return $result;
 }
 
-function run_bench_cli(string $script, array $args, callable $parse): array {
+function runBenchCli(string $script, array $args, callable $parse): array {
     $cmd = 'BENCH_JSON=1 php ' . escapeshellarg($script);
     foreach ($args as $a) {
         $cmd .= ' ' . escapeshellarg((string) $a);
@@ -267,11 +267,11 @@ function run_bench_cli(string $script, array $args, callable $parse): array {
     return $result;
 }
 
-function parse_json_line(string $stdout, string $expected_name): ?array {
+function parseJsonLine(string $stdout, string $expectedName): ?array {
     foreach (explode("\n", $stdout) as $line) {
         if (str_starts_with($line, '__JSON__ ')) {
             $payload = json_decode(substr($line, 9), true);
-            if (is_array($payload) && ($payload['name'] ?? null) === $expected_name) {
+            if (is_array($payload) && ($payload['name'] ?? null) === $expectedName) {
                 return $payload;
             }
         }
@@ -279,7 +279,7 @@ function parse_json_line(string $stdout, string $expected_name): ?array {
     return null;
 }
 
-function git_info(string $cwd): array {
+function gitInfo(string $cwd): array {
     $info = [
         'commit'  => null,
         'short'   => null,
@@ -299,7 +299,7 @@ function git_info(string $cwd): array {
     return $info;
 }
 
-function append_history(string $path, array $record): void {
+function appendHistory(string $path, array $record): void {
     $flat = [
         'timestamp'    => $record['timestamp'],
         'commit'       => $record['git']['short'],

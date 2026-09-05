@@ -34,7 +34,7 @@ final class DevView {
     private ?string $active_slot = null;
 
     private function __construct(
-        private readonly string $views_path,
+        private readonly string $viewsPath,
         private readonly array  $data,
     ) {}
 
@@ -53,7 +53,7 @@ final class DevView {
         $path = __DIR__ . '/Views';
         $ctx  = new self($path, $data);
 
-        $html = $ctx->render_file($template);
+        $html = $ctx->renderFile($template);
 
         if ($ctx->layout_name !== null) {
             if (!isset($ctx->slots['content'])) {
@@ -61,7 +61,7 @@ final class DevView {
             }
             $layout       = new self($path, $ctx->data);
             $layout->slots = $ctx->slots;
-            return $layout->render_file($ctx->layout_name);
+            return $layout->renderFile($ctx->layout_name);
         }
 
         return $html;
@@ -77,7 +77,7 @@ final class DevView {
      * @param array  $extra    Additional data merged for this partial only.
      */
     public function include(string $template, array $extra = []): string {
-        return (new self($this->views_path, array_merge($this->data, $extra)))->render_file($template);
+        return (new self($this->viewsPath, array_merge($this->data, $extra)))->renderFile($template);
     }
 
     /**
@@ -134,7 +134,7 @@ final class DevView {
      *
      * Used by dev tool templates to display readable file locations.
      */
-    public static function short_path(string $file): string {
+    public static function shortPath(string $file): string {
         $root = defined('SKIM_ROOT') ? \SKIM_ROOT : dirname(__DIR__, 2);
         $normalized = str_replace('\\', '/', $file);
         $root_norm  = str_replace('\\', '/', rtrim($root, '/'));
@@ -149,7 +149,7 @@ final class DevView {
      *
      * Used by dev tool templates to color-code argument values in stack frames.
      */
-    public static function value_class(string $type): string {
+    public static function valueClass(string $type): string {
         return match ($type) {
             'string'        => 'string',
             'int', 'float'  => 'number',
@@ -161,13 +161,13 @@ final class DevView {
     }
 
     /**
-     * Renders a template file, resolving .php extension and extracting data. #AI:render_file
+     * Renders a template file, resolving .php extension and extracting data. #AI:renderFile
      *
      * @param string $template Template path relative to views root, no extension.
      * @throws \RuntimeException If the template file does not exist.
      */
-    public function render_file(string $template): string {
-        $template_path = $this->views_path . '/' . ltrim($template, '/') . '.php';
+    public function renderFile(string $template): string {
+        $template_path = $this->viewsPath . '/' . ltrim($template, '/') . '.php';
 
         if (!is_file($template_path)) {
             throw new \RuntimeException("Dev view template not found: {$template} ({$template_path})");
@@ -256,10 +256,10 @@ final class DevView {
 #AI param_details: [{name: $name | type: string | required: true | desc: Slot identifier matching a previous start()/end() pair.}]
 #AI return_detail: {type: string | desc: Captured slot HTML or empty string.}
 
-#AI:render_file
+#AI:renderFile
 #AI group: Rendering
 #AI frequency: internal
-#AI signature: public function render_file(string $template): string
+#AI signature: public function renderFile(string $template): string
 #AI contract: Renders a single template file by resolving the .php extension, extracting data as local variables, and including the file within an output buffer.
 #AI param_details: [{name: $template | type: string | required: true | desc: Template path relative to views root, no extension.}]
 #AI return_detail: {type: string | desc: Raw rendered HTML without layout wrapping.}

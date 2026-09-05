@@ -63,8 +63,8 @@ final class Config {
      */
     public static function get(string $key, mixed $default = null): mixed {
         if (!self::$booted) {
-            if (!self::load_compiled_cache()) {
-                self::load(base_path('config'));
+            if (!self::loadCompiledCache()) {
+                self::load(basePath('config'));
             }
         }
 
@@ -124,22 +124,22 @@ final class Config {
     }
 
     /**
-     * Attempts to load config from a pre-compiled PHP array cache. #AI:load_compiled_cache
+     * Attempts to load config from a pre-compiled PHP array cache. #AI:loadCompiledCache
      *
      * WHY: Pure arrays allow OPcache shared-memory hit with zero parse overhead.
      * Returns false when the cache file is missing or stale (dev mode with
      * APP_DEBUG=true and any config file newer than cache), so the caller
      * falls back to scanning the config directory.
      */
-    private static function load_compiled_cache(): bool {
-        $cache_path = storage_path('config_cache/config.php');
+    private static function loadCompiledCache(): bool {
+        $cache_path = storagePath('config_cache/config.php');
         if (!is_file($cache_path)) {
             return false;
         }
 
         $debug = \Skim\Core\Env::get('APP_DEBUG', false);
         if ($debug) {
-            $config_dir = base_path('config');
+            $config_dir = basePath('config');
             $cache_time = filemtime($cache_path);
             foreach (glob($config_dir . '/*.php') ?: [] as $file) {
                 if (filemtime($file) > $cache_time) {
@@ -158,8 +158,8 @@ final class Config {
      */
     public static function all(): array {
         if (!self::$booted) {
-            if (!self::load_compiled_cache()) {
-                self::load(base_path('config'));
+            if (!self::loadCompiledCache()) {
+                self::load(basePath('config'));
             }
         }
         return self::$data;
@@ -231,10 +231,10 @@ final class Config {
 #AI contract: Returns the entire internal config data array as-is. Auto-loads on first call.
 #AI return_detail: {type: array | desc: The full nested config map keyed by filename then array keys.}
 
-#AI:load_compiled_cache
+#AI:loadCompiledCache
 #AI group: Read API
 #AI frequency: internal
-#AI signature: private static function load_compiled_cache(): bool
+#AI signature: private static function loadCompiledCache(): bool
 #AI contract: Attempts to load config from a pre-compiled PHP array cache at storage/config_cache/config.php. Returns false when the cache file is missing or stale (APP_DEBUG=true and any config/*.php file newer than cache). Sets booted flag on success.
 #AI return_detail: {type: bool | desc: True if cache was loaded, false if caller should fall back to load().}
 #AI side_effects: [Populates self::$data from compiled file; Sets self::$booted to true on success]

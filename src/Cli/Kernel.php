@@ -77,17 +77,17 @@ final class Kernel {
      * @return int POSIX exit code.
      */
     public function run(\Skim\Cli\ArgvParser $input): int {
-        $this->agent   = $input->has_flag('agent');
-        $this->quiet   = $this->agent || $input->has_flag('quiet', 'q');
-        $this->no_ansi = $this->agent || $input->has_flag('no-ansi');
+        $this->agent   = $input->hasFlag('agent');
+        $this->quiet   = $this->agent || $input->hasFlag('quiet', 'q');
+        $this->no_ansi = $this->agent || $input->hasFlag('no-ansi');
 
-        if ($input->has_flag('version', 'V')) {
+        if ($input->hasFlag('version', 'V')) {
             echo "SKIM Framework CLI v" . self::VERSION . "\n";
             return 0;
         }
 
         if ($this->no_ansi) {
-            \Skim\Cli\Cli::force_plain(true);
+            \Skim\Cli\Cli::forcePlain(true);
         }
 
         $command_name = $input->command;
@@ -100,7 +100,7 @@ final class Kernel {
             }
 
             if ($command_name === 'help' || $command_name === 'list') {
-                $selected = $this->show_help();
+                $selected = $this->showHelp();
                 if ($selected === null) {
                     return 0;
                 }
@@ -110,15 +110,15 @@ final class Kernel {
 
             if ($this->agent) {
                 fwrite(STDERR, "error\tunknown_command\t{$command_name}\n");
-                $suggestion = $this->closest_command($command_name, array_keys($this->all_commands()));
+                $suggestion = $this->closestCommand($command_name, array_keys($this->allCommands()));
                 if ($suggestion !== null) {
                     fwrite(STDERR, "suggestion\t{$suggestion}\n");
                 }
                 return 1;
             }
 
-            \Skim\Cli\Cli::error_box('Error', "Unknown command: {$command_name}");
-            \Skim\Cli\Cli::did_you_mean($command_name, array_keys($this->all_commands()));
+            \Skim\Cli\Cli::errorBox('Error', "Unknown command: {$command_name}");
+            \Skim\Cli\Cli::didYouMean($command_name, array_keys($this->allCommands()));
             return 1;
         }
     }
@@ -131,7 +131,7 @@ final class Kernel {
      * @param string $name Command name from argv.
      */
     private function resolve(string $name): ?string {
-        $all = $this->all_commands();
+        $all = $this->allCommands();
 
         if (isset($all[$name])) {
             return $all[$name];
@@ -146,11 +146,11 @@ final class Kernel {
     }
 
     /**
-     * Merges built-in commands with user-defined ones from config/app.php. #AI:all_commands
+     * Merges built-in commands with user-defined ones from config/app.php. #AI:allCommands
      *
      * Includes dev-only commands (docs, mcp:serve) when SKIM_DEV is true.
      */
-    private function all_commands(): array {
+    private function allCommands(): array {
         $commands = self::COMMANDS;
         if (defined('SKIM_DEV') && SKIM_DEV) {
             $commands = array_merge($commands, self::DEV_COMMANDS);
@@ -166,23 +166,23 @@ final class Kernel {
      * renders error boxes. In debug mode, includes stack trace.
      *
      * @param string      $class        FQCN of the command class.
-     * @param string      $command_name Registered command name.
+     * @param string      $commandName Registered command name.
      * @param \Skim\Cli\ArgvParser $input Parsed CLI input.
      */
-    private function dispatch(string $class, string $command_name, \Skim\Cli\ArgvParser $input): int {
+    private function dispatch(string $class, string $commandName, \Skim\Cli\ArgvParser $input): int {
         /** @var \Skim\Cli\Command $cmd */
         $cmd = new $class();
-        $cmd->set_input($input->args, $input->flags);
+        $cmd->setInput($input->args, $input->flags);
 
         if (!$this->quiet) {
-            $this->print_header();
+            $this->printHeader();
         }
 
         $start_time = microtime(true);
 
         try {
             $code = $cmd->handle();
-            if (\Skim\Cli\Cli::is_tty() && !$this->quiet) {
+            if (\Skim\Cli\Cli::isTty() && !$this->quiet) {
                 \Skim\Cli\Cli::newline();
                 \Skim\Cli\Cli::duration($start_time);
             }
@@ -194,7 +194,7 @@ final class Kernel {
                 return 1;
             }
 
-            \Skim\Cli\Cli::error_box('Error', $e->getMessage());
+            \Skim\Cli\Cli::errorBox('Error', $e->getMessage());
             if (\Skim\Core\Config::get('app.debug')) {
                 \Skim\Cli\Cli::muted($e->getTraceAsString());
             }
@@ -203,28 +203,28 @@ final class Kernel {
     }
 
     /**
-     * Shows help: interactive TUI on TTY, static listing otherwise. #AI:show_help
+     * Shows help: interactive TUI on TTY, static listing otherwise. #AI:showHelp
      *
      * Returns a selected command name for re-dispatch, or null to exit.
      */
-    private function show_help(): ?string {
-        $groups = $this->build_groups();
+    private function showHelp(): ?string {
+        $groups = $this->buildGroups();
 
         if ($this->agent) {
-            $this->print_agent_help($groups);
+            $this->printAgentHelp($groups);
             return null;
         }
 
-        $is_interactive = \Skim\Cli\Cli::is_tty() && !$this->no_ansi && !$this->quiet;
+        $is_interactive = \Skim\Cli\Cli::isTty() && !$this->no_ansi && !$this->quiet;
 
         if ($is_interactive) {
-            $this->print_header();
+            $this->printHeader();
             $menu = new \Skim\Cli\InteractiveMenu($groups);
             return $menu->run();
         }
 
         if (!$this->quiet) {
-            $this->print_header();
+            $this->printHeader();
         }
 
         \Skim\Cli\Cli::section('Available commands:');
@@ -242,7 +242,7 @@ final class Kernel {
     /**
      * Prints compact tab-separated help for automation and LLM agents.
      */
-    private function print_agent_help(array $groups): void {
+    private function printAgentHelp(array $groups): void {
         \Skim\Cli\Cli::line("command\tusage\tdescription");
         foreach ($groups as $group) {
             foreach ($group['commands'] as $command) {
@@ -254,7 +254,7 @@ final class Kernel {
     /**
      * Returns the closest command suggestion, or null when no close match exists.
      */
-    private function closest_command(string $input, array $candidates): ?string {
+    private function closestCommand(string $input, array $candidates): ?string {
         $best = null;
         $best_dist = 4;
         foreach ($candidates as $candidate) {
@@ -268,10 +268,10 @@ final class Kernel {
     }
 
     /**
-     * Builds ordered command groups for display from all registered commands. #AI:build_groups
+     * Builds ordered command groups for display from all registered commands. #AI:buildGroups
      */
-    private function build_groups(): array {
-        $all = $this->all_commands();
+    private function buildGroups(): array {
+        $all = $this->allCommands();
         $grouped = [];
 
         foreach ($all as $name => $class) {
@@ -280,15 +280,15 @@ final class Kernel {
             }
             /** @var \Skim\Cli\Command $cmd */
             $cmd = new $class();
-            $cmd->configure_for_name($name);
+            $cmd->configureForName($name);
 
-            $group_key   = $cmd->get_group();
+            $group_key   = $cmd->getGroup();
             $group_label = self::GROUP_ORDER[$group_key] ?? ucfirst($group_key);
 
             $grouped[$group_label][] = [
                 'name'        => $name,
-                'usage'       => $cmd->get_usage(),
-                'description' => $cmd->get_description(),
+                'usage'       => $cmd->getUsage(),
+                'description' => $cmd->getDescription(),
             ];
         }
 
@@ -313,9 +313,9 @@ final class Kernel {
     }
 
     /**
-     * Prints the SKIM header banner with logo and environment metadata. #AI:print_header
+     * Prints the SKIM header banner with logo and environment metadata. #AI:printHeader
      */
-    private function print_header(): void {
+    private function printHeader(): void {
         \Skim\Cli\Cli::header(
             self::VERSION,
             PHP_VERSION,
@@ -365,37 +365,37 @@ final class Kernel {
 #AI param_details: [{name: $name | type: string | required: true | desc: Command name from argv.}]
 #AI return_detail: {type: ?string | desc: FQCN of the command class, or null if not registered.}
 
-#AI:all_commands
+#AI:allCommands
 #AI group: Command Resolution
 #AI frequency: internal
-#AI signature: private function all_commands(): array
+#AI signature: private function allCommands(): array
 #AI contract: Merges built-in COMMANDS with user-defined commands from config/app.php.
 #AI return_detail: {type: array | desc: Merged command registry (name => FQCN).}
 
 #AI:dispatch
 #AI group: Dispatch
 #AI frequency: internal
-#AI signature: private function dispatch(string $class, string $command_name, argv_parser $input): int
+#AI signature: private function dispatch(string $class, string $commandName, argv_parser $input): int
 #AI contract: Instantiates, configures, and dispatches a resolved command class. Prints header, records timing, catches exceptions.
-#AI param_details: [{name: $class | type: string | required: true | desc: FQCN of the command class.}; {name: $command_name | type: string | required: true | desc: Registered command name.}; {name: $input | type: argv_parser | required: true | desc: Parsed CLI input.}]
+#AI param_details: [{name: $class | type: string | required: true | desc: FQCN of the command class.}; {name: $commandName | type: string | required: true | desc: Registered command name.}; {name: $input | type: argv_parser | required: true | desc: Parsed CLI input.}]
 #AI return_detail: {type: int | desc: Exit code from command handle(), or 1 on exception.}
 
-#AI:show_help
+#AI:showHelp
 #AI group: Help Display
 #AI frequency: internal
-#AI signature: private function show_help(): ?string
+#AI signature: private function showHelp(): ?string
 #AI contract: Shows interactive TUI help on TTY or static command listing otherwise. Returns selected command name for re-dispatch or null to exit.
 #AI return_detail: {type: ?string | desc: Selected command name for re-dispatch, or null to exit.}
 
-#AI:build_groups
+#AI:buildGroups
 #AI group: Help Display
 #AI frequency: internal
-#AI signature: private function build_groups(): array
+#AI signature: private function buildGroups(): array
 #AI contract: Builds ordered command groups from all registered commands, sorted by GROUP_ORDER.
 #AI return_detail: {type: array | desc: Array of group records with label and commands keys.}
 
-#AI:print_header
+#AI:printHeader
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private function print_header(): void
+#AI signature: private function printHeader(): void
 #AI contract: Prints the SKIM header banner with logo and environment metadata via cli::header().

@@ -69,7 +69,7 @@ final class ProgressBar {
         echo "\n\n";
         
         $elapsed = round(microtime(true) - $this->started_at, 2);
-        $is_plain = !self::is_tty();
+        $is_plain = !self::isTty();
         
         if ($is_plain) {
             echo "✔ {$msg} in {$elapsed}s\n";
@@ -82,7 +82,7 @@ final class ProgressBar {
      * Renders the current state of the bar to stdout using carriage return. #AI:render
      */
     private function render(): void {
-        $is_plain = !self::is_tty();
+        $is_plain = !self::isTty();
         if ($is_plain) {
             if ($this->total > 0) {
                 $pct = (int) (($this->current / $this->total) * 100);
@@ -112,9 +112,9 @@ final class ProgressBar {
     }
 
     /**
-     * Returns true when stdout is connected to an interactive terminal. #AI:is_tty
+     * Returns true when stdout is connected to an interactive terminal. #AI:isTty
      */
-    private static function is_tty(): bool {
+    private static function isTty(): bool {
         if (function_exists('stream_isatty') && @stream_isatty(STDOUT)) {
             return true;
         }
@@ -173,8 +173,8 @@ final class ProgressBar {
 #AI signature: private function render(): void
 #AI contract: Renders the current state to stdout using carriage return for in-place updates. Switches between bar and spinner based on total.
 
-#AI:is_tty
+#AI:isTty
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private static function is_tty(): bool
+#AI signature: private static function isTty(): bool
 #AI contract: Returns true when stdout is connected to an interactive terminal.

@@ -5,9 +5,9 @@ use Skim\Core\Response;
 use Skim\Realtime\Datastar;
 use Skim\Realtime\Sse;
 
-function stream_subprocess(string $php_code): string {
+function streamSubprocess(string $phpCode): string {
     $proc = proc_open(
-        ['php', '-r', $php_code],
+        ['php', '-r', $phpCode],
         [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
         $pipes
     );
@@ -31,7 +31,7 @@ describe('response::stream() driver resolution', function(): void {
             });
             echo $received;
         ';
-        expect(stream_subprocess($code))->toBe(\Skim\Realtime\Sse::class);
+        expect(streamSubprocess($code))->toBe(\Skim\Realtime\Sse::class);
     });
 
     test('resolves a driver from the container when driver arg is given', function(): void {
@@ -45,7 +45,7 @@ describe('response::stream() driver resolution', function(): void {
             }, driver: \Skim\Realtime\Contract\ElementPatcher::class);
             echo $received;
         ';
-        expect(stream_subprocess($code))->toBe(\Skim\Realtime\Datastar::class);
+        expect(streamSubprocess($code))->toBe(\Skim\Realtime\Datastar::class);
     });
 
     test('resolves a driver from config when no driver arg is given', function(): void {
@@ -59,7 +59,7 @@ describe('response::stream() driver resolution', function(): void {
             });
             echo $received;
         ';
-        expect(stream_subprocess($code))->toBe(\Skim\Realtime\Datastar::class);
+        expect(streamSubprocess($code))->toBe(\Skim\Realtime\Datastar::class);
     });
 
 });

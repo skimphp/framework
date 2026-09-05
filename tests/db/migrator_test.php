@@ -7,13 +7,13 @@ use Skim\Db\Migration;
 // Creates temporary migration files on disk, runs them against SQLite :memory:.
 // Cleaned up after each test.
 
-function make_migration_dir(): string {
+function makeMigrationDir(): string {
     $dir = sys_get_temp_dir() . '/skim_mig_' . uniqid();
     mkdir($dir);
     return $dir;
 }
 
-function write_migration(string $dir, string $name, string $up, string $down): string {
+function writeMigration(string $dir, string $name, string $up, string $down): string {
     $file    = $dir . '/' . $name . '.php';
     $content = <<<PHP
     <?php
@@ -26,16 +26,16 @@ function write_migration(string $dir, string $name, string $up, string $down): s
     return $file;
 }
 
-function setup_migrator_db(): void {
+function setupMigratorDb(): void {
     \Skim\Db\Db::connect('default', ['driver' => 'sqlite', 'database' => ':memory:']);
 }
 
 describe('migrator::run()', function(): void {
 
     test('runs pending migrations and records them in _migrations table', function(): void {
-        setup_migrator_db();
-        $dir = make_migration_dir();
-        write_migration($dir, '2024_01_01_000001_create_posts',
+        setupMigratorDb();
+        $dir = makeMigrationDir();
+        writeMigration($dir, '2024_01_01_000001_create_posts',
             'CREATE TABLE posts (id INTEGER PRIMARY KEY)',
             'DROP TABLE posts',
         );
@@ -55,9 +55,9 @@ describe('migrator::run()', function(): void {
     });
 
     test('is idempotent — already-run migrations are skipped', function(): void {
-        setup_migrator_db();
-        $dir = make_migration_dir();
-        write_migration($dir, '2024_01_01_000001_create_tags',
+        setupMigratorDb();
+        $dir = makeMigrationDir();
+        writeMigration($dir, '2024_01_01_000001_create_tags',
             'CREATE TABLE tags (id INTEGER PRIMARY KEY)',
             'DROP TABLE tags',
         );
@@ -73,8 +73,8 @@ describe('migrator::run()', function(): void {
     });
 
     test('returns empty array when no migration files present', function(): void {
-        setup_migrator_db();
-        $dir = make_migration_dir();
+        setupMigratorDb();
+        $dir = makeMigrationDir();
         $mig = new \Skim\Db\Migrator($dir);
         expect($mig->run())->toBeEmpty();
         rmdir($dir);
@@ -85,9 +85,9 @@ describe('migrator::run()', function(): void {
 describe('migrator::down()', function(): void {
 
     test('rolls back last batch', function(): void {
-        setup_migrator_db();
-        $dir = make_migration_dir();
-        write_migration($dir, '2024_01_01_000001_create_orders',
+        setupMigratorDb();
+        $dir = makeMigrationDir();
+        writeMigration($dir, '2024_01_01_000001_create_orders',
             'CREATE TABLE orders (id INTEGER PRIMARY KEY)',
             'DROP TABLE orders',
         );
@@ -107,8 +107,8 @@ describe('migrator::down()', function(): void {
     });
 
     test('returns empty array when nothing to roll back', function(): void {
-        setup_migrator_db();
-        $dir = make_migration_dir();
+        setupMigratorDb();
+        $dir = makeMigrationDir();
         $mig = new \Skim\Db\Migrator($dir);
         expect($mig->down())->toBeEmpty();
         rmdir($dir);
@@ -119,13 +119,13 @@ describe('migrator::down()', function(): void {
 describe('migrator::status()', function(): void {
 
     test('reports pending and applied status for each migration', function(): void {
-        setup_migrator_db();
-        $dir = make_migration_dir();
-        write_migration($dir, '2024_01_01_000001_create_items',
+        setupMigratorDb();
+        $dir = makeMigrationDir();
+        writeMigration($dir, '2024_01_01_000001_create_items',
             'CREATE TABLE items (id INTEGER PRIMARY KEY)',
             'DROP TABLE items',
         );
-        write_migration($dir, '2024_01_01_000002_create_cats',
+        writeMigration($dir, '2024_01_01_000002_create_cats',
             'CREATE TABLE cats (id INTEGER PRIMARY KEY)',
             'DROP TABLE cats',
         );

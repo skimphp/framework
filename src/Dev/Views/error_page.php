@@ -138,7 +138,7 @@ $e = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
             </div>
             <div class="frame-subtitle">
               <?php if ($f['file'] !== ''): ?>
-              <span class="path"><?= $e(\Skim\Dev\DevView::short_path($f['file'])) ?></span><span class="colon">:</span><span class="line"><?= (int)$f['line'] ?></span>
+              <span class="path"><?= $e(\Skim\Dev\DevView::shortPath($f['file'])) ?></span><span class="colon">:</span><span class="line"><?= (int)$f['line'] ?></span>
               <?php else: ?>
               <span style="color:var(--muted)">—</span>
               <?php endif ?>
@@ -160,7 +160,7 @@ $e = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
                 <div class="arg-idx">#<?= (int)$arg['idx'] ?></div>
                 <div class="arg-value-wrap">
                   <div>
-                    <span class="arg-type-badge <?= $e(\Skim\Dev\DevView::value_class($arg['type'])) ?>"><?= $e($arg['type']) ?><?= isset($arg['object_id']) ? ' ' . $e($arg['object_id']) : '' ?></span>
+                    <span class="arg-type-badge <?= $e(\Skim\Dev\DevView::valueClass($arg['type'])) ?>"><?= $e($arg['type']) ?><?= isset($arg['object_id']) ? ' ' . $e($arg['object_id']) : '' ?></span>
                   </div>
                   <?php if (!empty($arg['props'])): ?>
                   <div class="obj-props">
@@ -208,7 +208,7 @@ $e = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
               <span class="cls"><?= $e($f['class']) ?></span><span class="op">::</span><span class="fn"><?= $e($f['function']) ?></span>()
             </div>
             <div class="frame-subtitle">
-              <span class="path"><?= $e(\Skim\Dev\DevView::short_path($f['file'])) ?></span><span class="colon">:</span><span class="line"><?= (int)$f['line'] ?></span>
+              <span class="path"><?= $e(\Skim\Dev\DevView::shortPath($f['file'])) ?></span><span class="colon">:</span><span class="line"><?= (int)$f['line'] ?></span>
             </div>
           </div>
           <span class="frame-context mw">Request → Response</span>
@@ -245,7 +245,7 @@ $e = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
                 <?php endif ?>
               </div>
               <div class="frame-subtitle">
-                <span class="path"><?= $e(\Skim\Dev\DevView::short_path($f['file'])) ?></span><span class="colon">:</span><span class="line"><?= (int)$f['line'] ?></span>
+                <span class="path"><?= $e(\Skim\Dev\DevView::shortPath($f['file'])) ?></span><span class="colon">:</span><span class="line"><?= (int)$f['line'] ?></span>
               </div>
             </div>
           </div>

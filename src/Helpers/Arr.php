@@ -11,7 +11,7 @@ namespace Skim\Helpers;
  *
  * Example:
  *   arr::find(['id' => 5], $users);           // first user with id=5
- *   arr::map_by('id', $users);                // [5 => user, 6 => user, ...]
+ *   arr::mapBy('id', $users);                // [5 => user, 6 => user, ...]
  *   arr::pluck('name', $users);               // ['John', 'Jane', ...]
  *
  * Testing: All methods are pure functions — test directly, no mocking needed.
@@ -36,14 +36,14 @@ final class Arr {
     }
 
     /**
-     * Returns all elements matching a key=>value pair or callable. #AI:find_all
+     * Returns all elements matching a key=>value pair or callable. #AI:findAll
      *
      * Unlike find() which returns only the first match, this returns all matches.
      *
      * @param array|callable $criteria ['col' => 'val'] pair or predicate function.
      * @param array          $items    Array to filter.
      */
-    public static function find_all(array|callable $criteria, array $items): array {
+    public static function findAll(array|callable $criteria, array $items): array {
         if (is_callable($criteria)) {
             return array_values(array_filter($items, $criteria));
         }
@@ -52,15 +52,15 @@ final class Arr {
     }
 
     /**
-     * Re-indexes an array by a column value — last-write-wins on collision. #AI:map_by
+     * Re-indexes an array by a column value — last-write-wins on collision. #AI:mapBy
      *
      * Example:
-     *   arr::map_by('id', [['id'=>5,'name'=>'J']]); // [5 => ['id'=>5,'name'=>'J']]
+     *   arr::mapBy('id', [['id'=>5,'name'=>'J']]); // [5 => ['id'=>5,'name'=>'J']]
      *
      * @param string $key   Column to use as the new key.
      * @param array  $items Array of arrays or objects.
      */
-    public static function map_by(string $key, array $items): array {
+    public static function mapBy(string $key, array $items): array {
         $result = [];
         foreach ($items as $item) {
             $k          = is_array($item) ? $item[$key] : $item->$key;
@@ -70,16 +70,16 @@ final class Arr {
     }
 
     /**
-     * Maps two columns into key→value pairs. #AI:map_col
+     * Maps two columns into key→value pairs. #AI:mapCol
      *
      * Example:
-     *   arr::map_col('id', 'name', $rows); // [5 => 'John', 6 => 'Jane']
+     *   arr::mapCol('id', 'name', $rows); // [5 => 'John', 6 => 'Jane']
      *
      * @param string $key   Column for the resulting array key.
      * @param string $val   Column for the resulting array value.
      * @param array  $items Array of arrays or objects.
      */
-    public static function map_col(string $key, string $val, array $items): array {
+    public static function mapCol(string $key, string $val, array $items): array {
         $result = [];
         foreach ($items as $item) {
             $k = is_array($item) ? $item[$key] : $item->$key;
@@ -103,13 +103,13 @@ final class Arr {
     }
 
     /**
-     * Filters items where a column equals a value, re-indexed. #AI:filter_by
+     * Filters items where a column equals a value, re-indexed. #AI:filterBy
      *
      * @param string $col   Column to match.
      * @param mixed  $val   Value to match (strict ===).
      * @param array  $items Array of arrays or objects.
      */
-    public static function filter_by(string $col, mixed $val, array $items): array {
+    public static function filterBy(string $col, mixed $val, array $items): array {
         return array_values(array_filter($items, fn($item) => (is_array($item) ? $item[$col] : $item->$col) === $val));
     }
 
@@ -136,7 +136,7 @@ final class Arr {
     }
 
     /**
-     * Creates a double-key index: result[k1][k2] = item. #AI:map_nested
+     * Creates a double-key index: result[k1][k2] = item. #AI:mapNested
      *
      * Last-write-wins on key collision at the second level.
      *
@@ -144,7 +144,7 @@ final class Arr {
      * @param string $key2  Second-level key column.
      * @param array  $items Array of arrays or objects.
      */
-    public static function map_nested(string $key1, string $key2, array $items): array {
+    public static function mapNested(string $key1, string $key2, array $items): array {
         $result = [];
         foreach ($items as $item) {
             $k1 = is_array($item) ? $item[$key1] : $item->$key1;
@@ -155,7 +155,7 @@ final class Arr {
     }
 
     /**
-     * Creates a triple-key index: result[k1][k2][] = item (appends). #AI:map_keys
+     * Creates a triple-key index: result[k1][k2][] = item (appends). #AI:mapKeys
      *
      * Unlike map_nested, appends to an array at the second level instead of overwriting.
      *
@@ -163,7 +163,7 @@ final class Arr {
      * @param string $key2  Second-level key column.
      * @param array  $items Array of arrays or objects.
      */
-    public static function map_keys(string $key1, string $key2, array $items): array {
+    public static function mapKeys(string $key1, string $key2, array $items): array {
         $result = [];
         foreach ($items as $item) {
             $k1 = is_array($item) ? $item[$key1] : $item->$key1;
@@ -202,14 +202,14 @@ final class Arr {
     }
 
     /**
-     * Picks a random key weighted by values. #AI:weighted_pick
+     * Picks a random key weighted by values. #AI:weightedPick
      *
      * Example:
-     *   arr::weighted_pick(['red' => 80, 'blue' => 20]); // 'red' ~80% of the time
+     *   arr::weightedPick(['red' => 80, 'blue' => 20]); // 'red' ~80% of the time
      *
      * @param array $weights Associative array of key => weight.
      */
-    public static function weighted_pick(array $weights): string|int {
+    public static function weightedPick(array $weights): string|int {
         $rand = random_int(1, (int) array_sum($weights));
         $sum  = 0;
         foreach ($weights as $key => $weight) {
@@ -222,19 +222,19 @@ final class Arr {
     }
 
     /**
-     * Returns a human-readable string dump of an array for CLI/logs. #AI:to_string
+     * Returns a human-readable string dump of an array for CLI/logs. #AI:toString
      *
      * No HTML output — safe for terminal and log file use.
      *
      * @param array $data  Array to dump.
      * @param int   $depth Current indentation depth (internal recursion).
      */
-    public static function to_string(array $data, int $depth = 0): string {
+    public static function toString(array $data, int $depth = 0): string {
         $indent = str_repeat('  ', $depth);
         $out    = "[\n";
         foreach ($data as $k => $v) {
             $out .= $indent . '  ' . var_export($k, true) . ' => ';
-            $out .= is_array($v) ? self::to_string($v, $depth + 1) : var_export($v, true) . ",\n";
+            $out .= is_array($v) ? self::toString($v, $depth + 1) : var_export($v, true) . ",\n";
         }
         return $out . $indent . "],\n";
     }
@@ -275,26 +275,26 @@ final class Arr {
 #AI param_details: [{name: $criteria | type: array|callable | required: true | desc: ['col' => 'val'] shorthand or predicate function.}; {name: $items | type: array | required: true | desc: Array to search.}]
 #AI return_detail: {type: mixed | desc: First matching element or null.}
 
-#AI:find_all
+#AI:findAll
 #AI group: Search
 #AI frequency: medium
-#AI signature: public static function find_all(array|callable $criteria, array $items): array
+#AI signature: public static function findAll(array|callable $criteria, array $items): array
 #AI contract: Returns all elements matching a key=>value pair or callable. Re-indexes the result.
 #AI param_details: [{name: $criteria | type: array|callable | required: true | desc: ['col' => 'val'] shorthand or predicate function.}; {name: $items | type: array | required: true | desc: Array to filter.}]
 #AI return_detail: {type: array | desc: All matching elements, re-indexed.}
 
-#AI:map_by
+#AI:mapBy
 #AI group: Indexing
 #AI frequency: high
-#AI signature: public static function map_by(string $key, array $items): array
+#AI signature: public static function mapBy(string $key, array $items): array
 #AI contract: Re-indexes an array by a column value. Last-write-wins on key collision.
 #AI param_details: [{name: $key | type: string | required: true | desc: Column to use as the new key.}; {name: $items | type: array | required: true | desc: Array of arrays or objects.}]
 #AI return_detail: {type: array | desc: Associative array keyed by column value.}
 
-#AI:map_col
+#AI:mapCol
 #AI group: Indexing
 #AI frequency: high
-#AI signature: public static function map_col(string $key, string $val, array $items): array
+#AI signature: public static function mapCol(string $key, string $val, array $items): array
 #AI contract: Maps two columns into key→value pairs.
 #AI param_details: [{name: $key | type: string | required: true | desc: Column for resulting key.}; {name: $val | type: string | required: true | desc: Column for resulting value.}; {name: $items | type: array | required: true | desc: Array of arrays or objects.}]
 #AI return_detail: {type: array | desc: Key→value associative array.}
@@ -307,10 +307,10 @@ final class Arr {
 #AI param_details: [{name: $key | type: string | required: true | desc: Column to extract.}; {name: $items | type: array | required: true | desc: Array of arrays.}]
 #AI return_detail: {type: array | desc: Flat list of column values.}
 
-#AI:filter_by
+#AI:filterBy
 #AI group: Search
 #AI frequency: medium
-#AI signature: public static function filter_by(string $col, mixed $val, array $items): array
+#AI signature: public static function filterBy(string $col, mixed $val, array $items): array
 #AI contract: Filters items where column equals value (strict ===). Returns re-indexed array.
 #AI param_details: [{name: $col | type: string | required: true | desc: Column to match.}; {name: $val | type: mixed | required: true | desc: Value to match.}; {name: $items | type: array | required: true | desc: Array to filter.}]
 #AI return_detail: {type: array | desc: Filtered and re-indexed array.}
@@ -331,18 +331,18 @@ final class Arr {
 #AI param_details: [{name: $items | type: array | required: true | desc: Input array.}]
 #AI return_detail: {type: mixed | desc: Last element or null.}
 
-#AI:map_nested
+#AI:mapNested
 #AI group: Indexing
 #AI frequency: medium
-#AI signature: public static function map_nested(string $key1, string $key2, array $items): array
+#AI signature: public static function mapNested(string $key1, string $key2, array $items): array
 #AI contract: Creates a double-key index: result[k1][k2] = item. Last-write-wins at second level.
 #AI param_details: [{name: $key1 | type: string | required: true | desc: First-level key column.}; {name: $key2 | type: string | required: true | desc: Second-level key column.}; {name: $items | type: array | required: true | desc: Array of arrays or objects.}]
 #AI return_detail: {type: array | desc: Two-level nested associative array.}
 
-#AI:map_keys
+#AI:mapKeys
 #AI group: Indexing
 #AI frequency: medium
-#AI signature: public static function map_keys(string $key1, string $key2, array $items): array
+#AI signature: public static function mapKeys(string $key1, string $key2, array $items): array
 #AI contract: Creates a triple-key index: result[k1][k2][] = item. Appends at second level (not overwrites).
 #AI param_details: [{name: $key1 | type: string | required: true | desc: First-level key column.}; {name: $key2 | type: string | required: true | desc: Second-level key column.}; {name: $items | type: array | required: true | desc: Array of arrays or objects.}]
 #AI return_detail: {type: array | desc: Two-level nested array with appended lists.}
@@ -355,18 +355,18 @@ final class Arr {
 #AI param_details: [{name: $values | type: array | required: true | desc: Associative array of numeric values.}]
 #AI return_detail: {type: array | desc: Normalized values summing to 100.}
 
-#AI:weighted_pick
+#AI:weightedPick
 #AI group: Aggregation
 #AI frequency: low
-#AI signature: public static function weighted_pick(array $weights): string|int
+#AI signature: public static function weightedPick(array $weights): string|int
 #AI contract: Picks a random key weighted by values. Uses random_int() for cryptographic randomness.
 #AI param_details: [{name: $weights | type: array | required: true | desc: Associative array of key => weight.}]
 #AI return_detail: {type: string|int | desc: The randomly selected key.}
 
-#AI:to_string
+#AI:toString
 #AI group: Debug
 #AI frequency: low
-#AI signature: public static function to_string(array $data, int $depth = 0): string
+#AI signature: public static function toString(array $data, int $depth = 0): string
 #AI contract: Returns a human-readable string dump of an array. No HTML — safe for CLI and log files.
 #AI param_details: [{name: $data | type: array | required: true | desc: Array to dump.}; {name: $depth | type: int | required: false | desc: Internal recursion depth.}]
 #AI return_detail: {type: string | desc: Formatted string representation.}

@@ -13,7 +13,7 @@ namespace Skim\Queue;
  *   class send_email_job extends base_job {
  *       public function __construct(private readonly int $user_id) {}
  *       public function handle(): void {
- *           $user = user::find_or_fail($this->user_id);
+ *           $user = user::findOrFail($this->user_id);
  *           mailer::send($user->email, 'welcome');
  *       }
  *   }

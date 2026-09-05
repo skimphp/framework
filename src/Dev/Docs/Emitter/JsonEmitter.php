@@ -30,24 +30,24 @@ class JsonEmitter {
      *   (new json_emitter())->emit($classes, 'build/llm.json');
      *
      * @param \Skim\Dev\Docs\Value\ExtractedClass[] $classes Extracted class records to serialize.
-     * @param string            $output_path          Absolute or relative path for the JSON file.
-     * @param array             $capability_map       Extension capability details, keyed by capability name.
-     * @param string[]          $installed_extensions List of installed extension names.
+     * @param string            $outputPath          Absolute or relative path for the JSON file.
+     * @param array             $capabilityMap       Extension capability details, keyed by capability name.
+     * @param string[]          $installedExtensions List of installed extension names.
      *
      * @throws \RuntimeException If json_encode fails or the file cannot be written.
      */
-    public function emit(array $classes, string $output_path, array $capability_map = [], array $installed_extensions = []): void {
+    public function emit(array $classes, string $outputPath, array $capabilityMap = [], array $installedExtensions = []): void {
         $data = [
             'generated_at' => date('c'),
-            'classes'      => array_map(fn(\Skim\Dev\Docs\Value\ExtractedClass $c) => $c->to_array(), $classes),
+            'classes'      => array_map(fn(\Skim\Dev\Docs\Value\ExtractedClass $c) => $c->toArray(), $classes),
         ];
 
-        if ($capability_map !== []) {
-            $data['capabilities'] = $capability_map;
+        if ($capabilityMap !== []) {
+            $data['capabilities'] = $capabilityMap;
         }
 
-        if ($installed_extensions !== []) {
-            $data['extensions'] = ['installed' => $installed_extensions];
+        if ($installedExtensions !== []) {
+            $data['extensions'] = ['installed' => $installedExtensions];
         }
 
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -55,13 +55,13 @@ class JsonEmitter {
             throw new \RuntimeException('json_emitter: json_encode failed: ' . json_last_error_msg());
         }
 
-        $dir = dirname($output_path);
+        $dir = dirname($outputPath);
         if (!is_dir($dir)) {
             mkdir($dir, 0755, recursive: true);
         }
 
-        if (file_put_contents($output_path, $json) === false) {
-            throw new \RuntimeException("json_emitter: cannot write to {$output_path}");
+        if (file_put_contents($outputPath, $json) === false) {
+            throw new \RuntimeException("json_emitter: cannot write to {$outputPath}");
         }
     }
 
@@ -116,9 +116,9 @@ class JsonEmitter {
 #AI:emit
 #AI group: Serialization
 #AI frequency: high
-#AI signature: public function emit(array $classes, string $output_path, array $capability_map = [], array $installed_extensions = []): void
+#AI signature: public function emit(array $classes, string $outputPath, array $capabilityMap = [], array $installedExtensions = []): void
 #AI contract: Serializes extracted_class[] to pretty-printed JSON at the given path. Creates parent directories if needed. Optionally includes extension capability data and installed extension names as top-level sections.
-#AI param_details: [{name: $classes | type: extracted_class[] | required: true | desc: Class records to serialize.}; {name: $output_path | type: string | required: true | desc: Filesystem path for the output JSON file.}; {name: $capability_map | type: array | required: false | desc: Extension capability details written as top-level "capabilities" section when non-empty.}; {name: $installed_extensions | type: string[] | required: false | desc: Installed extension names written under "extensions.installed" when non-empty.}]
+#AI param_details: [{name: $classes | type: extracted_class[] | required: true | desc: Class records to serialize.}; {name: $outputPath | type: string | required: true | desc: Filesystem path for the output JSON file.}; {name: $capabilityMap | type: array | required: false | desc: Extension capability details written as top-level "capabilities" section when non-empty.}; {name: $installedExtensions | type: string[] | required: false | desc: Installed extension names written under "extensions.installed" when non-empty.}]
 #AI throws_details: [{type: \RuntimeException | desc: When json_encode fails or the file cannot be written.}]
 #AI side_effects: [writes JSON file to disk; creates parent directories]
 

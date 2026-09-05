@@ -13,5 +13,5 @@ namespace Skim\Worker;
  * #AI:interface
  */
 interface Resettable {
-    public static function reset_request(): void;
+    public static function resetRequest(): void;
 }

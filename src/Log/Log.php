@@ -87,16 +87,16 @@ final class Log {
     public static function emergency(string $msg, array $ctx = []): void { self::write('emergency', $msg, $ctx); }
 
     /**
-     * Injects a custom handler, replacing the default. #AI:set_handler
+     * Injects a custom handler, replacing the default. #AI:setHandler
      *
      * Use in tests to inject a spy or in production to swap in Monolog.
      *
      * Example:
-     *   log::set_handler(new null_handler());
+     *   log::setHandler(new null_handler());
      *
      * @param \Skim\Log\LogHandler $handler Custom handler implementation.
      */
-    public static function set_handler(\Skim\Log\LogHandler $handler): void {
+    public static function setHandler(\Skim\Log\LogHandler $handler): void {
         self::$handler = $handler;
     }
 
@@ -120,14 +120,14 @@ final class Log {
     }
 
     private static function handler(): \Skim\Log\LogHandler {
-        return self::$handler ??= self::resolve_handler();
+        return self::$handler ??= self::resolveHandler();
     }
 
-    private static function resolve_handler(): \Skim\Log\LogHandler {
+    private static function resolveHandler(): \Skim\Log\LogHandler {
         $channel = \Skim\Core\Config::get('app.log.channel', 'file');
         return match ($channel) {
             'file'  => new \Skim\Log\FileHandler(
-                path:  (string) \Skim\Core\Config::get('app.log.path', storage_path('logs/app.log')),
+                path:  (string) \Skim\Core\Config::get('app.log.path', storagePath('logs/app.log')),
                 level: (string) \Skim\Core\Config::get('app.log.level', 'debug'),
                 days:  (int) \Skim\Core\Config::get('app.log.days', 14),
             ),
@@ -216,10 +216,10 @@ final class Log {
 #AI contract: Logs a message at emergency level. Use for system-wide failures.
 #AI param_details: [{name: $msg | type: string | required: true | desc: Log message.}; {name: $ctx | type: array | required: false | desc: Arbitrary context metadata.}]
 
-#AI:set_handler
+#AI:setHandler
 #AI group: Testing Hooks
 #AI frequency: low
-#AI signature: public static function set_handler(log_handler $handler): void
+#AI signature: public static function setHandler(log_handler $handler): void
 #AI contract: Replaces the active handler. Use in tests or to swap in Monolog for production channels.
 #AI param_details: [{name: $handler | type: log_handler | required: true | desc: Custom handler implementation.}]
 #AI side_effects: [Mutates static handler state]

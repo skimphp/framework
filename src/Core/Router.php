@@ -31,7 +31,7 @@ use function FastRoute\simpleDispatcher;
  *       $r->get('/posts', [post_controller::class, 'index']);
  *   }, middleware: [auth_middleware::class]);
  *
- * Testing: use app::test_instance() which creates a fresh router.
+ * Testing: use app::testInstance() which creates a fresh router.
  *
  * #AI:class
  */
@@ -44,7 +44,7 @@ class Router {
     private ?Dispatcher $dispatcher = null;
     private mixed $mutation_guard = null;
 
-    private static function convert_params(string $pattern): string {
+    private static function convertParams(string $pattern): string {
         return (string) preg_replace_callback(
             '/@([a-zA-Z_][a-zA-Z0-9_]*)(?::([a-z]+))?/',
             function(array $m): string {
@@ -150,13 +150,13 @@ class Router {
     }
 
     /**
-     * Installs a mutation guard callback. #AI:set_mutation_guard
+     * Installs a mutation guard callback. #AI:setMutationGuard
      *
      * The guard returns false when route mutation should be blocked (after freeze).
      *
      * @param callable $guard Returns true when mutation is allowed.
      */
-    public function set_mutation_guard(callable $guard): void {
+    public function setMutationGuard(callable $guard): void {
         $this->mutation_guard = $guard;
     }
 
@@ -175,12 +175,12 @@ class Router {
      * @throws \LogicException If the mutation guard blocks the call.
      */
     public function add(string|array $methods, string $pattern, array|callable $handler): \Skim\Core\RouteEntry {
-        $this->assert_mutable();
+        $this->assertMutable();
 
-        $current_prefix     = $this->current_prefix();
-        $current_middleware = $this->current_group_middleware();
+        $current_prefix     = $this->currentPrefix();
+        $current_middleware = $this->currentGroupMiddleware();
 
-        $full_pattern   = $current_prefix . self::convert_params($pattern);
+        $full_pattern   = $current_prefix . self::convertParams($pattern);
         $methods        = (array) $methods;
         $entry          = new \Skim\Core\RouteEntry(implode('|', $methods), $full_pattern, $handler, $this);
 
@@ -214,11 +214,11 @@ class Router {
      * @throws \LogicException If the mutation guard blocks the call.
      */
     public function group(string $prefix, callable $callback, array $middleware = []): void {
-        $this->assert_mutable();
+        $this->assertMutable();
 
         $this->group_stack[] = [
-            'prefix'     => $this->current_prefix() . $prefix,
-            'middleware' => array_merge($this->current_group_middleware(), $middleware),
+            'prefix'     => $this->currentPrefix() . $prefix,
+            'middleware' => array_merge($this->currentGroupMiddleware(), $middleware),
         ];
 
         $callback($this);
@@ -236,12 +236,12 @@ class Router {
      * @throws \LogicException If the mutation guard blocks the call.
      */
     public function command(string $name, array|callable $handler): void {
-        $this->assert_mutable();
+        $this->assertMutable();
         $this->commands[$name] = $handler;
     }
 
     /**
-     * Registers a name-to-pattern mapping for URL generation. #AI:register_name
+     * Registers a name-to-pattern mapping for URL generation. #AI:registerName
      *
      * Called automatically by route_entry::name(). Overwrites previous mappings.
      *
@@ -249,8 +249,8 @@ class Router {
      * @param string $pattern URL pattern with {param:regex} placeholders.
      * @throws \LogicException If the mutation guard blocks the call.
      */
-    public function register_name(string $name, string $pattern): void {
-        $this->assert_mutable();
+    public function registerName(string $name, string $pattern): void {
+        $this->assertMutable();
         $this->named[$name] = $pattern;
     }
 
@@ -272,11 +272,11 @@ class Router {
         if (!$instance instanceof self) {
             throw new \RuntimeException('Router not available in container.');
         }
-        return $instance->build_url($name, $params);
+        return $instance->buildUrl($name, $params);
     }
 
     /**
-     * Builds a URL from a named route (instance method). #AI:build_url
+     * Builds a URL from a named route (instance method). #AI:buildUrl
      *
      * Replaces {param:regex} and {param} segments with values from $params.
      *
@@ -284,7 +284,7 @@ class Router {
      * @param array  $params Key-value pairs for route placeholders.
      * @throws \InvalidArgumentException If name is not registered or params are missing.
      */
-    public function build_url(string $name, array $params = []): string {
+    public function buildUrl(string $name, array $params = []): string {
         if (!isset($this->named[$name])) {
             throw new \InvalidArgumentException("Route '{$name}' not found.");
         }
@@ -338,7 +338,7 @@ class Router {
      * rather than the compiled fast-route regex form. Returns null when no matching
      * route is found in the registration list.
      */
-    private function pattern_for_handler(mixed $handler, string $method): ?string {
+    private function patternForHandler(mixed $handler, string $method): ?string {
         foreach ($this->routes as $r) {
             $methods = (array) $r['methods'];
             if ($r['handler'] === $handler && in_array($method, $methods, true)) {
@@ -349,13 +349,13 @@ class Router {
     }
 
     /**
-     * Dispatches a CLI command by name. #AI:dispatch_command
+     * Dispatches a CLI command by name. #AI:dispatchCommand
      *
      * Returns handler info on match, null if the command is not registered.
      *
      * @param string $name Command name from argv[1].
      */
-    public function dispatch_command(string $name): array|null {
+    public function dispatchCommand(string $name): array|null {
         if (!isset($this->commands[$name])) {
             return null;
         }
@@ -379,7 +379,7 @@ class Router {
 
         $cacheFile = null;
         if (!$hasClosures && \Skim\Core\Config::get('app.env') === 'production') {
-            $cacheFile = \storage_path('cache/routes.php');
+            $cacheFile = storagePath('cache/routes.php');
             if (!is_dir(dirname($cacheFile))) {
                 $cacheFile = null;
             }
@@ -392,7 +392,7 @@ class Router {
                         'handler'    => $route['handler'],
                         'middleware' => array_merge(
                             $route['middleware'],
-                            $route['entry']->get_middleware(),
+                            $route['entry']->getMiddleware(),
                         ),
                     ]);
                 }
@@ -406,15 +406,15 @@ class Router {
         }
     }
 
-    private function current_prefix(): string {
+    private function currentPrefix(): string {
         return empty($this->group_stack) ? '' : end($this->group_stack)['prefix'];
     }
 
-    private function current_group_middleware(): array {
+    private function currentGroupMiddleware(): array {
         return empty($this->group_stack) ? [] : end($this->group_stack)['middleware'];
     }
 
-    private function assert_mutable(): void {
+    private function assertMutable(): void {
         if ($this->mutation_guard !== null && !($this->mutation_guard)()) {
             throw new \LogicException('Cannot modify routes after app is frozen.');
         }
@@ -431,7 +431,7 @@ class Router {
 #AI badges: [router; fast-route; dispatch; named-routes; groups; cli]
 #AI intro: `Skim\Core\Router` wraps nikic/fast-route to compile all routes into a single regex on first dispatch. It supports F3-compatible @param token syntax (@id, @id:int, @slug:str, @any), route groups with additive prefix and middleware, named routes for reverse URL generation, and CLI command routing.
 #AI lifecycle: created during app boot, routes registered before freeze(), compiled on first dispatch
-#AI test_seam: app::test_instance() creates a fresh router; dispatch() can be called directly in tests
+#AI test_seam: app::testInstance() creates a fresh router; dispatch() can be called directly in tests
 #AI invariants: [routes compiled lazily on first dispatch(); add() invalidates compiled dispatcher; groups nest additively; mutation guard blocks changes after freeze(); @param tokens converted to fast-route regex]
 #AI warnings: [Route registration after freeze() throws LogicException; url() requires the app singleton to be available]
 #AI notes: Why fast-route over F3's router: compiles all routes into one regex, orders of magnitude faster than per-route string matching.
@@ -502,10 +502,10 @@ class Router {
 #AI throws_details: [{type: \LogicException | desc: If the mutation guard blocks the call.}]
 #AI notes: Prefer get()/post()/put()/patch()/delete() for single-method routes and any() for all-method routes. Use map() when the method set is dynamic or when mirroring Slim/Laravel-style code.
 
-#AI:set_mutation_guard
+#AI:setMutationGuard
 #AI group: Route Registration
 #AI frequency: internal
-#AI signature: public function set_mutation_guard(callable $guard): void
+#AI signature: public function setMutationGuard(callable $guard): void
 #AI contract: Installs a callback that returns false when route mutation should be blocked.
 #AI param_details: [{name: $guard | type: callable | required: true | desc: Returns true when mutation is allowed.}]
 
@@ -535,10 +535,10 @@ class Router {
 #AI param_details: [{name: $name | type: string | required: true | desc: Command name.}; {name: $handler | type: array|callable | required: true | desc: Command handler.}]
 #AI throws_details: [{type: \LogicException | desc: If the mutation guard blocks the call.}]
 
-#AI:register_name
+#AI:registerName
 #AI group: Named Routes
 #AI frequency: internal
-#AI signature: public function register_name(string $name, string $pattern): void
+#AI signature: public function registerName(string $name, string $pattern): void
 #AI contract: Registers a name-to-pattern mapping for reverse URL generation. Called by route_entry::name().
 #AI param_details: [{name: $name | type: string | required: true | desc: Route name.}; {name: $pattern | type: string | required: true | desc: URL pattern with placeholders.}]
 #AI throws_details: [{type: \LogicException | desc: If the mutation guard blocks the call.}]
@@ -552,10 +552,10 @@ class Router {
 #AI return_detail: {type: string | desc: Generated URL path.}
 #AI throws_details: [{type: \InvalidArgumentException | desc: If name is not registered or params are missing.}; {type: \RuntimeException | desc: If router is not available in container.}]
 
-#AI:build_url
+#AI:buildUrl
 #AI group: Named Routes
 #AI frequency: medium
-#AI signature: public function build_url(string $name, array $params = []): string
+#AI signature: public function buildUrl(string $name, array $params = []): string
 #AI contract: Instance method that replaces {param:regex} segments with values from $params.
 #AI param_details: [{name: $name | type: string | required: true | desc: Registered route name.}; {name: $params | type: array | required: false | desc: Key-value pairs for placeholders.}]
 #AI return_detail: {type: string | desc: Generated URL path.}
@@ -569,10 +569,10 @@ class Router {
 #AI param_details: [{name: $method | type: string | required: true | desc: HTTP method.}; {name: $path | type: string | required: true | desc: Request path.}]
 #AI return_detail: {type: array|null|false | desc: Route info {handler, params, middleware} on match, null (404), or false (405).}
 
-#AI:dispatch_command
+#AI:dispatchCommand
 #AI group: Dispatch
 #AI frequency: medium
-#AI signature: public function dispatch_command(string $name): array|null
+#AI signature: public function dispatchCommand(string $name): array|null
 #AI contract: Dispatches a CLI command by name. Returns handler info or null if not registered.
 #AI param_details: [{name: $name | type: string | required: true | desc: Command name from argv[1].}]
 #AI return_detail: {type: array|null | desc: Handler info or null.}

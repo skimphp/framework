@@ -22,10 +22,10 @@ use Skim\Core\Response;
  */
 class Cors implements \Skim\Core\Middleware {
     public function __construct(
-        private readonly string $allow_origin  = '*',
-        private readonly string $allow_methods = 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-        private readonly string $allow_headers = 'Content-Type, Authorization, X-Requested-With',
-        private readonly int    $max_age       = 86400,
+        private readonly string $allowOrigin  = '*',
+        private readonly string $allowMethods = 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+        private readonly string $allowHeaders = 'Content-Type, Authorization, X-Requested-With',
+        private readonly int    $maxAge       = 86400,
     ) {}
 
     /**
@@ -40,10 +40,10 @@ class Cors implements \Skim\Core\Middleware {
      * @param callable $next Next middleware or controller in the pipeline.
      */
     public function handle(\Skim\Core\Request $req, \Skim\Core\Response $res, callable $next): mixed {
-        $res->with_header('Access-Control-Allow-Origin',  $this->allow_origin)
-            ->with_header('Access-Control-Allow-Methods', $this->allow_methods)
-            ->with_header('Access-Control-Allow-Headers', $this->allow_headers)
-            ->with_header('Access-Control-Max-Age',       (string) $this->max_age);
+        $res->withHeader('Access-Control-Allow-Origin',  $this->allowOrigin)
+            ->withHeader('Access-Control-Allow-Methods', $this->allowMethods)
+            ->withHeader('Access-Control-Allow-Headers', $this->allowHeaders)
+            ->withHeader('Access-Control-Max-Age',       (string) $this->maxAge);
 
         if ($req->method() === 'OPTIONS') {
             return $res->status(204)->json([]);

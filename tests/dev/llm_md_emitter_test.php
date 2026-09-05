@@ -2,7 +2,7 @@
 
 use Skim\Dev\Docs\Emitter\LlmMdEmitter;
 
-function sample_llm_data(): array {
+function sampleLlmData(): array {
     return [
         'generated_at' => '2026-01-01T00:00:00+00:00',
         'classes'      => [
@@ -36,14 +36,14 @@ describe('llm_md_emitter', function(): void {
 
     test('writes llm.md file to the specified path', function(): void {
         $path = sys_get_temp_dir() . '/skim_llm_md_' . uniqid() . '.md';
-        (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sample_llm_data(), $path);
+        (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sampleLlmData(), $path);
         expect(file_exists($path))->toBeTrue();
         unlink($path);
     });
 
     test('generated file contains compact class section', function(): void {
         $path = sys_get_temp_dir() . '/skim_llm_md_' . uniqid() . '.md';
-        (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sample_llm_data(), $path);
+        (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sampleLlmData(), $path);
         $content = file_get_contents($path);
         expect($content)->toContain('## `skim\\cache\\cache` — cache');
         unlink($path);
@@ -51,7 +51,7 @@ describe('llm_md_emitter', function(): void {
 
     test('generated file contains method invariant text', function(): void {
         $path = sys_get_temp_dir() . '/skim_llm_md_' . uniqid() . '.md';
-        (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sample_llm_data(), $path);
+        (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sampleLlmData(), $path);
         $content = file_get_contents($path);
         expect($content)->toContain('never throws on miss');
         unlink($path);
@@ -59,7 +59,7 @@ describe('llm_md_emitter', function(): void {
 
     test('generated file contains non-goal text', function(): void {
         $path = sys_get_temp_dir() . '/skim_llm_md_' . uniqid() . '.md';
-        (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sample_llm_data(), $path);
+        (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sampleLlmData(), $path);
         $content = file_get_contents($path);
         expect($content)->toContain('does not warm the cache');
         unlink($path);
@@ -67,7 +67,7 @@ describe('llm_md_emitter', function(): void {
 
     test('generated file contains grouped method contracts', function(): void {
         $path = sys_get_temp_dir() . '/skim_llm_md_' . uniqid() . '.md';
-        (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sample_llm_data(), $path);
+        (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sampleLlmData(), $path);
         $content = file_get_contents($path);
         expect($content)->toContain('### Methods');
         expect($content)->toContain('returns default when key absent');
@@ -76,7 +76,7 @@ describe('llm_md_emitter', function(): void {
 
     test('generated file contains lifecycle metadata', function(): void {
         $path = sys_get_temp_dir() . '/skim_llm_md_' . uniqid() . '.md';
-        (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sample_llm_data(), $path);
+        (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sampleLlmData(), $path);
         $content = file_get_contents($path);
         expect($content)->toContain('boot');
         unlink($path);
@@ -86,7 +86,7 @@ describe('llm_md_emitter', function(): void {
         $blocker = sys_get_temp_dir() . '/skim_llm_blocker_' . uniqid();
         file_put_contents($blocker, 'I am a file, not a dir');
         $impossible = $blocker . '/nested/llm.md';
-        expect(fn() => (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sample_llm_data(), $impossible))
+        expect(fn() => (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit(sampleLlmData(), $impossible))
             ->toThrow(\RuntimeException::class);
         unlink($blocker);
     });

@@ -112,14 +112,14 @@ final class RedisDriver implements \Skim\Cache\Driver {
     }
 
     /**
-     * Clears the selected Redis database unconditionally. #AI:flush_all
+     * Clears the selected Redis database unconditionally. #AI:flushAll
      *
      * WARNING: Issues FLUSHDB on the selected database. Destroys ALL data
      * in that database, not just cache keys. Prefer flush('prefix:') in production.
      *
      * @return bool True if Redis confirmed the flush.
      */
-    public function flush_all(): bool {
+    public function flushAll(): bool {
         return (bool) $this->redis()->flushDB();
     }
 
@@ -215,10 +215,10 @@ final class RedisDriver implements \Skim\Cache\Driver {
 #AI param_details: [{name: $prefix | type: string | required: true | desc: Key prefix to match.}]
 #AI return_detail: {type: bool | desc: Always true.}
 
-#AI:flush_all
+#AI:flushAll
 #AI group: Invalidation
 #AI frequency: low
-#AI signature: public function flush_all(): bool
+#AI signature: public function flushAll(): bool
 #AI contract: Issues FLUSHDB on the selected Redis database, destroying all data in that database.
 #AI return_detail: {type: bool | desc: True if Redis confirmed the flush.}
 #AI warnings: [FLUSHDB destroys ALL data in the selected database, not just cache keys; Prefer flush('prefix:') in production]

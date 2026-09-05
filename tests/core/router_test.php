@@ -67,37 +67,37 @@ describe('router — named routes', function(): void {
         $r = new \Skim\Core\Router();
         $r->add('GET', '/users/@id:int', fn() => null)->name('user.show');
 
-        $url = $r->build_url('user.show', ['id' => 5]);
+        $url = $r->buildUrl('user.show', ['id' => 5]);
         expect($url)->toBe('/users/5');
     });
 
     test('build_url throws when name not registered', function(): void {
         $r = new \Skim\Core\Router();
-        expect(fn() => $r->build_url('nonexistent'))->toThrow(\InvalidArgumentException::class);
+        expect(fn() => $r->buildUrl('nonexistent'))->toThrow(\InvalidArgumentException::class);
     });
 
     test('build_url throws when required param missing', function(): void {
         $r = new \Skim\Core\Router();
         $r->add('GET', '/users/@id', fn() => null)->name('user.show');
 
-        expect(fn() => $r->build_url('user.show', []))->toThrow(\InvalidArgumentException::class);
+        expect(fn() => $r->buildUrl('user.show', []))->toThrow(\InvalidArgumentException::class);
     });
 
 });
 
 describe('router::url() — static url via app container', function(): void {
 
-    test('app::test_instance() registers sys.router in container', function(): void {
-        $app = \Skim\Core\App::test_instance();
+    test('app::testInstance() registers sys.router in container', function(): void {
+        $app = \Skim\Core\App::testInstance();
         expect($app->get('sys.router'))->toBeInstanceOf(\Skim\Core\Router::class);
     });
 
     test('sys.router can build named route URLs', function(): void {
-        $app = \Skim\Core\App::test_instance();
+        $app = \Skim\Core\App::testInstance();
         $app->router->add('GET', '/posts/@slug:str', fn() => null)->name('post.show');
 
         $router = $app->get('sys.router');
-        expect($router->build_url('post.show', ['slug' => 'hello-world']))->toBe('/posts/hello-world');
+        expect($router->buildUrl('post.show', ['slug' => 'hello-world']))->toBe('/posts/hello-world');
     });
 
 });

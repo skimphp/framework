@@ -33,7 +33,7 @@ class ClassVisitor extends NodeVisitorAbstract {
     /**
      * Returns cached file lines, reading from disk on first call. #AI:get_file_lines
      */
-    private function get_file_lines(): array {
+    private function getFileLines(): array {
         if ($this->file_lines === null) {
             $content = file_exists($this->file) ? file_get_contents($this->file) : '';
             $this->file_lines = array_merge([''], explode("\n", $content));
@@ -44,8 +44,8 @@ class ClassVisitor extends NodeVisitorAbstract {
     /**
      * Collects consecutive // comment lines immediately preceding a node. #AI:get_preceding_inline_comments
      */
-    private function get_preceding_inline_comments(Node $node): string {
-        $lines = $this->get_file_lines();
+    private function getPrecedingInlineComments(Node $node): string {
+        $lines = $this->getFileLines();
         $start_line = $node->getStartLine();
         
         $comment_lines = [];
@@ -79,15 +79,15 @@ class ClassVisitor extends NodeVisitorAbstract {
         }
 
         $class_doc = (string) ($node->getDocComment()?->getText() ?? '');
-        $class_examples = $class_doc !== '' ? $this->annotations->extract_examples($class_doc) : [];
+        $class_examples = $class_doc !== '' ? $this->annotations->extractExamples($class_doc) : [];
         $tags = [];
         $summary = '';
         if ($class_doc !== '') {
             $tags    = $this->annotations->parse($class_doc);
-            $summary = $this->annotations->extract_summary($class_doc);
+            $summary = $this->annotations->extractSummary($class_doc);
         } else {
-            $inline  = $this->get_preceding_inline_comments($node);
-            $tags    = $this->annotations->parse_inline($inline);
+            $inline  = $this->getPrecedingInlineComments($node);
+            $tags    = $this->annotations->parseInline($inline);
             $summary = $tags['summary'] ?? '';
             unset($tags['summary']);
         }
@@ -95,7 +95,7 @@ class ClassVisitor extends NodeVisitorAbstract {
         foreach ($node->getComments() as $comment) {
             $comment_text = $comment->getText();
             if (str_contains($comment_text, '#AI')) {
-                $hash_tags = $this->annotations->parse_hash_ai($comment_text);
+                $hash_tags = $this->annotations->parseHashAi($comment_text);
                 foreach ($hash_tags as $k => $v) {
                     $tags[$k][] = $v;
                 }
@@ -108,7 +108,7 @@ class ClassVisitor extends NodeVisitorAbstract {
 
         $owner = $this->current_namespace . '\\' . (string) $node->name;
 
-        $detached = $this->parse_detached_blocks();
+        $detached = $this->parseDetachedBlocks();
         if (($detached['class'] ?? []) !== []) {
             $tags = array_merge($tags, $detached['class']);
         }
@@ -120,10 +120,10 @@ class ClassVisitor extends NodeVisitorAbstract {
             $doc = (string) ($method->getDocComment()?->getText() ?? '');
             if ($doc !== '') {
                 $tags_m = $this->annotations->parse($doc);
-                $summary_m = $this->annotations->extract_summary($doc);
+                $summary_m = $this->annotations->extractSummary($doc);
             } else {
-                $inline_m = $this->get_preceding_inline_comments($method);
-                $tags_m = $this->annotations->parse_inline($inline_m);
+                $inline_m = $this->getPrecedingInlineComments($method);
+                $tags_m = $this->annotations->parseInline($inline_m);
                 $summary_m = $tags_m['summary'] ?? '';
                 unset($tags_m['summary']);
             }
@@ -151,7 +151,7 @@ class ClassVisitor extends NodeVisitorAbstract {
                 array_unshift($tags_m['contract'], $summary_m);
             }
 
-            $methods[] = $this->extract_method($method, $owner, $tags_m);
+            $methods[] = $this->extractMethod($method, $owner, $tags_m);
         }
 
         foreach ($detached['methods'] ?? [] as $name => $detached_tags) {
@@ -160,61 +160,61 @@ class ClassVisitor extends NodeVisitorAbstract {
             }
         }
 
-        $invariants = array_merge($this->list_value($tags, 'invariant'), $this->list_value($tags, 'invariants'));
-        $non_goals = array_merge($this->list_value($tags, 'non_goal'), $this->list_value($tags, 'non_goals'));
-        $side_effects = array_merge($this->list_value($tags, 'side_effect'), $this->list_value($tags, 'side_effects'));
+        $invariants = array_merge($this->listValue($tags, 'invariant'), $this->listValue($tags, 'invariants'));
+        $non_goals = array_merge($this->listValue($tags, 'non_goal'), $this->listValue($tags, 'non_goals'));
+        $side_effects = array_merge($this->listValue($tags, 'side_effect'), $this->listValue($tags, 'side_effects'));
 
         $this->result = new \Skim\Dev\Docs\Value\ExtractedClass(
-            class_name:   (string) $node->name,
+            className:   (string) $node->name,
             namespace:    $this->current_namespace,
             file:         $this->file,
             summary:      $summary,
-            lifecycle:    $this->scalar_value($tags, 'lifecycle'),
-            owner:        $this->scalar_value($tags, 'role', $this->scalar_value($tags, 'owner')),
-            layer:        $this->scalar_value($tags, 'layer'),
-            owns:         $this->list_value($tags, 'owns'),
-            entry_points: $this->list_value($tags, 'entry_points'),
-            config_reads: $this->list_value($tags, 'config_reads'),
+            lifecycle:    $this->scalarValue($tags, 'lifecycle'),
+            owner:        $this->scalarValue($tags, 'role', $this->scalarValue($tags, 'owner')),
+            layer:        $this->scalarValue($tags, 'layer'),
+            owns:         $this->listValue($tags, 'owns'),
+            entryPoints: $this->listValue($tags, 'entry_points'),
+            configReads: $this->listValue($tags, 'config_reads'),
             invariants:   $invariants,
-            side_effects: $side_effects,
-            non_goals:    $non_goals,
-            symbol:       $this->scalar_value($tags, 'symbol', $owner),
-            title:        $this->scalar_value($tags, 'title', (string) $node->name),
-            description:  $this->scalar_value($tags, 'description', $summary),
-            source_path:  $this->scalar_value($tags, 'source_path'),
-            badges:       $this->list_value($tags, 'badges'),
-            intro:        $this->scalar_value($tags, 'intro'),
-            fallback:     $this->scalar_value($tags, 'fallback'),
-            test_seam:    $this->scalar_value($tags, 'test_seam'),
-            drivers:      $this->list_value($tags, 'drivers'),
-            core_behaviors: $this->list_value($tags, 'core_behaviors'),
-            warnings:     array_merge($this->list_value($tags, 'warning'), $this->list_value($tags, 'warnings')),
-            notes:        $this->list_value($tags, 'notes'),
-            scope_items:  $this->list_value($tags, 'scope_items'),
-            flow:         $this->scalar_value($tags, 'flow'),
-            lifecycle_steps: $this->list_value($tags, 'lifecycle_steps'),
-            section_order: $this->list_value($tags, 'section_order'),
-            architectural_notes: $this->scalar_value($tags, 'architectural_notes'),
+            sideEffects: $side_effects,
+            nonGoals:    $non_goals,
+            symbol:       $this->scalarValue($tags, 'symbol', $owner),
+            title:        $this->scalarValue($tags, 'title', (string) $node->name),
+            description:  $this->scalarValue($tags, 'description', $summary),
+            sourcePath:  $this->scalarValue($tags, 'source_path'),
+            badges:       $this->listValue($tags, 'badges'),
+            intro:        $this->scalarValue($tags, 'intro'),
+            fallback:     $this->scalarValue($tags, 'fallback'),
+            testSeam:    $this->scalarValue($tags, 'test_seam'),
+            drivers:      $this->listValue($tags, 'drivers'),
+            coreBehaviors: $this->listValue($tags, 'core_behaviors'),
+            warnings:     array_merge($this->listValue($tags, 'warning'), $this->listValue($tags, 'warnings')),
+            notes:        $this->listValue($tags, 'notes'),
+            scopeItems:  $this->listValue($tags, 'scope_items'),
+            flow:         $this->scalarValue($tags, 'flow'),
+            lifecycleSteps: $this->listValue($tags, 'lifecycle_steps'),
+            sectionOrder: $this->listValue($tags, 'section_order'),
+            architecturalNotes: $this->scalarValue($tags, 'architectural_notes'),
             examples:     $class_examples,
-            see_also:     $this->list_value($tags, 'see_also'),
+            seeAlso:     $this->listValue($tags, 'see_also'),
             methods:      $methods,
         );
         return null;
     }
 
     /**
-     * Builds an extracted_method from a ClassMethod node and its merged tags. #AI:extract_method
+     * Builds an extracted_method from a ClassMethod node and its merged tags. #AI:extractMethod
      */
-    private function extract_method(ClassMethod $method, string $owner, array $tags): \Skim\Dev\Docs\Value\ExtractedMethod {
+    private function extractMethod(ClassMethod $method, string $owner, array $tags): \Skim\Dev\Docs\Value\ExtractedMethod {
         $params = [];
         foreach ($method->params as $param) {
-            $type     = $param->type !== null ? $this->type_to_string($param->type) : '';
+            $type     = $param->type !== null ? $this->typeToString($param->type) : '';
             $variadic = $param->variadic ? '...' : '';
             $name     = $variadic . '$' . (string) $param->var->name;
             $params[] = ($type !== '' ? $type . ' ' : '') . $name;
         }
         $return_type = $method->returnType !== null
-            ? ': ' . $this->type_to_string($method->returnType)
+            ? ': ' . $this->typeToString($method->returnType)
             : '';
             
         $vis_name = match(true) {
@@ -226,16 +226,16 @@ class ClassVisitor extends NodeVisitorAbstract {
         $signature  = "{$visibility} function {$method->name}("
             . implode(', ', $params) . "){$return_type}";
 
-        $invariants = array_merge($this->list_value($tags, 'invariant'), $this->list_value($tags, 'invariants'));
-        $non_goals = array_merge($this->list_value($tags, 'non_goal'), $this->list_value($tags, 'non_goals'));
-        $side_effects = array_merge($this->list_value($tags, 'side_effect'), $this->list_value($tags, 'side_effects'));
-        $signature = $this->scalar_value($tags, 'signature', $signature);
-        $contracts = $this->list_value($tags, 'contract');
+        $invariants = array_merge($this->listValue($tags, 'invariant'), $this->listValue($tags, 'invariants'));
+        $non_goals = array_merge($this->listValue($tags, 'non_goal'), $this->listValue($tags, 'non_goals'));
+        $side_effects = array_merge($this->listValue($tags, 'side_effect'), $this->listValue($tags, 'side_effects'));
+        $signature = $this->scalarValue($tags, 'signature', $signature);
+        $contracts = $this->listValue($tags, 'contract');
         $contract = $contracts[0] ?? '';
 
         $doc = (string) ($method->getDocComment()?->getText() ?? '');
-        $method_examples = $doc !== '' ? $this->annotations->extract_examples($doc) : [];
-        $tag_examples = $this->list_value($tags, 'example');
+        $method_examples = $doc !== '' ? $this->annotations->extractExamples($doc) : [];
+        $tag_examples = $this->listValue($tags, 'example');
         $formatted_examples = [];
         foreach ($tag_examples as $ex) {
             if (is_array($ex) && isset($ex['code'])) {
@@ -256,36 +256,36 @@ class ClassVisitor extends NodeVisitorAbstract {
             name:         (string) $method->name,
             signature:    $signature,
             owner:        $owner,
-            group:        $this->scalar_value($tags, 'group'),
-            frequency:    $this->scalar_value($tags, 'frequency'),
+            group:        $this->scalarValue($tags, 'group'),
+            frequency:    $this->scalarValue($tags, 'frequency'),
             contracts:    $contracts,
             invariants:   $invariants,
-            non_goals:    $non_goals,
-            side_effects: $side_effects,
-            inputs:       $this->list_value($tags, 'input'),
-            returns:      $this->scalar_value($tags, 'returns'),
-            reads:        $this->list_value($tags, 'reads'),
-            mutates:      $this->list_value($tags, 'mutates'),
-            calls:        $this->list_value($tags, 'calls'),
-            throws:       $this->list_value($tags, 'throws'),
-            warnings:     array_merge($this->list_value($tags, 'warning'), $this->list_value($tags, 'warnings')),
+            nonGoals:    $non_goals,
+            sideEffects: $side_effects,
+            inputs:       $this->listValue($tags, 'input'),
+            returns:      $this->scalarValue($tags, 'returns'),
+            reads:        $this->listValue($tags, 'reads'),
+            mutates:      $this->listValue($tags, 'mutates'),
+            calls:        $this->listValue($tags, 'calls'),
+            throws:       $this->listValue($tags, 'throws'),
+            warnings:     array_merge($this->listValue($tags, 'warning'), $this->listValue($tags, 'warnings')),
             examples:     $examples,
-            lifecycle:    $this->scalar_value($tags, 'lifecycle'),
-            perf:         $this->scalar_value($tags, 'perf'),
+            lifecycle:    $this->scalarValue($tags, 'lifecycle'),
+            perf:         $this->scalarValue($tags, 'perf'),
             contract:     $contract,
-            param_details: $this->list_value($tags, 'param_details'),
-            return_detail: $this->record_value($tags, 'return_detail'),
-            throws_details: $this->list_value($tags, 'throws_details'),
-            notes:        $this->list_value($tags, 'notes'),
-            see_also:     $this->list_value($tags, 'see_also'),
-            aliases:      $this->list_value($tags, 'aliases'),
+            paramDetails: $this->listValue($tags, 'param_details'),
+            returnDetail: $this->recordValue($tags, 'return_detail'),
+            throwsDetails: $this->listValue($tags, 'throws_details'),
+            notes:        $this->listValue($tags, 'notes'),
+            seeAlso:     $this->listValue($tags, 'see_also'),
+            aliases:      $this->listValue($tags, 'aliases'),
         );
     }
 
     /**
-     * Parses detached #AI blocks at the bottom of the file into class and method sections. #AI:parse_detached_blocks
+     * Parses detached #AI blocks at the bottom of the file into class and method sections. #AI:parseDetachedBlocks
      */
-    private function parse_detached_blocks(): array {
+    private function parseDetachedBlocks(): array {
         $source = file_exists($this->file) ? (string) file_get_contents($this->file) : '';
         $blocks = ['class' => [], 'methods' => []];
         $current = null;
@@ -296,7 +296,7 @@ class ClassVisitor extends NodeVisitorAbstract {
                 continue;
             }
 
-            $parsed = $this->annotations->parse_hash_ai($trimmed);
+            $parsed = $this->annotations->parseHashAi($trimmed);
             if (isset($parsed['__target'])) {
                 $current = (string) $parsed['__target'];
                 if ($current === 'class') {
@@ -322,9 +322,9 @@ class ClassVisitor extends NodeVisitorAbstract {
     }
 
     /**
-     * Returns the raw tag value, unwrapping single-element arrays. #AI:raw_value
+     * Returns the raw tag value, unwrapping single-element arrays. #AI:rawValue
      */
-    private function raw_value(array $tags, string $key): mixed {
+    private function rawValue(array $tags, string $key): mixed {
         if (!array_key_exists($key, $tags)) {
             return null;
         }
@@ -336,10 +336,10 @@ class ClassVisitor extends NodeVisitorAbstract {
     }
 
     /**
-     * Returns a scalar string value from tags, with optional default. #AI:scalar_value
+     * Returns a scalar string value from tags, with optional default. #AI:scalarValue
      */
-    private function scalar_value(array $tags, string $key, string $default = ''): string {
-        $value = $this->raw_value($tags, $key);
+    private function scalarValue(array $tags, string $key, string $default = ''): string {
+        $value = $this->rawValue($tags, $key);
         if ($value === null) {
             return $default;
         }
@@ -351,10 +351,10 @@ class ClassVisitor extends NodeVisitorAbstract {
     }
 
     /**
-     * Returns a list value from tags, parsing bracket lists when needed. #AI:list_value
+     * Returns a list value from tags, parsing bracket lists when needed. #AI:listValue
      */
-    private function list_value(array $tags, string $key): array {
-        $value = $this->raw_value($tags, $key);
+    private function listValue(array $tags, string $key): array {
+        $value = $this->rawValue($tags, $key);
         if ($value === null || $value === '') {
             return [];
         }
@@ -364,23 +364,23 @@ class ClassVisitor extends NodeVisitorAbstract {
             }
             if (array_is_list($value)) {
                 if (count($value) === 1 && is_string($value[0]) && str_starts_with(trim($value[0]), '[')) {
-                    return $this->annotations->parse_bracket_list($value[0]);
+                    return $this->annotations->parseBracketList($value[0]);
                 }
                 return $value;
             }
             return [$value];
         }
         if (is_string($value) && str_starts_with(trim($value), '[')) {
-            return $this->annotations->parse_bracket_list($value);
+            return $this->annotations->parseBracketList($value);
         }
         return [(string) $value];
     }
 
     /**
-     * Returns a record value from tags, parsing pipe-delimited records when needed. #AI:record_value
+     * Returns a record value from tags, parsing pipe-delimited records when needed. #AI:recordValue
      */
-    private function record_value(array $tags, string $key): array {
-        $value = $this->raw_value($tags, $key);
+    private function recordValue(array $tags, string $key): array {
+        $value = $this->rawValue($tags, $key);
         if ($value === null || $value === '') {
             return [];
         }
@@ -391,21 +391,21 @@ class ClassVisitor extends NodeVisitorAbstract {
             return $value[0];
         }
         if (is_string($value)) {
-            return $this->annotations->parse_record($value);
+            return $this->annotations->parseRecord($value);
         }
         return [];
     }
 
     /**
-     * Converts a PhpParser type node to its string representation. #AI:type_to_string
+     * Converts a PhpParser type node to its string representation. #AI:typeToString
      */
-    private function type_to_string(Node $type): string {
+    private function typeToString(Node $type): string {
         return match (true) {
             $type instanceof Node\Identifier       => $type->name,
             $type instanceof Node\Name             => (string) $type,
-            $type instanceof Node\NullableType     => '?' . $this->type_to_string($type->type),
-            $type instanceof Node\UnionType        => implode('|', array_map($this->type_to_string(...), $type->types)),
-            $type instanceof Node\IntersectionType => implode('&', array_map($this->type_to_string(...), $type->types)),
+            $type instanceof Node\NullableType     => '?' . $this->typeToString($type->type),
+            $type instanceof Node\UnionType        => implode('|', array_map($this->typeToString(...), $type->types)),
+            $type instanceof Node\IntersectionType => implode('&', array_map($this->typeToString(...), $type->types)),
             default                                => '',
         };
     }
@@ -441,44 +441,44 @@ class ClassVisitor extends NodeVisitorAbstract {
 #AI signature: public function enterNode(Node $node): null
 #AI contract: Visits each AST node. Tracks namespace context and captures the first non-anonymous class with all its annotated methods. Merges tags from PHPDoc, inline comments, trailing comment #AI blocks, and detached #AI blocks.
 
-#AI:extract_method
+#AI:extractMethod
 #AI group: Extraction
 #AI frequency: internal
-#AI signature: private function extract_method(ClassMethod $method, string $owner, array $tags): extracted_method
+#AI signature: private function extractMethod(ClassMethod $method, string $owner, array $tags): extracted_method
 #AI contract: Builds an extracted_method from a ClassMethod AST node and its merged annotation tags. Constructs the method signature string from AST type nodes.
 
-#AI:parse_detached_blocks
+#AI:parseDetachedBlocks
 #AI group: Extraction
 #AI frequency: internal
-#AI signature: private function parse_detached_blocks(): array
+#AI signature: private function parseDetachedBlocks(): array
 #AI contract: Reads the source file and parses all detached #AI blocks at the bottom into class-level and method-level tag arrays. Uses #AI:{target} headers to determine section boundaries.
 
-#AI:raw_value
+#AI:rawValue
 #AI group: Value Helpers
 #AI frequency: internal
-#AI signature: private function raw_value(array $tags, string $key): mixed
+#AI signature: private function rawValue(array $tags, string $key): mixed
 #AI contract: Returns the raw tag value for a key, unwrapping single-element list arrays to their scalar value.
 
-#AI:scalar_value
+#AI:scalarValue
 #AI group: Value Helpers
 #AI frequency: internal
-#AI signature: private function scalar_value(array $tags, string $key, string $default = ''): string
+#AI signature: private function scalarValue(array $tags, string $key, string $default = ''): string
 #AI contract: Returns a scalar string from tags with optional default fallback.
 
-#AI:list_value
+#AI:listValue
 #AI group: Value Helpers
 #AI frequency: internal
-#AI signature: private function list_value(array $tags, string $key): array
+#AI signature: private function listValue(array $tags, string $key): array
 #AI contract: Returns a list value from tags, parsing bracket-delimited strings when needed.
 
-#AI:record_value
+#AI:recordValue
 #AI group: Value Helpers
 #AI frequency: internal
-#AI signature: private function record_value(array $tags, string $key): array
+#AI signature: private function recordValue(array $tags, string $key): array
 #AI contract: Returns a record value from tags, parsing pipe-delimited record strings when needed.
 
-#AI:type_to_string
+#AI:typeToString
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private function type_to_string(Node $type): string
+#AI signature: private function typeToString(Node $type): string
 #AI contract: Converts a PhpParser type node (Identifier, Name, Nullable, Union, Intersection) to its PHP string representation.

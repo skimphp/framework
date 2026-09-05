@@ -25,7 +25,7 @@ final class HttpResponse {
     ) {}
 
     /**
-     * Builds an http_response from PHP stream $http_response_header meta. #AI:from_stream
+     * Builds an http_response from PHP stream $http_response_header meta. #AI:fromStream
      *
      * Parses the status line and header lines from the meta array produced
      * by file_get_contents with stream contexts.
@@ -33,7 +33,7 @@ final class HttpResponse {
      * @param string $body Raw response body.
      * @param array  $meta The $http_response_header array from PHP streams.
      */
-    public static function from_stream(string $body, array $meta): static {
+    public static function fromStream(string $body, array $meta): static {
         $status  = 0;
         $headers = [];
 
@@ -94,13 +94,13 @@ final class HttpResponse {
 #AI config_reads: []
 #AI non_goals: [Does not validate status codes; Does not retry requests; Does not follow redirects]
 #AI side_effects: []
-#AI flow: client::send() -> http_response::from_stream() -> immutable value object
+#AI flow: client::send() -> http_response::fromStream() -> immutable value object
 #AI section_order: [Construction; Accessors]
 
-#AI:from_stream
+#AI:fromStream
 #AI group: Construction
 #AI frequency: internal
-#AI signature: public static function from_stream(string $body, array $meta): static
+#AI signature: public static function fromStream(string $body, array $meta): static
 #AI contract: Parses PHP stream $http_response_header meta array into status code and headers, returns a new http_response.
 #AI param_details: [{name: $body | type: string | required: true | desc: Raw response body string.}; {name: $meta | type: array | required: true | desc: The $http_response_header array from PHP stream context.}]
 #AI return_detail: {type: static | desc: New http_response with parsed status and headers.}

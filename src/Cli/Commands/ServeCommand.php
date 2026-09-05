@@ -29,7 +29,7 @@ class ServeCommand extends \Skim\Cli\Command {
     public function handle(): int {
         $host = (string) $this->flag('host', '127.0.0.1');
         $port = (string) $this->flag('port', '8000');
-        $root = base_path('public');
+        $root = basePath('public');
 
         $this->success("SKIM dev server: http://{$host}:{$port}");
         $this->muted('Press Ctrl+C to stop.');
@@ -38,19 +38,19 @@ class ServeCommand extends \Skim\Cli\Command {
         $ini_flags = trim((string) (getenv('PHP_INI_FLAGS') ?? ''));
         $ini_args  = $ini_flags === '' ? '' : ' ' . $ini_flags;
         $workers   = (int) (getenv('PHP_CLI_SERVER_WORKERS') ?? 0);
-        $preload   = base_path('storage/preload.php');
+        $preload   = basePath('storage/preload.php');
         $preload_arg = is_file($preload) ? ' -d opcache.preload=' . escapeshellarg($preload) : '';
         $php_cmd   = "php{$ini_args}{$preload_arg} -S {$host}:{$port} -t {$root}";
         if ($workers > 0) {
             $php_cmd = "PHP_CLI_SERVER_WORKERS={$workers} {$php_cmd}";
         }
-        $vite_cmd = file_exists(base_path('package.json')) ? 'npm run dev' : null;
+        $vite_cmd = file_exists(basePath('package.json')) ? 'npm run dev' : null;
 
         $procs = [];
-        $procs[] = proc_open($php_cmd, [STDIN, STDOUT, STDERR], $pipes, base_path());
+        $procs[] = proc_open($php_cmd, [STDIN, STDOUT, STDERR], $pipes, basePath());
 
         if ($vite_cmd !== null) {
-            $procs[] = proc_open($vite_cmd, [STDIN, STDOUT, STDERR], $pipes2, base_path());
+            $procs[] = proc_open($vite_cmd, [STDIN, STDOUT, STDERR], $pipes2, basePath());
         }
 
         foreach ($procs as $proc) {

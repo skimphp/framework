@@ -13,8 +13,8 @@ use Skim\Core\App;
  *
  * Example:
  *   $client = new http_client($app);
- *   $client->acting_as($user)->post('/api/posts', json: ['title' => 'Hello']);
- *   $client->get('/api/posts')->assert_ok()->assert_json([...]);
+ *   $client->actingAs($user)->post('/api/posts', json: ['title' => 'Hello']);
+ *   $client->get('/api/posts')->assertOk()->assertJson([...]);
  *
  * Testing: This class IS the test utility — instantiate directly in test cases.
  *
@@ -24,44 +24,44 @@ class HttpClient {
     public function __construct(private readonly \Skim\Core\App $app) {}
 
     /**
-     * Creates a pending request authenticated as the given user. #AI:acting_as
+     * Creates a pending request authenticated as the given user. #AI:actingAs
      *
      * @param object $user User object injected into the auth service.
      */
-    public function acting_as(object $user): \Skim\Testing\PendingRequest {
-        return (new \Skim\Testing\PendingRequest($this->app))->acting_as($user);
+    public function actingAs(object $user): \Skim\Testing\PendingRequest {
+        return (new \Skim\Testing\PendingRequest($this->app))->actingAs($user);
     }
 
     /**
-     * Creates a pending request with custom headers. #AI:with_headers
+     * Creates a pending request with custom headers. #AI:withHeaders
      *
      * @param array $headers Key-value header pairs (e.g., ['Accept' => 'application/json']).
      */
-    public function with_headers(array $headers): \Skim\Testing\PendingRequest {
-        return (new \Skim\Testing\PendingRequest($this->app))->with_headers($headers);
+    public function withHeaders(array $headers): \Skim\Testing\PendingRequest {
+        return (new \Skim\Testing\PendingRequest($this->app))->withHeaders($headers);
     }
 
     /**
-     * Creates a pending request with pre-populated session data. #AI:with_session
+     * Creates a pending request with pre-populated session data. #AI:withSession
      *
      * @param array $data Key-value session pairs available during the request.
      */
-    public function with_session(array $data): \Skim\Testing\PendingRequest {
-        return (new \Skim\Testing\PendingRequest($this->app))->with_session($data);
+    public function withSession(array $data): \Skim\Testing\PendingRequest {
+        return (new \Skim\Testing\PendingRequest($this->app))->withSession($data);
     }
 
     /**
-     * Creates a pending request that follows redirects automatically. #AI:following_redirects
+     * Creates a pending request that follows redirects automatically. #AI:followingRedirects
      */
-    public function following_redirects(): \Skim\Testing\PendingRequest {
-        return (new \Skim\Testing\PendingRequest($this->app))->following_redirects();
+    public function followingRedirects(): \Skim\Testing\PendingRequest {
+        return (new \Skim\Testing\PendingRequest($this->app))->followingRedirects();
     }
 
     /**
-     * Creates a pending request that skips all middleware. #AI:without_middleware
+     * Creates a pending request that skips all middleware. #AI:withoutMiddleware
      */
-    public function without_middleware(): \Skim\Testing\PendingRequest {
-        return (new \Skim\Testing\PendingRequest($this->app))->without_middleware();
+    public function withoutMiddleware(): \Skim\Testing\PendingRequest {
+        return (new \Skim\Testing\PendingRequest($this->app))->withoutMiddleware();
     }
 
     /**
@@ -130,41 +130,41 @@ class HttpClient {
 #AI section_order: [Configuration; HTTP Methods; Architecture]
 #AI architectural_notes: Thin convenience layer over pending_request — each call creates a fresh instance to prevent state leakage.
 
-#AI:acting_as
+#AI:actingAs
 #AI group: Configuration
 #AI frequency: high
-#AI signature: public function acting_as(object $user): pending_request
+#AI signature: public function actingAs(object $user): pending_request
 #AI contract: Creates a pending request authenticated as the given user.
 #AI param_details: [{name: $user | type: object | required: true | desc: User object injected into the auth service.}]
 #AI return_detail: {type: pending_request | desc: Configured pending request ready for HTTP method calls.}
 
-#AI:with_headers
+#AI:withHeaders
 #AI group: Configuration
 #AI frequency: medium
-#AI signature: public function with_headers(array $headers): pending_request
+#AI signature: public function withHeaders(array $headers): pending_request
 #AI contract: Creates a pending request with custom headers.
 #AI param_details: [{name: $headers | type: array | required: true | desc: Key-value header pairs.}]
 #AI return_detail: {type: pending_request | desc: Configured pending request.}
 
-#AI:with_session
+#AI:withSession
 #AI group: Configuration
 #AI frequency: medium
-#AI signature: public function with_session(array $data): pending_request
+#AI signature: public function withSession(array $data): pending_request
 #AI contract: Creates a pending request with pre-populated session data.
 #AI param_details: [{name: $data | type: array | required: true | desc: Key-value session pairs.}]
 #AI return_detail: {type: pending_request | desc: Configured pending request.}
 
-#AI:following_redirects
+#AI:followingRedirects
 #AI group: Configuration
 #AI frequency: low
-#AI signature: public function following_redirects(): pending_request
+#AI signature: public function followingRedirects(): pending_request
 #AI contract: Creates a pending request that automatically follows 3xx redirects.
 #AI return_detail: {type: pending_request | desc: Configured pending request.}
 
-#AI:without_middleware
+#AI:withoutMiddleware
 #AI group: Configuration
 #AI frequency: low
-#AI signature: public function without_middleware(): pending_request
+#AI signature: public function withoutMiddleware(): pending_request
 #AI contract: Creates a pending request that skips all middleware during dispatch.
 #AI return_detail: {type: pending_request | desc: Configured pending request.}
 

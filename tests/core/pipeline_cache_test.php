@@ -5,7 +5,7 @@ use Skim\Core\Pipeline;
 use Skim\Core\Request;
 use Skim\Core\Response;
 
-describe('pipeline::reset_instance_cache()', function (): void {
+describe('pipeline::resetInstanceCache()', function (): void {
 
     test('clears the middleware instance cache', function (): void {
         $pipeline = new \Skim\Core\Pipeline();
@@ -16,14 +16,14 @@ describe('pipeline::reset_instance_cache()', function (): void {
         $pipeline->run($req, $res, [\Skim\Middleware\Cors::class], fn() => $res);
 
         // After reset, a new instance should be created on next run
-        \Skim\Core\Pipeline::reset_instance_cache();
+        \Skim\Core\Pipeline::resetInstanceCache();
 
         $result = $pipeline->run($req, $res, [\Skim\Middleware\Cors::class], fn() => $res);
         expect($result)->toBeInstanceOf(\Skim\Core\Response::class);
     });
 
     test('is safe to call when cache is empty', function (): void {
-        \Skim\Core\Pipeline::reset_instance_cache();
+        \Skim\Core\Pipeline::resetInstanceCache();
         expect(true)->toBeTrue();
     });
 

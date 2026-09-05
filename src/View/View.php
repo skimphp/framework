@@ -26,9 +26,9 @@ final class View implements \Skim\Worker\Resettable {
     private static ?string $default_layout = null;
 
     /**
-     * Clears shared data between requests in worker mode. #AI:reset_request
+     * Clears shared data between requests in worker mode. #AI:resetRequest
      */
-    public static function reset_request(): void {
+    public static function resetRequest(): void {
         self::$shared_data = [];
     }
 
@@ -54,11 +54,11 @@ final class View implements \Skim\Worker\Resettable {
         // CRITICAL: Disable layout if only a fragment is needed for HTMX performance
         $layout = $fragment ? null : self::$default_layout;
 
-        $ctx = new \Skim\View\Template(self::views_path(), array_merge(self::$shared_data, $data), $layout, $fragment !== null);
-        $html = $ctx->render_file($template);
+        $ctx = new \Skim\View\Template(self::viewsPath(), array_merge(self::$shared_data, $data), $layout, $fragment !== null);
+        $html = $ctx->renderFile($template);
 
         if ($fragment !== null) {
-            $html = self::extract_fragment($html, $fragment, $template);
+            $html = self::extractFragment($html, $fragment, $template);
         }
 
         \Skim\Dev\Profiler::view($template, $fragment, (microtime(true) - $t) * 1000);
@@ -67,13 +67,13 @@ final class View implements \Skim\Worker\Resettable {
     }
 
     /**
-     * Renders only the named fragment — shorthand for render() with $fragment. #AI:render_fragment
+     * Renders only the named fragment — shorthand for render() with $fragment. #AI:renderFragment
      *
      * @param string $template Template path relative to views root.
      * @param array  $data     Data for this render.
      * @param string $fragment Named fragment to extract.
      */
-    public static function render_fragment(string $template, array $data, string $fragment): string {
+    public static function renderFragment(string $template, array $data, string $fragment): string {
         return self::render($template, $data, $fragment);
     }
 
@@ -93,29 +93,29 @@ final class View implements \Skim\Worker\Resettable {
      *
      * @param string $key Shared variable name.
      */
-    public static function get_shared(string $key): mixed {
+    public static function getShared(string $key): mixed {
         return self::$shared_data[$key] ?? null;
     }
 
     /**
-     * Sets the root directory for template resolution. #AI:set_path
+     * Sets the root directory for template resolution. #AI:setPath
      *
      * Called during app boot. Defaults to SKIM_ROOT/app/views.
      *
      * @param string $path Absolute path to the views directory.
      */
-    public static function set_path(string $path): void {
+    public static function setPath(string $path): void {
         self::$views_path = rtrim($path, '/');
     }
 
     /**
-     * Sets a default layout applied to every root render. #AI:set_default_layout
+     * Sets a default layout applied to every root render. #AI:setDefaultLayout
      *
      * Templates that call $this->layout() override this. Pass null to disable.
      *
      * @param string|null $name Layout template path, or null to disable.
      */
-    public static function set_default_layout(?string $name): void {
+    public static function setDefaultLayout(?string $name): void {
         self::$default_layout = $name;
     }
 
@@ -151,7 +151,7 @@ final class View implements \Skim\Worker\Resettable {
 
     // --- internals ---
 
-    public static function views_path(): string {
+    public static function viewsPath(): string {
         if (self::$views_path !== '') {
             return self::$views_path;
         }
@@ -159,7 +159,7 @@ final class View implements \Skim\Worker\Resettable {
         return $root . '/app/views';
     }
 
-    private static function extract_fragment(string $html, string $name, string $template): string {
+    private static function extractFragment(string $html, string $name, string $template): string {
         try {
             return \Skim\View\FragmentExtractor::extract($html, $name);
         } catch (\Skim\View\Exceptions\ViewException $e) {
@@ -191,8 +191,8 @@ final class View implements \Skim\Worker\Resettable {
 #AI config_reads: []
 #AI non_goals: [Does not compile or cache templates; Does not escape output; Does not handle asset bundling]
 #AI side_effects: [Records render timing in profiler::view(); share() mutates static shared_data]
-#AI flow: view::render() -> template::render_file() -> layout system -> fragment extraction? -> profiler::view()
-#AI lifecycle_steps: [view::render($template, $data, $fragment); -> resolve views_path; -> new template(path, merged_data, default_layout); -> template::render_file(); -> fragment? -> extract_fragment(); -> profiler::view(); -> return HTML]
+#AI flow: view::render() -> template::renderFile() -> layout system -> fragment extraction? -> profiler::view()
+#AI lifecycle_steps: [view::render($template, $data, $fragment); -> resolve views_path; -> new template(path, merged_data, default_layout); -> template::renderFile(); -> fragment? -> extract_fragment(); -> profiler::view(); -> return HTML]
 #AI section_order: [Rendering API; Configuration; Testing Hooks; Architecture]
 #AI architectural_notes: Uses native PHP templates for real stack traces and opcache performance. Fragment extraction is a post-render state-machine pass — the full template always renders first.
 
@@ -206,10 +206,10 @@ final class View implements \Skim\Worker\Resettable {
 #AI throws_details: [{type: view_exception | desc: If template file or fragment name is not found.}]
 #AI side_effects: [Records render timing in profiler::view()]
 
-#AI:render_fragment
+#AI:renderFragment
 #AI group: Rendering API
 #AI frequency: medium
-#AI signature: public static function render_fragment(string $template, array $data, string $fragment): string
+#AI signature: public static function renderFragment(string $template, array $data, string $fragment): string
 #AI contract: Shorthand for render() with $fragment set. Renders only the named fragment block.
 #AI param_details: [{name: $template | type: string | required: true | desc: Template path relative to views root.}; {name: $data | type: array | required: true | desc: Data for this render.}; {name: $fragment | type: string | required: true | desc: Named fragment to extract.}]
 #AI return_detail: {type: string | desc: Extracted fragment HTML.}
@@ -222,17 +222,17 @@ final class View implements \Skim\Worker\Resettable {
 #AI param_details: [{name: $key | type: string | required: true | desc: Shared variable name available in all templates.}; {name: $value | type: mixed | required: true | desc: Shared variable value.}]
 #AI side_effects: [Mutates static shared_data array]
 
-#AI:set_path
+#AI:setPath
 #AI group: Configuration
 #AI frequency: low
-#AI signature: public static function set_path(string $path): void
+#AI signature: public static function setPath(string $path): void
 #AI contract: Sets the root directory for template resolution. Called during app boot.
 #AI param_details: [{name: $path | type: string | required: true | desc: Absolute path to the views directory.}]
 
-#AI:set_default_layout
+#AI:setDefaultLayout
 #AI group: Configuration
 #AI frequency: low
-#AI signature: public static function set_default_layout(?string $name): void
+#AI signature: public static function setDefaultLayout(?string $name): void
 #AI contract: Sets a default layout applied to every root render that does not call $this->layout(). Pass null to disable.
 #AI param_details: [{name: $name | type: ?string | required: true | desc: Layout template path, or null to disable.}]
 
@@ -243,10 +243,10 @@ final class View implements \Skim\Worker\Resettable {
 #AI contract: Clears shared data, views path, and default layout. Use in test tearDown().
 #AI side_effects: [Clears all static state]
 
-#AI:reset_request
+#AI:resetRequest
 #AI group: Testing Hooks
 #AI frequency: internal
-#AI signature: public static function reset_request(): void
+#AI signature: public static function resetRequest(): void
 #AI contract: Clears shared data between requests in worker mode.
 #AI side_effects: [Empties static $shared_data array]
 

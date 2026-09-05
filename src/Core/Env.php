@@ -80,8 +80,8 @@ final class Env {
      */
     public static function get(string $key, mixed $default = null): mixed {
         if (!self::$loaded) {
-            if (!self::load_compiled_cache()) {
-                self::load(base_path('.env'));
+            if (!self::loadCompiledCache()) {
+                self::load(basePath('.env'));
             }
         }
 
@@ -122,29 +122,29 @@ final class Env {
      */
     public static function all(): array {
         if (!self::$loaded) {
-            if (!self::load_compiled_cache()) {
-                self::load(base_path('.env'));
+            if (!self::loadCompiledCache()) {
+                self::load(basePath('.env'));
             }
         }
         return self::$cache;
     }
 
     /**
-     * Attempts to load env values from a pre-compiled PHP array cache. #AI:load_compiled_cache
+     * Attempts to load env values from a pre-compiled PHP array cache. #AI:loadCompiledCache
      *
      * WHY: Pure arrays allow OPcache shared-memory hit with zero parse overhead.
      * Returns false when the cache file is missing or stale (dev mode with
      * APP_DEBUG=true and .env newer than cache), so the caller falls back
      * to parsing .env directly.
      */
-    private static function load_compiled_cache(): bool {
-        $cache_path = storage_path('config_cache/env.php');
+    private static function loadCompiledCache(): bool {
+        $cache_path = storagePath('config_cache/env.php');
         if (!is_file($cache_path)) {
             return false;
         }
 
         $debug = $_SERVER['APP_DEBUG'] ?? $_ENV['APP_DEBUG'] ?? false;
-        if ($debug && is_file(base_path('.env')) && filemtime(base_path('.env')) > filemtime($cache_path)) {
+        if ($debug && is_file(basePath('.env')) && filemtime(basePath('.env')) > filemtime($cache_path)) {
             return false;
         }
 
@@ -223,10 +223,10 @@ final class Env {
 #AI contract: Returns all cached environment variables as a flat array. Auto-loads on first call. Includes values from .env and set() overrides. Does not include $_SERVER or $_ENV values.
 #AI return_detail: {type: array | desc: Flat key-value map of all cached environment variables.}
 
-#AI:load_compiled_cache
+#AI:loadCompiledCache
 #AI group: Read API
 #AI frequency: internal
-#AI signature: private static function load_compiled_cache(): bool
+#AI signature: private static function loadCompiledCache(): bool
 #AI contract: Attempts to load env values from a pre-compiled PHP array cache at storage/config_cache/env.php. Returns false when the cache file is missing or stale (APP_DEBUG=true and .env newer than cache). Sets loaded flag on success.
 #AI return_detail: {type: bool | desc: True if cache was loaded, false if caller should fall back to load().}
 #AI side_effects: [Populates self::$cache from compiled file; Sets self::$loaded to true on success]

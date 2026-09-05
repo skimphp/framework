@@ -14,7 +14,7 @@ namespace Skim\Http;
  *       'GET https://api.example.com/users' => ['status' => 200, 'body' => [['id' => 1]]],
  *   ]);
  *   $resp = $http->get('https://api.example.com/users');
- *   $http->assert_sent('GET', 'users');
+ *   $http->assertSent('GET', 'users');
  *
  * Testing: Create via client::fake() — no external dependencies needed.
  *
@@ -37,7 +37,7 @@ final class FakeClient extends \Skim\Http\Client {
      * @param array  $headers Request headers (recorded but not sent).
      */
     public function get(string $url, array $query = [], array $headers = []): \Skim\Http\HttpResponse {
-        return $this->fake_send('GET', $url, null);
+        return $this->fakeSend('GET', $url, null);
     }
 
     /**
@@ -48,7 +48,7 @@ final class FakeClient extends \Skim\Http\Client {
      * @param array  $headers Request headers (recorded but not sent).
      */
     public function post(string $url, array $data = [], array $headers = []): \Skim\Http\HttpResponse {
-        return $this->fake_send('POST', $url, $data);
+        return $this->fakeSend('POST', $url, $data);
     }
 
     /**
@@ -59,7 +59,7 @@ final class FakeClient extends \Skim\Http\Client {
      * @param array  $headers Request headers (recorded but not sent).
      */
     public function put(string $url, array $data = [], array $headers = []): \Skim\Http\HttpResponse {
-        return $this->fake_send('PUT', $url, $data);
+        return $this->fakeSend('PUT', $url, $data);
     }
 
     /**
@@ -70,7 +70,7 @@ final class FakeClient extends \Skim\Http\Client {
      * @param array  $headers Request headers (recorded but not sent).
      */
     public function patch(string $url, array $data = [], array $headers = []): \Skim\Http\HttpResponse {
-        return $this->fake_send('PATCH', $url, $data);
+        return $this->fakeSend('PATCH', $url, $data);
     }
 
     /**
@@ -81,23 +81,23 @@ final class FakeClient extends \Skim\Http\Client {
      * @param array  $headers Request headers (recorded but not sent).
      */
     public function delete(string $url, array $data = [], array $headers = []): \Skim\Http\HttpResponse {
-        return $this->fake_send('DELETE', $url, $data);
+        return $this->fakeSend('DELETE', $url, $data);
     }
 
     /**
-     * Asserts that a request matching method+url substring was made. #AI:assert_sent
+     * Asserts that a request matching method+url substring was made. #AI:assertSent
      *
      * Throws RuntimeException when no recorded request matches. The URL
      * match uses str_contains, so partial URLs work.
      *
      * Example:
-     *   $http->assert_sent('GET', 'users'); // matches any URL containing 'users'
+     *   $http->assertSent('GET', 'users'); // matches any URL containing 'users'
      *
      * @param string $method HTTP method (case-insensitive).
      * @param string $url    URL substring to match against recorded URLs.
      * @throws \RuntimeException When no matching request was recorded.
      */
-    public function assert_sent(string $method, string $url): void {
+    public function assertSent(string $method, string $url): void {
         $found = array_find(
             $this->recorded,
             fn($r) => $r['method'] === strtoupper($method) && str_contains($r['url'], $url),
@@ -108,11 +108,11 @@ final class FakeClient extends \Skim\Http\Client {
     }
 
     /**
-     * Asserts that no HTTP requests were recorded. #AI:assert_nothing_sent
+     * Asserts that no HTTP requests were recorded. #AI:assertNothingSent
      *
      * @throws \RuntimeException When any requests were recorded.
      */
-    public function assert_nothing_sent(): void {
+    public function assertNothingSent(): void {
         if ($this->recorded !== []) {
             throw new \RuntimeException('Expected no HTTP requests, but ' . count($this->recorded) . ' were sent.');
         }
@@ -129,7 +129,7 @@ final class FakeClient extends \Skim\Http\Client {
         return $this->recorded;
     }
 
-    private function fake_send(string $method, string $url, mixed $body): \Skim\Http\HttpResponse {
+    private function fakeSend(string $method, string $url, mixed $body): \Skim\Http\HttpResponse {
         $this->recorded[] = ['method' => $method, 'url' => $url, 'body' => $body];
 
         $key = "{$method} {$url}";
@@ -219,18 +219,18 @@ final class FakeClient extends \Skim\Http\Client {
 #AI param_details: [{name: $url | type: string | required: true | desc: Target URL.}; {name: $data | type: array | required: false | desc: Request body data (recorded).}; {name: $headers | type: array | required: false | desc: Request headers (recorded but not sent).}]
 #AI return_detail: {type: http_response | desc: Stub response or default 200 empty JSON.}
 
-#AI:assert_sent
+#AI:assertSent
 #AI group: Assertions
 #AI frequency: high
-#AI signature: public function assert_sent(string $method, string $url): void
+#AI signature: public function assertSent(string $method, string $url): void
 #AI contract: Throws RuntimeException when no recorded request matches the given method and URL substring.
 #AI param_details: [{name: $method | type: string | required: true | desc: HTTP method (case-insensitive).}; {name: $url | type: string | required: true | desc: URL substring to match via str_contains.}]
 #AI throws_details: [{type: \RuntimeException | desc: When no matching request was recorded.}]
 
-#AI:assert_nothing_sent
+#AI:assertNothingSent
 #AI group: Assertions
 #AI frequency: medium
-#AI signature: public function assert_nothing_sent(): void
+#AI signature: public function assertNothingSent(): void
 #AI contract: Throws RuntimeException when any HTTP requests were recorded.
 #AI throws_details: [{type: \RuntimeException | desc: When any requests were recorded.}]
 

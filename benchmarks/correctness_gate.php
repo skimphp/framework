@@ -25,8 +25,8 @@ $results = [
 ];
 $errors = [];
 
-function boot_app(): app {
-    $app = app::test_instance([
+function bootApp(): app {
+    $app = app::testInstance([
         'app.debug' => false,
         'app.view.default_layout' => null,
     ]);
@@ -34,41 +34,41 @@ function boot_app(): app {
     $app->router->get('/boom', fn() => throw new \RuntimeException('handler blew up'));
     event::on('boot.ping', fn() => null);
     $app->boot();
-    $app->boot_extensions();
+    $app->bootExtensions();
     $app->freeze();
-    event::capture_boot_snapshot();
+    event::captureBootSnapshot();
     return $app;
 }
 
-function run_once(app $app, string $uri): void {
-    $app->begin_request();
+function runOnce(app $app, string $uri): void {
+    $app->beginRequest();
     try {
         $app->dispatch(request::make('GET', $uri), new response());
     } catch (\Throwable $e) {
         ob_start();
-        $app->handle_exception($e);
+        $app->handleException($e);
         ob_end_clean();
     } finally {
-        $app->end_request();
+        $app->endRequest();
     }
 }
 
 // --- 1. Isolation ---
 try {
-    $app = boot_app();
-    run_once($app, '/ping');
+    $app = bootApp();
+    runOnce($app, '/ping');
     $app->set('user.name', 'alice');
     view::share('title', 'test');
     event::on('req.ping', fn() => null);
-    run_once($app, '/ping');
+    runOnce($app, '/ping');
 
     if ($app->get('user.name') !== null) {
         throw new \RuntimeException('user scope leaked');
     }
-    if (view::get_shared('title') !== null) {
+    if (view::getShared('title') !== null) {
         throw new \RuntimeException('view shared data leaked');
     }
-    if (event::listener_count('req.ping') !== 0) {
+    if (event::listenerCount('req.ping') !== 0) {
         throw new \RuntimeException('request listener leaked');
     }
     $results['isolation'] = true;
@@ -80,22 +80,22 @@ try {
 try {
     event::off();
     view::reset();
-    component_collector::reset_request();
+    component_collector::resetRequest();
 
-    $app = boot_app();
-    $boot_baseline = event::listener_count('boot.ping');
+    $app = bootApp();
+    $boot_baseline = event::listenerCount('boot.ping');
 
     for ($i = 0; $i < 20; $i++) {
-        run_once($app, '/ping');
+        runOnce($app, '/ping');
         event::on('req.ping', fn() => null);
-        run_once($app, '/ping');
+        runOnce($app, '/ping');
     }
 
-    if (event::listener_count('boot.ping') !== $boot_baseline) {
+    if (event::listenerCount('boot.ping') !== $boot_baseline) {
         throw new \RuntimeException('boot listener count changed from ' . $boot_baseline);
     }
-    if (event::listener_count('req.ping') !== 0) {
-        throw new \RuntimeException('request listeners accumulated: ' . event::listener_count('req.ping'));
+    if (event::listenerCount('req.ping') !== 0) {
+        throw new \RuntimeException('request listeners accumulated: ' . event::listenerCount('req.ping'));
     }
     $results['event_accumulation'] = true;
 } catch (\Throwable $e) {
@@ -106,13 +106,13 @@ try {
 try {
     event::off();
     view::reset();
-    component_collector::reset_request();
+    component_collector::resetRequest();
 
-    $app = boot_app();
+    $app = bootApp();
     $baseline_ob = ob_get_level();
 
-    run_once($app, '/boom');
-    run_once($app, '/ping');
+    runOnce($app, '/boom');
+    runOnce($app, '/ping');
 
     if ($app->get('user.name') !== null) {
         throw new \RuntimeException('user scope leaked after error');
@@ -132,18 +132,18 @@ try {
 try {
     event::off();
     view::reset();
-    component_collector::reset_request();
+    component_collector::resetRequest();
 
-    $app = boot_app();
+    $app = bootApp();
 
     for ($i = 0; $i < 5; $i++) {
-        run_once($app, '/ping');
+        runOnce($app, '/ping');
     }
     $baseline = memory_get_usage(true);
     $peak_delta = 0;
 
     for ($i = 0; $i < 1000; $i++) {
-        run_once($app, '/ping');
+        runOnce($app, '/ping');
         $peak_delta = max($peak_delta, memory_get_usage(true) - $baseline);
     }
 

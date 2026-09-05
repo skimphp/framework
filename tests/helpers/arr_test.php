@@ -2,11 +2,11 @@
 
 use Skim\Helpers\Arr;
 
-describe('arr::map_by()', function(): void {
+describe('arr::mapBy()', function(): void {
 
     test('re-indexes array by column value', function(): void {
         $input  = [['id' => 5, 'name' => 'John'], ['id' => 6, 'name' => 'Jane']];
-        $result = \Skim\Helpers\Arr::map_by('id', $input);
+        $result = \Skim\Helpers\Arr::mapBy('id', $input);
         expect($result)->toHaveKey(5)->toHaveKey(6);
         expect($result[5]['name'])->toBe('John');
         expect($result[6]['name'])->toBe('Jane');
@@ -14,17 +14,17 @@ describe('arr::map_by()', function(): void {
 
     test('last-write-wins on key collision', function(): void {
         $input  = [['id' => 1, 'v' => 'first'], ['id' => 1, 'v' => 'second']];
-        $result = \Skim\Helpers\Arr::map_by('id', $input);
+        $result = \Skim\Helpers\Arr::mapBy('id', $input);
         expect($result[1]['v'])->toBe('second');
     });
 
 });
 
-describe('arr::map_col()', function(): void {
+describe('arr::mapCol()', function(): void {
 
     test('maps two columns into key→value pairs', function(): void {
         $rows   = [['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Bob']];
-        $result = \Skim\Helpers\Arr::map_col('id', 'name', $rows);
+        $result = \Skim\Helpers\Arr::mapCol('id', 'name', $rows);
         expect($result)->toBe([1 => 'Alice', 2 => 'Bob']);
     });
 
@@ -39,28 +39,28 @@ describe('arr::pluck()', function(): void {
 
 });
 
-describe('arr::filter_by()', function(): void {
+describe('arr::filterBy()', function(): void {
 
     test('returns only matching rows, re-indexed', function(): void {
         $rows   = [['s' => 'a'], ['s' => 'b'], ['s' => 'a']];
-        $result = \Skim\Helpers\Arr::filter_by('s', 'a', $rows);
+        $result = \Skim\Helpers\Arr::filterBy('s', 'a', $rows);
         expect(count($result))->toBe(2);
         expect(array_key_exists(0, $result))->toBeTrue();
     });
 
 });
 
-describe('arr::find_all()', function(): void {
+describe('arr::findAll()', function(): void {
 
     test('returns all matching elements', function(): void {
         $items  = [['role' => 'admin'], ['role' => 'user'], ['role' => 'admin']];
-        $result = \Skim\Helpers\Arr::find_all(['role' => 'admin'], $items);
+        $result = \Skim\Helpers\Arr::findAll(['role' => 'admin'], $items);
         expect(count($result))->toBe(2);
     });
 
     test('returns empty array when no match', function(): void {
         $items  = [['role' => 'user']];
-        $result = \Skim\Helpers\Arr::find_all(['role' => 'admin'], $items);
+        $result = \Skim\Helpers\Arr::findAll(['role' => 'admin'], $items);
         expect($result)->toBe([]);
     });
 
@@ -80,12 +80,12 @@ describe('arr::normalize100()', function(): void {
 
 });
 
-describe('arr::weighted_pick()', function(): void {
+describe('arr::weightedPick()', function(): void {
 
     test('always returns a key from the weights array', function(): void {
         $keys = ['red', 'blue', 'green'];
         for ($i = 0; $i < 50; $i++) {
-            expect(\Skim\Helpers\Arr::weighted_pick(['red' => 70, 'blue' => 20, 'green' => 10]))->toBeIn($keys);
+            expect(\Skim\Helpers\Arr::weightedPick(['red' => 70, 'blue' => 20, 'green' => 10]))->toBeIn($keys);
         }
     });
 

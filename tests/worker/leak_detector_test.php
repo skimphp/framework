@@ -12,12 +12,12 @@ use Skim\Worker\WorkerReset;
 beforeEach(function (): void {
     \Skim\Events\Event::off();
     \Skim\View\View::reset();
-    \Skim\View\ComponentCollector::reset_request();
+    \Skim\View\ComponentCollector::resetRequest();
     \Skim\Worker\LeakDetector::reset();
 });
 
-function boot_worker_app_with_leak_detection(string $mode = 'strict'): \Skim\Core\App {
-    $app = \Skim\Core\App::test_instance([
+function bootWorkerAppWithLeakDetection(string $mode = 'strict'): \Skim\Core\App {
+    $app = \Skim\Core\App::testInstance([
         'app.debug' => false,
         'app.view.default_layout' => null,
         'app.leak_detection' => $mode,
@@ -26,33 +26,33 @@ function boot_worker_app_with_leak_detection(string $mode = 'strict'): \Skim\Cor
     $app->router->get('/boom', fn() => throw new \RuntimeException('handler blew up'));
     \Skim\Events\Event::on('boot.ping', fn() => null);
     $app->boot();
-    $app->boot_extensions();
+    $app->bootExtensions();
     $app->freeze();
-    \Skim\Events\Event::capture_boot_snapshot();
+    \Skim\Events\Event::captureBootSnapshot();
     \Skim\Worker\LeakDetector::configure($mode);
     return $app;
 }
 
-function leak_run_once(\Skim\Core\App $app, string $uri): void {
-    $app->begin_request();
+function leakRunOnce(\Skim\Core\App $app, string $uri): void {
+    $app->beginRequest();
     try {
         $app->dispatch(\Skim\Core\Request::make('GET', $uri), new \Skim\Core\Response());
     } catch (\Throwable $e) {
         ob_start();
-        $app->handle_exception($e);
+        $app->handleException($e);
         ob_end_clean();
     } finally {
-        $app->end_request();
+        $app->endRequest();
     }
 }
 
 describe('leak_detector — hard invariants', function (): void {
 
     test('clean app produces zero findings after N requests', function (): void {
-        $app = boot_worker_app_with_leak_detection('strict');
+        $app = bootWorkerAppWithLeakDetection('strict');
 
         for ($i = 0; $i < 60; $i++) {
-            leak_run_once($app, '/ping');
+            leakRunOnce($app, '/ping');
         }
 
         // Only hard invariants must be empty; growth trends can legitimately
@@ -62,9 +62,9 @@ describe('leak_detector — hard invariants', function (): void {
     });
 
     test('user scope leak is flagged', function (): void {
-        $app = boot_worker_app_with_leak_detection('strict');
+        $app = bootWorkerAppWithLeakDetection('strict');
 
-        leak_run_once($app, '/ping');
+        leakRunOnce($app, '/ping');
         // Simulate a bug: user scope not cleared
         $app->set('user.name', 'leaked');
         // Force worker_reset without end_request to bypass normal cleanup
@@ -78,7 +78,7 @@ describe('leak_detector — hard invariants', function (): void {
     });
 
     test('resolved singleton growth is flagged', function (): void {
-        $app = \Skim\Core\App::test_instance([
+        $app = \Skim\Core\App::testInstance([
             'app.debug' => false,
             'app.view.default_layout' => null,
             'app.leak_detection' => 'strict',
@@ -91,21 +91,21 @@ describe('leak_detector — hard invariants', function (): void {
         $app->router->get('/ping', fn(): array => ['ok' => true]);
         \Skim\Events\Event::on('boot.ping', fn() => null);
         $app->boot();
-        $app->boot_extensions();
+        $app->bootExtensions();
         $app->freeze();
-        \Skim\Events\Event::capture_boot_snapshot();
+        \Skim\Events\Event::captureBootSnapshot();
         \Skim\Worker\LeakDetector::configure('strict');
 
         // Warmup
         for ($i = 0; $i < 15; $i++) {
-            leak_run_once($app, '/ping');
+            leakRunOnce($app, '/ping');
             $app->make('leaky.svc');
         }
 
         // Grow resolved count each request by adding new request-time bindings
         // (in a real leak this would be a singleton caching per-request state)
         for ($i = 0; $i < 20; $i++) {
-            leak_run_once($app, '/ping');
+            leakRunOnce($app, '/ping');
             // Use make_transient to build a new object and cache it manually
             // by injecting into a helper that tracks count
             $app->make('leaky.svc');
@@ -121,26 +121,26 @@ describe('leak_detector — hard invariants', function (): void {
 describe('leak_detector — modes', function (): void {
 
     test('off mode produces no findings', function (): void {
-        $app = boot_worker_app_with_leak_detection('off');
+        $app = bootWorkerAppWithLeakDetection('off');
         $app->set('user.name', 'leaked');
 
-        leak_run_once($app, '/ping');
+        leakRunOnce($app, '/ping');
 
         expect(\Skim\Worker\LeakDetector::findings())->toBe([]);
     });
 
     test('warn mode does not accumulate findings', function (): void {
-        $app = boot_worker_app_with_leak_detection('warn');
+        $app = bootWorkerAppWithLeakDetection('warn');
 
         for ($i = 0; $i < 20; $i++) {
-            leak_run_once($app, '/ping');
+            leakRunOnce($app, '/ping');
         }
 
         expect(\Skim\Worker\LeakDetector::findings())->toBe([]);
     });
 
     test('strict mode accumulates findings', function (): void {
-        $app = boot_worker_app_with_leak_detection('strict');
+        $app = bootWorkerAppWithLeakDetection('strict');
         $app->set('user.name', 'leaked');
         \Skim\Worker\WorkerReset::apply(ob_get_level());
         \Skim\Worker\LeakDetector::check($app);

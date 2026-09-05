@@ -26,9 +26,9 @@ final class ExtManifest {
      *   ext_manifest::generate($ext, '/path/to/vendor/acme/auth/skim.json');
      *
      * @param \Skim\Ext\Extension $ext Instantiated extension to extract metadata from.
-     * @param string    $output_path Absolute file path for the JSON output.
+     * @param string    $outputPath Absolute file path for the JSON output.
      */
-    public static function generate(\Skim\Ext\Extension $ext, string $output_path): void {
+    public static function generate(\Skim\Ext\Extension $ext, string $outputPath): void {
         $data = [
             'name'         => $ext->name,
             'version'      => $ext->version,
@@ -40,11 +40,11 @@ final class ExtManifest {
             'config'       => $ext->config(),
             'migrations'   => $ext->migrations() !== '',
             'commands'     => array_keys($ext->commands()),
-            'env_keys'     => $ext->env_keys(),
-            'post_install' => $ext->post_install(),
+            'env_keys'     => $ext->envKeys(),
+            'post_install' => $ext->postInstall(),
         ];
 
-        file_put_contents($output_path, json_encode($data, JSON_PRETTY_PRINT));
+        file_put_contents($outputPath, json_encode($data, JSON_PRETTY_PRINT));
     }
 }
 
@@ -71,7 +71,7 @@ final class ExtManifest {
 #AI:generate
 #AI group: Generation
 #AI frequency: low
-#AI signature: public static function generate(extension $ext, string $output_path): void
+#AI signature: public static function generate(extension $ext, string $outputPath): void
 #AI contract: Serializes extension metadata to a JSON file. Overwrites any existing file at the target path.
-#AI param_details: [{name: $ext | type: extension | required: true | desc: Instantiated extension to extract metadata from.}; {name: $output_path | type: string | required: true | desc: Absolute file path for the JSON output.}]
+#AI param_details: [{name: $ext | type: extension | required: true | desc: Instantiated extension to extract metadata from.}; {name: $outputPath | type: string | required: true | desc: Absolute file path for the JSON output.}]
 #AI side_effects: [Writes JSON file to disk]

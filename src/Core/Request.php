@@ -31,27 +31,27 @@ class Request {
         private readonly array $server,
         private readonly array $cookies,
         private readonly array $files,
-        private readonly string $raw_body,
+        private readonly string $rawBody,
     ) {}
 
     /**
-     * Creates a request from PHP superglobals. #AI:from_globals
+     * Creates a request from PHP superglobals. #AI:fromGlobals
      *
      * Called once by app::run() at the start of the request. Reads superglobals
      * at call time; mutations to $_GET after this point are not reflected.
      *
      * Example:
      *   // Called internally by app::run()
-     *   $req = request::from_globals();
+     *   $req = request::fromGlobals();
      */
-    public static function from_globals(): static {
+    public static function fromGlobals(): static {
         return new static(
             query:    $_GET    ?? [],
             post:     $_POST   ?? [],
             server:   $_SERVER ?? [],
             cookies:  $_COOKIE ?? [],
             files:    $_FILES  ?? [],
-            raw_body: (string) file_get_contents('php://input'),
+            rawBody: (string) file_get_contents('php://input'),
         );
     }
 
@@ -125,7 +125,7 @@ class Request {
         if (!str_contains($ct, 'application/json')) {
             return $this->json_body = [];
         }
-        $decoded = json_decode($this->raw_body, true);
+        $decoded = json_decode($this->rawBody, true);
         return $this->json_body = is_array($decoded) ? $decoded : [];
     }
 
@@ -208,49 +208,49 @@ class Request {
     }
 
     /**
-     * Returns true when HX-Request header is present. #AI:is_htmx
+     * Returns true when HX-Request header is present. #AI:isHtmx
      */
-    public function is_htmx(): bool {
+    public function isHtmx(): bool {
         return $this->header('HX-Request') !== null;
     }
 
     /**
-     * Returns true when datastar-request header is present. #AI:is_datastar
+     * Returns true when datastar-request header is present. #AI:isDatastar
      */
-    public function is_datastar(): bool {
+    public function isDatastar(): bool {
         return $this->header('datastar-request') !== null;
     }
 
     /**
-     * Returns true when Accept header contains application/json. #AI:is_json
+     * Returns true when Accept header contains application/json. #AI:isJson
      */
-    public function is_json(): bool {
+    public function isJson(): bool {
         $accept = $this->header('Accept') ?? '';
         return str_contains($accept, 'application/json');
     }
 
     /**
-     * Returns true when X-Requested-With is XMLHttpRequest. #AI:is_ajax
+     * Returns true when X-Requested-With is XMLHttpRequest. #AI:isAjax
      */
-    public function is_ajax(): bool {
+    public function isAjax(): bool {
         return strtolower((string) $this->header('X-Requested-With')) === 'xmlhttprequest';
     }
 
     /**
-     * Returns true when running via PHP CLI. #AI:is_cli
+     * Returns true when running via PHP CLI. #AI:isCli
      */
-    public function is_cli(): bool {
+    public function isCli(): bool {
         return PHP_SAPI === 'cli';
     }
 
     /**
-     * Injects route parameters after dispatch (framework internal). #AI:set_route_params
+     * Injects route parameters after dispatch (framework internal). #AI:setRouteParams
      *
      * Called by app::run() after routing resolves. Never call from application code.
      *
      * @param array $params Route parameter key-value pairs.
      */
-    public function set_route_params(array $params): void {
+    public function setRouteParams(array $params): void {
         $this->route_params = $params;
     }
 
@@ -268,9 +268,9 @@ class Request {
     }
 
     /**
-     * Returns all route parameters as a flat array. #AI:all_params
+     * Returns all route parameters as a flat array. #AI:allParams
      */
-    public function all_params(): array {
+    public function allParams(): array {
         return $this->route_params;
     }
 
@@ -290,7 +290,7 @@ class Request {
      * Useful for non-form payloads (JSON, binary, webhooks).
      */
     public function raw(): string {
-        return $this->raw_body;
+        return $this->rawBody;
     }
 }
 
@@ -312,14 +312,14 @@ class Request {
 #AI entry_points: [from_globals; make; get; post; input; json; file; header; ip; method; path]
 #AI non_goals: [Does not validate input; Does not sanitize data; Does not handle file uploads beyond $_FILES passthrough]
 #AI side_effects: [json() caches parsed body on first call; set_route_params() mutates internal state]
-#AI flow: app::run() -> request::from_globals() -> middleware pipeline -> controller(request $req)
+#AI flow: app::run() -> request::fromGlobals() -> middleware pipeline -> controller(request $req)
 #AI section_order: [Construction; Input Access; Headers & IP; URL & Method; Detection Helpers; Route Params; Raw Access]
 #AI architectural_notes: The request is a value object created once per HTTP cycle. Route params are injected after dispatch by the framework. The make() factory delegates to request_factory for test fabrication.
 
-#AI:from_globals
+#AI:fromGlobals
 #AI group: Construction
 #AI frequency: internal
-#AI signature: public static function from_globals(): static
+#AI signature: public static function fromGlobals(): static
 #AI contract: Creates a request from PHP superglobals. Called once by app::run(). Reads superglobals at call time.
 
 #AI:make
@@ -408,45 +408,45 @@ class Request {
 #AI contract: Returns the full URL including scheme and host.
 #AI return_detail: {type: string | desc: Full URL.}
 
-#AI:is_htmx
+#AI:isHtmx
 #AI group: Detection Helpers
 #AI frequency: medium
-#AI signature: public function is_htmx(): bool
+#AI signature: public function isHtmx(): bool
 #AI contract: Returns true when HX-Request header is present.
 #AI return_detail: {type: bool | desc: True for htmx requests.}
 
-#AI:is_datastar
+#AI:isDatastar
 #AI group: Detection Helpers
 #AI frequency: medium
-#AI signature: public function is_datastar(): bool
+#AI signature: public function isDatastar(): bool
 #AI contract: Returns true when datastar-request header is present.
 #AI return_detail: {type: bool | desc: True for datastar requests.}
 
-#AI:is_json
+#AI:isJson
 #AI group: Detection Helpers
 #AI frequency: medium
-#AI signature: public function is_json(): bool
+#AI signature: public function isJson(): bool
 #AI contract: Returns true when Accept header contains application/json.
 #AI return_detail: {type: bool | desc: True for JSON-accepting requests.}
 
-#AI:is_ajax
+#AI:isAjax
 #AI group: Detection Helpers
 #AI frequency: low
-#AI signature: public function is_ajax(): bool
+#AI signature: public function isAjax(): bool
 #AI contract: Returns true when X-Requested-With is XMLHttpRequest.
 #AI return_detail: {type: bool | desc: True for XHR requests.}
 
-#AI:is_cli
+#AI:isCli
 #AI group: Detection Helpers
 #AI frequency: low
-#AI signature: public function is_cli(): bool
+#AI signature: public function isCli(): bool
 #AI contract: Returns true when running via PHP CLI.
 #AI return_detail: {type: bool | desc: True for CLI SAPI.}
 
-#AI:set_route_params
+#AI:setRouteParams
 #AI group: Route Params
 #AI frequency: internal
-#AI signature: public function set_route_params(array $params): void
+#AI signature: public function setRouteParams(array $params): void
 #AI contract: Injects route parameters after dispatch. Called by framework, never by application code.
 #AI param_details: [{name: $params | type: array | required: true | desc: Route parameter key-value pairs.}]
 
@@ -458,10 +458,10 @@ class Request {
 #AI param_details: [{name: $key | type: string | required: true | desc: Route parameter name.}; {name: $default | type: mixed | required: false | desc: Returned when the param is absent.}]
 #AI return_detail: {type: mixed | desc: Route param value or $default.}
 
-#AI:all_params
+#AI:allParams
 #AI group: Route Params
 #AI frequency: low
-#AI signature: public function all_params(): array
+#AI signature: public function allParams(): array
 #AI contract: Returns all route parameters as a flat key-value array.
 #AI return_detail: {type: array | desc: All route params.}
 

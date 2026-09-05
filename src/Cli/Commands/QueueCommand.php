@@ -53,7 +53,7 @@ class QueueCommand extends \Skim\Cli\Command {
         $this->info("Starting worker on queue '{$queue_name}' (sleep={$sleep}s)");
         $this->muted('Press Ctrl+C to stop gracefully.');
 
-        $w = new \Skim\Queue\Worker(queue: $queue_name, sleep: $sleep, max_jobs: $max_jobs);
+        $w = new \Skim\Queue\Worker(queue: $queue_name, sleep: $sleep, maxJobs: $max_jobs);
         $w->work();
 
         $this->success('Worker stopped.');
@@ -112,7 +112,7 @@ class QueueCommand extends \Skim\Cli\Command {
 #AI intro: `queue_command` implements the `php skim queue:*` family of CLI commands. It dispatches to work (start worker), status (show pending counts), flush (remove pending jobs), and restart (signal workers to stop) sub-commands.
 #AI lifecycle: instantiated by kernel, handle() called once per invocation; work sub-command blocks until worker stops
 #AI fallback: unknown sub-commands print an error and return exit code 1
-#AI test_seam: instantiate directly, call set_input() with test args, then handle(); use queue::set_redis() for mock Redis
+#AI test_seam: instantiate directly, call set_input() with test args, then handle(); use queue::setRedis() for mock Redis
 #AI invariants: [work blocks until worker stops; flush destroys pending jobs; restart sets a Redis timestamp checked by workers]
 #AI core_behaviors: [work starts a long-lived worker with BRPOP polling; status reads queue sizes from Redis; flush deletes queue keys; restart writes a timestamp to Redis]
 #AI warnings: [flush destroys all pending jobs in the specified queue; work blocks the terminal until stopped]

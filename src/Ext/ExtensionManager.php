@@ -48,8 +48,8 @@ final class ExtensionManager {
         $registry   = new \Skim\Ext\ExtRegistry($root);
         $extensions = $registry->installed();
 
-        self::validate_dependencies($extensions);
-        $extensions = self::topological_sort($extensions);
+        self::validateDependencies($extensions);
+        $extensions = self::topologicalSort($extensions);
 
         $app->set('sys.extensions', $extensions);
         $app->set('sys.extension_conflicts', $registry->conflicts());
@@ -79,7 +79,7 @@ final class ExtensionManager {
                 continue;
             }
 
-            $app->with_extension_context(
+            $app->withExtensionContext(
                 $extension['name'],
                 (int) $extension['priority'],
                 fn(): mixed => $instance->register($app),
@@ -102,7 +102,7 @@ final class ExtensionManager {
                 continue;
             }
 
-            $app->with_extension_context(
+            $app->withExtensionContext(
                 $extension['name'],
                 (int) $extension['priority'],
                 fn(): mixed => $instance->boot($app),
@@ -133,12 +133,12 @@ final class ExtensionManager {
     }
 
     /**
-     * Validates that all required capabilities are provided by installed extensions. #AI:validate_dependencies
+     * Validates that all required capabilities are provided by installed extensions. #AI:validateDependencies
      *
      * @param array $extensions Extension metadata arrays.
      * @throws \RuntimeException When a required capability is not provided by any extension.
      */
-    private static function validate_dependencies(array $extensions): void {
+    private static function validateDependencies(array $extensions): void {
         $available = [];
         foreach ($extensions as $ext) {
             $available[] = $ext['name'];
@@ -163,13 +163,13 @@ final class ExtensionManager {
     }
 
     /**
-     * Returns extensions sorted so dependencies always come before dependents. #AI:topological_sort
+     * Returns extensions sorted so dependencies always come before dependents. #AI:topologicalSort
      *
      * @param array $extensions Extension metadata arrays.
      * @return array Topologically sorted extensions.
      * @throws \RuntimeException On circular dependency.
      */
-    private static function topological_sort(array $extensions): array {
+    private static function topologicalSort(array $extensions): array {
         $by_name    = [];
         $providers  = [];
         foreach ($extensions as $ext) {
@@ -267,18 +267,18 @@ final class ExtensionManager {
 #AI param_details: [{name: $app | type: app | required: true | desc: Application container.}]
 #AI side_effects: [Calls extension boot() hooks]
 
-#AI:validate_dependencies
+#AI:validateDependencies
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private static function validate_dependencies(array $extensions): void
+#AI signature: private static function validateDependencies(array $extensions): void
 #AI contract: Throws RuntimeException when a required capability or name is not provided by any installed extension.
 #AI param_details: [{name: $extensions | type: array | required: true | desc: Extension metadata arrays.}]
 #AI throws_details: [{type: \RuntimeException | desc: When a required capability is not provided.}]
 
-#AI:topological_sort
+#AI:topologicalSort
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private static function topological_sort(array $extensions): array
+#AI signature: private static function topologicalSort(array $extensions): array
 #AI contract: Returns extensions sorted so dependencies always come before dependents. Throws on circular dependency.
 #AI param_details: [{name: $extensions | type: array | required: true | desc: Extension metadata arrays.}]
 #AI return_detail: {type: array | desc: Topologically sorted extension metadata arrays.}

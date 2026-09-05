@@ -24,19 +24,19 @@ class LlmMdEmitter {
      * Prepends framework llm.md content when provided and the file exists.
      *
      * @param array       $data              Decoded llm.json array.
-     * @param string      $output_path        Filesystem path for the output Markdown file.
-     * @param string|null $framework_llm_md  Optional path to framework-level llm.md to prepend.
+     * @param string      $outputPath        Filesystem path for the output Markdown file.
+     * @param string|null $frameworkLlmMd  Optional path to framework-level llm.md to prepend.
      *
      * @throws \RuntimeException If the file cannot be written.
      */
-    public function emit(array $data, string $output_path, ?string $framework_llm_md = null): void {
+    public function emit(array $data, string $outputPath, ?string $frameworkLlmMd = null): void {
         $classes = $data['classes'] ?? [];
         $generated = $data['generated_at'] ?? date('c');
 
         $lines = ['# LLM context', '', '> Auto-generated from source annotations. Do not edit manually.  ', "> Generated: {$generated}", ''];
 
-        if ($framework_llm_md !== null && file_exists($framework_llm_md)) {
-            $framework_content = file_get_contents($framework_llm_md);
+        if ($frameworkLlmMd !== null && file_exists($frameworkLlmMd)) {
+            $framework_content = file_get_contents($frameworkLlmMd);
             if ($framework_content !== false) {
                 $lines[] = '## Framework (skim)';
                 $lines[] = '';
@@ -48,13 +48,13 @@ class LlmMdEmitter {
         }
 
         foreach ($classes as $class) {
-            $lines = array_merge($lines, $this->render_class($class));
+            $lines = array_merge($lines, $this->renderClass($class));
         }
 
-        $this->write($output_path, implode("\n", $lines) . "\n");
+        $this->write($outputPath, implode("\n", $lines) . "\n");
     }
 
-    private function render_class(array $class): array {
+    private function renderClass(array $class): array {
         $symbol = $class['symbol'] ?? trim(($class['namespace'] ?? '') . '\\' . ($class['class_name'] ?? ''), '\\');
         $title = $class['title'] ?? ($class['class_name'] ?? 'class');
         $description = $class['description'] ?? ($class['summary'] ?? '');
@@ -84,25 +84,25 @@ class LlmMdEmitter {
             $lines[] = '';
         }
 
-        $this->append_list($lines, 'Core Behavior', $class['core_behaviors'] ?? $class['invariants'] ?? []);
-        $this->append_scope_table($lines, $class['scope_items'] ?? []);
-        $this->append_list($lines, 'Warnings', $class['warnings'] ?? [], prefix: '⚠ ');
+        $this->appendList($lines, 'Core Behavior', $class['core_behaviors'] ?? $class['invariants'] ?? []);
+        $this->appendScopeTable($lines, $class['scope_items'] ?? []);
+        $this->appendList($lines, 'Warnings', $class['warnings'] ?? [], prefix: '⚠ ');
 
         $methods = $class['methods'] ?? [];
-        $groups = $this->group_methods($methods, $class['section_order'] ?? []);
+        $groups = $this->groupMethods($methods, $class['section_order'] ?? []);
         foreach ($groups as $group => $group_methods) {
             $lines[] = "### {$group}";
             $lines[] = '';
             foreach ($group_methods as $method) {
-                $lines = array_merge($lines, $this->render_method($method));
+                $lines = array_merge($lines, $this->renderMethod($method));
             }
         }
 
         return $lines;
     }
 
-    private function render_method(array $method): array {
-        $lines = ["#### `{$this->compact_signature($method['signature'] ?? $method['name'] ?? '')}`"];
+    private function renderMethod(array $method): array {
+        $lines = ["#### `{$this->compactSignature($method['signature'] ?? $method['name'] ?? '')}`"];
         if (($method['contract'] ?? '') !== '') {
             $lines[] = $this->clean($method['contract']);
         } elseif (($method['contracts'] ?? []) !== []) {
@@ -142,7 +142,7 @@ class LlmMdEmitter {
         return $lines;
     }
 
-    private function append_list(array &$lines, string $title, array $items, string $prefix = ''): void {
+    private function appendList(array &$lines, string $title, array $items, string $prefix = ''): void {
         if ($items === []) {
             return;
         }
@@ -153,7 +153,7 @@ class LlmMdEmitter {
         $lines[] = '';
     }
 
-    private function append_scope_table(array &$lines, array $items): void {
+    private function appendScopeTable(array &$lines, array $items): void {
         if ($items === []) {
             return;
         }
@@ -170,7 +170,7 @@ class LlmMdEmitter {
         $lines[] = '';
     }
 
-    private function group_methods(array $methods, array $order): array {
+    private function groupMethods(array $methods, array $order): array {
         $groups = [];
         foreach ($order as $group) {
             $groups[(string) $group] = [];
@@ -183,12 +183,12 @@ class LlmMdEmitter {
         return array_filter($groups, fn(array $items): bool => $items !== []);
     }
 
-    private function compact_signature(string $signature): string {
+    private function compactSignature(string $signature): string {
         if (!preg_match('/function\s+(\w+)\s*\((.*?)\)\s*(?::\s*([^\s]+))?/', $signature, $matches)) {
             return $signature;
         }
         $params = [];
-        foreach ($this->split_params($matches[2]) as $param) {
+        foreach ($this->splitParams($matches[2]) as $param) {
             if (preg_match('/\$(\w+)(\s*=\s*.+)?$/', trim($param), $param_match)) {
                 $params[] = $param_match[1] . ($param_match[2] ?? '');
             }
@@ -197,7 +197,7 @@ class LlmMdEmitter {
         return $matches[1] . '(' . implode(', ', $params) . ')' . $return;
     }
 
-    private function split_params(string $params): array {
+    private function splitParams(string $params): array {
         return trim($params) === '' ? [] : array_map('trim', explode(',', $params));
     }
 
@@ -206,8 +206,8 @@ class LlmMdEmitter {
         return trim(preg_replace('/\s+/', ' ', $value) ?? $value);
     }
 
-    private function write(string $output_path, string $content): void {
-        $dir = dirname($output_path);
+    private function write(string $outputPath, string $content): void {
+        $dir = dirname($outputPath);
         $ancestor = $dir;
         while ($ancestor !== '/' && $ancestor !== '.' && !file_exists($ancestor)) {
             $parent = dirname($ancestor);
@@ -222,8 +222,8 @@ class LlmMdEmitter {
         if (!is_dir($dir) && !@mkdir($dir, 0755, recursive: true)) {
             throw new \RuntimeException("llm_md_emitter: cannot create directory {$dir}");
         }
-        if (file_put_contents($output_path, $content) === false) {
-            throw new \RuntimeException("llm_md_emitter: cannot write to {$output_path}");
+        if (file_put_contents($outputPath, $content) === false) {
+            throw new \RuntimeException("llm_md_emitter: cannot write to {$outputPath}");
         }
     }
 }
@@ -255,8 +255,8 @@ class LlmMdEmitter {
 #AI:emit
 #AI group: Emit
 #AI frequency: high
-#AI signature: public function emit(array $data, string $output_path, ?string $framework_llm_md = null): void
+#AI signature: public function emit(array $data, string $outputPath, ?string $frameworkLlmMd = null): void
 #AI contract: Accepts decoded llm.json array and writes compact class sections grouped by section_order. Prepends framework llm.md content when the optional path is provided and the file exists.
-#AI param_details: [{name: $data | type: array | required: true | desc: Decoded llm.json array with 'classes' and 'generated_at' keys.}; {name: $output_path | type: string | required: true | desc: Filesystem path for the output Markdown file.}; {name: $framework_llm_md | type: ?string | required: false | desc: Optional path to framework-level llm.md to prepend.}]
+#AI param_details: [{name: $data | type: array | required: true | desc: Decoded llm.json array with 'classes' and 'generated_at' keys.}; {name: $outputPath | type: string | required: true | desc: Filesystem path for the output Markdown file.}; {name: $frameworkLlmMd | type: ?string | required: false | desc: Optional path to framework-level llm.md to prepend.}]
 #AI throws_details: [{type: \RuntimeException | desc: When the output directory cannot be created or the file cannot be written.}]
 #AI side_effects: [writes Markdown file to disk]

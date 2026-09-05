@@ -34,21 +34,21 @@ final class QueryBuilder {
         $pdo_params = [];
 
         if (isset($params['set'])) {
-            [$clause, $extra] = self::build_set($params['set']);
+            [$clause, $extra] = self::buildSet($params['set']);
             $sql = str_replace('%set%', $clause, $sql);
             $pdo_params += $extra;
             unset($params['set']);
         }
 
         if (isset($params['values'])) {
-            [$clause, $extra] = self::build_values($params['values']);
+            [$clause, $extra] = self::buildValues($params['values']);
             $sql = str_replace('%values%', $clause, $sql);
             $pdo_params += $extra;
             unset($params['values']);
         }
 
         if (isset($params['where'])) {
-            $clause = self::build_where($params['where']);
+            $clause = self::buildWhere($params['where']);
             $sql = str_replace('%where%', $clause !== '' ? "WHERE {$clause}" : '', $sql);
             unset($params['where']);
         }
@@ -86,7 +86,7 @@ final class QueryBuilder {
     }
 
     /**
-     * Builds a WHERE clause from flat or nested (and/or) conditions. #AI:build_where
+     * Builds a WHERE clause from flat or nested (and/or) conditions. #AI:buildWhere
      *
      * Flat list: ['a = :a', 'b = :b'] → joined with AND.
      * Nested: ['or' => [[...], [...]], 'and' => [[...], [...]]] → grouped and wrapped.
@@ -94,7 +94,7 @@ final class QueryBuilder {
      *
      * @param array $conditions Flat list or nested and/or structure.
      */
-    public static function build_where(array $conditions): string {
+    public static function buildWhere(array $conditions): string {
         if ($conditions === []) {
             return '';
         }
@@ -131,7 +131,7 @@ final class QueryBuilder {
     }
 
     /**
-     * Builds a SET clause for UPDATE statements. #AI:build_set
+     * Builds a SET clause for UPDATE statements. #AI:buildSet
      *
      * Null values skip the column (partial update). null_marker instances
      * produce SET col = NULL (explicit erasure via db::null()).
@@ -139,7 +139,7 @@ final class QueryBuilder {
      * @param array $data Column => value pairs for the SET clause.
      * @return array{string, array<string, mixed>} [SET clause, PDO params].
      */
-    public static function build_set(array $data): array {
+    public static function buildSet(array $data): array {
         $parts      = [];
         $pdo_params = [];
 
@@ -159,12 +159,12 @@ final class QueryBuilder {
     }
 
     /**
-     * Builds INSERT column list and VALUES placeholders. #AI:build_values
+     * Builds INSERT column list and VALUES placeholders. #AI:buildValues
      *
      * @param array $data Column => value pairs for the INSERT.
      * @return array{string, array<string, mixed>} [(col1, col2) VALUES (:col1, :col2), PDO params].
      */
-    public static function build_values(array $data): array {
+    public static function buildValues(array $data): array {
         $cols       = array_keys($data);
         $pdo_params = [];
 
@@ -243,26 +243,26 @@ final class QueryBuilder {
 #AI param_details: [{name: $sql | type: string | required: true | desc: SQL template with %placeholders%.}; {name: $params | type: array | required: true | desc: Placeholder values and :named params.}]
 #AI return_detail: {type: array{string, array} | desc: [built SQL, PDO params] ready for PDO::prepare + execute.}
 
-#AI:build_where
+#AI:buildWhere
 #AI group: Clause Builders
 #AI frequency: internal
-#AI signature: public static function build_where(array $conditions): string
+#AI signature: public static function buildWhere(array $conditions): string
 #AI contract: Builds a WHERE clause from flat or nested and/or conditions. Returns empty string when conditions are empty.
 #AI param_details: [{name: $conditions | type: array | required: true | desc: Flat list ['a = :a'] or nested ['or' => [...], 'and' => [...]].}]
 #AI return_detail: {type: string | desc: WHERE clause body (without WHERE keyword) or empty string.}
 
-#AI:build_set
+#AI:buildSet
 #AI group: Clause Builders
 #AI frequency: internal
-#AI signature: public static function build_set(array $data): array
+#AI signature: public static function buildSet(array $data): array
 #AI contract: Builds a SET clause for UPDATE. Null skips the column, null_marker forces SET col = NULL.
 #AI param_details: [{name: $data | type: array | required: true | desc: Column => value pairs.}]
 #AI return_detail: {type: array{string, array} | desc: [SET clause string, PDO params].}
 
-#AI:build_values
+#AI:buildValues
 #AI group: Clause Builders
 #AI frequency: internal
-#AI signature: public static function build_values(array $data): array
+#AI signature: public static function buildValues(array $data): array
 #AI contract: Builds INSERT column list and VALUES placeholders.
 #AI param_details: [{name: $data | type: array | required: true | desc: Column => value pairs.}]
 #AI return_detail: {type: array{string, array} | desc: [(col1, col2) VALUES (:col1, :col2), PDO params].}

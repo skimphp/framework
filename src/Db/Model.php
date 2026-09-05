@@ -18,7 +18,7 @@ use Skim\Db\Exceptions\NotFoundException;
  *       public string $email { set(string $val) => strtolower(trim($val)); }
  *   }
  *   $user = user::find(1);           // model|null
- *   $user = user::find_or_fail(1);   // model|throws
+ *   $user = user::findOrFail(1);   // model|throws
  *   user::create(['name' => 'John', 'email' => 'J@J.COM']);
  *
  * Testing: Use test_db() for SQLite :memory:, models work directly against it.
@@ -50,18 +50,18 @@ abstract class Model {
             [':id' => $id],
             connection: static::$connection,
         );
-        return $row !== null ? static::hydrate_one($row) : null;
+        return $row !== null ? static::hydrateOne($row) : null;
     }
 
     /**
-     * Finds a record by primary key, throwing not_found_exception if missing. #AI:find_or_fail
+     * Finds a record by primary key, throwing not_found_exception if missing. #AI:findOrFail
      *
      * Use in controllers where missing records should produce a 404 response.
      *
      * @param int|string $id Primary key value.
      * @throws \Skim\Db\Exceptions\NotFoundException When no record matches.
      */
-    public static function find_or_fail(int|string $id): static {
+    public static function findOrFail(int|string $id): static {
         $model = static::find($id);
         if ($model === null) {
             throw new \Skim\Db\Exceptions\NotFoundException(static::class, $id);
@@ -70,7 +70,7 @@ abstract class Model {
     }
 
     /**
-     * Finds the first record matching a column=value condition. #AI:find_by
+     * Finds the first record matching a column=value condition. #AI:findBy
      *
      * Returns null if no match. Column name is validated against injection.
      *
@@ -78,7 +78,7 @@ abstract class Model {
      * @param mixed  $val Value to match.
      * @throws \InvalidArgumentException If column name contains invalid characters.
      */
-    public static function find_by(string $col, mixed $val): ?static {
+    public static function findBy(string $col, mixed $val): ?static {
         if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $col)) {
             throw new \InvalidArgumentException("Invalid column name '{$col}'.");
         }
@@ -87,7 +87,7 @@ abstract class Model {
             [':val' => $val],
             connection: static::$connection,
         );
-        return $row !== null ? static::hydrate_one($row) : null;
+        return $row !== null ? static::hydrateOne($row) : null;
     }
 
     /**
@@ -151,22 +151,22 @@ abstract class Model {
      */
     public static function raw(string $sql, array $params = []): array {
         $rows = \Skim\Db\Db::all($sql, $params, connection: static::$connection);
-        return static::hydrate_many($rows);
+        return static::hydrateMany($rows);
     }
 
     /**
-     * Deletes all rows matching the given conditions. #AI:delete_where
+     * Deletes all rows matching the given conditions. #AI:deleteWhere
      *
      * WARNING: No limit — deletes ALL matching rows. Use with specific conditions.
      *
      * @param array $conditions Column=>value filter pairs.
      * @return int Number of rows deleted.
      */
-    public static function delete_where(array $conditions): int {
+    public static function deleteWhere(array $conditions): int {
         $scope = (new \Skim\Db\QueryScope(static::class))->where($conditions);
         [$built, $pdoParams] = \Skim\Db\QueryBuilder::build(
             'DELETE FROM ' . static::$table . ' %where%',
-            static::scope_to_params($scope),
+            static::scopeToParams($scope),
         );
         return (int) \Skim\Db\Db::query($built, $pdoParams, connection: static::$connection);
     }
@@ -181,9 +181,9 @@ abstract class Model {
      */
     public function save(): void {
         if (!isset($this->attributes[static::$primary])) {
-            $this->do_insert();
+            $this->doInsert();
         } else {
-            $this->do_update();
+            $this->doUpdate();
         }
     }
 
@@ -213,58 +213,58 @@ abstract class Model {
     public function fill(array $data): void {
         foreach ($data as $key => $value) {
             if (!in_array($key, static::$guarded, true)) {
-                $this->set_attribute($key, $value);
+                $this->setAttribute($key, $value);
             }
         }
     }
 
     /**
-     * Returns all current attributes as a plain array. #AI:to_array
+     * Returns all current attributes as a plain array. #AI:toArray
      */
-    public function to_array(): array {
+    public function toArray(): array {
         return $this->attributes;
     }
 
     // --- hydration ---
 
     /**
-     * Creates a model instance from a DB row — bypasses guarded check. #AI:hydrate_one
+     * Creates a model instance from a DB row — bypasses guarded check. #AI:hydrateOne
      *
      * Called internally by find/all/raw — never call directly in application code.
      *
      * @param array $row Associative array from DB fetch.
      */
-    public static function hydrate_one(array $row): static {
+    public static function hydrateOne(array $row): static {
         $m = new static();
         foreach ($row as $col => $val) {
-            $m->set_raw($col, $val);
+            $m->setRaw($col, $val);
         }
         $m->dirty_cols = [];
         return $m;
     }
 
     /**
-     * Bulk hydrates an array of DB rows into model instances. #AI:hydrate_many
+     * Bulk hydrates an array of DB rows into model instances. #AI:hydrateMany
      *
      * @param array $rows Array of associative arrays from DB fetch.
      */
-    public static function hydrate_many(array $rows): array {
-        return array_map(fn(array $row) => static::hydrate_one($row), $rows);
+    public static function hydrateMany(array $rows): array {
+        return array_map(fn(array $row) => static::hydrateOne($row), $rows);
     }
 
     // --- table / connection accessors (used by query_scope) ---
 
     /**
-     * Returns the table name for this model. #AI:get_table
+     * Returns the table name for this model. #AI:getTable
      */
-    public static function get_table(): string {
+    public static function getTable(): string {
         return static::$table;
     }
 
     /**
-     * Returns the connection name for this model. #AI:get_connection
+     * Returns the connection name for this model. #AI:getConnection
      */
-    public static function get_connection(): string {
+    public static function getConnection(): string {
         return static::$connection;
     }
 
@@ -286,9 +286,9 @@ abstract class Model {
         $driver = $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
 
         $cols = match ($driver) {
-            'mysql'  => static::fetch_mysql_schema($pdo),
-            'pgsql'  => static::fetch_pgsql_schema($pdo),
-            'sqlite' => static::fetch_sqlite_schema($pdo),
+            'mysql'  => static::fetchMysqlSchema($pdo),
+            'pgsql'  => static::fetchPgsqlSchema($pdo),
+            'sqlite' => static::fetchSqliteSchema($pdo),
             default  => [],
         };
 
@@ -296,12 +296,12 @@ abstract class Model {
         return $cols;
     }
 
-    private static function fetch_mysql_schema(\PDO $pdo): array {
+    private static function fetchMysqlSchema(\PDO $pdo): array {
         $stmt = $pdo->query('DESCRIBE `' . static::$table . '`');
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    private static function fetch_pgsql_schema(\PDO $pdo): array {
+    private static function fetchPgsqlSchema(\PDO $pdo): array {
         $stmt = $pdo->prepare(
             'SELECT column_name AS "Field", data_type AS "Type", is_nullable AS "Null"
              FROM information_schema.columns
@@ -312,7 +312,7 @@ abstract class Model {
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    private static function fetch_sqlite_schema(\PDO $pdo): array {
+    private static function fetchSqliteSchema(\PDO $pdo): array {
         $stmt = $pdo->query('PRAGMA table_info(`' . static::$table . '`)');
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         return array_map(fn($r) => [
@@ -323,9 +323,9 @@ abstract class Model {
     }
 
     /**
-     * Returns a flat array of column names from the cached schema. #AI:column_names
+     * Returns a flat array of column names from the cached schema. #AI:columnNames
      */
-    public static function column_names(): array {
+    public static function columnNames(): array {
         return array_column(static::schema(), 'Field');
     }
 
@@ -336,7 +336,7 @@ abstract class Model {
     }
 
     public function __set(string $name, mixed $value): void {
-        $this->set_attribute($name, $value);
+        $this->setAttribute($name, $value);
     }
 
     public function __isset(string $name): bool {
@@ -345,7 +345,7 @@ abstract class Model {
 
     // --- internals ---
 
-    private function set_attribute(string $key, mixed $value): void {
+    private function setAttribute(string $key, mixed $value): void {
         if (isset($this->attributes[$key]) && $this->attributes[$key] !== $value) {
             if (!in_array($key, $this->dirty_cols, true)) {
                 $this->dirty_cols[] = $key;
@@ -357,7 +357,7 @@ abstract class Model {
         $this->attributes[$key] = $this->cast($key, $value);
     }
 
-    private function set_raw(string $key, mixed $value): void {
+    private function setRaw(string $key, mixed $value): void {
         $this->attributes[$key] = $this->cast($key, $value);
     }
 
@@ -372,7 +372,7 @@ abstract class Model {
         };
     }
 
-    private function do_insert(): void {
+    private function doInsert(): void {
         $data = array_filter(
             $this->attributes,
             fn($k) => !in_array($k, static::$guarded, true),
@@ -390,11 +390,11 @@ abstract class Model {
         );
 
         $pdo = \Skim\Db\Db::pdo(static::$connection);
-        $this->set_raw(static::$primary, (int) $pdo->lastInsertId());
+        $this->setRaw(static::$primary, (int) $pdo->lastInsertId());
         $this->dirty_cols = [];
     }
 
-    private function do_update(): void {
+    private function doUpdate(): void {
         if ($this->dirty_cols === []) {
             return;
         }
@@ -420,8 +420,8 @@ abstract class Model {
         $this->dirty_cols = [];
     }
 
-    private static function scope_to_params(\Skim\Db\QueryScope $scope): array {
-        return $scope->to_builder_params();
+    private static function scopeToParams(\Skim\Db\QueryScope $scope): array {
+        return $scope->toBuilderParams();
     }
 }
 
@@ -460,19 +460,19 @@ abstract class Model {
 #AI param_details: [{name: $id | type: int|string | required: true | desc: Primary key value.}]
 #AI return_detail: {type: ?static | desc: Hydrated model instance or null.}
 
-#AI:find_or_fail
+#AI:findOrFail
 #AI group: Finders
 #AI frequency: high
-#AI signature: public static function find_or_fail(int|string $id): static
+#AI signature: public static function findOrFail(int|string $id): static
 #AI contract: Finds a record by primary key. Throws not_found_exception if missing — use in controllers for 404 responses.
 #AI param_details: [{name: $id | type: int|string | required: true | desc: Primary key value.}]
 #AI return_detail: {type: static | desc: Hydrated model instance.}
 #AI throws_details: [{type: not_found_exception | desc: When no record matches the primary key.}]
 
-#AI:find_by
+#AI:findBy
 #AI group: Finders
 #AI frequency: medium
-#AI signature: public static function find_by(string $col, mixed $val): ?static
+#AI signature: public static function findBy(string $col, mixed $val): ?static
 #AI contract: Finds the first record matching a column=value condition. Validates column name against injection. Returns null if no match.
 #AI param_details: [{name: $col | type: string | required: true | desc: Column name (validated as identifier).}; {name: $val | type: mixed | required: true | desc: Value to match.}]
 #AI return_detail: {type: ?static | desc: Hydrated model instance or null.}
@@ -520,10 +520,10 @@ abstract class Model {
 #AI param_details: [{name: $sql | type: string | required: true | desc: SQL template with %placeholders%.}; {name: $params | type: array | required: false | desc: Placeholder values and :named params.}]
 #AI return_detail: {type: array | desc: Array of hydrated model instances.}
 
-#AI:delete_where
+#AI:deleteWhere
 #AI group: Deletion
 #AI frequency: low
-#AI signature: public static function delete_where(array $conditions): int
+#AI signature: public static function deleteWhere(array $conditions): int
 #AI contract: Deletes all rows matching the conditions. No limit — deletes ALL matching rows.
 #AI param_details: [{name: $conditions | type: array | required: true | desc: Column=>value filter pairs.}]
 #AI return_detail: {type: int | desc: Number of rows deleted.}
@@ -552,40 +552,40 @@ abstract class Model {
 #AI contract: Assigns non-guarded attributes from an array. Guarded columns are silently skipped.
 #AI param_details: [{name: $data | type: array | required: true | desc: Column=>value pairs to assign.}]
 
-#AI:to_array
+#AI:toArray
 #AI group: Accessors
 #AI frequency: medium
-#AI signature: public function to_array(): array
+#AI signature: public function toArray(): array
 #AI contract: Returns all current attributes as a plain associative array.
 #AI return_detail: {type: array | desc: Model attributes.}
 
-#AI:hydrate_one
+#AI:hydrateOne
 #AI group: Hydration
 #AI frequency: internal
-#AI signature: public static function hydrate_one(array $row): static
+#AI signature: public static function hydrateOne(array $row): static
 #AI contract: Creates a model instance from a DB row. Bypasses guarded check and dirty tracking. Never call directly in application code.
 #AI param_details: [{name: $row | type: array | required: true | desc: Associative array from DB fetch.}]
 #AI return_detail: {type: static | desc: Clean hydrated model instance.}
 
-#AI:hydrate_many
+#AI:hydrateMany
 #AI group: Hydration
 #AI frequency: internal
-#AI signature: public static function hydrate_many(array $rows): array
+#AI signature: public static function hydrateMany(array $rows): array
 #AI contract: Bulk hydrates an array of DB rows into model instances.
 #AI param_details: [{name: $rows | type: array | required: true | desc: Array of associative arrays.}]
 #AI return_detail: {type: array | desc: Array of hydrated model instances.}
 
-#AI:get_table
+#AI:getTable
 #AI group: Accessors
 #AI frequency: internal
-#AI signature: public static function get_table(): string
+#AI signature: public static function getTable(): string
 #AI contract: Returns the table name for this model.
 #AI return_detail: {type: string | desc: Table name.}
 
-#AI:get_connection
+#AI:getConnection
 #AI group: Accessors
 #AI frequency: internal
-#AI signature: public static function get_connection(): string
+#AI signature: public static function getConnection(): string
 #AI contract: Returns the connection name for this model.
 #AI return_detail: {type: string | desc: Connection name.}
 
@@ -597,9 +597,9 @@ abstract class Model {
 #AI return_detail: {type: array | desc: Array of column definition arrays with Field, Type, Null keys.}
 #AI side_effects: Reads DB schema on first call, caches result.
 
-#AI:column_names
+#AI:columnNames
 #AI group: Schema
 #AI frequency: low
-#AI signature: public static function column_names(): array
+#AI signature: public static function columnNames(): array
 #AI contract: Returns a flat array of column names from the cached schema.
 #AI return_detail: {type: array | desc: Array of column name strings.}

@@ -33,25 +33,25 @@ final class WorkerReset {
      * Flushes output buffers, rolls back any open database transactions, resets
      * all request-scoped static facades, and clears middleware singleton cache.
      *
-     * @param int $preserve_ob_level Output buffers at or below this level are left open.
+     * @param int $preserveObLevel Output buffers at or below this level are left open.
      *                                Pass ob_get_level() in tests to preserve PHPUnit's buffer.
      */
-    public static function apply(int $preserve_ob_level = 0): void {
+    public static function apply(int $preserveObLevel = 0): void {
         self::discover();
 
-        while (ob_get_level() > $preserve_ob_level) {
+        while (ob_get_level() > $preserveObLevel) {
             ob_end_clean();
         }
 
-        \Skim\Db\Db::rollback_all();
+        \Skim\Db\Db::rollbackAll();
 
         foreach (self::$classes as $class) {
-            $class::reset_request();
+            $class::resetRequest();
         }
 
         \Skim\Dev\Profiler::reset();
         \Skim\Dev\RequestTrace::reset();
-        \Skim\Core\Pipeline::reset_instance_cache();
+        \Skim\Core\Pipeline::resetInstanceCache();
     }
 
     /**
@@ -103,15 +103,15 @@ final class WorkerReset {
 #AI config_reads: []
 #AI non_goals: [Does not reset non-resettable classes; Does not close DB connections — only rolls back transactions]
 #AI side_effects: [Flushes output buffers; Rolls back database transactions; Resets profiler and request_trace; Clears pipeline instance cache]
-#AI flow: worker entrypoint -> end_request() -> worker_reset::apply() -> discover() -> rollback_all() -> reset_request() on each discovered class -> profiler::reset() / request_trace::reset() / pipeline::reset_instance_cache()
+#AI flow: worker entrypoint -> end_request() -> worker_reset::apply() -> discover() -> rollback_all() -> reset_request() on each discovered class -> profiler::reset() / request_trace::reset() / pipeline::resetInstanceCache()
 #AI lifecycle_steps: [First request: discover() scans all declared classes; -> apply($preserve_ob_level) flushes buffers; -> rollback_all(); -> foreach discovered class: reset_request(); -> profiler/request_trace reset]; [Subsequent requests: discover() scans only new classes; -> same reset sequence]
 
 #AI:apply
 #AI group: Lifecycle
 #AI frequency: high
-#AI signature: public static function apply(int $preserve_ob_level = 0): void
+#AI signature: public static function apply(int $preserveObLevel = 0): void
 #AI contract: Resets all request-scoped state. Safe to call once per request. Flushes output buffers down to $preserve_ob_level, rolls back any open DB transactions, resets all discovered resettable facades, and clears profiler/request_trace/pipeline caches.
-#AI param_details: [{name: $preserve_ob_level | type: int | required: false | desc: Output buffers at or below this level are left open. Pass ob_get_level() in tests to preserve PHPUnit buffers.}]
+#AI param_details: [{name: $preserveObLevel | type: int | required: false | desc: Output buffers at or below this level are left open. Pass ob_get_level() in tests to preserve PHPUnit buffers.}]
 #AI side_effects: [Flushes output buffers; Rolls back DB transactions; Resets all resettable facades; Clears profiler and request_trace; Clears pipeline instance cache]
 
 #AI:discover

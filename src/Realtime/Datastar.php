@@ -61,12 +61,12 @@ class Datastar implements \Skim\Realtime\Contract\ElementPatcher, \Skim\Realtime
      * Merges key-value pairs into Datastar reactive signals. #AI:signals
      *
      * @param array $signals         Key-value pairs to merge.
-     * @param bool  $only_if_missing When true, only sets signals that do not already exist.
+     * @param bool  $onlyIfMissing When true, only sets signals that do not already exist.
      */
-    public function signals(array $signals, bool $only_if_missing = false): static {
+    public function signals(array $signals, bool $onlyIfMissing = false): static {
         $json = (string) json_encode($signals, \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES);
         $payload = "signals {$json}";
-        if ($only_if_missing) {
+        if ($onlyIfMissing) {
             $payload .= "\nonlyIfMissing true";
         }
         $this->transport->send($payload, event: 'datastar-patch-signals');
@@ -91,15 +91,15 @@ class Datastar implements \Skim\Realtime\Contract\ElementPatcher, \Skim\Realtime
     }
 
     /**
-     * Renders a view fragment and patches it into the DOM in one call. #AI:view_fragment
+     * Renders a view fragment and patches it into the DOM in one call. #AI:viewFragment
      *
      * @param string $template Template path relative to views directory.
      * @param array  $data     Variables passed to the template.
      * @param string $fragment Fragment name within the template.
      * @param string $selector CSS selector for patch target (empty = fragment default).
      */
-    public function view_fragment(string $template, array $data, string $fragment, string $selector = ''): static {
-        $html = \Skim\View\View::render_fragment($template, $data, $fragment);
+    public function viewFragment(string $template, array $data, string $fragment, string $selector = ''): static {
+        $html = \Skim\View\View::renderFragment($template, $data, $fragment);
         $this->patch($html, $selector);
         return $this;
     }
@@ -146,9 +146,9 @@ class Datastar implements \Skim\Realtime\Contract\ElementPatcher, \Skim\Realtime
 #AI:signals
 #AI group: Signal Operations
 #AI frequency: high
-#AI signature: public function signals(array $signals, bool $only_if_missing = false): static
+#AI signature: public function signals(array $signals, bool $onlyIfMissing = false): static
 #AI contract: Sends a datastar-patch-signals event merging the given key-value pairs into reactive signals.
-#AI param_details: [{name: $signals | type: array | required: true | desc: Key-value pairs to merge.}; {name: $only_if_missing | type: bool | required: false | desc: Only set signals that do not already exist.}]
+#AI param_details: [{name: $signals | type: array | required: true | desc: Key-value pairs to merge.}; {name: $onlyIfMissing | type: bool | required: false | desc: Only set signals that do not already exist.}]
 #AI side_effects: [Writes SSE event to output buffer via transport]
 
 #AI:run
@@ -160,10 +160,10 @@ class Datastar implements \Skim\Realtime\Contract\ElementPatcher, \Skim\Realtime
 #AI warnings: [Executes arbitrary JavaScript — never pass user input]
 #AI side_effects: [Writes SSE event to output buffer via transport; Executes JS in browser]
 
-#AI:view_fragment
+#AI:viewFragment
 #AI group: View Integration
 #AI frequency: medium
-#AI signature: public function view_fragment(string $template, array $data, string $fragment, string $selector = ''): static
+#AI signature: public function viewFragment(string $template, array $data, string $fragment, string $selector = ''): static
 #AI contract: Renders a named view fragment and patches it into the DOM in one call.
 #AI param_details: [{name: $template | type: string | required: true | desc: Template path.}; {name: $data | type: array | required: true | desc: Template variables.}; {name: $fragment | type: string | required: true | desc: Fragment name.}; {name: $selector | type: string | required: false | desc: CSS selector for patch target.}]
 #AI side_effects: [Renders view; Writes SSE event to output buffer via transport]

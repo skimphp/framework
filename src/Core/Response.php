@@ -107,19 +107,19 @@ class Response {
     }
 
     /**
-     * Auto-selects full view vs fragment based on request headers. #AI:smart_view
+     * Auto-selects full view vs fragment based on request headers. #AI:smartView
      *
      * Renders a fragment when HX-Target or datastar-target header is present,
      * otherwise renders the full view with layout.
      *
      * Example:
-     *   return $res->smart_view('users/show', ['user' => $user], $req);
+     *   return $res->smartView('users/show', ['user' => $user], $req);
      *
      * @param string  $template Template path.
      * @param array   $data     Template variables.
      * @param \Skim\Core\Request $req Current request for header inspection.
      */
-    public function smart_view(string $template, array $data, \Skim\Core\Request $req): static {
+    public function smartView(string $template, array $data, \Skim\Core\Request $req): static {
         $fragment = $req->header('HX-Target') ?? $req->header('datastar-target');
         if ($fragment !== null) {
             return $this->fragment($template, $data, $fragment);
@@ -219,39 +219,39 @@ class Response {
      *
      * Sets Content-Disposition: attachment. The file is read and sent by send().
      *
-     * @param string $file_path Absolute path to the file on disk.
+     * @param string $filePath Absolute path to the file on disk.
      * @param string $filename  Suggested save name. Defaults to basename.
      * @throws \RuntimeException If file_path does not exist.
      */
-    public function download(string $file_path, string $filename = ''): static {
-        if (!is_file($file_path)) {
-            throw new \RuntimeException("Download file not found: {$file_path}");
+    public function download(string $filePath, string $filename = ''): static {
+        if (!is_file($filePath)) {
+            throw new \RuntimeException("Download file not found: {$filePath}");
         }
-        $filename = $filename ?: basename($file_path);
+        $filename = $filename ?: basename($filePath);
         $this->headers['Content-Type']        = 'application/octet-stream';
         $this->headers['Content-Disposition'] = "attachment; filename=\"{$filename}\"";
-        $this->headers['Content-Length']      = (string) filesize($file_path);
-        $this->body = "\x00file:{$file_path}";
+        $this->headers['Content-Length']      = (string) filesize($filePath);
+        $this->body = "\x00file:{$filePath}";
         return $this;
     }
 
     /**
-     * Adds or overwrites a response header. #AI:with_header
+     * Adds or overwrites a response header. #AI:withHeader
      *
      * @param string $name  Header name.
      * @param string $value Header value.
      */
-    public function with_header(string $name, string $value): static {
+    public function withHeader(string $name, string $value): static {
         $this->headers[$name] = $value;
         return $this;
     }
 
     /**
-     * Replaces the response body. #AI:set_body
+     * Replaces the response body. #AI:setBody
      *
      * @param string $body Raw body content.
      */
-    public function set_body(string $body): static {
+    public function setBody(string $body): static {
         $this->body = $body;
         return $this;
     }
@@ -292,36 +292,36 @@ class Response {
     }
 
     /**
-     * Returns the current HTTP status code. #AI:get_status
+     * Returns the current HTTP status code. #AI:getStatus
      */
-    public function get_status(): int {
+    public function getStatus(): int {
         return $this->status_code;
     }
 
     /**
-     * Returns the raw response body. #AI:get_body
+     * Returns the raw response body. #AI:getBody
      */
-    public function get_body(): string {
+    public function getBody(): string {
         return $this->body;
     }
 
     /**
-     * Returns all response headers. #AI:get_headers
+     * Returns all response headers. #AI:getHeaders
      *
      * @return array Associative array of header name => value.
      */
-    public function get_headers(): array {
+    public function getHeaders(): array {
         return $this->headers;
     }
 
     /**
-     * Returns a response header value by name. #AI:get_header
+     * Returns a response header value by name. #AI:getHeader
      *
      * Case-insensitive lookup.
      *
      * @param string $key Header name.
      */
-    public function get_header(string $key): ?string {
+    public function getHeader(string $key): ?string {
         foreach ($this->headers as $name => $value) {
             if (strcasecmp($name, $key) === 0) {
                 return (string) $value;
@@ -332,11 +332,11 @@ class Response {
     }
 
     /**
-     * Decodes the JSON response body as an array. #AI:get_json
+     * Decodes the JSON response body as an array. #AI:getJson
      *
      * Returns empty array when the body is not valid JSON.
      */
-    public function get_json(): array {
+    public function getJson(): array {
         $decoded = json_decode($this->body, true);
 
         return is_array($decoded) ? $decoded : [];
@@ -406,10 +406,10 @@ class Response {
 #AI param_details: [{name: $template | type: string | required: true | desc: Template path.}; {name: $data | type: array | required: true | desc: Template variables.}; {name: $fragment | type: string | required: true | desc: Fragment name.}]
 #AI return_detail: {type: static | desc: $this for fluent chaining.}
 
-#AI:smart_view
+#AI:smartView
 #AI group: Views
 #AI frequency: medium
-#AI signature: public function smart_view(string $template, array $data, request $req): static
+#AI signature: public function smartView(string $template, array $data, request $req): static
 #AI contract: Auto-selects full view vs fragment based on HX-Target or datastar-target request headers.
 #AI param_details: [{name: $template | type: string | required: true | desc: Template path.}; {name: $data | type: array | required: true | desc: Template variables.}; {name: $req | type: request | required: true | desc: Current request for header inspection.}]
 #AI return_detail: {type: static | desc: $this for fluent chaining.}
@@ -443,24 +443,24 @@ class Response {
 #AI:download
 #AI group: Streaming & Downloads
 #AI frequency: low
-#AI signature: public function download(string $file_path, string $filename = ''): static
+#AI signature: public function download(string $filePath, string $filename = ''): static
 #AI contract: Sets Content-Disposition: attachment headers. File is read and sent by send().
-#AI param_details: [{name: $file_path | type: string | required: true | desc: Absolute path to the file on disk.}; {name: $filename | type: string | required: false | desc: Suggested save name. Defaults to basename.}]
+#AI param_details: [{name: $filePath | type: string | required: true | desc: Absolute path to the file on disk.}; {name: $filename | type: string | required: false | desc: Suggested save name. Defaults to basename.}]
 #AI return_detail: {type: static | desc: $this for fluent chaining.}
 #AI throws_details: [{type: \RuntimeException | desc: If file_path does not exist.}]
 
-#AI:with_header
+#AI:withHeader
 #AI group: Headers & Body
 #AI frequency: medium
-#AI signature: public function with_header(string $name, string $value): static
+#AI signature: public function withHeader(string $name, string $value): static
 #AI contract: Adds or overwrites a response header.
 #AI param_details: [{name: $name | type: string | required: true | desc: Header name.}; {name: $value | type: string | required: true | desc: Header value.}]
 #AI return_detail: {type: static | desc: $this for fluent chaining.}
 
-#AI:set_body
+#AI:setBody
 #AI group: Headers & Body
 #AI frequency: low
-#AI signature: public function set_body(string $body): static
+#AI signature: public function setBody(string $body): static
 #AI contract: Replaces the response body.
 #AI param_details: [{name: $body | type: string | required: true | desc: Raw body content.}]
 #AI return_detail: {type: static | desc: $this for fluent chaining.}
@@ -472,38 +472,38 @@ class Response {
 #AI contract: Sends headers and body to the PHP output buffer. Idempotent — no-op if already sent. Handles stream and file download sentinels internally.
 #AI side_effects: [Writes HTTP headers and body to output buffer]
 
-#AI:get_status
+#AI:getStatus
 #AI group: Test Accessors
 #AI frequency: medium
-#AI signature: public function get_status(): int
+#AI signature: public function getStatus(): int
 #AI contract: Returns the current HTTP status code.
 #AI return_detail: {type: int | desc: HTTP status code.}
 
-#AI:get_body
+#AI:getBody
 #AI group: Test Accessors
 #AI frequency: medium
-#AI signature: public function get_body(): string
+#AI signature: public function getBody(): string
 #AI contract: Returns the raw response body string.
 #AI return_detail: {type: string | desc: Response body.}
 
-#AI:get_headers
+#AI:getHeaders
 #AI group: Test Accessors
 #AI frequency: low
-#AI signature: public function get_headers(): array
+#AI signature: public function getHeaders(): array
 #AI contract: Returns all response headers as an associative array.
 #AI return_detail: {type: array | desc: Header name => value pairs.}
 
-#AI:get_header
+#AI:getHeader
 #AI group: Test Accessors
 #AI frequency: low
-#AI signature: public function get_header(string $key): ?string
+#AI signature: public function getHeader(string $key): ?string
 #AI contract: Returns a response header value by name. Case-insensitive lookup.
 #AI param_details: [{name: $key | type: string | required: true | desc: Header name.}]
 #AI return_detail: {type: ?string | desc: Header value or null if absent.}
 
-#AI:get_json
+#AI:getJson
 #AI group: Test Accessors
 #AI frequency: medium
-#AI signature: public function get_json(): array
+#AI signature: public function getJson(): array
 #AI contract: Decodes the JSON response body as an array. Returns empty array when invalid.
 #AI return_detail: {type: array | desc: Decoded JSON or empty array.}

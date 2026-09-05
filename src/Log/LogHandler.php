@@ -14,7 +14,7 @@ namespace Skim\Log;
  *           \Sentry\captureMessage("[$level] $message");
  *       }
  *   }
- *   log::set_handler(new sentry_handler());
+ *   log::setHandler(new sentry_handler());
  *
  * #AI:class
  */
@@ -38,8 +38,8 @@ interface LogHandler {
 #AI layer: log
 #AI badges: [interface; log; contract]
 #AI intro: `log_handler` is the single-method interface that every log backend must implement. The `log` facade holds one handler instance and delegates all level-specific calls to its `write()` method.
-#AI lifecycle: instantiated once by log::resolve_handler() or injected via log::set_handler()
-#AI test_seam: log::set_handler(), log::reset()
+#AI lifecycle: instantiated once by log::resolveHandler() or injected via log::setHandler()
+#AI test_seam: log::setHandler(), log::reset()
 #AI invariants: [write() must not throw; implementations should handle their own errors]
 #AI core_behaviors: [Receives level, message, and context for every log entry]
 #AI owns: nothing

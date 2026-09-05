@@ -40,7 +40,7 @@ class RequestFactory {
      * @param array  $query    Query string parameters ($_GET equivalent).
      * @param array  $post     Form-encoded body data ($_POST equivalent).
      * @param array  $headers  Human-readable headers (auto-mapped to $_SERVER keys).
-     * @param string $raw_body Raw request body for JSON or other content types.
+     * @param string $rawBody Raw request body for JSON or other content types.
      * @param array  $cookies  Cookie key-value pairs.
      * @param array  $files    Uploaded file entries ($_FILES equivalent).
      */
@@ -50,7 +50,7 @@ class RequestFactory {
         array  $query    = [],
         array  $post     = [],
         array  $headers  = [],
-        string $raw_body = '',
+        string $rawBody = '',
         array  $cookies  = [],
         array  $files    = [],
     ): \Skim\Core\Request {
@@ -71,7 +71,7 @@ class RequestFactory {
             server: $server,
             cookies: $cookies,
             files: $files,
-            raw_body: $raw_body,
+            rawBody: $rawBody,
         );
     }
 }
@@ -104,7 +104,7 @@ class RequestFactory {
 #AI:make
 #AI group: Factory
 #AI frequency: internal
-#AI signature: public static function make(string $method = 'GET', string $path = '/', array $query = [], array $post = [], array $headers = [], string $raw_body = '', array $cookies = [], array $files = []): request
+#AI signature: public static function make(string $method = 'GET', string $path = '/', array $query = [], array $post = [], array $headers = [], string $rawBody = '', array $cookies = [], array $files = []): request
 #AI contract: Builds a request object from raw parameters. Maps human-readable headers to $_SERVER-style keys with proper HTTP_ prefix handling.
-#AI param_details: [{name: $method | type: string | required: false | desc: HTTP method, defaults to GET.}; {name: $path | type: string | required: false | desc: Request URI path, defaults to /.}; {name: $query | type: array | required: false | desc: Query string parameters.}; {name: $post | type: array | required: false | desc: Form-encoded body data.}; {name: $headers | type: array | required: false | desc: Human-readable headers auto-mapped to $_SERVER keys.}; {name: $raw_body | type: string | required: false | desc: Raw request body for JSON or other content types.}; {name: $cookies | type: array | required: false | desc: Cookie key-value pairs.}; {name: $files | type: array | required: false | desc: Uploaded file entries.}]
+#AI param_details: [{name: $method | type: string | required: false | desc: HTTP method, defaults to GET.}; {name: $path | type: string | required: false | desc: Request URI path, defaults to /.}; {name: $query | type: array | required: false | desc: Query string parameters.}; {name: $post | type: array | required: false | desc: Form-encoded body data.}; {name: $headers | type: array | required: false | desc: Human-readable headers auto-mapped to $_SERVER keys.}; {name: $rawBody | type: string | required: false | desc: Raw request body for JSON or other content types.}; {name: $cookies | type: array | required: false | desc: Cookie key-value pairs.}; {name: $files | type: array | required: false | desc: Uploaded file entries.}]
 #AI return_detail: {type: request | desc: Fully configured request object ready for dispatch.}

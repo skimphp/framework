@@ -301,13 +301,13 @@ CSS;
     }
 
     /**
-     * Returns toolbar-scoped CSS variables and component styles. #AI:toolbar_css
+     * Returns toolbar-scoped CSS variables and component styles. #AI:toolbarCss
      *
      * All selectors are scoped to #skim-tb to prevent style leakage into
      * the host page. Uses the same design tokens as css() but with a
      * --tb- prefix to avoid conflicts with user CSS custom properties.
      */
-    public static function toolbar_css(): string {
+    public static function toolbarCss(): string {
         return <<<'CSS'
 :root{--tb-bg:#0f1117;--tb-surface:#161b22;--tb-border:rgba(255,255,255,0.08);--tb-text:#e2e8f0;--tb-muted:#64748b;--tb-accent:#3b82f6;--tb-warn:#f59e0b;--tb-danger:#ef4444;--tb-success:#10b981;--tb-active-tab:#1e2535;--tb-height:36px;--tb-panel-h:280px}
 #skim-tb{position:fixed;bottom:0;left:0;right:0;background:var(--tb-bg);border-top:1px solid var(--tb-border);border-radius:8px 8px 0 0;overflow:hidden;user-select:none;z-index:999999;font:12px/1.4 'JetBrains Mono','Fira Code',ui-monospace,monospace}
@@ -403,9 +403,9 @@ CSS;
     }
 
     /**
-     * Returns the Tabler Icons CDN link tag. #AI:icon_font
+     * Returns the Tabler Icons CDN link tag. #AI:iconFont
      */
-    public static function icon_font(): string {
+    public static function iconFont(): string {
         return '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">';
     }
 }
@@ -429,7 +429,7 @@ CSS;
 #AI config_reads: []
 #AI non_goals: [Does not load external CSS files; Does not integrate with the Vite asset pipeline; Does not compile or minify CSS]
 #AI side_effects: []
-#AI flow: dev_theme::css() → CSS string; dev_theme::toolbar_css() → scoped CSS string
+#AI flow: dev_theme::css() → CSS string; dev_theme::toolbarCss() → scoped CSS string
 #AI lifecycle_steps: [called by templates; returns static CSS string; embedded in <style> block]
 #AI section_order: [CSS Providers; Utilities]
 #AI architectural_notes: Keeps CSS co-located with PHP dev tools for zero-config deployment. The toolbar uses --tb- prefixed variables to avoid conflicts with user page CSS.
@@ -441,16 +441,16 @@ CSS;
 #AI contract: Returns the complete shared CSS for full-page dev tools — custom properties, base reset, scrollbar, and shared component classes (kv-grid, badges, buttons, code-box, tabs, toast).
 #AI return_detail: {type: string | desc: Complete CSS string for embedding in a <style> block.}
 
-#AI:toolbar_css
+#AI:toolbarCss
 #AI group: CSS Providers
 #AI frequency: medium
-#AI signature: public static function toolbar_css(): string
+#AI signature: public static function toolbarCss(): string
 #AI contract: Returns toolbar-scoped CSS with --tb- prefixed variables and #skim-tb selectors to prevent style leakage into the host page.
 #AI return_detail: {type: string | desc: Scoped CSS string for the debug toolbar.}
 
-#AI:icon_font
+#AI:iconFont
 #AI group: Utilities
 #AI frequency: low
-#AI signature: public static function icon_font(): string
+#AI signature: public static function iconFont(): string
 #AI contract: Returns the Tabler Icons webfont CDN <link> tag used by both error page and toolbar.
 #AI return_detail: {type: string | desc: HTML <link> tag for Tabler Icons CDN.}

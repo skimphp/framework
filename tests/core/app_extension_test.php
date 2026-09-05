@@ -38,14 +38,14 @@ namespace {
 
     describe('app extension service binding', function(): void {
         test('class-string binding resolves through the container', function(): void {
-            $app = \Skim\Core\App::test_instance();
+            $app = \Skim\Core\App::testInstance();
             $app->bind(\Tests\Fixtures\Ext\SampleService::class, \Tests\Fixtures\Ext\HighService::class);
 
             expect($app->make(\Tests\Fixtures\Ext\SampleService::class))->toBeInstanceOf(\Tests\Fixtures\Ext\HighService::class);
         });
 
         test('higher priority binding replaces lower priority binding', function(): void {
-            $app = \Skim\Core\App::test_instance();
+            $app = \Skim\Core\App::testInstance();
             $app->bind(\Tests\Fixtures\Ext\SampleService::class, \Tests\Fixtures\Ext\LowService::class, priority: 10);
             $app->bind(\Tests\Fixtures\Ext\SampleService::class, \Tests\Fixtures\Ext\HighService::class, priority: 100);
 
@@ -53,7 +53,7 @@ namespace {
         });
 
         test('lower priority binding cannot replace higher priority binding', function(): void {
-            $app = \Skim\Core\App::test_instance();
+            $app = \Skim\Core\App::testInstance();
             $app->bind(\Tests\Fixtures\Ext\SampleService::class, \Tests\Fixtures\Ext\HighService::class, priority: 100);
             $app->bind(\Tests\Fixtures\Ext\SampleService::class, \Tests\Fixtures\Ext\LowService::class, priority: 10);
 
@@ -61,7 +61,7 @@ namespace {
         });
 
         test('decorators are applied in priority order', function(): void {
-            $app = \Skim\Core\App::test_instance();
+            $app = \Skim\Core\App::testInstance();
             $app->bind(\Tests\Fixtures\Ext\SampleService::class, \Tests\Fixtures\Ext\LowService::class);
             $app->decorate(\Tests\Fixtures\Ext\SampleService::class, fn(\Tests\Fixtures\Ext\SampleService $service): \Tests\Fixtures\Ext\SampleService => new \Tests\Fixtures\Ext\DecoratedService($service, 'first'), priority: 10);
             $app->decorate(\Tests\Fixtures\Ext\SampleService::class, fn(\Tests\Fixtures\Ext\SampleService $service): \Tests\Fixtures\Ext\SampleService => new \Tests\Fixtures\Ext\DecoratedService($service, 'second'), priority: 100);
@@ -70,7 +70,7 @@ namespace {
         });
 
         test('freeze prevents service and route mutation', function(): void {
-            $app = \Skim\Core\App::test_instance();
+            $app = \Skim\Core\App::testInstance();
             $app->freeze();
 
             expect(fn() => $app->bind(\Tests\Fixtures\Ext\SampleService::class, \Tests\Fixtures\Ext\LowService::class))->toThrow(\LogicException::class);

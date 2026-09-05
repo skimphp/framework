@@ -78,22 +78,22 @@ final class Assets {
     }
 
     /**
-     * Sets the Vite dev server URL (testing only). #AI:set_vite_url
+     * Sets the Vite dev server URL (testing only). #AI:setViteUrl
      *
      * @param string $url Vite dev server base URL.
      */
-    public static function set_vite_url(string $url): void {
+    public static function setViteUrl(string $url): void {
         self::$vite_url = rtrim($url, '/');
     }
 
     /**
-     * Injects a manifest array directly (testing only). #AI:set_manifest
+     * Injects a manifest array directly (testing only). #AI:setManifest
      *
      * Bypasses file-based manifest loading. Call reset() in tearDown().
      *
      * @param array $manifest Fake Vite manifest for testing.
      */
-    public static function set_manifest(array $manifest): void {
+    public static function setManifest(array $manifest): void {
         self::$manifest = $manifest;
     }
 
@@ -113,10 +113,10 @@ final class Assets {
             return self::$manifest;
         }
 
-        $path = (self::$public_path ?: base_path('public')) . '/build/.vite/manifest.json';
+        $path = (self::$public_path ?: basePath('public')) . '/build/.vite/manifest.json';
 
         if (!is_file($path)) {
-            $path = (self::$public_path ?: base_path('public')) . '/build/manifest.json';
+            $path = (self::$public_path ?: basePath('public')) . '/build/manifest.json';
         }
 
         if (!is_file($path)) {
@@ -180,18 +180,18 @@ final class Assets {
 #AI param_details: [{name: $path | type: string | required: true | desc: CSS file path.}]
 #AI return_detail: {type: string | desc: HTML link tag or empty string in dev mode.}
 
-#AI:set_vite_url
+#AI:setViteUrl
 #AI group: Testing Hooks
 #AI frequency: low
-#AI signature: public static function set_vite_url(string $url): void
+#AI signature: public static function setViteUrl(string $url): void
 #AI contract: Overrides the Vite dev server URL. Default is http://localhost:5173.
 #AI param_details: [{name: $url | type: string | required: true | desc: Vite dev server base URL.}]
 #AI side_effects: Mutates static state.
 
-#AI:set_manifest
+#AI:setManifest
 #AI group: Testing Hooks
 #AI frequency: low
-#AI signature: public static function set_manifest(array $manifest): void
+#AI signature: public static function setManifest(array $manifest): void
 #AI contract: Injects a manifest array directly, bypassing file-based loading. Use in tests.
 #AI param_details: [{name: $manifest | type: array | required: true | desc: Fake Vite manifest.}]
 #AI side_effects: Mutates static manifest cache.

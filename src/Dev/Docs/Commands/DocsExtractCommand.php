@@ -33,21 +33,21 @@ class DocsExtractCommand extends \Skim\Cli\Command {
      * @return int 0 on success, 1 on failure.
      */
     public function handle(): int {
-        $paths  = \Skim\Dev\Docs\Value\DocsGenerationPaths::from_flags($this->flags);
-        $output = $paths->json_path();
+        $paths  = \Skim\Dev\Docs\Value\DocsGenerationPaths::fromFlags($this->flags);
+        $output = $paths->jsonPath();
 
         $this->info('Scanning source files…');
         $scanner = new \Skim\Dev\Docs\Extractor\ProjectScanner();
 
         try {
-            $scan_paths = $paths->scan_paths();
-            if ($paths->has_source_override() && !is_dir($scan_paths[0])) {
+            $scan_paths = $paths->scanPaths();
+            if ($paths->hasSourceOverride() && !is_dir($scan_paths[0])) {
                 $this->error('Source directory not found: ' . $scan_paths[0]);
                 return 1;
             }
 
-            $classes = $paths->has_source_override()
-                ? $scanner->scan_paths($scan_paths)
+            $classes = $paths->hasSourceOverride()
+                ? $scanner->scanPaths($scan_paths)
                 : $scanner->scan();
         } catch (\Throwable $e) {
             $this->error('Scan failed: ' . $e->getMessage());
@@ -56,7 +56,7 @@ class DocsExtractCommand extends \Skim\Cli\Command {
 
         $this->muted(count($classes) . ' classes found.');
 
-        $registry            = new \Skim\Ext\ExtRegistry(base_path());
+        $registry            = new \Skim\Ext\ExtRegistry(basePath());
         $extensions          = $registry->installed();
         $capability_map      = [];
         $installed_names     = [];

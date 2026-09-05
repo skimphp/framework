@@ -16,4 +16,4 @@
 <!-- @end -->
 
 <p>Dashboard for <?= e($name) ?></p>
-<?php $this->end_section() ?>
+<?php $this->endSection() ?>

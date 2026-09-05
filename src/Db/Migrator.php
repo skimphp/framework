@@ -25,8 +25,8 @@ final class Migrator {
     private string $migrations_dir;
     private string $connection;
 
-    public function __construct(string $migrations_dir, string $connection = 'default') {
-        $this->migrations_dir = rtrim($migrations_dir, '/');
+    public function __construct(string $migrationsDir, string $connection = 'default') {
+        $this->migrations_dir = rtrim($migrationsDir, '/');
         $this->connection     = $connection;
     }
 
@@ -39,20 +39,20 @@ final class Migrator {
      * @return array List of migration filenames that were run.
      */
     public function run(): array {
-        $this->ensure_table();
-        $applied = $this->applied_filenames();
-        $pending = $this->load_pending($applied);
+        $this->ensureTable();
+        $applied = $this->appliedFilenames();
+        $pending = $this->loadPending($applied);
 
         if ($pending === []) {
             return [];
         }
 
-        $batch = $this->next_batch();
+        $batch = $this->nextBatch();
         $ran   = [];
 
         foreach ($pending as $migration) {
             \Skim\Db\Db::transaction(function() use ($migration, $batch): void {
-                $this->execute_sql($migration->up());
+                $this->executeSql($migration->up());
                 \Skim\Db\Db::query(
                     'INSERT INTO ' . $this->table . ' %values%',
                     ['values' => ['filename' => $migration->filename, 'batch' => $batch]],
@@ -76,7 +76,7 @@ final class Migrator {
      * @return array List of migration filenames that were rolled back.
      */
     public function down(int $steps = 0): array {
-        $this->ensure_table();
+        $this->ensureTable();
 
         if ($steps > 0) {
             $rows = \Skim\Db\Db::all(
@@ -84,7 +84,7 @@ final class Migrator {
                 connection: $this->connection,
             );
         } else {
-            $batch = $this->current_batch();
+            $batch = $this->currentBatch();
             if ($batch === 0) {
                 return [];
             }
@@ -104,7 +104,7 @@ final class Migrator {
             }
             $migration = require $file;
             \Skim\Db\Db::transaction(function() use ($migration, $row): void {
-                $this->execute_sql($migration->down());
+                $this->executeSql($migration->down());
                 \Skim\Db\Db::query(
                     'DELETE FROM ' . $this->table . ' WHERE filename = :f',
                     [':f' => $row['filename']],
@@ -127,12 +127,12 @@ final class Migrator {
      *   $migrator->fresh(); // Nuclear option: wipe and rebuild
      */
     public function fresh(): void {
-        $applied = array_reverse($this->applied_filenames());
+        $applied = array_reverse($this->appliedFilenames());
         foreach ($applied as $filename) {
             $file = $this->migrations_dir . '/' . $filename;
             if (is_file($file)) {
                 $migration = require $file;
-                $this->execute_sql($migration->down());
+                $this->executeSql($migration->down());
             }
         }
 
@@ -147,14 +147,14 @@ final class Migrator {
      * @return array Array of ['filename', 'batch', 'status'] records.
      */
     public function status(): array {
-        $this->ensure_table();
+        $this->ensureTable();
         $applied = array_column(
             \Skim\Db\Db::all('SELECT * FROM ' . $this->table, connection: $this->connection),
             null,
             'filename',
         );
 
-        $all = $this->load_all();
+        $all = $this->loadAll();
         $out = [];
 
         foreach ($all as $migration) {
@@ -170,7 +170,7 @@ final class Migrator {
 
     // --- internals ---
 
-    private function ensure_table(): void {
+    private function ensureTable(): void {
         $driver = \Skim\Db\Db::pdo($this->connection)->getAttribute(\PDO::ATTR_DRIVER_NAME);
 
 		$id_col = match ($driver) {
@@ -207,14 +207,14 @@ final class Migrator {
         }
     }
 
-    private function applied_filenames(): array {
+    private function appliedFilenames(): array {
         return array_column(
             \Skim\Db\Db::all('SELECT filename FROM ' . $this->table, connection: $this->connection),
             'filename',
         );
     }
 
-    private function load_all(): array {
+    private function loadAll(): array {
         $files = glob($this->migrations_dir . '/*.php') ?: [];
         sort($files);
         $migrations = [];
@@ -226,22 +226,22 @@ final class Migrator {
         return $migrations;
     }
 
-    private function load_pending(array $applied): array {
+    private function loadPending(array $applied): array {
         return array_filter(
-            $this->load_all(),
+            $this->loadAll(),
             fn(\Skim\Db\Migration $m) => !in_array($m->filename, $applied, true),
         );
     }
 
-    private function next_batch(): int {
-        return $this->current_batch() + 1;
+    private function nextBatch(): int {
+        return $this->currentBatch() + 1;
     }
 
-    private function current_batch(): int {
+    private function currentBatch(): int {
         return (int) \Skim\Db\Db::val('SELECT MAX(batch) FROM ' . $this->table, connection: $this->connection);
     }
 
-    private function execute_sql(string $sql): void {
+    private function executeSql(string $sql): void {
         $statements = array_filter(
             array_map('trim', explode(';', $sql)),
             fn(string $s) => $s !== '',

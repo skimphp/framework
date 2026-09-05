@@ -33,20 +33,20 @@ class CacheBuildCommand extends \Skim\Cli\Command {
      * WHY: Pure arrays allow OPcache shared-memory hit with zero parse overhead.
      */
     public function handle(): int {
-        $cache_dir = storage_path('config_cache');
+        $cache_dir = storagePath('config_cache');
         if (!is_dir($cache_dir)) {
             mkdir($cache_dir, 0755, true);
         }
 
         \Skim\Core\Env::reset();
-        \Skim\Core\Env::load(base_path('.env'));
+        \Skim\Core\Env::load(basePath('.env'));
         file_put_contents(
             $cache_dir . '/env.php',
             '<?php return ' . var_export(\Skim\Core\Env::all(), true) . ';'
         );
 
         \Skim\Core\Config::reset();
-        \Skim\Core\Config::load(base_path('config'));
+        \Skim\Core\Config::load(basePath('config'));
         file_put_contents(
             $cache_dir . '/config.php',
             '<?php return ' . var_export(\Skim\Core\Config::all(), true) . ';'
@@ -86,7 +86,7 @@ class CacheBuildCommand extends \Skim\Cli\Command {
 #AI flow: cache_build_command::handle() -> mkdir storage/config_cache -> env::reset + load + write -> config::reset + load + write -> app extensions write -> success
 #AI lifecycle_steps: [kernel dispatches cache_build_command; -> handle(); -> mkdir storage/config_cache; -> env::reset(); -> env::load(.env); -> write env.php; -> config::reset(); -> config::load(config/); -> write config.php; -> app::instance(); -> write extensions.php; -> success]
 #AI section_order: [Command Execution]
-#AI architectural_notes: Thin CLI wrapper that delegates to env, config, and app facades. The generated files are consumed by env::load_compiled_cache() and config::load_compiled_cache().
+#AI architectural_notes: Thin CLI wrapper that delegates to env, config, and app facades. The generated files are consumed by env::loadCompiledCache() and config::loadCompiledCache().
 
 #AI:handle
 #AI group: Command Execution

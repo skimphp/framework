@@ -69,7 +69,7 @@ class SessionFake {
 #AI test_seam: bind into container via $app->bind('session', fn() => new session_fake())
 #AI invariants: [Data exists only in memory for the lifetime of the object; flush() clears all data; all() returns the full data array]
 #AI core_behaviors: [Plain array storage; Implements the session read/write/has/flush contract]
-#AI notes: Does not implement session_driver interface — it provides only the methods pending_request needs. Use session::set_driver() with a proper driver for full interface compliance.
+#AI notes: Does not implement session_driver interface — it provides only the methods pending_request needs. Use session::setDriver() with a proper driver for full interface compliance.
 #AI owns: in-memory data array
 #AI entry_points: [set; get; has; flush; all]
 #AI config_reads: []

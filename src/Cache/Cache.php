@@ -17,7 +17,7 @@ use Skim\Dev\Profiler;
  * Example:
  *   $user = cache::remember("user:{$id}", 3600, fn() => User::find($id));
  *   cache::flush('user:'); // Invalidate all user:* keys
- *   cache::flush_all();    // Wipe everything
+ *   cache::flushAll();    // Wipe everything
  *
  * Testing: Use set_driver() to inject mocks, reset() to clear state.
  */
@@ -40,13 +40,13 @@ final class Cache {
      */
     public static function remember(string $key, int $ttl, callable $default): mixed {
         if (self::has($key)) {
-            \Skim\Dev\Profiler::cache('remember', $key, hit: true, ttl: $ttl, driver: self::driver_name());
+            \Skim\Dev\Profiler::cache('remember', $key, hit: true, ttl: $ttl, driver: self::driverName());
             return self::get($key);
         }
 
         $value = $default();
         self::set($key, $value, $ttl);
-        \Skim\Dev\Profiler::cache('remember', $key, hit: false, ttl: $ttl, driver: self::driver_name());
+        \Skim\Dev\Profiler::cache('remember', $key, hit: false, ttl: $ttl, driver: self::driverName());
         return $value;
     }
 
@@ -62,7 +62,7 @@ final class Cache {
     public static function get(string $key, mixed $default = null): mixed {
         $value = self::driver()->get($key, $default);
         $hit   = $value !== $default;
-        \Skim\Dev\Profiler::cache('get', $key, hit: $hit, driver: self::driver_name());
+        \Skim\Dev\Profiler::cache('get', $key, hit: $hit, driver: self::driverName());
         return $value;
     }
 
@@ -88,7 +88,7 @@ final class Cache {
      */
     public static function set(string $key, mixed $value, ?int $ttl = null): bool {
         $ttl ??= (int) \Skim\Core\Config::get('cache.ttl', 3600);
-        \Skim\Dev\Profiler::cache('set', $key, hit: false, ttl: $ttl, driver: self::driver_name());
+        \Skim\Dev\Profiler::cache('set', $key, hit: false, ttl: $ttl, driver: self::driverName());
         return self::driver()->set($key, $value, $ttl);
     }
 
@@ -101,7 +101,7 @@ final class Cache {
      * @return bool True if backend confirmed deletion.
      */
     public static function delete(string $key): bool {
-        \Skim\Dev\Profiler::cache('delete', $key, driver: self::driver_name());
+        \Skim\Dev\Profiler::cache('delete', $key, driver: self::driverName());
         return self::driver()->delete($key);
     }
 
@@ -118,12 +118,12 @@ final class Cache {
      * @return bool True if backend confirmed invalidation.
      */
     public static function flush(string $prefix): bool {
-        \Skim\Dev\Profiler::cache('flush', $prefix, driver: self::driver_name());
+        \Skim\Dev\Profiler::cache('flush', $prefix, driver: self::driverName());
         return self::driver()->flush($prefix);
     }
 
     /**
-     * Clears the entire active backend unconditionally. #AI:flush_all
+     * Clears the entire active backend unconditionally. #AI:flushAll
      *
      * WARNING: Destroys all cached data across all contexts sharing this driver.
      * Prefer flush('prefix:') in production for targeted invalidation.
@@ -131,9 +131,9 @@ final class Cache {
      *
      * @return bool True if backend confirmed flush.
      */
-    public static function flush_all(): bool {
-        \Skim\Dev\Profiler::cache('flush_all', '', driver: self::driver_name());
-        return self::driver()->flush_all();
+    public static function flushAll(): bool {
+        \Skim\Dev\Profiler::cache('flush_all', '', driver: self::driverName());
+        return self::driver()->flushAll();
     }
 
     /**
@@ -158,19 +158,19 @@ final class Cache {
     }
 
     /**
-     * Injects a custom driver instance (testing only). #AI:set_driver
+     * Injects a custom driver instance (testing only). #AI:setDriver
      *
      * Use in PHPUnit to bypass config-based resolution. Call reset() in
      * tearDown() to restore normal behavior.
      *
      * Example:
-     *   cache::set_driver(new array_driver());
+     *   cache::setDriver(new array_driver());
      *   // ... run tests ...
      *   cache::reset();
      *
      * @param \Skim\Cache\Driver $driver Mock or fake driver for testing.
      */
-    public static function set_driver(\Skim\Cache\Driver $driver): void {
+    public static function setDriver(\Skim\Cache\Driver $driver): void {
         self::$instance = $driver;
     }
 
@@ -190,35 +190,35 @@ final class Cache {
      * Private — internal subsystems only.
      */
     private static function driver(): \Skim\Cache\Driver {
-        return self::$instance ??= self::resolve_driver();
+        return self::$instance ??= self::resolveDriver();
     }
 
     /**
-     * Builds the primary driver, falling back on failure. #AI:resolve_driver
+     * Builds the primary driver, falling back on failure. #AI:resolveDriver
      *
      * Falls back to config('cache.fallback') when the primary driver's
      * constructor throws. Runtime failures inside a live driver are not caught.
      */
-    private static function resolve_driver(): \Skim\Cache\Driver {
+    private static function resolveDriver(): \Skim\Cache\Driver {
         $name = \Skim\Core\Config::get('cache.driver', 'array');
         try {
-            return self::make_driver($name);
+            return self::makeDriver($name);
         } catch (\Throwable $e) {
             $fallback = \Skim\Core\Config::get('cache.fallback', 'file');
             if ($fallback !== $name) {
-                return self::make_driver($fallback);
+                return self::makeDriver($fallback);
             }
             throw $e;
         }
     }
 
     /**
-     * Maps driver name to a concrete instance. #AI:make_driver
+     * Maps driver name to a concrete instance. #AI:makeDriver
      *
      * @param string $name Driver name from config (redis, file, array).
      * @throws \InvalidArgumentException If the driver name is unsupported.
      */
-    private static function make_driver(string $name): \Skim\Cache\Driver {
+    private static function makeDriver(string $name): \Skim\Cache\Driver {
         return match ($name) {
             'redis' => new \Skim\Cache\RedisDriver(
                 host:     (string) \Skim\Core\Config::get('cache.redis.host', '127.0.0.1'),
@@ -236,11 +236,11 @@ final class Cache {
     }
 
     /**
-     * Returns the configured primary driver name for profiling. #AI:driver_name
+     * Returns the configured primary driver name for profiling. #AI:driverName
      *
      * May differ from the actual active driver after set_driver() or fallback.
      */
-    private static function driver_name(): string {
+    private static function driverName(): string {
         return \Skim\Core\Config::get('cache.driver', 'array');
     }
 }
@@ -327,10 +327,10 @@ final class Cache {
 #AI side_effects: Mass deletion in cache backend for matching keys.
 #AI warnings: [Prefix is required. Trying to flush with an empty string triggers a PHP ArgumentCountError — use flush_all() instead.]
 
-#AI:flush_all
+#AI:flushAll
 #AI group: Invalidation
 #AI frequency: low
-#AI signature: public static function flush_all(): bool
+#AI signature: public static function flushAll(): bool
 #AI contract: Unconditionally wipes the entire cache backend by delegating to the driver's flush_all(). Records the operation in profiler.
 #AI return_detail: {type: bool | desc: True if backend confirmed flush.}
 #AI warnings: [Destroys all cached data across all application contexts sharing this driver; Triggers immediate re-computation on next read; Prefer flush('prefix:') in production]
@@ -345,10 +345,10 @@ final class Cache {
 #AI return_detail: {type: tagged_redis_driver | desc: Tag-scoped cache proxy.}
 #AI throws_details: [{type: RuntimeException | desc: Thrown when the active driver is not redis_driver.}]
 
-#AI:set_driver
+#AI:setDriver
 #AI group: Testing Hooks
 #AI frequency: low
-#AI signature: public static function set_driver(driver $driver): void
+#AI signature: public static function setDriver(driver $driver): void
 #AI contract: Replaces the active driver instance directly. Use in tests to bypass config-based resolution and external services.
 #AI param_details: [{name: $driver | type: driver | required: true | desc: Driver implementation used for subsequent cache calls.}]
 #AI side_effects: Mutates static driver state.
@@ -367,22 +367,22 @@ final class Cache {
 #AI contract: Returns the cached driver instance, resolving and caching it lazily if null.
 #AI notes: Private for internal subsystem access.
 
-#AI:resolve_driver
+#AI:resolveDriver
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private static function resolve_driver(): driver
+#AI signature: private static function resolveDriver(): driver
 #AI contract: Builds the primary driver from config, falls back to the configured secondary on exception.
 
-#AI:make_driver
+#AI:makeDriver
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private static function make_driver(string $name): driver
+#AI signature: private static function makeDriver(string $name): driver
 #AI contract: Maps string config names to concrete driver instances (redis, file, array).
 #AI param_details: [{name: $name | type: string | required: true | desc: Driver name from config (redis, file, array).}]
 #AI throws_details: [{type: InvalidArgumentException | desc: If driver name is unsupported.}]
 
-#AI:driver_name
+#AI:driverName
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private static function driver_name(): string
+#AI signature: private static function driverName(): string
 #AI contract: Returns the configured cache.driver value for profiler metadata. May differ from the actual active driver after set_driver() or fallback.

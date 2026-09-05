@@ -24,7 +24,7 @@ return [
     'log' => [
         'channel' => env('LOG_CHANNEL', 'file'),
         'level'   => env('LOG_LEVEL', 'debug'),
-        'path'    => storage_path('logs/app.log'),
+        'path'    => storagePath('logs/app.log'),
         'days'    => 14,
     ],
 

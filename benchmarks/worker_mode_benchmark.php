@@ -2,7 +2,7 @@
 
 // Benchmarks SKIM in FrankenPHP-style worker mode locally.
 // Spins up a small TCP server, accepts connections, and for each request
-// runs app::begin_request() → dispatch() → send() → end_request() in a loop.
+// runs app::beginRequest() → dispatch() → send() → end_request() in a loop.
 //
 // Usage inside container:
 //   docker compose exec app php benchmarks/worker_mode_benchmark.php [concurrency] [duration] [port]
@@ -23,7 +23,7 @@ $address     = "127.0.0.1:{$port}";
 $app = skim\core\app::instance();
 $app->router->get('/bench', fn() => ['ok' => true, 'time' => microtime(true), 'id' => $_GET['id'] ?? null]);
 $app->boot();
-$app->boot_extensions();
+$app->bootExtensions();
 $app->freeze();
 
 // Create a listening socket.
@@ -78,7 +78,7 @@ while (microtime(true) < $end_time || count($clients) > 0) {
 
         if ($client['state'] === 'processing') {
             // Run the full worker request cycle.
-            $app->begin_request();
+            $app->beginRequest();
 
             $original_server = $_SERVER;
             $_SERVER = [
@@ -91,7 +91,7 @@ while (microtime(true) < $end_time || count($clients) > 0) {
             $_COOKIE = [];
             $_FILES = [];
 
-            $req = skim\core\request::from_globals();
+            $req = skim\core\request::fromGlobals();
             $res = new skim\core\response();
 
             ob_start();
@@ -100,11 +100,11 @@ while (microtime(true) < $end_time || count($clients) > 0) {
                 $result->send();
             } finally {
                 $body = ob_get_clean();
-                $app->end_request();
+                $app->endRequest();
                 $_SERVER = $original_server;
             }
 
-            $status = $result->get_status();
+            $status = $result->getStatus();
             $length = strlen($body);
             $reason = match ($status) {
                 200 => 'OK',

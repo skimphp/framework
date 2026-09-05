@@ -54,11 +54,11 @@ describe('json_emitter — emit()', function(): void {
 
     test('serializes new extracted_class fields into classes array', function (): void {
         $cls = new \Skim\Dev\Docs\Value\ExtractedClass(
-            class_name:   'cache',
+            className:   'cache',
             namespace:    'skim\\cache',
             file:         '/src/cache.php',
             layer:        'cache',
-            entry_points: ['remember', 'get'],
+            entryPoints: ['remember', 'get'],
             invariants:   ['driver reused until reset'],
         );
         $path = sys_get_temp_dir() . '/skim_llm_new_fields_' . uniqid() . '.json';

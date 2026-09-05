@@ -13,7 +13,7 @@ if (!$sock) {
 }
 stream_set_blocking($sock, false);
 
-function make_request($id) {
+function makeRequest($id) {
     return "GET /bench?id={$id} HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n";
 }
 
@@ -25,7 +25,7 @@ $expected_ids = [];
 
 while ($received < 20) {
     if ($sent < 20 && $sent === $received) {
-        $req = make_request($sent + 1);
+        $req = makeRequest($sent + 1);
         $expected_ids[$sent + 1] = true;
         @fwrite($sock, $req);
         $sent++;

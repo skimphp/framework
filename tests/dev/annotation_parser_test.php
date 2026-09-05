@@ -77,13 +77,13 @@ describe('annotation_parser::parse — legacy @ai- style', function () {
          * @ai-contract returns cached driver or resolves one
          */
         DOC;
-        $summary = $parser->extract_summary($doc);
+        $summary = $parser->extractSummary($doc);
         expect($summary)->toContain('Returns the active driver instance');
     });
 
     it('returns empty summary when no pre-tag lines exist', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
-        $result = $parser->extract_summary('/** @ai-contract only a tag */');
+        $result = $parser->extractSummary('/** @ai-contract only a tag */');
         expect($result)->toBe('');
     });
 
@@ -97,7 +97,7 @@ describe('annotation_parser::parse — legacy @ai- style', function () {
          * @ai-contract stores value
          */
         DOC;
-        $summary = $parser->extract_summary($doc);
+        $summary = $parser->extractSummary($doc);
         expect($summary)->toContain('Static cache facade')
             ->and($summary)->toContain('Swap the backend');
     });
@@ -113,7 +113,7 @@ describe('annotation_parser::parse_hash_ai — #AI semicolon style', function ()
     it('parses single-line #AI with multiple key:value pairs', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $source = '#AI role:static cache facade; layer:cache; lifecycle:driver resolved lazily;';
-        $result = $parser->parse_hash_ai($source);
+        $result = $parser->parseHashAi($source);
         expect($result['role'])->toBe('static cache facade')
             ->and($result['layer'])->toBe('cache')
             ->and($result['lifecycle'])->toBe('driver resolved lazily');
@@ -122,7 +122,7 @@ describe('annotation_parser::parse_hash_ai — #AI semicolon style', function ()
     it('parses bracket list values without splitting them', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $source = '#AI owns:[driver instance]; entry_points:[remember,get,set,has];';
-        $result = $parser->parse_hash_ai($source);
+        $result = $parser->parseHashAi($source);
         expect($result['owns'])->toBe(['driver instance'])
             ->and($result['entry_points'])->toBe(['remember', 'get', 'set', 'has']);
     });
@@ -134,7 +134,7 @@ describe('annotation_parser::parse_hash_ai — #AI semicolon style', function ()
         #AI owns:[driver instance cache]; entry_points:[remember,get,set];
         #AI invariants:[driver reused until reset,remember computes only on miss];
         BLOCK;
-        $result = $parser->parse_hash_ai($block);
+        $result = $parser->parseHashAi($block);
         expect($result['role'])->toBe('static cache facade')
             ->and($result['owns'])->toBe(['driver instance cache'])
             ->and($result['invariants'])->toBe(['driver reused until reset', 'remember computes only on miss']);
@@ -143,7 +143,7 @@ describe('annotation_parser::parse_hash_ai — #AI semicolon style', function ()
     it('ignores lines that do not start with #AI', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $source = "some prose\n#AI role:facade;\nmore prose";
-        $result = $parser->parse_hash_ai($source);
+        $result = $parser->parseHashAi($source);
         expect($result)->toHaveKey('role')
             ->and($result)->not->toHaveKey('some prose');
     });
@@ -158,25 +158,25 @@ describe('annotation_parser::parse_bracket_list', function () {
 
     it('splits [a,b,c] into trimmed array', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
-        $result = $parser->parse_bracket_list('[remember,get,set,has]');
+        $result = $parser->parseBracketList('[remember,get,set,has]');
         expect($result)->toBe(['remember', 'get', 'set', 'has']);
     });
 
     it('trims whitespace inside brackets', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
-        $result = $parser->parse_bracket_list('[ driver instance , active backend ]');
+        $result = $parser->parseBracketList('[ driver instance , active backend ]');
         expect($result)->toBe(['driver instance', 'active backend']);
     });
 
     it('returns single-item array for value without brackets', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
-        $result = $parser->parse_bracket_list('array_driver');
+        $result = $parser->parseBracketList('array_driver');
         expect($result)->toBe(['array_driver']);
     });
 
     it('returns empty array for empty brackets', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
-        $result = $parser->parse_bracket_list('[]');
+        $result = $parser->parseBracketList('[]');
         expect($result)->toBe([]);
     });
 
@@ -233,7 +233,7 @@ describe('annotation_parser::parse_inline', function () {
         // Resets between requests naturally (process-scoped array).
         // @ai-contract stores values in process memory only
         SRC;
-        $result = $parser->parse_inline($source);
+        $result = $parser->parseInline($source);
         expect($result['summary'])->toContain('In-memory array driver')
             ->and($result['contract'][0])->toBe('stores values in process memory only');
     });
@@ -241,21 +241,21 @@ describe('annotation_parser::parse_inline', function () {
     it('returns empty summary when no pre-tag lines', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $source = '// @ai-contract only a tag';
-        $result = $parser->parse_inline($source);
+        $result = $parser->parseInline($source);
         expect($result['summary'])->toBe('');
     });
 
     it('stops collecting lines at first non-comment line', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $source = "// @ai-contract a tag\nclass foo {}";
-        $result = $parser->parse_inline($source);
+        $result = $parser->parseInline($source);
         expect($result['contract'][0])->toBe('a tag');
     });
 
     it('parses #AI style inside inline comments', function () {
         $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $source = '// #AI role:array driver; layer:cache;';
-        $result = $parser->parse_inline($source);
+        $result = $parser->parseInline($source);
         expect($result)->toHaveKey('role');
     });
 

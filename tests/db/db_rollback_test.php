@@ -2,7 +2,7 @@
 
 use Skim\Db\Db;
 
-describe('db::rollback_all()', function (): void {
+describe('db::rollbackAll()', function (): void {
 
     test('rolls back open transactions on all pooled connections', function (): void {
         \Skim\Db\Db::reset();
@@ -19,7 +19,7 @@ describe('db::rollback_all()', function (): void {
 
         expect($pdo->inTransaction())->toBeTrue();
 
-        \Skim\Db\Db::rollback_all();
+        \Skim\Db\Db::rollbackAll();
 
         expect($pdo->inTransaction())->toBeFalse();
     });
@@ -31,7 +31,7 @@ describe('db::rollback_all()', function (): void {
             'database' => ':memory:',
         ]);
 
-        expect(fn() => \Skim\Db\Db::rollback_all())->not->toThrow(\Throwable::class);
+        expect(fn() => \Skim\Db\Db::rollbackAll())->not->toThrow(\Throwable::class);
     });
 
     test('rolls back transactions on multiple named connections', function (): void {
@@ -51,7 +51,7 @@ describe('db::rollback_all()', function (): void {
         $default->beginTransaction();
         $analytics->beginTransaction();
 
-        \Skim\Db\Db::rollback_all();
+        \Skim\Db\Db::rollbackAll();
 
         expect($default->inTransaction())->toBeFalse();
         expect($analytics->inTransaction())->toBeFalse();

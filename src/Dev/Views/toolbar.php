@@ -31,9 +31,9 @@ use Skim\Dev\DevTheme;
 $e = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 ?>
 <style>
-<?= \Skim\Dev\DevTheme::toolbar_css() ?>
+<?= \Skim\Dev\DevTheme::toolbarCss() ?>
 </style>
-<?= \Skim\Dev\DevTheme::icon_font() ?>
+<?= \Skim\Dev\DevTheme::iconFont() ?>
 <div id="skim-tb">
     <div class="tb-resize" id="skim-resize"></div>
     <div class="bar">

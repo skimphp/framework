@@ -5,7 +5,7 @@ use Skim\View\Exceptions\ViewException;
 
 beforeEach(function(): void {
     \Skim\View\View::reset();
-    \Skim\View\View::set_path(dirname(__DIR__) . '/Fixtures/Views');
+    \Skim\View\View::setPath(dirname(__DIR__) . '/Fixtures/Views');
 });
 
 describe('view::render() — full template', function(): void {

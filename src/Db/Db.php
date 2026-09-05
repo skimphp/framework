@@ -36,10 +36,10 @@ class Db {
      * @param array  $config Driver config array from config/db.php.
      */
     public static function connect(string $name, array $config): void {
-        self::$pool[$name] = self::make_pdo($config);
+        self::$pool[$name] = self::makePdo($config);
     }
 
-    private static function make_pdo(array $cfg): \PDO {
+    private static function makePdo(array $cfg): \PDO {
         if ($cfg['driver'] === 'sqlite' && ($cfg['database'] ?? '') !== ':memory:') {
             $dir = dirname($cfg['database']);
             if (!is_dir($dir)) {
@@ -84,14 +84,14 @@ class Db {
     /**
      * Returns the number of active pooled connections. #AI:connection_count
      */
-    public static function connection_count(): int {
+    public static function connectionCount(): int {
         return count(self::$pool);
     }
 
     /**
      * Returns true if any pooled connection has an open transaction. #AI:has_open_transaction
      */
-    public static function has_open_transaction(): bool {
+    public static function hasOpenTransaction(): bool {
         foreach (self::$pool as $conn) {
             if ($conn->inTransaction()) {
                 return true;
@@ -106,7 +106,7 @@ class Db {
      * transaction, the next request must not inherit it. Called by
      * worker_reset::apply() between requests.
      */
-    public static function rollback_all(): void {
+    public static function rollbackAll(): void {
         foreach (self::$pool as $conn) {
             if ($conn->inTransaction()) {
                 $conn->rollBack();

@@ -4,7 +4,7 @@ use Skim\View\View;
 
 beforeEach(function(): void {
     \Skim\View\View::reset();
-    \Skim\View\View::set_path(dirname(__DIR__) . '/Fixtures/Views');
+    \Skim\View\View::setPath(dirname(__DIR__) . '/Fixtures/Views');
 });
 
 describe('layout system', function(): void {

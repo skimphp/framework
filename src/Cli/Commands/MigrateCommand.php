@@ -31,7 +31,7 @@ class MigrateCommand extends \Skim\Cli\Command {
      */
     public function handle(): int {
         $sub  = $this->arg(0, 'run');
-        $mig  = new \Skim\Db\Migrator(base_path('migrations'));
+        $mig  = new \Skim\Db\Migrator(basePath('migrations'));
 
         return match ($sub) {
             'down'   => $this->down($mig),

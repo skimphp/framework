@@ -49,20 +49,20 @@ final class Filter {
     }
 
     /**
-     * Validates a positive integer (min: 1). #AI:int_positive
+     * Validates a positive integer (min: 1). #AI:intPositive
      *
      * @param mixed $value Input to validate.
      */
-    public static function int_positive(mixed $value): int|false {
+    public static function intPositive(mixed $value): int|false {
         return self::int($value, min: 1);
     }
 
     /**
-     * Validates a natural number (min: 0). #AI:int_natural
+     * Validates a natural number (min: 0). #AI:intNatural
      *
      * @param mixed $value Input to validate.
      */
-    public static function int_natural(mixed $value): int|false {
+    public static function intNatural(mixed $value): int|false {
         return self::int($value, min: 0);
     }
 
@@ -263,13 +263,13 @@ final class Filter {
     // --- array variants ---
 
     /**
-     * Filters an array, keeping only valid ints. #AI:arr_int
+     * Filters an array, keeping only valid ints. #AI:arrInt
      *
      * @param array    $values Input values to validate.
      * @param int|null $min    Minimum allowed value.
      * @param int|null $max    Maximum allowed value.
      */
-    public static function arr_int(array $values, ?int $min = null, ?int $max = null): array {
+    public static function arrInt(array $values, ?int $min = null, ?int $max = null): array {
         return array_values(array_filter(
             array_map(fn($v) => self::int($v, $min, $max), $values),
             fn($v) => $v !== false,
@@ -277,21 +277,21 @@ final class Filter {
     }
 
     /**
-     * Filters an array, keeping only positive ints. #AI:arr_int_positive
+     * Filters an array, keeping only positive ints. #AI:arrIntPositive
      *
      * @param array $values Input values to validate.
      */
-    public static function arr_int_positive(array $values): array {
-        return self::arr_int($values, min: 1);
+    public static function arrIntPositive(array $values): array {
+        return self::arrInt($values, min: 1);
     }
 
     /**
-     * Filters an array, keeping only values present in $allowed. #AI:arr_in
+     * Filters an array, keeping only values present in $allowed. #AI:arrIn
      *
      * @param array $values  Input values to check.
      * @param array $allowed Whitelist of allowed values.
      */
-    public static function arr_in(array $values, array $allowed): array {
+    public static function arrIn(array $values, array $allowed): array {
         return array_values(array_filter($values, fn($v) => in_array($v, $allowed, true)));
     }
 }
@@ -331,18 +331,18 @@ final class Filter {
 #AI param_details: [{name: $value | type: mixed | required: true | desc: Input to validate.}; {name: $min | type: ?int | required: false | desc: Minimum allowed value (inclusive).}; {name: $max | type: ?int | required: false | desc: Maximum allowed value (inclusive).}]
 #AI return_detail: {type: int|false | desc: Validated integer or false.}
 
-#AI:int_positive
+#AI:intPositive
 #AI group: Numeric
 #AI frequency: medium
-#AI signature: public static function int_positive(mixed $value): int|false
+#AI signature: public static function intPositive(mixed $value): int|false
 #AI contract: Alias for int() with min:1.
 #AI param_details: [{name: $value | type: mixed | required: true | desc: Input to validate.}]
 #AI return_detail: {type: int|false | desc: Positive integer or false.}
 
-#AI:int_natural
+#AI:intNatural
 #AI group: Numeric
 #AI frequency: medium
-#AI signature: public static function int_natural(mixed $value): int|false
+#AI signature: public static function intNatural(mixed $value): int|false
 #AI contract: Alias for int() with min:0.
 #AI param_details: [{name: $value | type: mixed | required: true | desc: Input to validate.}]
 #AI return_detail: {type: int|false | desc: Natural number or false.}
@@ -459,26 +459,26 @@ final class Filter {
 #AI param_details: [{name: $value | type: int|float | required: true | desc: Input to check.}; {name: $min | type: int|float | required: true | desc: Minimum (inclusive).}; {name: $max | type: int|float | required: true | desc: Maximum (inclusive).}]
 #AI return_detail: {type: int|float|false | desc: Value if in range, false otherwise.}
 
-#AI:arr_int
+#AI:arrInt
 #AI group: Array Variants
 #AI frequency: medium
-#AI signature: public static function arr_int(array $values, ?int $min = null, ?int $max = null): array
+#AI signature: public static function arrInt(array $values, ?int $min = null, ?int $max = null): array
 #AI contract: Filters an array, keeping only valid ints within optional range. Re-indexes the result.
 #AI param_details: [{name: $values | type: array | required: true | desc: Input values.}; {name: $min | type: ?int | required: false | desc: Minimum allowed value.}; {name: $max | type: ?int | required: false | desc: Maximum allowed value.}]
 #AI return_detail: {type: array | desc: Filtered and re-indexed array of valid ints.}
 
-#AI:arr_int_positive
+#AI:arrIntPositive
 #AI group: Array Variants
 #AI frequency: low
-#AI signature: public static function arr_int_positive(array $values): array
+#AI signature: public static function arrIntPositive(array $values): array
 #AI contract: Filters an array, keeping only positive ints (min:1).
 #AI param_details: [{name: $values | type: array | required: true | desc: Input values.}]
 #AI return_detail: {type: array | desc: Filtered array of positive ints.}
 
-#AI:arr_in
+#AI:arrIn
 #AI group: Array Variants
 #AI frequency: medium
-#AI signature: public static function arr_in(array $values, array $allowed): array
+#AI signature: public static function arrIn(array $values, array $allowed): array
 #AI contract: Filters an array, keeping only values present in $allowed. Re-indexes the result.
 #AI param_details: [{name: $values | type: array | required: true | desc: Input values.}; {name: $allowed | type: array | required: true | desc: Whitelist.}]
 #AI return_detail: {type: array | desc: Filtered and re-indexed array.}

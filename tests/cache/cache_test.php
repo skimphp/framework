@@ -5,7 +5,7 @@ use Skim\Cache\ArrayDriver;
 use Skim\Cache\FileDriver;
 
 beforeEach(function(): void {
-    \Skim\Cache\Cache::set_driver(new \Skim\Cache\ArrayDriver());
+    \Skim\Cache\Cache::setDriver(new \Skim\Cache\ArrayDriver());
 });
 
 describe('cache — set / get / has / delete', function(): void {
@@ -46,7 +46,7 @@ describe('cache — TTL expiry (array driver)', function(): void {
 
     test('key expires after TTL', function(): void {
         $driver = new \Skim\Cache\ArrayDriver();
-        \Skim\Cache\Cache::set_driver($driver);
+        \Skim\Cache\Cache::setDriver($driver);
 
         // set with 1 microsecond ttl by writing directly to simulate expiry
         $driver->set('expiring', 'value', 1);
@@ -59,7 +59,7 @@ describe('cache — TTL expiry (array driver)', function(): void {
     test('key persists within TTL', function(): void {
         $driver = new \Skim\Cache\ArrayDriver();
         $driver->set('fresh', 'alive', 3600);
-        \Skim\Cache\Cache::set_driver($driver);
+        \Skim\Cache\Cache::setDriver($driver);
         expect(\Skim\Cache\Cache::get('fresh'))->toBe('alive');
     });
 
@@ -110,7 +110,7 @@ describe('cache::flush()', function(): void {
     test('flush_all() removes all keys', function(): void {
         \Skim\Cache\Cache::set('a', 1);
         \Skim\Cache\Cache::set('b', 2);
-        \Skim\Cache\Cache::flush_all();
+        \Skim\Cache\Cache::flushAll();
         expect(\Skim\Cache\Cache::has('a'))->toBeFalse();
         expect(\Skim\Cache\Cache::has('b'))->toBeFalse();
     });
@@ -124,7 +124,7 @@ describe('file_driver', function(): void {
         $driver = new \Skim\Cache\FileDriver($dir);
         $driver->set('hello', 'world');
         expect($driver->get('hello'))->toBe('world');
-        $driver->flush_all();
+        $driver->flushAll();
         rmdir($dir);
     });
 

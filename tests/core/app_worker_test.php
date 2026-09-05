@@ -7,8 +7,8 @@ use Skim\Core\Response;
 describe('app — request-scoped and transient bindings', function (): void {
 
     test('bind_request marks service as request-scoped', function (): void {
-        $app = \Skim\Core\App::test_instance();
-        $app->bind_request('svc.req', fn() => new \stdClass());
+        $app = \Skim\Core\App::testInstance();
+        $app->bindRequest('svc.req', fn() => new \stdClass());
 
         $first = $app->make('svc.req');
         $second = $app->make('svc.req');
@@ -17,30 +17,30 @@ describe('app — request-scoped and transient bindings', function (): void {
     });
 
     test('end_request clears request-scoped resolved singletons', function (): void {
-        $app = \Skim\Core\App::test_instance();
-        $app->bind_request('svc.req', fn() => new \stdClass());
+        $app = \Skim\Core\App::testInstance();
+        $app->bindRequest('svc.req', fn() => new \stdClass());
 
         $before = $app->make('svc.req');
-        $app->end_request();
+        $app->endRequest();
         $after = $app->make('svc.req');
 
         expect($after)->not->toBe($before);
     });
 
     test('end_request leaves non-request-scoped bindings intact', function (): void {
-        $app = \Skim\Core\App::test_instance();
+        $app = \Skim\Core\App::testInstance();
         $app->bind('svc.normal', fn() => new \stdClass());
 
         $before = $app->make('svc.normal');
-        $app->end_request();
+        $app->endRequest();
         $after = $app->make('svc.normal');
 
         expect($after)->toBe($before);
     });
 
     test('bind_transient returns a new instance on every make()', function (): void {
-        $app = \Skim\Core\App::test_instance();
-        $app->bind_transient('svc.tr', fn() => new \stdClass());
+        $app = \Skim\Core\App::testInstance();
+        $app->bindTransient('svc.tr', fn() => new \stdClass());
 
         $first  = $app->make('svc.tr');
         $second = $app->make('svc.tr');
@@ -49,17 +49,17 @@ describe('app — request-scoped and transient bindings', function (): void {
     });
 
     test('transient binding does not cache in resolved', function (): void {
-        $app = \Skim\Core\App::test_instance();
-        $app->bind_transient('svc.tr', fn() => 'x');
+        $app = \Skim\Core\App::testInstance();
+        $app->bindTransient('svc.tr', fn() => 'x');
 
         $app->make('svc.tr');
 
-        expect($app->resolved_services())->toBe([]);
+        expect($app->resolvedServices())->toBe([]);
     });
 
     test('bind clears previous transient flag', function (): void {
-        $app = \Skim\Core\App::test_instance();
-        $app->bind_transient('svc.x', fn() => 'a');
+        $app = \Skim\Core\App::testInstance();
+        $app->bindTransient('svc.x', fn() => 'a');
         $app->bind('svc.x', fn() => 'b');
 
         $first  = $app->make('svc.x');
@@ -69,9 +69,9 @@ describe('app — request-scoped and transient bindings', function (): void {
     });
 
     test('bind_request clears previous transient flag so it caches again', function (): void {
-        $app = \Skim\Core\App::test_instance();
-        $app->bind_transient('svc.t', fn() => new \stdClass());
-        $app->bind_request('svc.t', fn() => new \stdClass());
+        $app = \Skim\Core\App::testInstance();
+        $app->bindTransient('svc.t', fn() => new \stdClass());
+        $app->bindRequest('svc.t', fn() => new \stdClass());
 
         $first  = $app->make('svc.t');
         $second = $app->make('svc.t');
@@ -80,9 +80,9 @@ describe('app — request-scoped and transient bindings', function (): void {
     });
 
     test('bind_transient clears previous request-scoped flag', function (): void {
-        $app = \Skim\Core\App::test_instance();
-        $app->bind_request('svc.r', fn() => new \stdClass());
-        $app->bind_transient('svc.r', fn() => new \stdClass());
+        $app = \Skim\Core\App::testInstance();
+        $app->bindRequest('svc.r', fn() => new \stdClass());
+        $app->bindTransient('svc.r', fn() => new \stdClass());
 
         $first  = $app->make('svc.r');
         $second = $app->make('svc.r');
@@ -91,24 +91,24 @@ describe('app — request-scoped and transient bindings', function (): void {
     });
 
     test('make_transient always returns a fresh instance', function (): void {
-        $app = \Skim\Core\App::test_instance();
+        $app = \Skim\Core\App::testInstance();
         $app->bind('svc.s', fn() => new \stdClass());
 
-        $a = $app->make_transient('svc.s');
-        $b = $app->make_transient('svc.s');
+        $a = $app->makeTransient('svc.s');
+        $b = $app->makeTransient('svc.s');
 
         expect($a)->not->toBe($b);
-        expect($app->resolved_services())->toBe([]); // never cached
+        expect($app->resolvedServices())->toBe([]); // never cached
     });
 
     test('make_transient resolves auto-wired classes without caching', function (): void {
-        $app = \Skim\Core\App::test_instance();
+        $app = \Skim\Core\App::testInstance();
 
-        $a = $app->make_transient(\stdClass::class);
-        $b = $app->make_transient(\stdClass::class);
+        $a = $app->makeTransient(\stdClass::class);
+        $b = $app->makeTransient(\stdClass::class);
 
         expect($a)->not->toBe($b);
-        expect($app->resolved_services())->toBe([]);
+        expect($app->resolvedServices())->toBe([]);
     });
 
 });
@@ -116,30 +116,30 @@ describe('app — request-scoped and transient bindings', function (): void {
 describe('app — emit()', function (): void {
 
     test('emit sends a response instance directly', function (): void {
-        $app = \Skim\Core\App::test_instance();
+        $app = \Skim\Core\App::testInstance();
         $res = new \Skim\Core\Response();
 
         ob_start();
         $app->emit($res, new \Skim\Core\Response());
         ob_end_clean();
 
-        expect($res->get_status())->toBe(200);
+        expect($res->getStatus())->toBe(200);
     });
 
     test('emit serializes arrays to json', function (): void {
-        $app = \Skim\Core\App::test_instance();
+        $app = \Skim\Core\App::testInstance();
         $fallback = new \Skim\Core\Response();
 
         ob_start();
         $app->emit(['id' => 42], $fallback);
         $out = ob_get_clean();
 
-        expect($fallback->get_status())->toBe(200);
-        expect($fallback->get_json())->toBe(['id' => 42]);
+        expect($fallback->getStatus())->toBe(200);
+        expect($fallback->getJson())->toBe(['id' => 42]);
     });
 
     test('emit sends strings as raw body', function (): void {
-        $app = \Skim\Core\App::test_instance();
+        $app = \Skim\Core\App::testInstance();
         $fallback = new \Skim\Core\Response();
 
         ob_start();
@@ -150,7 +150,7 @@ describe('app — emit()', function (): void {
     });
 
     test('emit sends null as empty body with fallback', function (): void {
-        $app = \Skim\Core\App::test_instance();
+        $app = \Skim\Core\App::testInstance();
         $fallback = new \Skim\Core\Response();
 
         ob_start();
@@ -161,14 +161,14 @@ describe('app — emit()', function (): void {
     });
 
     test('emit returns 405 for false', function (): void {
-        $app = \Skim\Core\App::test_instance();
+        $app = \Skim\Core\App::testInstance();
         $fallback = new \Skim\Core\Response();
 
         ob_start();
         $app->emit(false, $fallback);
         ob_end_clean();
 
-        expect($fallback->get_status())->toBe(405);
+        expect($fallback->getStatus())->toBe(405);
     });
 
 });
@@ -176,18 +176,18 @@ describe('app — emit()', function (): void {
 describe('app — boot_extensions()', function (): void {
 
     test('boot_extensions is idempotent', function (): void {
-        $app = \Skim\Core\App::test_instance();
-        $app->boot_extensions();
-        $app->boot_extensions();
+        $app = \Skim\Core\App::testInstance();
+        $app->bootExtensions();
+        $app->bootExtensions();
 
         expect($app)->toBeInstanceOf(\Skim\Core\App::class);
     });
 
     test('boot_extensions returns early when already booted', function (): void {
-        $app = \Skim\Core\App::test_instance();
-        $app->boot_extensions();
+        $app = \Skim\Core\App::testInstance();
+        $app->bootExtensions();
         // second call must not throw
-        expect(fn() => $app->boot_extensions())->not->toThrow(\Throwable::class);
+        expect(fn() => $app->bootExtensions())->not->toThrow(\Throwable::class);
     });
 
 });
@@ -195,14 +195,14 @@ describe('app — boot_extensions()', function (): void {
 describe('app — is_debug_mode()', function (): void {
 
     test('returns false when app.debug is not set', function (): void {
-        $app = \Skim\Core\App::test_instance();
-        expect($app->is_debug_mode())->toBeFalse();
+        $app = \Skim\Core\App::testInstance();
+        expect($app->isDebugMode())->toBeFalse();
     });
 
     test('returns true when app.debug is true', function (): void {
-        $app = \Skim\Core\App::test_instance(['app.debug' => true]);
-        $app->begin_request();
-        expect($app->is_debug_mode())->toBeTrue();
+        $app = \Skim\Core\App::testInstance(['app.debug' => true]);
+        $app->beginRequest();
+        expect($app->isDebugMode())->toBeTrue();
     });
 
 });
@@ -210,22 +210,22 @@ describe('app — is_debug_mode()', function (): void {
 describe('app — handle_exception()', function (): void {
 
     test('renders error page in debug mode', function (): void {
-        $app = \Skim\Core\App::test_instance(['app.debug' => true]);
-        $app->begin_request();
+        $app = \Skim\Core\App::testInstance(['app.debug' => true]);
+        $app->beginRequest();
 
         ob_start();
-        $app->handle_exception(new \RuntimeException('test'));
+        $app->handleException(new \RuntimeException('test'));
         $out = ob_get_clean();
 
         expect($out)->toContain('test');
     });
 
     test('returns 500 in production mode', function (): void {
-        $app = \Skim\Core\App::test_instance(['app.debug' => false]);
-        $app->begin_request();
+        $app = \Skim\Core\App::testInstance(['app.debug' => false]);
+        $app->beginRequest();
 
         ob_start();
-        $app->handle_exception(new \RuntimeException('test'));
+        $app->handleException(new \RuntimeException('test'));
         ob_end_clean();
 
         expect(http_response_code())->toBe(500);

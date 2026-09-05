@@ -11,7 +11,7 @@ namespace Skim\Dev\Docs\Value;
  * Example:
  *   // Accessed via extracted_class->methods
  *   foreach ($class->methods as $method) {
- *       $array = $method->to_array();
+ *       $array = $method->toArray();
  *   }
  *
  * Testing: Instantiate directly with test data.
@@ -33,8 +33,8 @@ readonly class ExtractedMethod {
         public string $frequency = '',
         public array $contracts = [],
         public array $invariants = [],
-        public array $non_goals = [],
-        public array $side_effects = [],
+        public array $nonGoals = [],
+        public array $sideEffects = [],
         public array $inputs = [],
         public string $returns = '',
         public array $reads = [],
@@ -46,24 +46,24 @@ readonly class ExtractedMethod {
         public string $lifecycle = '',
         public string $perf = '',
         public string $contract = '',
-        public array $param_details = [],
-        public array $return_detail = [],
-        public array $throws_details = [],
+        public array $paramDetails = [],
+        public array $returnDetail = [],
+        public array $throwsDetails = [],
         public array $notes = [],
-        public array $see_also = [],
+        public array $seeAlso = [],
         public array $aliases = [],
     ) {}
 
     /**
-     * Serializes to a plain associative array suitable for json_encode. #AI:to_array
+     * Serializes to a plain associative array suitable for json_encode. #AI:toArray
      *
      * Falls back to contracts[0] for contract, and converts legacy throws
      * to throws_details format when throws_details is empty.
      */
-    public function to_array(): array {
+    public function toArray(): array {
         $contract = $this->contract !== '' ? $this->contract : ($this->contracts[0] ?? '');
-        $return_detail = $this->return_detail !== [] ? $this->return_detail : ($this->returns !== '' ? ['type' => '', 'desc' => $this->returns] : []);
-        $throws_details = $this->throws_details;
+        $return_detail = $this->returnDetail !== [] ? $this->returnDetail : ($this->returns !== '' ? ['type' => '', 'desc' => $this->returns] : []);
+        $throws_details = $this->throwsDetails;
         if ($throws_details === [] && $this->throws !== []) {
             $throws_details = array_map(fn(string $throw): array => ['type' => $throw, 'desc' => ''], $this->throws);
         }
@@ -74,13 +74,13 @@ readonly class ExtractedMethod {
             'frequency'     => $this->frequency,
             'signature'     => $this->signature,
             'contract'      => $contract,
-            'param_details' => $this->param_details,
+            'param_details' => $this->paramDetails,
             'return_detail' => $return_detail,
             'throws_details' => $throws_details,
             'contracts'    => $this->contracts,
             'invariants'   => $this->invariants,
-            'non_goals'    => $this->non_goals,
-            'side_effects' => $this->side_effects,
+            'non_goals'    => $this->nonGoals,
+            'side_effects' => $this->sideEffects,
             'inputs'       => $this->inputs,
             'returns'      => $this->returns,
             'reads'        => $this->reads,
@@ -92,7 +92,7 @@ readonly class ExtractedMethod {
             'examples'     => $this->examples,
             'lifecycle'    => $this->lifecycle,
             'perf'         => $this->perf,
-            'see_also'     => $this->see_also,
+            'see_also'     => $this->seeAlso,
             'aliases'      => $this->aliases,
         ];
     }
@@ -128,9 +128,9 @@ readonly class ExtractedMethod {
 #AI signature: public function __construct(string $name, string $signature, ...)
 #AI contract: Creates an immutable value object with all extracted method annotation fields. Only name and signature are required; all other fields default to empty.
 
-#AI:to_array
+#AI:toArray
 #AI group: Serialization
 #AI frequency: high
-#AI signature: public function to_array(): array
+#AI signature: public function toArray(): array
 #AI contract: Serializes to a plain associative array suitable for json_encode. Falls back to contracts[0] for contract and converts legacy throws to throws_details format.
 #AI return_detail: {type: array | desc: JSON-safe associative array with all method annotation data.}

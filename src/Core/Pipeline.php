@@ -35,7 +35,7 @@ class Pipeline {
      *
      * #AI:reset_instance_cache
      */
-    public static function reset_instance_cache(): void {
+    public static function resetInstanceCache(): void {
         self::$instance_cache = [];
     }
 
@@ -75,8 +75,8 @@ class Pipeline {
      *
      * No-op when request_trace is disabled — never throws.
      */
-    public function record_pipeline_trace(\Skim\Core\Request $req, array $middlewares): void {
-        if (!\Skim\Dev\RequestTrace::is_enabled()) {
+    public function recordPipelineTrace(\Skim\Core\Request $req, array $middlewares): void {
+        if (!\Skim\Dev\RequestTrace::isEnabled()) {
             return;
         }
 

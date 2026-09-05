@@ -63,7 +63,7 @@ final class ErrorPage {
         $file    = $e->getFile();
         $line    = $e->getLine();
 
-        $frames_sectioned = self::parse_frames($e);
+        $frames_sectioned = self::parseFrames($e);
 
         return [
             'page_title'      => "Error — {$class}",
@@ -72,22 +72,22 @@ final class ErrorPage {
             'file'            => $file,
             'line'            => $line,
             'php_version'     => PHP_VERSION,
-            'code_lines'      => self::code_context($file, $line),
+            'code_lines'      => self::codeContext($file, $line),
             'line_start'      => max(1, $line - self::CONTEXT_LINES),
             'line_end'        => $line + self::CONTEXT_LINES,
             'frames_app'      => $frames_sectioned['app'],
             'frames_pipeline' => $frames_sectioned['pipeline'],
             'frames_fw'       => $frames_sectioned['framework'],
             'frame_count'     => $frames_sectioned['count'],
-            'env_server'      => self::collect_server_env(),
-            'env_vars'        => self::collect_env_vars(),
-            'request'         => self::collect_request(),
-            'route'           => self::collect_route(),
-            'middleware'      => self::collect_middleware(),
-            'container'       => self::collect_container($e),
-            'resolved_list'   => self::collect_resolved(),
-            'bindings_list'   => self::collect_bindings_list(),
-            'solutions'       => self::suggest_solutions($e),
+            'env_server'      => self::collectServerEnv(),
+            'env_vars'        => self::collectEnvVars(),
+            'request'         => self::collectRequest(),
+            'route'           => self::collectRoute(),
+            'middleware'      => self::collectMiddleware(),
+            'container'       => self::collectContainer($e),
+            'resolved_list'   => self::collectResolved(),
+            'bindings_list'   => self::collectBindingsList(),
+            'solutions'       => self::suggestSolutions($e),
             'trace_text'      => $e->getTraceAsString(),
             'ide'             => \Skim\Dev\IdeLink::resolve(),
             'ide_name'        => \Skim\Dev\IdeLink::name(\Skim\Dev\IdeLink::resolve()),
@@ -101,7 +101,7 @@ final class ErrorPage {
      * Returns pre-escaped HTML spans with syntax classes. The error line
      * is marked with hl=true for the template to add visual emphasis.
      */
-    private static function code_context(string $file, int $line, int $context = self::CONTEXT_LINES): array {
+    private static function codeContext(string $file, int $line, int $context = self::CONTEXT_LINES): array {
         if (!is_file($file)) {
             return [];
         }
@@ -115,7 +115,7 @@ final class ErrorPage {
             $code = rtrim($raw[$i] ?? '');
             $out[] = [
                 'num'  => $i + 1,
-                'code' => self::highlight_php($code),
+                'code' => self::highlightPhp($code),
                 'hl'   => ($i + 1) === $line,
             ];
         }
@@ -134,7 +134,7 @@ final class ErrorPage {
      * the section label, and (when applicable) reflected argument values
      * with object property expansion.
      */
-    private static function parse_frames(\Throwable $e): array {
+    private static function parseFrames(\Throwable $e): array {
         $app = [];
         $pipeline = [];
         $framework = [];
@@ -146,7 +146,7 @@ final class ErrorPage {
             'line'     => $e->getLine(),
             'class'    => '',
             'function' => '',
-            'call'     => self::format_error_call($e),
+            'call'     => self::formatErrorCall($e),
             'is_error' => true,
             'search'   => strtolower($e->getFile() . ' ' . get_class($e)),
             'args'     => [],
@@ -159,7 +159,7 @@ final class ErrorPage {
             $func  = $t['function'] ?? '';
             $type  = $t['type'] ?? '';
 
-            $section = self::classify_frame($file, $class, $func);
+            $section = self::classifyFrame($file, $class, $func);
 
             $call = '';
             if ($class !== '') {
@@ -172,7 +172,7 @@ final class ErrorPage {
             $args = [];
             if (!empty($t['args'])) {
                 foreach ($t['args'] as $j => $arg) {
-                    $args[] = self::describe_arg($arg, $j);
+                    $args[] = self::describeArg($arg, $j);
                 }
             }
 
@@ -216,7 +216,7 @@ final class ErrorPage {
      * instead of a boolean. Middleware classes go to 'pipeline'; everything
      * inside the framework goes to 'framework'; everything else is 'app'.
      */
-    private static function classify_frame(string $file, string $class = '', string $function = ''): string {
+    private static function classifyFrame(string $file, string $class = '', string $function = ''): string {
         if ($file === '' && $class === '' && $function === '') {
             return 'framework';
         }
@@ -255,9 +255,9 @@ final class ErrorPage {
      * Closures and resources are summarised without expansion to keep the panel
      * legible.
      */
-    private static function describe_arg(mixed $arg, int $idx): array {
-        $type  = self::arg_type($arg);
-        $value = self::arg_value($arg);
+    private static function describeArg(mixed $arg, int $idx): array {
+        $type  = self::argType($arg);
+        $value = self::argValue($arg);
 
         $out = [
             'idx'   => $idx,
@@ -271,7 +271,7 @@ final class ErrorPage {
             // all_props() reads public + protected + private via \Closure::bind.
             // Cheaper than the DI tree call because it never calls make(), but
             // gives the same visual fidelity.
-            $out['props']     = self::all_props($arg);
+            $out['props']     = self::allProps($arg);
         }
         elseif (is_array($arg) && $arg !== []) {
             $out['array_len'] = count($arg);
@@ -291,7 +291,7 @@ final class ErrorPage {
      * truncated with an "_n_more" hint. Uses raw values (no deep introspection);
      * the template layer formats strings/numbers/refs with the right colour class.
      */
-    private static function public_props(object $obj): array {
+    private static function publicProps(object $obj): array {
         try {
             $ref = new \ReflectionObject($obj);
         }
@@ -312,8 +312,8 @@ final class ErrorPage {
             $val = $p->getValue($obj);
             $rows[] = [
                 'key'   => $p->getName(),
-                'value' => self::prop_value($val),
-                'class' => self::prop_class($val),
+                'value' => self::propValue($val),
+                'class' => self::propClass($val),
             ];
             $count++;
         }
@@ -331,7 +331,7 @@ final class ErrorPage {
      * Same return shape as public_props(); protected/private rows are tagged
      * with 'class' => 'muted' so the template can dim them visually.
      */
-    private static function all_props(object $obj): array {
+    private static function allProps(object $obj): array {
         try {
             $ref = new \ReflectionObject($obj);
         }
@@ -393,15 +393,15 @@ final class ErrorPage {
             }
             $rows[] = [
                 'key'   => $p['name'] . ($p['vis'] !== 'public' ? ' (' . $p['vis'][0] . ')' : ''),
-                'value' => self::prop_value($p['value']),
-                'class' => self::prop_class($p['value']),
+                'value' => self::propValue($p['value']),
+                'class' => self::propClass($p['value']),
             ];
             $count++;
         }
         return $rows;
     }
 
-    private static function prop_value(mixed $val): string {
+    private static function propValue(mixed $val): string {
         return match (true) {
             is_string($val) => '"' . (mb_strlen($val) > 80 ? mb_substr($val, 0, 77) . '…' : $val) . '"',
             is_int($val), is_float($val) => (string) $val,
@@ -413,7 +413,7 @@ final class ErrorPage {
         };
     }
 
-    private static function prop_class(mixed $val): string {
+    private static function propClass(mixed $val): string {
         return match (true) {
             is_string($val) => 'str',
             is_int($val), is_float($val) => 'num',
@@ -428,9 +428,9 @@ final class ErrorPage {
      * Collects the matched route (pattern + params) from request_trace. #AI:collect_route
      *
      * Returns null when trace is disabled or no route was matched. Reads the
-     * 'route_matched' event written by app::record_route_trace().
+     * 'route_matched' event written by app::recordRouteTrace().
      */
-    private static function collect_route(): ?array {
+    private static function collectRoute(): ?array {
         $trace = \Skim\Dev\RequestTrace::current();
         if ($trace === null) {
             return null;
@@ -458,7 +458,7 @@ final class ErrorPage {
      * Returns a list of {class, active} rows. The 'active' flag marks the
      * middleware that the error originated in, when detectable from the trace.
      */
-    private static function collect_middleware(): ?array {
+    private static function collectMiddleware(): ?array {
         $trace = \Skim\Dev\RequestTrace::current();
         if ($trace === null) {
             return null;
@@ -475,7 +475,7 @@ final class ErrorPage {
             return null;
         }
 
-        $active = self::find_active_middleware();
+        $active = self::findActiveMiddleware();
 
         $rows = [];
         foreach ($stack as $cls) {
@@ -493,7 +493,7 @@ final class ErrorPage {
      * Walks the exception trace top-down (deepest first) and returns the
      * class of the first frame whose owning class is a middleware.
      */
-    private static function find_active_middleware(): ?string {
+    private static function findActiveMiddleware(): ?string {
         return null;
     }
 
@@ -506,20 +506,20 @@ final class ErrorPage {
      * limit is reached or a primitive is encountered. Uses the live container
      * via app::instance() to confirm each class is actually resolvable.
      */
-    private static function collect_container(\Throwable $e): array {
-        $controller = self::find_controller_class($e);
+    private static function collectContainer(\Throwable $e): array {
+        $controller = self::findControllerClass($e);
         if ($controller === null) {
-            return self::container_examples();
+            return self::containerExamples();
         }
 
-        $tree = self::build_di_node($controller, depth: 0, visited: []);
+        $tree = self::buildDiNode($controller, depth: 0, visited: []);
         return [$tree];
     }
 
     /**
      * Returns the example DI tree shown when no controller is identifiable. #AI:container_examples
      */
-    private static function container_examples(): array {
+    private static function containerExamples(): array {
         return [
             [
                 'cls'      => 'PaymentController',
@@ -549,9 +549,9 @@ final class ErrorPage {
      * @return array<int, array{abstract:string, status:string}> One row per
      *         resolved abstract, sorted alphabetically.
      */
-    private static function collect_resolved(): array {
+    private static function collectResolved(): array {
         $rows = [];
-        foreach (\Skim\Core\App::instance()->resolved_services() as $abstract) {
+        foreach (\Skim\Core\App::instance()->resolvedServices() as $abstract) {
             $rows[] = [
                 'abstract' => $abstract,
                 'status'   => 'resolved',
@@ -566,7 +566,7 @@ final class ErrorPage {
      * @return array<int, array{abstract:string, factory:string, priority:int}>
      *         One row per binding, sorted by abstract.
      */
-    private static function collect_bindings_list(): array {
+    private static function collectBindingsList(): array {
         $rows = [];
         foreach (\Skim\Core\App::instance()->bindings_snapshot as $snap) {
             $rows[] = [
@@ -591,7 +591,7 @@ final class ErrorPage {
      * classify that. Otherwise call sites inside src/core/ would mask
      * every user controller as "framework".
      */
-    private static function find_controller_class(\Throwable $e): ?string {
+    private static function findControllerClass(\Throwable $e): ?string {
         $fallback = null;
         foreach ($e->getTrace() as $t) {
             $class = $t['class'] ?? '';
@@ -611,7 +611,7 @@ final class ErrorPage {
                 $class_file = $file;
             }
 
-            if (self::classify_frame($class_file, $class, $t['function'] ?? '') !== 'app') {
+            if (self::classifyFrame($class_file, $class, $t['function'] ?? '') !== 'app') {
                 continue;
             }
             if ($fallback === null) {
@@ -630,14 +630,14 @@ final class ErrorPage {
      * Uses the live app container to confirm resolution; falls back to
      * Reflection auto-wiring prediction when the class isn't bound.
      * Marks each node as `resolved` if its abstract appears in
-     * app::resolved_services() — the actual list of services that
+     * app::resolvedServices() — the actual list of services that
      * make() instantiated during this request.
      */
-    private static function build_di_node(string $class, int $depth, array $visited): array {
+    private static function buildDiNode(string $class, int $depth, array $visited): array {
         $visited[$class] = true;
 
-        $resolved       = self::is_resolvable($class);
-        $is_resolved    = self::is_in_resolved_list($class);
+        $resolved       = self::isResolvable($class);
+        $is_resolved    = self::isInResolvedList($class);
         $has_ctor       = false;
         $children       = [];
 
@@ -656,7 +656,7 @@ final class ErrorPage {
                         if (!class_exists($child) || isset($visited[$child])) {
                             continue;
                         }
-                        $children[] = self::build_di_node($child, $depth + 1, $visited);
+                        $children[] = self::buildDiNode($child, $depth + 1, $visited);
                     }
                 }
             }
@@ -681,14 +681,14 @@ final class ErrorPage {
     }
 
     /**
-     * Returns true if the given class is in app::resolved_services(). #AI:is_in_resolved_list
+     * Returns true if the given class is in app::resolvedServices(). #AI:is_in_resolved_list
      *
      * Used by build_di_node to mark every node that make() actually
      * instantiated during this request with a green ✓ resolved badge.
      */
-    private static function is_in_resolved_list(string $class): bool {
+    private static function isInResolvedList(string $class): bool {
         try {
-            return in_array(ltrim($class, '\\'), \Skim\Core\App::instance()->resolved_services(), true);
+            return in_array(ltrim($class, '\\'), \Skim\Core\App::instance()->resolvedServices(), true);
         }
         catch (\Throwable) {
             return false;
@@ -706,7 +706,7 @@ final class ErrorPage {
      * Does NOT call make() — that would trigger real side effects (DB
      * connections, network). Uses introspection only.
      */
-    private static function is_resolvable(string $class): ?bool {
+    private static function isResolvable(string $class): ?bool {
         if (!class_exists(\Skim\Core\App::class)) {
             return null;
         }
@@ -740,7 +740,7 @@ final class ErrorPage {
     /**
      * Collects server/PHP environment data for the Environment panel.
      */
-    private static function collect_server_env(): array {
+    private static function collectServerEnv(): array {
         $s = $_SERVER;
         return [
             ['key' => 'php version',        'value' => PHP_VERSION,                              'class' => 'ok'],
@@ -759,7 +759,7 @@ final class ErrorPage {
     /**
      * Collects environment variables with secret masking.
      */
-    private static function collect_env_vars(): array {
+    private static function collectEnvVars(): array {
         $items = [];
         $env   = getenv();
 
@@ -777,11 +777,11 @@ final class ErrorPage {
                 continue;
             }
 
-            $is_secret = self::is_secret_key($key);
+            $is_secret = self::isSecretKey($key);
             $items[] = [
                 'key'          => $key,
                 'value'        => $is_secret ? str_repeat('•', min(strlen($val), 28)) : (string)$val,
-                'class'        => $is_secret ? '' : self::env_value_class($key, (string)$val),
+                'class'        => $is_secret ? '' : self::envValueClass($key, (string)$val),
                 'secret'       => $is_secret,
                 'secret_value' => $is_secret ? (string)$val : '',
             ];
@@ -793,7 +793,7 @@ final class ErrorPage {
     /**
      * Collects HTTP request data for the Request panel.
      */
-    private static function collect_request(): array {
+    private static function collectRequest(): array {
         $s      = $_SERVER;
         $scheme = (!empty($s['HTTPS']) && $s['HTTPS'] !== 'off') ? 'https' : 'http';
 
@@ -839,8 +839,8 @@ final class ErrorPage {
         }
         $sections['headers'] = ['title' => 'Headers', 'items' => $header_items];
 
-        $sections['get']  = self::superglobal_section('$_GET',  $_GET);
-        $sections['post'] = self::superglobal_section('$_POST', $_POST);
+        $sections['get']  = self::superglobalSection('$_GET',  $_GET);
+        $sections['post'] = self::superglobalSection('$_POST', $_POST);
 
         $cookie_items = [];
         foreach ($_COOKIE as $k => $v) {
@@ -865,7 +865,7 @@ final class ErrorPage {
     /**
      * Suggests fixes based on exception type — e.g. similar method names. #AI:suggest_solutions
      */
-    private static function suggest_solutions(\Throwable $e): array {
+    private static function suggestSolutions(\Throwable $e): array {
         $solutions = [];
         $msg = $e->getMessage();
 
@@ -943,7 +943,7 @@ final class ErrorPage {
         HTML;
     }
 
-    private static function format_error_call(\Throwable $e): string {
+    private static function formatErrorCall(\Throwable $e): string {
         $class = get_class($e);
         $short = basename(str_replace('\\', '/', $class));
         return $short;
@@ -952,11 +952,11 @@ final class ErrorPage {
     /**
      * Determines whether a stack frame is framework/vendor noise. #AI:is_noise
      */
-    private static function is_noise(string $file, string $class = '', string $function = ''): bool {
-        return self::classify_frame($file, $class, $function) === 'framework';
+    private static function isNoise(string $file, string $class = '', string $function = ''): bool {
+        return self::classifyFrame($file, $class, $function) === 'framework';
     }
 
-    private static function arg_type(mixed $arg): string {
+    private static function argType(mixed $arg): string {
         return match (true) {
             is_object($arg) => get_class($arg),
             is_array($arg)  => 'array',
@@ -969,7 +969,7 @@ final class ErrorPage {
         };
     }
 
-    private static function arg_value(mixed $arg): string {
+    private static function argValue(mixed $arg): string {
         return match (true) {
             is_object($arg) => '#' . spl_object_id($arg),
             is_array($arg)  => '[' . count($arg) . ']',
@@ -980,7 +980,7 @@ final class ErrorPage {
         };
     }
 
-    private static function is_secret_key(string $key): bool {
+    private static function isSecretKey(string $key): bool {
         $lower = strtolower($key);
         foreach (self::SECRET_KEYS as $pattern) {
             if (str_contains($lower, $pattern)) {
@@ -990,7 +990,7 @@ final class ErrorPage {
         return false;
     }
 
-    private static function env_value_class(string $key, string $val): string {
+    private static function envValueClass(string $key, string $val): string {
         $lower = strtolower($val);
         if (in_array($lower, ['true', '1', 'yes', 'on', 'development', 'local'], true)) {
             return 'ok';
@@ -1001,7 +1001,7 @@ final class ErrorPage {
         return '';
     }
 
-    private static function superglobal_section(string $label, array $data): array {
+    private static function superglobalSection(string $label, array $data): array {
         $items = [];
         foreach ($data as $k => $v) {
             $items[] = [
@@ -1020,7 +1020,7 @@ final class ErrorPage {
     /**
      * Applies basic PHP syntax highlighting to a single source line. #AI:highlight_php
      */
-    private static function highlight_php(string $code): string {
+    private static function highlightPhp(string $code): string {
         if (trim($code) === '') {
             return '';
         }

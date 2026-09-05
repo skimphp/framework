@@ -38,7 +38,7 @@ describe('http_response', function(): void {
 
     test('from_stream() parses status from HTTP response header', function(): void {
         $meta = ['HTTP/1.1 201 Created', 'Content-Type: application/json'];
-        $r    = \Skim\Http\HttpResponse::from_stream('{"ok":true}', $meta);
+        $r    = \Skim\Http\HttpResponse::fromStream('{"ok":true}', $meta);
         expect($r->status)->toBe(201);
         expect($r->json())->toBe(['ok' => true]);
     });
@@ -50,14 +50,14 @@ describe('fake_client — record and assert', function(): void {
     test('records GET requests', function(): void {
         $http = \Skim\Http\Client::fake();
         $http->get('https://api.example.com/users');
-        $http->assert_sent('GET', 'users');
+        $http->assertSent('GET', 'users');
         expect($http->recorded())->toHaveCount(1);
     });
 
     test('records POST requests', function(): void {
         $http = \Skim\Http\Client::fake();
         $http->post('https://api.example.com/items', ['name' => 'widget']);
-        $http->assert_sent('POST', 'items');
+        $http->assertSent('POST', 'items');
         expect($http->recorded())->toHaveCount(1);
     });
 
@@ -78,20 +78,20 @@ describe('fake_client — record and assert', function(): void {
 
     test('assert_nothing_sent() passes when no requests made', function(): void {
         $http = \Skim\Http\Client::fake();
-        $http->assert_nothing_sent();
+        $http->assertNothingSent();
         expect(true)->toBeTrue();
     });
 
     test('assert_sent() throws when request was not made', function(): void {
         $http = \Skim\Http\Client::fake();
-        expect(fn() => $http->assert_sent('GET', 'not-called'))
+        expect(fn() => $http->assertSent('GET', 'not-called'))
             ->toThrow(\RuntimeException::class);
     });
 
     test('assert_nothing_sent() throws when requests were made', function(): void {
         $http = \Skim\Http\Client::fake();
         $http->get('https://api.example.com/ping');
-        expect(fn() => $http->assert_nothing_sent())
+        expect(fn() => $http->assertNothingSent())
             ->toThrow(\RuntimeException::class);
     });
 

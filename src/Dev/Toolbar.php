@@ -43,7 +43,7 @@ final class Toolbar {
 		$db_ms      = $summary['db']['ms'];
 		$db_warn    = $db_count > 20 ? ' warn-tab' : '';
 		$db_rows    = array_filter($events, fn($e) => $e['type'] === 'db');
-		$db_html    = self::build_db_rows($db_rows);
+		$db_html    = self::buildDbRows($db_rows);
 
 		$cache_hits  = $summary['cache']['hits'];
 		$cache_miss  = $summary['cache']['misses'];
@@ -53,7 +53,7 @@ final class Toolbar {
 			: '—';
 		$cache_tab_label = "{$cache_hits}h/{$cache_miss}m";
 		$cache_rows  = array_filter($events, fn($e) => $e['type'] === 'cache');
-		$cache_kv    = self::build_cache_rows($cache_rows);
+		$cache_kv    = self::buildCacheRows($cache_rows);
 		$cache_driver = '';
 		foreach ($cache_rows as $e) {
 			if (!empty($e['driver'])) { $cache_driver = $e['driver']; break; }
@@ -64,23 +64,23 @@ final class Toolbar {
 
 		$view_count  = $summary['views'];
 		$view_rows   = array_filter($events, fn($e) => $e['type'] === 'view');
-		$view_html   = self::build_view_rows($view_rows);
+		$view_html   = self::buildViewRows($view_rows);
 
 		$total_ms = isset($_SERVER['REQUEST_TIME_FLOAT'])
 			? round((microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']) * 1000, 1)
 			: $db_ms;
 
-		$timeline_html = self::build_timeline($summary, $total_ms);
+		$timeline_html = self::buildTimeline($summary, $total_ms);
 
 		$log_count = $summary['logs'];
-		$log_html  = self::build_log_rows($events);
+		$log_html  = self::buildLogRows($events);
 
 		$peak_mem = round(memory_get_peak_usage(true) / 1024 / 1024, 1);
 		$ms_class = $total_ms > 200 ? 'warn' : ($total_ms > 100 ? '' : 'ok');
 
 		$method  = $req->method();
 		$path    = $req->path();
-		$req_html = self::build_request_panel($req);
+		$req_html = self::buildRequestPanel($req);
 
 		try {
 			return \Skim\Dev\DevView::render('toolbar', [
@@ -112,7 +112,7 @@ final class Toolbar {
 		}
 	}
 
-	private static function build_request_panel(\Skim\Core\Request $req): string {
+	private static function buildRequestPanel(\Skim\Core\Request $req): string {
 		$s = $_SERVER;
 
 		$method   = htmlspecialchars($req->method(), ENT_QUOTES, 'UTF-8');
@@ -244,7 +244,7 @@ final class Toolbar {
         HTML;
 	}
 
-	private static function build_db_rows(array $events): string {
+	private static function buildDbRows(array $events): string {
 		if ($events === []) {
 			return '<div style="padding:20px 14px;font-size:11px;color:#64748b;font-style:italic">No queries</div>';
 		}
@@ -280,7 +280,7 @@ final class Toolbar {
 		return $html;
 	}
 
-	private static function build_cache_rows(array $events): string {
+	private static function buildCacheRows(array $events): string {
 		if ($events === []) {
 			return '<div style="padding:8px 0;font-size:11px;color:#64748b;font-style:italic">No cache events</div>';
 		}
@@ -298,7 +298,7 @@ final class Toolbar {
 		return $html;
 	}
 
-	private static function build_view_rows(array $events): string {
+	private static function buildViewRows(array $events): string {
 		if ($events === []) {
 			return '<div style="padding:20px 14px;font-size:11px;color:#64748b;font-style:italic">No views rendered</div>';
 		}
@@ -316,11 +316,11 @@ final class Toolbar {
 		return $html;
 	}
 
-	private static function build_timeline(array $summary, float $total_ms): string {
+	private static function buildTimeline(array $summary, float $totalMs): string {
 		$db_ms   = (float)($summary['db']['ms']  ?? 0);
 		$view_ms = (float)($summary['view_ms']   ?? 0);
-		$other   = max(0.0, $total_ms - $db_ms - $view_ms);
-		$total   = max(1.0, $total_ms);
+		$other   = max(0.0, $totalMs - $db_ms - $view_ms);
+		$total   = max(1.0, $totalMs);
 
 		$phases = [
 			'db queries'  => ['ms' => $db_ms,   'color' => '#f59e0b'],
@@ -343,7 +343,7 @@ final class Toolbar {
             ROW;
 		}
 
-		$total_display = round($total_ms, 1);
+		$total_display = round($totalMs, 1);
 		$html .= <<<TOTAL
         <div class="tl-row" style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">
             <span class="tl-lbl" style="color:var(--tb-text);font-weight:600">total</span>
@@ -355,7 +355,7 @@ final class Toolbar {
 		return $html;
 	}
 
-	private static function build_log_rows(array $events): string {
+	private static function buildLogRows(array $events): string {
 		if ($events === []) {
 			return '<div style="padding:20px 14px;font-size:11px;color:#64748b;font-style:italic">No events logged</div>';
 		}

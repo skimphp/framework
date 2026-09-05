@@ -19,7 +19,7 @@ describe('datastar::signals()', function(): void {
     test('adds onlyIfMissing line when flag is true', function(): void {
         $ds = new \Skim\Realtime\Datastar(new SilentSse());
         ob_start();
-        $ds->signals(['theme' => 'dark'], only_if_missing: true);
+        $ds->signals(['theme' => 'dark'], onlyIfMissing: true);
         $output = ob_get_clean();
         expect($output)->toContain("event: datastar-patch-signals\n");
         expect($output)->toContain("data: onlyIfMissing true\n");

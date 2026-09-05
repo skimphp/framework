@@ -13,7 +13,7 @@ use Skim\Dev\Docs\Value\ExtractedClass;
  * Example:
  *   $scanner = new project_scanner();
  *   $classes = $scanner->scan();               // uses config scan_paths
- *   $classes = $scanner->scan_paths(['/app']); // explicit paths
+ *   $classes = $scanner->scanPaths(['/app']); // explicit paths
  *
  * Testing: Instantiate directly; no static state.
  *
@@ -41,7 +41,7 @@ class ProjectScanner {
             if (!is_dir($path)) {
                 continue;
             }
-            foreach ($this->php_files($path) as $file) {
+            foreach ($this->phpFiles($path) as $file) {
                 $class = $this->extractor->extract($file);
                 if ($class !== null) {
                     $result[] = $class;
@@ -52,20 +52,20 @@ class ProjectScanner {
     }
 
     /**
-     * Scans explicit paths instead of config — used by commands with --source override. #AI:scan_paths
+     * Scans explicit paths instead of config — used by commands with --source override. #AI:scanPaths
      *
      * Same null-discard behaviour as scan().
      *
      * @param string[] $paths Directories to scan recursively.
      * @return \Skim\Dev\Docs\Value\ExtractedClass[] One entry per class found.
      */
-    public function scan_paths(array $paths): array {
+    public function scanPaths(array $paths): array {
         $result = [];
         foreach ($paths as $path) {
             if (!is_dir($path)) {
                 continue;
             }
-            foreach ($this->php_files($path) as $file) {
+            foreach ($this->phpFiles($path) as $file) {
                 $class = $this->extractor->extract($file);
                 if ($class !== null) {
                     $result[] = $class;
@@ -76,12 +76,12 @@ class ProjectScanner {
     }
 
     /**
-     * Yields absolute paths of all .php files under a directory, recursively. #AI:php_files
+     * Yields absolute paths of all .php files under a directory, recursively. #AI:phpFiles
      *
      * @param string $dir Root directory to scan.
      * @return iterable<string> Absolute file paths.
      */
-    private function php_files(string $dir): iterable {
+    private function phpFiles(string $dir): iterable {
         $iter = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
         );
@@ -124,16 +124,16 @@ class ProjectScanner {
 #AI contract: Reads scan_paths from config/docs.php, recursively finds all .php files in each path, runs class_extractor on each, and returns a flat extracted_class[] with nulls discarded.
 #AI return_detail: {type: extracted_class[] | desc: One entry per class found across all scan paths.}
 
-#AI:scan_paths
+#AI:scanPaths
 #AI group: Scanning
 #AI frequency: medium
-#AI signature: public function scan_paths(array $paths): array
+#AI signature: public function scanPaths(array $paths): array
 #AI contract: Scans the given explicit paths instead of config scan_paths. Same null-discard behaviour as scan(). Used by commands that override paths via --source flag.
 #AI param_details: [{name: $paths | type: string[] | required: true | desc: Directories to scan recursively for .php files.}]
 #AI return_detail: {type: extracted_class[] | desc: One entry per class found.}
 
-#AI:php_files
+#AI:phpFiles
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private function php_files(string $dir): iterable
+#AI signature: private function phpFiles(string $dir): iterable
 #AI contract: Yields absolute paths of all .php files under the given directory, recursively, using RecursiveIteratorIterator.

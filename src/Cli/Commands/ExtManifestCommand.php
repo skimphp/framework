@@ -36,8 +36,8 @@ class ExtManifestCommand extends \Skim\Cli\Command {
             return 1;
         }
 
-        \Skim\Ext\ExtManifest::generate(new $class(), base_path('skim.json'));
-        $this->success('Generated: ' . base_path('skim.json'));
+        \Skim\Ext\ExtManifest::generate(new $class(), basePath('skim.json'));
+        $this->success('Generated: ' . basePath('skim.json'));
         return 0;
     }
 }

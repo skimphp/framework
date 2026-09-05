@@ -10,7 +10,7 @@ namespace Skim\Session;
  *
  * Example:
  *   class db_session_driver implements session_driver { ... }
- *   session::set_driver(new db_session_driver(...));
+ *   session::setDriver(new db_session_driver(...));
  *
  * Testing: Use session_fake which satisfies this interface in-memory.
  *

@@ -29,7 +29,7 @@ class McpServeCommand extends \Skim\Cli\Command {
      * @return int Exit code from the child process, or 1 on pre-flight failure.
      */
     public function handle(): int {
-        $json_path = config('docs.output.json', base_path('llm.json'));
+        $json_path = config('docs.output.json', basePath('llm.json'));
 
         if (!file_exists($json_path)) {
             $this->error("llm.json not found at {$json_path} — run 'php skim docs:extract' first.");
@@ -52,10 +52,10 @@ class McpServeCommand extends \Skim\Cli\Command {
      * Priority: native binary → node bundle → null.
      */
     private function resolveRunner(): ?string {
-        $project_dir = escapeshellarg(base_path());
+        $project_dir = escapeshellarg(basePath());
 
         // 1. Native binary (installed via mcp:install)
-        $native = base_path('.skim/bin/skim-mcp');
+        $native = basePath('.skim/bin/skim-mcp');
         if (PHP_OS_FAMILY === 'Windows') {
             $native .= '.exe';
         }
@@ -80,8 +80,8 @@ class McpServeCommand extends \Skim\Cli\Command {
      */
     private function findBundle(): ?string {
         $candidates = [
-            base_path('mcp/dist/index.js'),                       // framework is root
-            base_path('vendor/skim/framework/mcp/dist/index.js'),  // composer dependency
+            basePath('mcp/dist/index.js'),                       // framework is root
+            basePath('vendor/skim/framework/mcp/dist/index.js'),  // composer dependency
         ];
         foreach ($candidates as $path) {
             if (file_exists($path)) return $path;

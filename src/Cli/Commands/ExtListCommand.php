@@ -63,7 +63,7 @@ class ExtListCommand extends \Skim\Cli\Command {
             }
 
             foreach ($capabilities as $capability) {
-                if (!\Skim\Ext\CapabilityVocabulary::is_known($capability)) {
+                if (!\Skim\Ext\CapabilityVocabulary::isKnown($capability)) {
                     $this->warn("Unknown capability '{$capability}' declared by {$extension['name']}");
                 }
             }
@@ -82,7 +82,7 @@ class ExtListCommand extends \Skim\Cli\Command {
      * Returns the injected or default extension registry. #AI:registry
      */
     private function registry(): \Skim\Ext\ExtRegistry {
-        return $this->registry ?? new \Skim\Ext\ExtRegistry(base_path());
+        return $this->registry ?? new \Skim\Ext\ExtRegistry(basePath());
     }
 }
 

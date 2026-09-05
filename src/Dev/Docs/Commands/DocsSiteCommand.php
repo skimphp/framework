@@ -30,9 +30,9 @@ class DocsSiteCommand extends \Skim\Cli\Command {
      * @return int 0 on success, 1 on failure.
      */
     public function handle(): int {
-        $paths     = \Skim\Dev\Docs\Value\DocsGenerationPaths::from_flags($this->flags);
-        $json_path = $paths->json_path();
-        $mdx_dir   = $paths->mdx_dir();
+        $paths     = \Skim\Dev\Docs\Value\DocsGenerationPaths::fromFlags($this->flags);
+        $json_path = $paths->jsonPath();
+        $mdx_dir   = $paths->mdxDir();
 
         try {
             $data = (new \Skim\Dev\Docs\Emitter\JsonEmitter())->load($json_path);

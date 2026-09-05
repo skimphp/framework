@@ -17,7 +17,7 @@ use Skim\Db\Migration;
  *   $migrator = new ext_migrator('default');
  *   $applied = $migrator->run('acme/auth', __DIR__ . '/migrations');
  *   // On failure:
- *   $migrator->rollback_session($applied);
+ *   $migrator->rollbackSession($applied);
  *
  * Testing: Use SQLite :memory: connection for isolated migration tests.
  *
@@ -46,27 +46,27 @@ final class ExtMigrator {
      * Example:
      *   $applied = $migrator->run('acme/auth', '/path/to/ext/migrations');
      *
-     * @param string $ext_name       Extension name (no colons allowed).
-     * @param string $migrations_path Absolute path to migration .php files.
+     * @param string $extName       Extension name (no colons allowed).
+     * @param string $migrationsPath Absolute path to migration .php files.
      * @return array<int,array{ext_name:string,filename:string,tracking_filename:string,file:string}>
      */
-    public function run(string $ext_name, string $migrations_path): array {
-        $ext_name = $this->normalize_ext_name($ext_name);
+    public function run(string $extName, string $migrationsPath): array {
+        $extName = $this->normalizeExtName($extName);
         $this->applied_this_session = [];
 
-        if (!is_dir($migrations_path)) {
+        if (!is_dir($migrationsPath)) {
             return [];
         }
 
-        $this->ensure_table();
-        $applied = $this->applied_for($ext_name);
-        $pending = $this->pending($ext_name, $migrations_path, $applied);
+        $this->ensureTable();
+        $applied = $this->appliedFor($extName);
+        $pending = $this->pending($extName, $migrationsPath, $applied);
 
         if ($pending === []) {
             return [];
         }
 
-        $batch = $this->next_batch();
+        $batch = $this->nextBatch();
 
         foreach ($pending as $entry) {
             /** @var \Skim\Db\Migration $migration */
@@ -74,7 +74,7 @@ final class ExtMigrator {
             $migration->filename = $entry['tracking_filename'];
 
             \Skim\Db\Db::transaction(function() use ($migration, $entry, $batch): void {
-                $this->execute_sql($migration->up());
+                $this->executeSql($migration->up());
                 \Skim\Db\Db::query(
                     'INSERT INTO ' . $this->table . ' %values%',
                     ['values' => ['filename' => $entry['tracking_filename'], 'batch' => $batch]],
@@ -89,18 +89,18 @@ final class ExtMigrator {
     }
 
     /**
-     * Rolls back migrations applied during the current install session. #AI:rollback_session
+     * Rolls back migrations applied during the current install session. #AI:rollbackSession
      *
      * WARNING: Only rolls back migrations applied by the most recent run() call.
      * Used for cleanup when a later step in the install process fails.
      *
-     * @param array $applied_this_session Array of applied entries from run().
+     * @param array $appliedThisSession Array of applied entries from run().
      * @return array<int,string> Tracking filenames that were rolled back.
      */
-    public function rollback_session(array $applied_this_session): array {
+    public function rollbackSession(array $appliedThisSession): array {
         $rolled_back = [];
 
-        foreach (array_reverse($applied_this_session) as $entry) {
+        foreach (array_reverse($appliedThisSession) as $entry) {
             if (!isset($entry['file'], $entry['tracking_filename']) || !is_file($entry['file'])) {
                 continue;
             }
@@ -110,7 +110,7 @@ final class ExtMigrator {
             $migration->filename = $entry['tracking_filename'];
 
             \Skim\Db\Db::transaction(function() use ($migration, $entry): void {
-                $this->execute_sql($migration->down());
+                $this->executeSql($migration->down());
                 \Skim\Db\Db::query(
                     'DELETE FROM ' . $this->table . ' WHERE filename = :filename',
                     [':filename' => $entry['tracking_filename']],
@@ -125,35 +125,35 @@ final class ExtMigrator {
     }
 
     /**
-     * Returns migrations applied during the most recent run() call. #AI:applied_this_session
+     * Returns migrations applied during the most recent run() call. #AI:appliedThisSession
      */
-    public function applied_this_session(): array {
+    public function appliedThisSession(): array {
         return $this->applied_this_session;
     }
 
-    private function normalize_ext_name(string $ext_name): string {
-        $ext_name = trim($ext_name);
-        if ($ext_name === '' || str_contains($ext_name, ':')) {
+    private function normalizeExtName(string $extName): string {
+        $extName = trim($extName);
+        if ($extName === '' || str_contains($extName, ':')) {
             throw new \InvalidArgumentException('Extension name must be non-empty and cannot contain ":".');
         }
 
-        return $ext_name;
+        return $extName;
     }
 
-    private function pending(string $ext_name, string $migrations_path, array $applied): array {
-        $files = glob(rtrim($migrations_path, '/') . '/*.php') ?: [];
+    private function pending(string $extName, string $migrationsPath, array $applied): array {
+        $files = glob(rtrim($migrationsPath, '/') . '/*.php') ?: [];
         sort($files);
 
         $pending = [];
         foreach ($files as $file) {
             $filename = basename($file);
-            $tracking_filename = "{$ext_name}: {$filename}";
+            $tracking_filename = "{$extName}: {$filename}";
             if (in_array($tracking_filename, $applied, true)) {
                 continue;
             }
 
             $pending[] = [
-                'ext_name'          => $ext_name,
+                'ext_name'          => $extName,
                 'filename'          => $filename,
                 'tracking_filename' => $tracking_filename,
                 'file'              => $file,
@@ -163,8 +163,8 @@ final class ExtMigrator {
         return $pending;
     }
 
-    private function applied_for(string $ext_name): array {
-        $prefix = "{$ext_name}: ";
+    private function appliedFor(string $extName): array {
+        $prefix = "{$extName}: ";
         $rows = \Skim\Db\Db::all('SELECT filename FROM ' . $this->table, connection: $this->connection);
 
         return array_values(array_filter(
@@ -173,7 +173,7 @@ final class ExtMigrator {
         ));
     }
 
-    private function ensure_table(): void {
+    private function ensureTable(): void {
         $driver = \Skim\Db\Db::pdo($this->connection)->getAttribute(\PDO::ATTR_DRIVER_NAME);
 
         $id_col = match ($driver) {
@@ -211,11 +211,11 @@ final class ExtMigrator {
         }
     }
 
-    private function next_batch(): int {
+    private function nextBatch(): int {
         return ((int) \Skim\Db\Db::val('SELECT MAX(batch) FROM ' . $this->table, connection: $this->connection)) + 1;
     }
 
-    private function execute_sql(string $sql): void {
+    private function executeSql(string $sql): void {
         $statements = array_filter(
             array_map('trim', explode(';', $sql)),
             static fn(string $statement): bool => $statement !== '',
@@ -259,25 +259,25 @@ final class ExtMigrator {
 #AI:run
 #AI group: Migration API
 #AI frequency: high
-#AI signature: public function run(string $ext_name, string $migrations_path): array
+#AI signature: public function run(string $extName, string $migrationsPath): array
 #AI contract: Scans the migrations path, compares against applied migrations, and applies pending ones inside transactions. Returns the list of applied entries.
-#AI param_details: [{name: $ext_name | type: string | required: true | desc: Extension name. Must be non-empty and cannot contain colons.}; {name: $migrations_path | type: string | required: true | desc: Absolute path to directory containing migration .php files.}]
+#AI param_details: [{name: $extName | type: string | required: true | desc: Extension name. Must be non-empty and cannot contain colons.}; {name: $migrationsPath | type: string | required: true | desc: Absolute path to directory containing migration .php files.}]
 #AI return_detail: {type: array | desc: List of applied migration entries with ext_name, filename, tracking_filename, and file keys.}
 #AI side_effects: [Creates _migrations table if missing; Executes migration SQL; Inserts tracking rows]
 
-#AI:rollback_session
+#AI:rollbackSession
 #AI group: Migration API
 #AI frequency: low
-#AI signature: public function rollback_session(array $applied_this_session): array
+#AI signature: public function rollbackSession(array $appliedThisSession): array
 #AI contract: Rolls back migrations applied during the current install session in reverse order. Each rollback runs inside a transaction.
-#AI param_details: [{name: $applied_this_session | type: array | required: true | desc: Array of applied entries returned by run().}]
+#AI param_details: [{name: $appliedThisSession | type: array | required: true | desc: Array of applied entries returned by run().}]
 #AI return_detail: {type: array<int,string> | desc: Tracking filenames that were rolled back.}
 #AI warnings: [Only rolls back migrations from the most recent run() call — not previous sessions]
 #AI side_effects: [Executes migration down() SQL; Deletes tracking rows from _migrations]
 
-#AI:applied_this_session
+#AI:appliedThisSession
 #AI group: Inspection
 #AI frequency: low
-#AI signature: public function applied_this_session(): array
+#AI signature: public function appliedThisSession(): array
 #AI contract: Returns the list of migrations applied during the most recent run() call.
 #AI return_detail: {type: array | desc: Applied migration entries from the last run().}

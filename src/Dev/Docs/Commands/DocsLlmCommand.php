@@ -32,9 +32,9 @@ class DocsLlmCommand extends \Skim\Cli\Command {
      * @return int 0 on success, 1 on failure.
      */
     public function handle(): int {
-        $paths     = \Skim\Dev\Docs\Value\DocsGenerationPaths::from_flags($this->flags);
-        $json_path = $paths->json_path();
-        $md_path   = $paths->llm_md_path();
+        $paths     = \Skim\Dev\Docs\Value\DocsGenerationPaths::fromFlags($this->flags);
+        $json_path = $paths->jsonPath();
+        $md_path   = $paths->llmMdPath();
 
         try {
             $data = (new \Skim\Dev\Docs\Emitter\JsonEmitter())->load($json_path);
@@ -45,11 +45,11 @@ class DocsLlmCommand extends \Skim\Cli\Command {
 
         $include_framework = (bool) config('docs.include_framework_context', false);
         $framework_llm_md  = $include_framework
-            ? base_path('vendor/skim/framework/llm.md')
+            ? basePath('vendor/skim/framework/llm.md')
             : null;
 
         try {
-            (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit($data, $md_path, framework_llm_md: $framework_llm_md);
+            (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit($data, $md_path, frameworkLlmMd: $framework_llm_md);
         } catch (\Throwable $e) {
             $this->error('Write failed: ' . $e->getMessage());
             return 1;

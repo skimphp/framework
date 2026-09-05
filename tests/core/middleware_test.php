@@ -7,7 +7,7 @@ use Skim\Core\Response;
 
 // Test middleware implementations — inline anonymous classes
 
-function make_recording_middleware(string $label, array &$log): \Skim\Core\Middleware {
+function makeRecordingMiddleware(string $label, array &$log): \Skim\Core\Middleware {
     return new class($label, $log) implements \Skim\Core\Middleware {
         public function __construct(private string $label, private array &$log) {}
 
@@ -20,7 +20,7 @@ function make_recording_middleware(string $label, array &$log): \Skim\Core\Middl
     };
 }
 
-function make_short_circuit_middleware(int $status): \Skim\Core\Middleware {
+function makeShortCircuitMiddleware(int $status): \Skim\Core\Middleware {
     return new class($status) implements \Skim\Core\Middleware {
         public function __construct(private int $status) {}
 
@@ -38,8 +38,8 @@ describe('pipeline — execution order', function(): void {
         $req      = \Skim\Core\Request::make();
         $res      = new \Skim\Core\Response();
 
-        $a = make_recording_middleware('A', $log);
-        $b = make_recording_middleware('B', $log);
+        $a = makeRecordingMiddleware('A', $log);
+        $b = makeRecordingMiddleware('B', $log);
 
         $pipeline->run($req, $res, [$a, $b], function() use (&$log, $res): \Skim\Core\Response {
             $log[] = 'core';
@@ -55,7 +55,7 @@ describe('pipeline — execution order', function(): void {
         $req      = \Skim\Core\Request::make();
         $res      = new \Skim\Core\Response();
 
-        $m = make_recording_middleware('M', $log);
+        $m = makeRecordingMiddleware('M', $log);
 
         $pipeline->run($req, $res, [$m], function() use (&$log, $res): \Skim\Core\Response {
             $log[] = 'core';
@@ -89,7 +89,7 @@ describe('pipeline — short-circuit', function(): void {
         $res       = new \Skim\Core\Response();
         $core_ran  = false;
 
-        $blocker = make_short_circuit_middleware(401);
+        $blocker = makeShortCircuitMiddleware(401);
 
         $result = $pipeline->run($req, $res, [$blocker], function() use (&$core_ran, $res): \Skim\Core\Response {
             $core_ran = true;
@@ -97,7 +97,7 @@ describe('pipeline — short-circuit', function(): void {
         });
 
         expect($core_ran)->toBeFalse();
-        expect($result->get_status())->toBe(401);
+        expect($result->getStatus())->toBe(401);
     });
 
     test('middleware after short-circuit does not run', function(): void {
@@ -106,8 +106,8 @@ describe('pipeline — short-circuit', function(): void {
         $req      = \Skim\Core\Request::make();
         $res      = new \Skim\Core\Response();
 
-        $blocker = make_short_circuit_middleware(403);
-        $after   = make_recording_middleware('after', $log);
+        $blocker = makeShortCircuitMiddleware(403);
+        $after   = makeRecordingMiddleware('after', $log);
 
         $pipeline->run($req, $res, [$blocker, $after], fn() => $res);
 
@@ -125,7 +125,7 @@ describe('cors middleware', function(): void {
 
         $cors->handle($req, $res, fn($r, $s) => $s->json([]));
 
-        expect($res->get_headers())->toHaveKey('Access-Control-Allow-Origin');
+        expect($res->getHeaders())->toHaveKey('Access-Control-Allow-Origin');
     });
 
     test('short-circuits with 204 on OPTIONS preflight', function(): void {
@@ -140,7 +140,7 @@ describe('cors middleware', function(): void {
         });
 
         expect($called)->toBeFalse();
-        expect($result->get_status())->toBe(204);
+        expect($result->getStatus())->toBe(204);
     });
 
 });

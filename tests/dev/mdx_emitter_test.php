@@ -2,7 +2,7 @@
 
 use Skim\Dev\Docs\Emitter\MdxEmitter;
 
-function sample_mdx_data(): array {
+function sampleMdxData(): array {
     return [
         'generated_at' => '2026-01-01T00:00:00+00:00',
         'classes'      => [
@@ -45,7 +45,7 @@ describe('mdx_emitter', function(): void {
 
     test('creates one MDX file per class', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_test_' . uniqid();
-        $count = (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit(sample_mdx_data(), $dir);
+        $count = (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit(sampleMdxData(), $dir);
 
         expect($count)->toBe(3);
         expect(file_exists($dir . '/core/request.mdx'))->toBeTrue();
@@ -60,7 +60,7 @@ describe('mdx_emitter', function(): void {
 
     test('returns count of files written', function(): void {
         $dir   = sys_get_temp_dir() . '/skim_mdx_count_' . uniqid();
-        $count = (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit(sample_mdx_data(), $dir);
+        $count = (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit(sampleMdxData(), $dir);
         expect($count)->toBe(3);
 
         array_map('unlink', glob($dir . '/core/*.mdx'));
@@ -71,7 +71,7 @@ describe('mdx_emitter', function(): void {
 
     test('preserves duplicate class names with source file suffixes', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_duplicate_' . uniqid();
-        $data = sample_mdx_data();
+        $data = sampleMdxData();
         $data['classes'][1]['class_name'] = 'request';
         $data['classes'][1]['file'] = '/src/core/response.php';
 
@@ -89,7 +89,7 @@ describe('mdx_emitter', function(): void {
 
     test('preserves duplicate class names with duplicate source basenames', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_duplicate_basename_' . uniqid();
-        $data = sample_mdx_data();
+        $data = sampleMdxData();
         $data['classes'][1]['class_name'] = 'request';
         $data['classes'][1]['file'] = '/other/core/request.php';
 
@@ -107,7 +107,7 @@ describe('mdx_emitter', function(): void {
 
     test('MDX file contains frontmatter title and description', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_front_' . uniqid();
-        (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit(sample_mdx_data(), $dir);
+        (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit(sampleMdxData(), $dir);
         $content = file_get_contents($dir . '/core/request.mdx');
 
         expect($content)->toContain('title: request');
@@ -121,7 +121,7 @@ describe('mdx_emitter', function(): void {
 
     test('MDX file contains method name and signature', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_method_' . uniqid();
-        (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit(sample_mdx_data(), $dir);
+        (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit(sampleMdxData(), $dir);
         $content = file_get_contents($dir . '/core/request.mdx');
 
         expect($content)->toContain('<ApiMethod name="get">')
@@ -135,7 +135,7 @@ describe('mdx_emitter', function(): void {
 
     test('MDX file contains contracts and non-goals', function(): void {
         $dir = sys_get_temp_dir() . '/skim_mdx_tags_' . uniqid();
-        (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit(sample_mdx_data(), $dir);
+        (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit(sampleMdxData(), $dir);
         $content = file_get_contents($dir . '/core/request.mdx');
 
         expect($content)->toContain('returns query param by key');

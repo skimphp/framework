@@ -36,7 +36,7 @@ final class FileDriver implements \Skim\Cache\Driver {
      * @param mixed  $default Fallback returned on miss.
      */
     public function get(string $key, mixed $default = null): mixed {
-        $file = $this->file_path($key);
+        $file = $this->filePath($key);
         if (!is_file($file)) {
             return $default;
         }
@@ -67,7 +67,7 @@ final class FileDriver implements \Skim\Cache\Driver {
      * @return bool True if file was written successfully.
      */
     public function set(string $key, mixed $value, ?int $ttl = null): bool {
-        $file    = $this->file_path($key);
+        $file    = $this->filePath($key);
         $expires = $ttl !== null ? microtime(true) + $ttl : null;
         $content = serialize([$expires, $value]);
         return (bool) @file_put_contents($file, $content, \LOCK_EX);
@@ -93,7 +93,7 @@ final class FileDriver implements \Skim\Cache\Driver {
      * @return bool True if file is gone.
      */
     public function delete(string $key): bool {
-        $file = $this->file_path($key);
+        $file = $this->filePath($key);
         return !is_file($file) || (bool) @unlink($file);
     }
 
@@ -118,20 +118,20 @@ final class FileDriver implements \Skim\Cache\Driver {
     }
 
     /**
-     * Clears all cache files in the directory. #AI:flush_all
+     * Clears all cache files in the directory. #AI:flushAll
      *
      * WARNING: Deletes every .cache file in the configured path.
      *
      * @return bool Always true.
      */
-    public function flush_all(): bool {
+    public function flushAll(): bool {
         foreach (glob($this->path . '/*.cache') ?: [] as $file) {
             @unlink($file);
         }
         return true;
     }
 
-    private function file_path(string $key): string {
+    private function filePath(string $key): string {
         return $this->path . '/' . base64_encode($key) . '.cache';
     }
 }
@@ -193,10 +193,10 @@ final class FileDriver implements \Skim\Cache\Driver {
 #AI param_details: [{name: $prefix | type: string | required: true | desc: Key prefix to match.}]
 #AI return_detail: {type: bool | desc: Always true.}
 
-#AI:flush_all
+#AI:flushAll
 #AI group: Invalidation
 #AI frequency: low
-#AI signature: public function flush_all(): bool
+#AI signature: public function flushAll(): bool
 #AI contract: Deletes every .cache file in the configured cache directory.
 #AI return_detail: {type: bool | desc: Always true.}
 #AI warnings: [Deletes every .cache file in the configured path unconditionally]

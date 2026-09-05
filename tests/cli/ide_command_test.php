@@ -4,9 +4,9 @@ use Skim\Db\Db;
 use Skim\Cli\Commands\IdeCommand;
 
 describe('ide_command schema generation with SQLite', function(): void {
-    $modelsDir = base_path('app/models');
+    $modelsDir = basePath('app/models');
     $modelFile = $modelsDir . '/post.php';
-    $helperFile = storage_path('ide-helper.php');
+    $helperFile = storagePath('ide-helper.php');
     $hadModelsDir = false;
     $hadHelperFile = false;
     $oldHelperContent = '';
@@ -75,7 +75,7 @@ class post extends \Skim\Db\Model {
 
     test('generates typed property stubs for SQLite models', function() use ($helperFile): void {
         $cmd = new \Skim\Cli\Commands\IdeCommand();
-        $cmd->set_input(['generate'], []);
+        $cmd->setInput(['generate'], []);
         
         ob_start();
         $exitCode = $cmd->handle();

@@ -15,9 +15,9 @@ interface SignalPatcher {
      * Merges key-value pairs into the client's reactive signals. #AI:signals
      *
      * @param array $signals         Key-value pairs to merge.
-     * @param bool  $only_if_missing When true, only sets signals that do not already exist.
+     * @param bool  $onlyIfMissing When true, only sets signals that do not already exist.
      */
-    public function signals(array $signals, bool $only_if_missing = false): static;
+    public function signals(array $signals, bool $onlyIfMissing = false): static;
 }
 
 #AI:interface

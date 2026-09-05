@@ -8,7 +8,7 @@ use Skim\Cli\Kernel;
 
 describe('CLI utility formatting and headers', function(): void {
     beforeEach(function(): void {
-        \Skim\Cli\Cli::force_plain(true);
+        \Skim\Cli\Cli::forcePlain(true);
     });
 
     test('cli::line outputs clean lines', function(): void {
@@ -27,7 +27,7 @@ describe('CLI utility formatting and headers', function(): void {
 
     test('cli::error_box renders bordered error message', function(): void {
         ob_start();
-        \Skim\Cli\Cli::error_box("Critical", "Something went wrong!");
+        \Skim\Cli\Cli::errorBox("Critical", "Something went wrong!");
         $out = ob_get_clean();
         expect($out)->toContain("Critical");
         expect($out)->toContain("Something went wrong!");
@@ -37,14 +37,14 @@ describe('CLI utility formatting and headers', function(): void {
 
     test('cli::did_you_mean outputs suggestions', function(): void {
         ob_start();
-        \Skim\Cli\Cli::did_you_mean("migrat", ["migrate", "serve", "queue:work"]);
+        \Skim\Cli\Cli::didYouMean("migrat", ["migrate", "serve", "queue:work"]);
         $out = ob_get_clean();
         expect($out)->toContain("Did you mean:  migrate");
     });
 
     test('cli::did_you_mean is silent if no close matches', function(): void {
         ob_start();
-        \Skim\Cli\Cli::did_you_mean("foobar", ["migrate", "serve", "queue:work"]);
+        \Skim\Cli\Cli::didYouMean("foobar", ["migrate", "serve", "queue:work"]);
         $out = ob_get_clean();
         expect($out)->toBe("");
     });
@@ -58,11 +58,11 @@ describe('command base class configuration', function(): void {
             }
         };
 
-        $cmd->configure_for_name('migrate:down');
-        expect($cmd->get_name())->toBe('migrate:down');
-        expect($cmd->get_group())->toBe('database');
-        expect($cmd->get_description())->toBe('rollback last batch');
-        expect($cmd->get_usage())->toBe('[--steps=N]');
+        $cmd->configureForName('migrate:down');
+        expect($cmd->getName())->toBe('migrate:down');
+        expect($cmd->getGroup())->toBe('database');
+        expect($cmd->getDescription())->toBe('rollback last batch');
+        expect($cmd->getUsage())->toBe('[--steps=N]');
     });
 });
 

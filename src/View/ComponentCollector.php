@@ -35,14 +35,14 @@ class ComponentCollector implements \Skim\Worker\Resettable {
     private static array $stack = [];
 
     /**
-     * Runs the closure and captures everything not inside a named part. #AI:capture_main
+     * Runs the closure and captures everything not inside a named part. #AI:captureMain
      *
      * The closure receives $this so templates can call $c->part().
      * Output is buffered; any echo/print inside the closure becomes main_part.
      *
      * @param callable $render Closure receiving the collector instance.
      */
-    public function capture_main(callable $render): void {
+    public function captureMain(callable $render): void {
         self::$stack[] = $this;
         ob_start();
         $render($this);
@@ -57,44 +57,44 @@ class ComponentCollector implements \Skim\Worker\Resettable {
      * @param callable $render Closure that outputs the part content.
      */
     public function part(string $name, callable $render): void {
-        $this->capture_part($name, $render);
+        $this->capturePart($name, $render);
     }
 
     /**
-     * Captures a named part by executing the closure inside output buffering. #AI:capture_part
+     * Captures a named part by executing the closure inside output buffering. #AI:capturePart
      *
      * @param string   $name   Part identifier used by the component template.
      * @param callable $render Closure that outputs the part content.
      */
-    public function capture_part(string $name, callable $render): void {
+    public function capturePart(string $name, callable $render): void {
         ob_start();
         $render();
         $this->named_parts[$name] = (string) ob_get_clean();
     }
 
     /**
-     * Returns the main body captured outside named parts. #AI:get_main
+     * Returns the main body captured outside named parts. #AI:getMain
      */
-    public function get_main(): string {
+    public function getMain(): string {
         return $this->main_part;
     }
 
     /**
-     * Returns a named part, or $default if it was never captured. #AI:get_part
+     * Returns a named part, or $default if it was never captured. #AI:getPart
      *
      * @param string $name    Part identifier to retrieve.
      * @param string $default Fallback HTML when the part is absent.
      */
-    public function get_part(string $name, string $default = ''): string {
+    public function getPart(string $name, string $default = ''): string {
         return $this->named_parts[$name] ?? $default;
     }
 
     /**
-     * Checks if a named part was captured. #AI:has_part
+     * Checks if a named part was captured. #AI:hasPart
      *
      * @param string $name Part identifier to check.
      */
-    public function has_part(string $name): bool {
+    public function hasPart(string $name): bool {
         return isset($this->named_parts[$name]);
     }
 
@@ -127,14 +127,14 @@ class ComponentCollector implements \Skim\Worker\Resettable {
     }
 
     /**
-     * Clears the static collector stack between requests in worker mode. #AI:reset_request
+     * Clears the static collector stack between requests in worker mode. #AI:resetRequest
      *
      * Under normal flow capture_main() pushes then pops, so the stack is empty
      * between renders. If a component closure throws, the matching pop() never
      * runs and a stale collector lingers in the process — this drops it so the
      * next request starts with an empty stack.
      */
-    public static function reset_request(): void {
+    public static function resetRequest(): void {
         self::$stack = [];
     }
 }
@@ -165,10 +165,10 @@ class ComponentCollector implements \Skim\Worker\Resettable {
 #AI section_order: [Capture API; Query API; Stack Management]
 #AI architectural_notes: The static stack replaces a scalar global, enabling nested components. Each collector is independent; parts do not leak between siblings or parents.
 
-#AI:capture_main
+#AI:captureMain
 #AI group: Capture API
 #AI frequency: high
-#AI signature: public function capture_main(callable $render): void
+#AI signature: public function captureMain(callable $render): void
 #AI contract: Buffers the closure output as the main part. Pushes this collector onto the static stack before execution and pops after.
 #AI param_details: [{name: $render | type: callable | required: true | desc: Closure receiving the collector instance.}]
 #AI side_effects: [Pushes then pops from static stack; Starts and ends output buffering]
@@ -181,33 +181,33 @@ class ComponentCollector implements \Skim\Worker\Resettable {
 #AI param_details: [{name: $name | type: string | required: true | desc: Part identifier used by the component template.}; {name: $render | type: callable | required: true | desc: Closure that outputs the part content.}]
 #AI side_effects: [Starts and ends output buffering]
 
-#AI:capture_part
+#AI:capturePart
 #AI group: Capture API
 #AI frequency: high
-#AI signature: public function capture_part(string $name, callable $render): void
+#AI signature: public function capturePart(string $name, callable $render): void
 #AI contract: Buffers the closure output and stores it under the given part name.
 #AI param_details: [{name: $name | type: string | required: true | desc: Part identifier used by the component template.}; {name: $render | type: callable | required: true | desc: Closure that outputs the part content.}]
 #AI side_effects: [Starts and ends output buffering]
 
-#AI:get_main
+#AI:getMain
 #AI group: Query API
 #AI frequency: high
-#AI signature: public function get_main(): string
+#AI signature: public function getMain(): string
 #AI contract: Returns the output captured outside any named part() calls.
 #AI return_detail: {type: string | desc: Main body HTML.}
 
-#AI:get_part
+#AI:getPart
 #AI group: Query API
 #AI frequency: high
-#AI signature: public function get_part(string $name, string $default = ''): string
+#AI signature: public function getPart(string $name, string $default = ''): string
 #AI contract: Returns captured HTML for a named part, or $default if absent.
 #AI param_details: [{name: $name | type: string | required: true | desc: Part identifier to retrieve.}; {name: $default | type: string | required: false | desc: Fallback HTML when the part is absent.}]
 #AI return_detail: {type: string | desc: Named part HTML or default.}
 
-#AI:has_part
+#AI:hasPart
 #AI group: Query API
 #AI frequency: medium
-#AI signature: public function has_part(string $name): bool
+#AI signature: public function hasPart(string $name): bool
 #AI contract: Returns true when the named part was captured.
 #AI param_details: [{name: $name | type: string | required: true | desc: Part identifier to check.}]
 #AI return_detail: {type: bool | desc: True if the part exists.}

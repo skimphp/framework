@@ -15,10 +15,10 @@ use Skim\Session\Session;
  *
  * Example:
  *   $req = new pending_request($app);
- *   $req->acting_as($user)
- *       ->with_headers(['Accept' => 'application/json'])
+ *   $req->actingAs($user)
+ *       ->withHeaders(['Accept' => 'application/json'])
  *       ->post('/api/posts', json: ['title' => 'Test'])
- *       ->assert_created();
+ *       ->assertCreated();
  *
  * Testing: This class IS the test dispatch mechanism — use via http_client.
  *
@@ -35,62 +35,62 @@ class PendingRequest {
     public function __construct(private readonly \Skim\Core\App $app) {}
 
     /**
-     * Returns a clone configured to authenticate as the given user. #AI:acting_as
+     * Returns a clone configured to authenticate as the given user. #AI:actingAs
      *
      * @param object $user User object bound to auth_service in the container.
      */
-    public function acting_as(object $user): static {
+    public function actingAs(object $user): static {
         $clone = clone $this;
         $clone->user = $user;
         return $clone;
     }
 
     /**
-     * Returns a clone with additional request headers. #AI:with_headers
+     * Returns a clone with additional request headers. #AI:withHeaders
      *
      * @param array $headers Key-value header pairs merged with existing headers.
      */
-    public function with_headers(array $headers): static {
+    public function withHeaders(array $headers): static {
         $clone = clone $this;
         $clone->headers = array_merge($this->headers, $headers);
         return $clone;
     }
 
     /**
-     * Returns a clone with pre-populated session data. #AI:with_session
+     * Returns a clone with pre-populated session data. #AI:withSession
      *
      * @param array $data Key-value session pairs bound via session_fake.
      */
-    public function with_session(array $data): static {
+    public function withSession(array $data): static {
         $clone = clone $this;
         $clone->session = array_merge($this->session, $data);
         return $clone;
     }
 
     /**
-     * Returns a clone with the given cookies. #AI:with_cookies
+     * Returns a clone with the given cookies. #AI:withCookies
      *
      * @param array $cookies Key-value cookie pairs.
      */
-    public function with_cookies(array $cookies): static {
+    public function withCookies(array $cookies): static {
         $clone = clone $this;
         $clone->cookies = $cookies;
         return $clone;
     }
 
     /**
-     * Returns a clone that follows redirects automatically. #AI:following_redirects
+     * Returns a clone that follows redirects automatically. #AI:followingRedirects
      */
-    public function following_redirects(): static {
+    public function followingRedirects(): static {
         $clone = clone $this;
         $clone->follow_redirects = true;
         return $clone;
     }
 
     /**
-     * Returns a clone that skips all middleware during dispatch. #AI:without_middleware
+     * Returns a clone that skips all middleware during dispatch. #AI:withoutMiddleware
      */
-    public function without_middleware(): static {
+    public function withoutMiddleware(): static {
         $clone = clone $this;
         $clone->skip_middleware = true;
         return $clone;
@@ -148,7 +148,7 @@ class PendingRequest {
             query: $query,
             post: $post,
             headers: $headers,
-            raw_body: $json ? json_encode($json) : '',
+            rawBody: $json ? json_encode($json) : '',
             cookies: $this->cookies,
         );
 
@@ -171,9 +171,9 @@ class PendingRequest {
             }
         }
 
-        $response = new \Skim\Testing\HttpResponse($app->dispatch($req, new \Skim\Core\Response(), skip_middleware: $this->skip_middleware));
+        $response = new \Skim\Testing\HttpResponse($app->dispatch($req, new \Skim\Core\Response(), skipMiddleware: $this->skip_middleware));
 
-        if ($this->follow_redirects && $response->is_redirect()) {
+        if ($this->follow_redirects && $response->isRedirect()) {
             return $this->get((string) $response->header('Location'));
         }
 
@@ -206,49 +206,49 @@ class PendingRequest {
 #AI section_order: [Configuration; HTTP Methods; Architecture]
 #AI architectural_notes: Immutable builder pattern — each configuration call returns a clone, making it safe to reuse a base pending_request across multiple assertions.
 
-#AI:acting_as
+#AI:actingAs
 #AI group: Configuration
 #AI frequency: high
-#AI signature: public function acting_as(object $user): static
+#AI signature: public function actingAs(object $user): static
 #AI contract: Returns a clone configured to authenticate as the given user via auth_fake.
 #AI param_details: [{name: $user | type: object | required: true | desc: User object bound to auth_service in the cloned container.}]
 #AI return_detail: {type: static | desc: New clone with user configured.}
 
-#AI:with_headers
+#AI:withHeaders
 #AI group: Configuration
 #AI frequency: medium
-#AI signature: public function with_headers(array $headers): static
+#AI signature: public function withHeaders(array $headers): static
 #AI contract: Returns a clone with additional request headers merged into existing ones.
 #AI param_details: [{name: $headers | type: array | required: true | desc: Key-value header pairs.}]
 #AI return_detail: {type: static | desc: New clone with headers merged.}
 
-#AI:with_session
+#AI:withSession
 #AI group: Configuration
 #AI frequency: medium
-#AI signature: public function with_session(array $data): static
+#AI signature: public function withSession(array $data): static
 #AI contract: Returns a clone with pre-populated session data bound via session_fake.
 #AI param_details: [{name: $data | type: array | required: true | desc: Key-value session pairs.}]
 #AI return_detail: {type: static | desc: New clone with session data merged.}
 
-#AI:with_cookies
+#AI:withCookies
 #AI group: Configuration
 #AI frequency: low
-#AI signature: public function with_cookies(array $cookies): static
+#AI signature: public function withCookies(array $cookies): static
 #AI contract: Returns a clone with the given cookies.
 #AI param_details: [{name: $cookies | type: array | required: true | desc: Key-value cookie pairs.}]
 #AI return_detail: {type: static | desc: New clone with cookies set.}
 
-#AI:following_redirects
+#AI:followingRedirects
 #AI group: Configuration
 #AI frequency: low
-#AI signature: public function following_redirects(): static
+#AI signature: public function followingRedirects(): static
 #AI contract: Returns a clone that automatically follows 3xx redirects via recursive get().
 #AI return_detail: {type: static | desc: New clone with redirect following enabled.}
 
-#AI:without_middleware
+#AI:withoutMiddleware
 #AI group: Configuration
 #AI frequency: low
-#AI signature: public function without_middleware(): static
+#AI signature: public function withoutMiddleware(): static
 #AI contract: Returns a clone that skips all middleware during dispatch.
 #AI return_detail: {type: static | desc: New clone with middleware skipping enabled.}
 

@@ -26,7 +26,7 @@ class QueryScope {
     private ?int    $limit_val  = null;
     private ?int    $offset_val = null;
 
-    public function __construct(private readonly string $model_class) {}
+    public function __construct(private readonly string $modelClass) {}
 
     /**
      * Adds a WHERE condition — repeated calls join with AND. #AI:where
@@ -91,7 +91,7 @@ class QueryScope {
      * Executes the query and returns hydrated model instances. #AI:all
      */
     public function all(): array {
-        return $this->model_class::hydrate_many($this->execute());
+        return $this->modelClass::hydrateMany($this->execute());
     }
 
     /**
@@ -99,7 +99,7 @@ class QueryScope {
      */
     public function first(): mixed {
         $rows = $this->limit(1)->execute();
-        return $rows !== [] ? $this->model_class::hydrate_one($rows[0]) : null;
+        return $rows !== [] ? $this->modelClass::hydrateOne($rows[0]) : null;
     }
 
     /**
@@ -107,12 +107,12 @@ class QueryScope {
      */
     public function count(): int {
         /** @var \Skim\Db\Model $class */
-        $class = $this->model_class;
-        $table = $class::get_table();
+        $class = $this->modelClass;
+        $table = $class::getTable();
         return (int) \Skim\Db\Db::val(
             "SELECT COUNT(*) FROM {$table} %where%",
             array_merge(['where' => $this->conditions], $this->pdo_params),
-            connection: $class::get_connection(),
+            connection: $class::getConnection(),
         );
     }
 
@@ -124,20 +124,20 @@ class QueryScope {
      *   // $page->items, $page->total, $page->pages, $page->has_next
      *
      * @param int $page     Current page number (1-indexed).
-     * @param int $per_page Items per page.
+     * @param int $perPage Items per page.
      */
-    public function paginate(int $page = 1, int $per_page = 20): \Skim\Db\Pagination {
+    public function paginate(int $page = 1, int $perPage = 20): \Skim\Db\Pagination {
         $total = $this->count();
-        $items = $this->limit($per_page)->offset(($page - 1) * $per_page)->all();
-        return new \Skim\Db\Pagination(items: $items, total: $total, per_page: $per_page, current: $page);
+        $items = $this->limit($perPage)->offset(($page - 1) * $perPage)->all();
+        return new \Skim\Db\Pagination(items: $items, total: $total, perPage: $perPage, current: $page);
     }
 
     /**
-     * Exports collected params in query_builder::build() format. #AI:to_builder_params
+     * Exports collected params in query_builder::build() format. #AI:toBuilderParams
      *
-     * Used internally by model::delete_where() to build scoped DELETE queries.
+     * Used internally by model::deleteWhere() to build scoped DELETE queries.
      */
-    public function to_builder_params(): array {
+    public function toBuilderParams(): array {
         return array_merge(['where' => $this->conditions], $this->pdo_params);
     }
 
@@ -145,8 +145,8 @@ class QueryScope {
 
     private function execute(): array {
         /** @var \Skim\Db\Model $class */
-        $class  = $this->model_class;
-        $table  = $class::get_table();
+        $class  = $this->modelClass;
+        $table  = $class::getTable();
         $params = array_merge(['where' => $this->conditions], $this->pdo_params);
 
         if ($this->order !== null) {
@@ -162,7 +162,7 @@ class QueryScope {
         $result = \Skim\Db\Db::query(
             "SELECT * FROM {$table} %where% %order_by% %limit% %offset%",
             $params,
-            connection: $class::get_connection(),
+            connection: $class::getConnection(),
         );
 
         return is_array($result) ? $result : [];
@@ -256,15 +256,15 @@ class QueryScope {
 #AI:paginate
 #AI group: Terminal Methods
 #AI frequency: high
-#AI signature: public function paginate(int $page = 1, int $per_page = 20): pagination
+#AI signature: public function paginate(int $page = 1, int $perPage = 20): pagination
 #AI contract: Executes count() and a limited all() to produce a pagination value object with items, total, and navigation properties.
-#AI param_details: [{name: $page | type: int | required: false | desc: Current page number (1-indexed). Default 1.}; {name: $per_page | type: int | required: false | desc: Items per page. Default 20.}]
+#AI param_details: [{name: $page | type: int | required: false | desc: Current page number (1-indexed). Default 1.}; {name: $perPage | type: int | required: false | desc: Items per page. Default 20.}]
 #AI return_detail: {type: pagination | desc: Immutable pagination value object.}
 #AI side_effects: Executes two queries — COUNT(*) and SELECT with LIMIT/OFFSET.
 
-#AI:to_builder_params
+#AI:toBuilderParams
 #AI group: Internal
 #AI frequency: internal
-#AI signature: public function to_builder_params(): array
-#AI contract: Exports collected conditions and params in query_builder::build() format. Used by model::delete_where().
+#AI signature: public function toBuilderParams(): array
+#AI contract: Exports collected conditions and params in query_builder::build() format. Used by model::deleteWhere().
 #AI return_detail: {type: array | desc: Params array compatible with query_builder::build().}

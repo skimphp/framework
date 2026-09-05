@@ -21,7 +21,7 @@ use Skim\View\Exceptions\ViewException;
  *   component_renderer::render('alert', ['message' => 'Saved']);
  *   component_renderer::render('alert', new alert_props(message: 'Saved'));
  *
- * Testing: Point view::set_path() to fixture directory before calling.
+ * Testing: Point view::setPath() to fixture directory before calling.
  *
  * #AI:class
  */
@@ -42,14 +42,14 @@ class ComponentRenderer {
         $t = microtime(true);
 
         if (is_object($props)) {
-            self::validate_props_class($props::class);
+            self::validatePropsClass($props::class);
         }
 
         // NOTE: get_object_vars() only exposes public properties.
         $data = is_object($props) ? get_object_vars($props) : $props;
 
-        $ctx  = new \Skim\View\Template(self::components_path(), $data, null);
-        $html = $ctx->render_file($name);
+        $ctx  = new \Skim\View\Template(self::componentsPath(), $data, null);
+        $html = $ctx->renderFile($name);
 
         \Skim\Dev\Profiler::view('components/' . $name, null, (microtime(true) - $t) * 1000);
 
@@ -57,12 +57,12 @@ class ComponentRenderer {
     }
 
     /**
-     * Ensures object props use the *Props naming convention. #AI:validate_props_class
+     * Ensures object props use the *Props naming convention. #AI:validatePropsClass
      *
      * @param string $class FQCN of the props object.
      * @throws \Skim\View\Exceptions\ViewException When the class name does not end in 'Props'.
      */
-    private static function validate_props_class(string $class): void {
+    private static function validatePropsClass(string $class): void {
         if (!str_ends_with($class, 'Props')) {
             throw new \Skim\View\Exceptions\ViewException(
                 "Props object must be a *Props class, got: {$class}"
@@ -71,10 +71,10 @@ class ComponentRenderer {
     }
 
     /**
-     * Resolves the components subdirectory under the active views path. #AI:components_path
+     * Resolves the components subdirectory under the active views path. #AI:componentsPath
      */
-    private static function components_path(): string {
-        return \Skim\View\View::views_path() . '/components';
+    private static function componentsPath(): string {
+        return \Skim\View\View::viewsPath() . '/components';
     }
 }
 
@@ -89,7 +89,7 @@ class ComponentRenderer {
 #AI intro: `component_renderer` renders reusable UI components in an isolated scope. It supports both legacy array props and readonly *_props objects, validating the latter to enforce naming conventions.
 #AI lifecycle: stateless static class, invoked per component render
 #AI fallback: n/a — stateless
-#AI test_seam: use view::set_path() to redirect to test fixtures
+#AI test_seam: use view::setPath() to redirect to test fixtures
 #AI invariants: [Props objects must end in '_props'; Component templates receive ONLY props data, no shared context; No layout wrapping is applied; Profiler records every component render]
 #AI core_behaviors: [Dual props: array (legacy) and readonly *_props object (new); Strict scope isolation via new template() with null layout; Props class naming validation; Profiler integration for component timing]
 #AI warnings: [get_object_vars() only sees public properties — declare DTO props as public readonly]
@@ -114,17 +114,17 @@ class ComponentRenderer {
 #AI throws_details: [{type: view_exception | desc: If props object is not a *_props class or component file is not found.}]
 #AI side_effects: [Records render timing in profiler::view()]
 
-#AI:validate_props_class
+#AI:validatePropsClass
 #AI group: Validation
 #AI frequency: internal
-#AI signature: private static function validate_props_class(string $class): void
+#AI signature: private static function validatePropsClass(string $class): void
 #AI contract: Throws when the class name does not end with '_props'. Enforces the props naming convention.
 #AI param_details: [{name: $class | type: string | required: true | desc: FQCN of the props object.}]
 #AI throws_details: [{type: view_exception | desc: When the class name does not end in '_props'.}]
 
-#AI:components_path
+#AI:componentsPath
 #AI group: Path Resolution
 #AI frequency: internal
-#AI signature: private static function components_path(): string
-#AI contract: Resolves the components subdirectory under the active views path by delegating to view::views_path().
+#AI signature: private static function componentsPath(): string
+#AI contract: Resolves the components subdirectory under the active views path by delegating to view::viewsPath().
 #AI return_detail: {type: string | desc: Absolute path to the views/components directory.}

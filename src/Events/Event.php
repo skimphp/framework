@@ -36,19 +36,19 @@ final class Event implements \Skim\Worker\Resettable {
      * is restored by reset_request() on every subsequent request so boot-time
      * listeners survive while request-time listeners are dropped.
      */
-    public static function capture_boot_snapshot(): void {
+    public static function captureBootSnapshot(): void {
         self::$persistent_listeners = self::$listeners;
     }
 
     /**
-     * Restores the boot-time listener registry between requests in worker mode. #AI:reset_request
+     * Restores the boot-time listener registry between requests in worker mode. #AI:resetRequest
      *
      * On the first call (at the end of the first worker request) the current listener
      * set is captured as the boot snapshot. Every later call resets listeners back to
      * that snapshot, so listeners registered at boot/extension time persist, while any
      * listeners registered during a request are dropped.
      */
-    public static function reset_request(): void {
+    public static function resetRequest(): void {
         self::$listeners = self::$persistent_listeners ?? [];
     }
 
@@ -119,19 +119,19 @@ final class Event implements \Skim\Worker\Resettable {
     }
 
     /**
-     * Pushes the event to the queue for async processing. #AI:emit_async
+     * Pushes the event to the queue for async processing. #AI:emitAsync
      *
      * The listener runs in a worker process, not during the current request.
      * Requires skim/queue to be installed.
      *
      * Example:
-     *   event::emit_async(new report_generated_event($report));
+     *   event::emitAsync(new report_generated_event($report));
      *
      * @param object|string $payload Event object or event name.
      * @param mixed         $data    Payload for string events.
      * @throws \RuntimeException When skim/queue is not installed.
      */
-    public static function emit_async(object|string $payload, mixed $data = null): void {
+    public static function emitAsync(object|string $payload, mixed $data = null): void {
         if (!class_exists(\Skim\Queue\Queue::class)) {
             throw new \RuntimeException('emit_async() requires skim/queue. Run: php skim module:add queue');
         }
@@ -161,11 +161,11 @@ final class Event implements \Skim\Worker\Resettable {
     }
 
     /**
-     * Returns the number of listeners registered for an event. #AI:listener_count
+     * Returns the number of listeners registered for an event. #AI:listenerCount
      *
      * @param string $event Event class-string or string name.
      */
-    public static function listener_count(string $event): int {
+    public static function listenerCount(string $event): int {
         return count(self::$listeners[$event] ?? []);
     }
 
@@ -174,7 +174,7 @@ final class Event implements \Skim\Worker\Resettable {
      *
      * Used by the leak detector to detect listener accumulation in worker mode.
      */
-    public static function total_listener_count(): int {
+    public static function totalListenerCount(): int {
         $total = 0;
         foreach (self::$listeners as $listeners) {
             $total += count($listeners);
@@ -228,10 +228,10 @@ final class Event implements \Skim\Worker\Resettable {
 #AI param_details: [{name: $payload | type: object|string | required: true | desc: Event object (typed) or event name (string).}; {name: $data | type: mixed | required: false | desc: Payload for string events. Ignored for typed events.}]
 #AI side_effects: [Runs all matching listeners inline; Removes once-listeners after execution]
 
-#AI:emit_async
+#AI:emitAsync
 #AI group: Dispatch
 #AI frequency: medium
-#AI signature: public static function emit_async(object|string $payload, mixed $data = null): void
+#AI signature: public static function emitAsync(object|string $payload, mixed $data = null): void
 #AI contract: Pushes the event to the queue for async processing in a worker process. Requires skim/queue to be installed.
 #AI param_details: [{name: $payload | type: object|string | required: true | desc: Event object or event name.}; {name: $data | type: mixed | required: false | desc: Payload for string events.}]
 #AI throws_details: [{type: \RuntimeException | desc: When skim/queue is not installed.}]
@@ -245,17 +245,17 @@ final class Event implements \Skim\Worker\Resettable {
 #AI param_details: [{name: $event | type: ?string | required: false | desc: Event name to clear, or null for all listeners.}]
 #AI side_effects: [Clears listener registry]
 
-#AI:listener_count
+#AI:listenerCount
 #AI group: Testing Hooks
 #AI frequency: low
-#AI signature: public static function listener_count(string $event): int
+#AI signature: public static function listenerCount(string $event): int
 #AI contract: Returns the number of listeners currently registered for the given event.
 #AI param_details: [{name: $event | type: string | required: true | desc: Event class-string or string name.}]
 #AI return_detail: {type: int | desc: Number of registered listeners.}
 
-#AI:reset_request
+#AI:resetRequest
 #AI group: Testing Hooks
 #AI frequency: internal
-#AI signature: public static function reset_request(): void
+#AI signature: public static function resetRequest(): void
 #AI contract: Clears the listener registry between requests in worker mode.
 #AI side_effects: [Empties the static $listeners array]

@@ -10,7 +10,7 @@ namespace Skim\Ext;
  * names; unknown capabilities are not rejected but flagged by is_known().
  *
  * Example:
- *   capability_vocabulary::is_known('auth');        // true
+ *   capability_vocabulary::isKnown('auth');        // true
  *   capability_vocabulary::TERMS['rate-limiting'];  // 'request rate limiting'
  *
  * #AI:class
@@ -36,11 +36,11 @@ final class CapabilityVocabulary {
     ];
 
     /**
-     * Returns true when the capability slug exists in TERMS. #AI:is_known
+     * Returns true when the capability slug exists in TERMS. #AI:isKnown
      *
      * @param string $capability Slug to test, e.g. 'auth' or 'rate-limiting'.
      */
-    public static function is_known(string $capability): bool {
+    public static function isKnown(string $capability): bool {
         return array_key_exists($capability, self::TERMS);
     }
 }
@@ -66,10 +66,10 @@ final class CapabilityVocabulary {
 #AI flow: is_known($slug) -> array_key_exists($slug, TERMS)
 #AI section_order: [Lookup API]
 
-#AI:is_known
+#AI:isKnown
 #AI group: Lookup API
 #AI frequency: low
-#AI signature: public static function is_known(string $capability): bool
+#AI signature: public static function isKnown(string $capability): bool
 #AI contract: Returns true when the given capability slug is present in the TERMS constant.
 #AI param_details: [{name: $capability | type: string | required: true | desc: Capability slug to test, e.g. 'auth' or 'rate-limiting'.}]
 #AI return_detail: {type: bool | desc: True if the slug is a recognized capability.}

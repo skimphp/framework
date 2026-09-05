@@ -46,18 +46,18 @@ final class ExtRegistry {
             return $this->installed;
         }
 
-        if ($this->load_compiled_cache()) {
+        if ($this->loadCompiledCache()) {
             return $this->installed;
         }
 
         $extensions = [];
-        foreach ($this->composer_files() as $file) {
+        foreach ($this->composerFiles() as $file) {
             $json = json_decode((string) file_get_contents($file), true);
             if (!is_array($json)) {
                 continue;
             }
 
-            $metadata = $this->metadata_from_package(dirname($file), $json);
+            $metadata = $this->metadataFromPackage(dirname($file), $json);
             if ($metadata === null) {
                 continue;
             }
@@ -68,7 +68,7 @@ final class ExtRegistry {
         usort($extensions, static fn(array $a, array $b): int => [$a['priority'], $a['name']] <=> [$b['priority'], $b['name']]);
 
         $this->installed = $extensions;
-        $this->write_compiled_cache();
+        $this->writeCompiledCache();
 
         return $this->installed;
     }
@@ -109,7 +109,7 @@ final class ExtRegistry {
      * @return array<int,array>
      */
     public static function all(?string $root = null): array {
-        return (new self($root ?? base_path()))->installed();
+        return (new self($root ?? basePath()))->installed();
     }
 
     /**
@@ -121,9 +121,9 @@ final class ExtRegistry {
      */
     public function __call(string $method, array $args): mixed {
         return match ($method) {
-            'has_capability' => $this->has_capability_value((string) ($args[0] ?? '')),
-            'who_provides'   => $this->who_provides_value((string) ($args[0] ?? '')),
-            'conflicts'      => $this->conflict_list(),
+            'has_capability' => $this->hasCapabilityValue((string) ($args[0] ?? '')),
+            'who_provides'   => $this->whoProvidesValue((string) ($args[0] ?? '')),
+            'conflicts'      => $this->conflictList(),
             default          => throw new \BadMethodCallException("Method {$method} does not exist."),
         };
     }
@@ -136,43 +136,43 @@ final class ExtRegistry {
      * @throws \BadMethodCallException When method is not recognized.
      */
     public static function __callStatic(string $method, array $args): mixed {
-        $root = isset($args[1]) && is_string($args[1]) ? $args[1] : base_path();
+        $root = isset($args[1]) && is_string($args[1]) ? $args[1] : basePath();
         $registry = new self($root);
 
         return match ($method) {
-            'has_capability' => $registry->has_capability_value((string) ($args[0] ?? '')),
-            'who_provides'   => $registry->who_provides_value((string) ($args[0] ?? '')),
-            'conflicts'      => $registry->conflict_list(),
+            'has_capability' => $registry->hasCapabilityValue((string) ($args[0] ?? '')),
+            'who_provides'   => $registry->whoProvidesValue((string) ($args[0] ?? '')),
+            'conflicts'      => $registry->conflictList(),
             default          => throw new \BadMethodCallException("Static method {$method} does not exist."),
         };
     }
 
-    private function has_capability_value(string $capability): bool {
-        return isset($this->capability_map()[$capability]);
+    private function hasCapabilityValue(string $capability): bool {
+        return isset($this->capabilityMap()[$capability]);
     }
 
-    private function who_provides_value(string $capability): ?string {
-        return $this->capability_map()[$capability] ?? null;
+    private function whoProvidesValue(string $capability): ?string {
+        return $this->capabilityMap()[$capability] ?? null;
     }
 
     /**
      * @return array<int,array{message:string,extensions:array,capabilities:array}>
      */
-    private function conflict_list(): array {
-        $this->capability_map();
+    private function conflictList(): array {
+        $this->capabilityMap();
 
         return $this->conflicts ?? [];
     }
 
     /**
-     * Builds a map of capability => providing extension name. #AI:capability_map
+     * Builds a map of capability => providing extension name. #AI:capabilityMap
      *
      * Also detects conflicts: duplicate capability providers and declared
      * conflict targets. Populates $this->conflicts as a side effect.
      *
      * @return array<string,string> Capability name => extension name map.
      */
-    public function capability_map(): array {
+    public function capabilityMap(): array {
         if ($this->capability_map !== null) {
             return $this->capability_map;
         }
@@ -227,13 +227,13 @@ final class ExtRegistry {
     }
 
     /**
-     * Attempts to load extension metadata from a pre-compiled PHP array cache. #AI:load_compiled_cache
+     * Attempts to load extension metadata from a pre-compiled PHP array cache. #AI:loadCompiledCache
      *
      * WHY: Pure arrays allow OPcache shared-memory hit with zero parse overhead.
      * Returns false when the cache file is missing or stale (dev mode with
      * APP_DEBUG=true and vendor/composer/installed.json newer than cache).
      */
-    private function load_compiled_cache(): bool {
+    private function loadCompiledCache(): bool {
         $cache_path = $this->root . '/.skim/config_cache/extensions.php';
         if (!is_file($cache_path)) {
             return false;
@@ -265,7 +265,7 @@ final class ExtRegistry {
      *
      * WHY: Pure arrays allow OPcache shared-memory hit with zero parse overhead.
      */
-    private function write_compiled_cache(): void {
+    private function writeCompiledCache(): void {
         $cache_dir = $this->root . '/.skim/config_cache';
         if (!is_dir($cache_dir)) {
             @mkdir($cache_dir, 0755, true);
@@ -277,7 +277,7 @@ final class ExtRegistry {
         );
     }
 
-    private function composer_files(): array {
+    private function composerFiles(): array {
         $vendor = rtrim($this->root, '/') . '/vendor';
         if (!is_dir($vendor)) {
             return [];
@@ -294,7 +294,7 @@ final class ExtRegistry {
         return $files;
     }
 
-    private function extension_type(mixed $type): string {
+    private function extensionType(mixed $type): string {
         $type = is_string($type) ? $type : 'feature';
 
         return match ($type) {
@@ -303,7 +303,7 @@ final class ExtRegistry {
         };
     }
 
-    private function metadata_from_package(string $path, array $composer): ?array {
+    private function metadataFromPackage(string $path, array $composer): ?array {
         $skim = $composer['extra']['skim'] ?? [];
         $class = is_array($skim) && isset($skim['extension']) && is_string($skim['extension'])
             ? $skim['extension']
@@ -347,8 +347,8 @@ final class ExtRegistry {
                     'config'       => $ext->config(),
                     'migrations'   => $ext->migrations() !== '',
                     'commands'     => array_keys($ext->commands()),
-                    'env_keys'     => $ext->env_keys(),
-                    'post_install' => $ext->post_install(),
+                    'env_keys'     => $ext->envKeys(),
+                    'post_install' => $ext->postInstall(),
                 ];
             }
         }
@@ -381,7 +381,7 @@ final class ExtRegistry {
             'version'            => (string) (($manifest['version'] ?? '') ?: ($package['version'] ?? 'dev')),
             'description'        => (string) (($manifest['description'] ?? '') ?: ($package['description'] ?? '')),
             'class'              => $class,
-            'type'               => $this->extension_type($skim['type'] ?? 'feature'),
+            'type'               => $this->extensionType($skim['type'] ?? 'feature'),
             'priority'           => (int) ($skim['priority'] ?? \Skim\Ext\ExtensionPriority::USER),
             'requires'           => array_values((array) ($manifest['requires'] ?? $skim['requires'] ?? [])),
             'provides'           => array_values((array) ($manifest['provides'] ?? $skim['provides'] ?? [])),
@@ -472,10 +472,10 @@ final class ExtRegistry {
 #AI param_details: [{name: $method | type: string | required: true | desc: Method name.}; {name: $args | type: array | required: true | desc: Method arguments.}]
 #AI throws_details: [{type: \BadMethodCallException | desc: When method is not recognized.}]
 
-#AI:capability_map
+#AI:capabilityMap
 #AI group: Capability API
 #AI frequency: medium
-#AI signature: public function capability_map(): array
+#AI signature: public function capabilityMap(): array
 #AI contract: Builds and returns a map of capability name => providing extension name. Detects duplicate providers and declared conflicts as a side effect.
 #AI return_detail: {type: array<string,string> | desc: Capability name => extension name map.}
 #AI side_effects: [Populates internal conflicts list]

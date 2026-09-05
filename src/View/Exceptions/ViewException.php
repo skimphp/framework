@@ -29,7 +29,7 @@ class ViewException extends \RuntimeException {}
 #AI layer: view
 #AI badges: [exception; view; error]
 #AI intro: `view_exception` is thrown by the view system when a template file cannot be resolved or a requested fragment name does not exist in the rendered output.
-#AI lifecycle: thrown during view::render() or template::render_file()
+#AI lifecycle: thrown during view::render() or template::renderFile()
 #AI fallback: n/a — exception type
 #AI test_seam: expect this exception in Pest tests for missing templates
 #AI invariants: [Extends RuntimeException; Thrown only for template-not-found and fragment-not-found errors]
@@ -41,6 +41,6 @@ class ViewException extends \RuntimeException {}
 #AI non_goals: [Does not handle rendering logic; Does not provide recovery mechanisms]
 #AI side_effects: []
 #AI flow: view::render() -> template not found or fragment missing -> throw view_exception
-#AI lifecycle_steps: [view::render() or template::render_file(); -> file/fragment not found; -> throw new view_exception(...)]
+#AI lifecycle_steps: [view::render() or template::renderFile(); -> file/fragment not found; -> throw new view_exception(...)]
 #AI section_order: [Architecture]
 #AI architectural_notes: Simple RuntimeException subclass — exists solely for type-specific catching.

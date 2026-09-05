@@ -20,7 +20,7 @@ final class Pagination {
     public function __construct(
         public readonly array $items,
         public readonly int   $total,
-        public readonly int   $per_page,
+        public readonly int   $perPage,
         public readonly int   $current,
     ) {}
 
@@ -28,7 +28,7 @@ final class Pagination {
      * Total number of pages, computed from total and per_page. #AI:pages
      */
     public int $pages {
-        get => (int) ceil($this->total / max(1, $this->per_page));
+        get => (int) ceil($this->total / max(1, $this->perPage));
     }
 
     /**
@@ -76,9 +76,9 @@ final class Pagination {
 #AI:__construct
 #AI group: Constructor
 #AI frequency: internal
-#AI signature: public function __construct(array $items, int $total, int $per_page, int $current)
+#AI signature: public function __construct(array $items, int $total, int $perPage, int $current)
 #AI contract: Stores the page of results and pagination metadata. All properties are readonly.
-#AI param_details: [{name: $items | type: array | required: true | desc: Hydrated model instances for the current page.}; {name: $total | type: int | required: true | desc: Total matching rows across all pages.}; {name: $per_page | type: int | required: true | desc: Number of items per page.}; {name: $current | type: int | required: true | desc: Current page number (1-indexed).}]
+#AI param_details: [{name: $items | type: array | required: true | desc: Hydrated model instances for the current page.}; {name: $total | type: int | required: true | desc: Total matching rows across all pages.}; {name: $perPage | type: int | required: true | desc: Number of items per page.}; {name: $current | type: int | required: true | desc: Current page number (1-indexed).}]
 
 #AI:pages
 #AI group: Computed Properties
@@ -90,13 +90,13 @@ final class Pagination {
 #AI:has_next
 #AI group: Computed Properties
 #AI frequency: high
-#AI signature: public bool $has_next { get }
+#AI signature: public bool $hasNext { get }
 #AI contract: Returns true when the current page is less than the total page count.
 #AI return_detail: {type: bool | desc: True if a next page exists.}
 
 #AI:has_prev
 #AI group: Computed Properties
 #AI frequency: high
-#AI signature: public bool $has_prev { get }
+#AI signature: public bool $hasPrev { get }
 #AI contract: Returns true when the current page is greater than 1.
 #AI return_detail: {type: bool | desc: True if a previous page exists.}

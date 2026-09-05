@@ -54,14 +54,14 @@ abstract class Extension {
     public function commands(): array     { return []; }
 
     /**
-     * Returns .env keys this extension expects. #AI:env_keys
+     * Returns .env keys this extension expects. #AI:envKeys
      */
-    public function env_keys(): array     { return []; }
+    public function envKeys(): array     { return []; }
 
     /**
-     * Returns post-install CLI step descriptions. #AI:post_install
+     * Returns post-install CLI step descriptions. #AI:postInstall
      */
-    public function post_install(): array { return []; }
+    public function postInstall(): array { return []; }
 
     /**
      * Returns static metadata without instantiation. #AI:manifest
@@ -130,17 +130,17 @@ abstract class Extension {
 #AI contract: Returns a map of CLI command names to their class strings.
 #AI return_detail: {type: array | desc: Command name => class map.}
 
-#AI:env_keys
+#AI:envKeys
 #AI group: Metadata Accessors
 #AI frequency: low
-#AI signature: public function env_keys(): array
+#AI signature: public function envKeys(): array
 #AI contract: Returns the list of .env variable names this extension requires.
 #AI return_detail: {type: array | desc: List of env key strings.}
 
-#AI:post_install
+#AI:postInstall
 #AI group: Metadata Accessors
 #AI frequency: low
-#AI signature: public function post_install(): array
+#AI signature: public function postInstall(): array
 #AI contract: Returns descriptions of post-install CLI steps this extension needs.
 #AI return_detail: {type: array | desc: List of step description strings.}
 

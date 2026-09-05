@@ -14,7 +14,7 @@ namespace Skim\Cli;
  *   cli::success('Migration complete.');
  *   cli::table(['name', 'status'], [['users', 'applied'], ['posts', 'pending']]);
  *
- * Testing: Call cli::force_plain(true) in setUp() to get deterministic output.
+ * Testing: Call cli::forcePlain(true) in setUp() to get deterministic output.
  *
  * #AI:class
  */
@@ -22,11 +22,11 @@ final class Cli {
     private static bool $force_plain = false;
 
     /**
-     * Forces plain-text output regardless of TTY detection. #AI:force_plain
+     * Forces plain-text output regardless of TTY detection. #AI:forcePlain
      *
      * @param bool $plain True to suppress all ANSI escape codes.
      */
-    public static function force_plain(bool $plain): void {
+    public static function forcePlain(bool $plain): void {
         self::$force_plain = $plain;
     }
 
@@ -157,12 +157,12 @@ final class Cli {
     }
 
     /**
-     * Creates a progress bar instance for tracking long-running operations. #AI:progress_bar
+     * Creates a progress bar instance for tracking long-running operations. #AI:progressBar
      *
      * @param int    $total Total steps (0 for indeterminate spinner mode).
      * @param string $label Text displayed alongside the bar.
      */
-    public static function progress_bar(int $total = 0, string $label = ''): \Skim\Cli\ProgressBar {
+    public static function progressBar(int $total = 0, string $label = ''): \Skim\Cli\ProgressBar {
         return new \Skim\Cli\ProgressBar($total, $label);
     }
 
@@ -232,7 +232,7 @@ final class Cli {
             ];
         }
 
-        $is_plain = self::$force_plain || !self::is_tty();
+        $is_plain = self::$force_plain || !self::isTty();
 
         if ($is_plain) {
             foreach ($logo as $line) {
@@ -285,7 +285,7 @@ final class Cli {
     }
 
     /**
-     * Renders a boxed error message with Unicode or plain borders. #AI:error_box
+     * Renders a boxed error message with Unicode or plain borders. #AI:errorBox
      *
      * Auto-detects TTY for Unicode box-drawing characters, falls back to
      * +---+ borders for piped output. Truncates lines wider than terminal.
@@ -293,8 +293,8 @@ final class Cli {
      * @param string $title Error title displayed in the box header.
      * @param string $body  Error body. When empty, $title is used as the body.
      */
-    public static function error_box(string $title, string $body = ''): void {
-        $is_plain = self::$force_plain || !self::is_tty();
+    public static function errorBox(string $title, string $body = ''): void {
+        $is_plain = self::$force_plain || !self::isTty();
         
         $msg = $body !== '' ? $body : $title;
         $hdr = $body !== '' ? $title : 'Error';
@@ -308,7 +308,7 @@ final class Cli {
         $outer_width = max($max_line_len + 6, mb_strlen($hdr) + 8);
         
         $cols = 80;
-        if (self::is_tty()) {
+        if (self::isTty()) {
             $cols = (int)(shell_exec('tput cols 2>/dev/null') ?: 80);
         }
         $outer_width = min($outer_width, $cols - 4);
@@ -338,14 +338,14 @@ final class Cli {
     }
 
     /**
-     * Suggests the closest matching command using Levenshtein distance. #AI:did_you_mean
+     * Suggests the closest matching command using Levenshtein distance. #AI:didYouMean
      *
      * Only prints a suggestion when a candidate is within edit distance 3.
      *
      * @param string $input      Mistyped command name.
      * @param array  $candidates List of valid command names to compare against.
      */
-    public static function did_you_mean(string $input, array $candidates): void {
+    public static function didYouMean(string $input, array $candidates): void {
         $best = null;
         $best_dist = 4;
         foreach ($candidates as $candidate) {
@@ -379,10 +379,10 @@ final class Cli {
      */
     public static function divider(string $char = '─'): void {
         $cols = 80;
-        if (self::is_tty()) {
+        if (self::isTty()) {
             $cols = (int)(shell_exec('tput cols 2>/dev/null') ?: 80);
         }
-        if (self::$force_plain || !self::is_tty()) {
+        if (self::$force_plain || !self::isTty()) {
             $char = '-';
         }
         self::line(str_repeat($char, $cols));
@@ -404,16 +404,16 @@ final class Cli {
      * @param string $text Text to colorize.
      */
     private static function color(string $code, string $text): string {
-        if (self::$force_plain || !self::is_tty()) {
+        if (self::$force_plain || !self::isTty()) {
             return $text;
         }
         return $code . $text . "\e[0m";
     }
 
     /**
-     * Returns true when stdout is connected to an interactive terminal. #AI:is_tty
+     * Returns true when stdout is connected to an interactive terminal. #AI:isTty
      */
-    public static function is_tty(): bool {
+    public static function isTty(): bool {
         if (function_exists('stream_isatty') && @stream_isatty(STDOUT)) {
             return true;
         }
@@ -445,10 +445,10 @@ final class Cli {
 #AI section_order: [Output; Interactive Prompts; Progress and Tables; Display Components; Architecture]
 #AI architectural_notes: Static utility class with no dependencies on framework config or container. TTY detection ensures CI logs and piped output remain clean plain text.
 
-#AI:force_plain
+#AI:forcePlain
 #AI group: Architecture
 #AI frequency: low
-#AI signature: public static function force_plain(bool $plain): void
+#AI signature: public static function forcePlain(bool $plain): void
 #AI contract: Forces plain-text output regardless of TTY detection. Used by --no-ansi flag and in tests.
 #AI param_details: [{name: $plain | type: bool | required: true | desc: True to suppress all ANSI escape codes.}]
 #AI side_effects: Mutates static force_plain flag.
@@ -527,10 +527,10 @@ final class Cli {
 #AI param_details: [{name: $question | type: string | required: true | desc: Prompt heading displayed above the options.}; {name: $options | type: array | required: true | desc: Indexed array of selectable items.}; {name: $default | type: mixed | required: false | desc: Returned when user presses Enter without typing.}]
 #AI return_detail: {type: mixed | desc: The selected option value, or $default.}
 
-#AI:progress_bar
+#AI:progressBar
 #AI group: Progress and Tables
 #AI frequency: medium
-#AI signature: public static function progress_bar(int $total = 0, string $label = ''): progress_bar
+#AI signature: public static function progressBar(int $total = 0, string $label = ''): progress_bar
 #AI contract: Creates a progress bar instance. Pass total=0 for indeterminate spinner mode.
 #AI param_details: [{name: $total | type: int | required: false | desc: Total steps. 0 for indeterminate spinner mode.}; {name: $label | type: string | required: false | desc: Text displayed alongside the bar.}]
 #AI return_detail: {type: progress_bar | desc: Progress bar instance to call advance() and finish() on.}
@@ -563,17 +563,17 @@ final class Cli {
 #AI contract: Prints a numbered step indicator with colored status icon (running=blue, success=green, error=red).
 #AI param_details: [{name: $n | type: int | required: true | desc: Current step number.}; {name: $total | type: int | required: true | desc: Total step count.}; {name: $msg | type: string | required: true | desc: Step description.}; {name: $status | type: string | required: false | desc: One of 'running', 'success', 'error'.}]
 
-#AI:error_box
+#AI:errorBox
 #AI group: Display Components
 #AI frequency: low
-#AI signature: public static function error_box(string $title, string $body = ''): void
+#AI signature: public static function errorBox(string $title, string $body = ''): void
 #AI contract: Renders a boxed error message with Unicode box-drawing on TTY or plain ASCII borders otherwise. Truncates lines wider than terminal width.
 #AI param_details: [{name: $title | type: string | required: true | desc: Error title displayed in the box header.}; {name: $body | type: string | required: false | desc: Error body. When empty, $title is used as the body.}]
 
-#AI:did_you_mean
+#AI:didYouMean
 #AI group: Display Components
 #AI frequency: low
-#AI signature: public static function did_you_mean(string $input, array $candidates): void
+#AI signature: public static function didYouMean(string $input, array $candidates): void
 #AI contract: Suggests the closest matching command using Levenshtein distance. Only prints when a candidate is within edit distance 3.
 #AI param_details: [{name: $input | type: string | required: true | desc: Mistyped command name.}; {name: $candidates | type: array | required: true | desc: List of valid command names to compare against.}]
 
@@ -604,9 +604,9 @@ final class Cli {
 #AI signature: private static function color(string $code, string $text): string
 #AI contract: Wraps text in ANSI color codes when output is a TTY, returns plain text otherwise.
 
-#AI:is_tty
+#AI:isTty
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: public static function is_tty(): bool
+#AI signature: public static function isTty(): bool
 #AI contract: Returns true when stdout is connected to an interactive terminal. Uses stream_isatty with posix_isatty fallback.
 #AI notes: Public because other CLI classes (interactive_menu, progress_bar) need TTY detection.

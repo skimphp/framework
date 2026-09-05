@@ -46,9 +46,9 @@ if (!function_exists('route')) {
     }
 }
 
-if (!function_exists('storage_path')) {
+if (!function_exists('storagePath')) {
     /**
-     * Absolute path under the .skim/ directory. #AI:storage_path
+     * Absolute path under the .skim/ directory. #AI:storagePath
      *
      * Resolves SKIM_ROOT when defined, falls back to getcwd().
      *
@@ -57,19 +57,19 @@ if (!function_exists('storage_path')) {
      *
      * @param string $path Sub-path appended to .skim root. Empty returns the root itself.
      */
-    function storage_path(string $path = ''): string {
+    function storagePath(string $path = ''): string {
         $base = defined('SKIM_ROOT') ? SKIM_ROOT . '/.skim' : getcwd() . '/.skim';
         return $path !== '' ? $base . '/' . ltrim($path, '/') : $base;
     }
 }
 
-if (!function_exists('base_path')) {
+if (!function_exists('basePath')) {
     /**
-     * Absolute path to the project root. #AI:base_path
+     * Absolute path to the project root. #AI:basePath
      *
      * @param string $path Sub-path appended to root. Empty returns root itself.
      */
-    function base_path(string $path = ''): string {
+    function basePath(string $path = ''): string {
         $base = defined('SKIM_ROOT') ? SKIM_ROOT : getcwd();
         return $path !== '' ? $base . '/' . ltrim($path, '/') : $base;
     }
@@ -83,10 +83,10 @@ if (!function_exists('e')) {
      * Pass `$double_encode = false` when the value already contains entities.
      *
      * @param string $value          Raw string to escape.
-     * @param bool   $double_encode  Re-encode existing entities when true.
+     * @param bool   $doubleEncode  Re-encode existing entities when true.
      */
-    function e(string $value, bool $double_encode = true): string {
-        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', $double_encode);
+    function e(string $value, bool $doubleEncode = true): string {
+        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', $doubleEncode);
     }
 }
 
@@ -109,9 +109,9 @@ if (!function_exists('component')) {
     }
 }
 
-if (!function_exists('component_with_parts')) {
+if (!function_exists('componentWithParts')) {
     /**
-     * Renders a component with named parts via closures. #AI:component_with_parts
+     * Renders a component with named parts via closures. #AI:componentWithParts
      *
      * Use for card headers, modal footers, or any component that needs
      * multiple named content blocks passed from the call site.
@@ -126,9 +126,9 @@ if (!function_exists('component_with_parts')) {
      * @param array|object $props  Props array or *_props readonly object.
      * @param callable     $render Closure receiving the component_collector instance.
      */
-    function component_with_parts(string $name, array|object $props, callable $render): string {
+    function componentWithParts(string $name, array|object $props, callable $render): string {
         $collector = new \Skim\View\ComponentCollector();
-        $collector->capture_main(function() use ($render, $collector) {
+        $collector->captureMain(function() use ($render, $collector) {
             $render($collector);
         });
 
@@ -156,21 +156,21 @@ if (!function_exists('part')) {
         if ($collector === null) {
             return $default;
         }
-        return $name === '' ? $collector->get_main() : $collector->get_part($name, $default);
+        return $name === '' ? $collector->getMain() : $collector->getPart($name, $default);
     }
 }
 
-if (!function_exists('has_part')) {
+if (!function_exists('hasPart')) {
     /**
-     * Checks if a named part exists in the active component collector. #AI:has_part
+     * Checks if a named part exists in the active component collector. #AI:hasPart
      *
      * Returns false when no component is currently rendering.
      *
      * @param string $name Part identifier to check.
      */
-    function has_part(string $name): bool {
+    function hasPart(string $name): bool {
         $collector = \Skim\View\ComponentCollector::current();
-        return $collector !== null && $collector->has_part($name);
+        return $collector !== null && $collector->hasPart($name);
     }
 }
 
@@ -239,10 +239,10 @@ if (!function_exists('asset')) {
 #AI param_details: [{name: $key | type: string | required: true | desc: Dot-path such as 'app.name' or 'db.default.host'.}; {name: $default | type: mixed | required: false | desc: Fallback value returned when the key is not set.}]
 #AI return_detail: {type: mixed | desc: The config value or $default.}
 
-#AI:base_path
+#AI:basePath
 #AI group: Config & Env
 #AI frequency: medium
-#AI signature: function base_path(string $path = ''): string
+#AI signature: function basePath(string $path = ''): string
 #AI contract: Returns the absolute path to the project root. Uses SKIM_ROOT when defined, falls back to getcwd(). Appends the optional sub-path.
 #AI param_details: [{name: $path | type: string | required: false | desc: Sub-path appended to root. Empty string returns the root directory itself.}]
 #AI return_detail: {type: string | desc: Absolute filesystem path.}
@@ -256,10 +256,10 @@ if (!function_exists('asset')) {
 #AI return_detail: {type: string | desc: Generated URL path.}
 #AI examples: [{label: Basic usage | code: route('user.show', ['id' => 5])  // → /users/5}]
 
-#AI:storage_path
+#AI:storagePath
 #AI group: Templates & Routing
 #AI frequency: medium
-#AI signature: function storage_path(string $path = ''): string
+#AI signature: function storagePath(string $path = ''): string
 #AI contract: Returns the absolute path under the .skim/ directory. Uses SKIM_ROOT when defined, falls back to getcwd(). Appends the optional sub-path.
 #AI param_details: [{name: $path | type: string | required: false | desc: Sub-path under .skim/. Empty string returns the .skim root itself.}]
 #AI return_detail: {type: string | desc: Absolute filesystem path under .skim/.}
@@ -268,9 +268,9 @@ if (!function_exists('asset')) {
 #AI:e
 #AI group: Templates & Routing
 #AI frequency: high
-#AI signature: function e(string $value, bool $double_encode = true): string
+#AI signature: function e(string $value, bool $doubleEncode = true): string
 #AI contract: HTML-escapes a string using htmlspecialchars with ENT_QUOTES and UTF-8. Always call on user-supplied data to prevent XSS. Pass $double_encode = false when the value already contains HTML entities.
-#AI param_details: [{name: $value | type: string | required: true | desc: Raw string to escape.}; {name: $double_encode | type: bool | required: false | desc: When false, existing HTML entities are not re-encoded.}]
+#AI param_details: [{name: $value | type: string | required: true | desc: Raw string to escape.}; {name: $doubleEncode | type: bool | required: false | desc: When false, existing HTML entities are not re-encoded.}]
 #AI return_detail: {type: string | desc: HTML-safe escaped string.}
 #AI warnings: [Skipping e() on user-supplied data is an XSS vulnerability]
 
@@ -283,10 +283,10 @@ if (!function_exists('asset')) {
 #AI return_detail: {type: string | desc: Rendered component HTML.}
 #AI throws_details: [{type: \Skim\View\Exceptions\ViewException | desc: If props object is not a *_props class or component file is not found.}]
 
-#AI:component_with_parts
+#AI:componentWithParts
 #AI group: Templates & Routing
 #AI frequency: medium
-#AI signature: function component_with_parts(string $name, array|object $props, callable $render): string
+#AI signature: function componentWithParts(string $name, array|object $props, callable $render): string
 #AI contract: Renders a component with named parts captured via closures. The closure receives a component_collector to declare parts. Parts and main body are injected into the component template.
 #AI param_details: [{name: $name | type: string | required: true | desc: Component name (maps to views/components/{$name}.php).}; {name: $props | type: array|object | required: true | desc: Props array or *_props readonly object.}; {name: $render | type: callable | required: true | desc: Closure receiving the component_collector instance.}]
 #AI return_detail: {type: string | desc: Rendered component HTML with parts injected.}
@@ -300,10 +300,10 @@ if (!function_exists('asset')) {
 #AI param_details: [{name: $name | type: string | required: false | desc: Part identifier, or empty string for main body.}; {name: $default | type: string | required: false | desc: Fallback HTML when the part is absent.}]
 #AI return_detail: {type: string | desc: Part HTML or default value.}
 
-#AI:has_part
+#AI:hasPart
 #AI group: Templates & Routing
 #AI frequency: medium
-#AI signature: function has_part(string $name): bool
+#AI signature: function hasPart(string $name): bool
 #AI contract: Returns true when the named part exists in the active component collector. Returns false when no component is rendering.
 #AI param_details: [{name: $name | type: string | required: true | desc: Part identifier to check.}]
 #AI return_detail: {type: bool | desc: True if the part exists and a component is rendering.}

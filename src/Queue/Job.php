@@ -76,7 +76,7 @@ interface Job {
 #AI non_goals: [Does not define serialization format (see queue::serialize_job); Does not manage retry back-off (see worker); Does not handle job scheduling]
 #AI side_effects: [handle() performs the actual work; failed() may send alerts or clean up]
 #AI flow: queue::push(job) -> serialize -> Redis -> worker unserializes -> handle() -> on failure: retry or failed()
-#AI lifecycle_steps: [application creates job instance; -> queue::push(job); -> queue::serialize_job(); -> Redis LPUSH/ZADD; -> worker BRPOP; -> unserialize; -> handle(); -> on exception: retry or failed()]
+#AI lifecycle_steps: [application creates job instance; -> queue::push(job); -> queue::serializeJob(); -> Redis LPUSH/ZADD; -> worker BRPOP; -> unserialize; -> handle(); -> on exception: retry or failed()]
 #AI section_order: [Job Execution; Failure Handling; Configuration]
 #AI architectural_notes: Interface — not instantiated directly. Implementations must be serializable for Redis storage. Most jobs extend base_job for default tries/delay/failed behavior.
 

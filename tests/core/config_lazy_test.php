@@ -47,7 +47,7 @@ describe('config lazy loading', function (): void {
     test('config::load() with compiled cache skips directory scan', function (): void {
         \Skim\Core\Config::reset();
 
-        $cache_path = storage_path('config_cache/config.php');
+        $cache_path = storagePath('config_cache/config.php');
         $backup     = is_file($cache_path) ? file_get_contents($cache_path) : null;
 
         try {

@@ -34,7 +34,7 @@ final class InteractiveMenu {
      */
     public function __construct(array $groups) {
         $this->groups = $groups;
-        $this->rebuild_flat_items();
+        $this->rebuildFlatItems();
     }
 
     /**
@@ -47,18 +47,18 @@ final class InteractiveMenu {
      * @return string|null Selected command name, or null if user quit.
      */
     public function run(): ?string {
-        if (!self::is_tty()) {
+        if (!self::isTty()) {
             return null;
         }
 
-        $this->setup_tty();
+        $this->setupTty();
 
         if (function_exists('pcntl_signal')) {
             if (function_exists('pcntl_async_signals')) {
                 pcntl_async_signals(true);
             }
             pcntl_signal(SIGINT, function() {
-                $this->restore_tty();
+                $this->restoreTty();
                 exit(1);
             });
         }
@@ -71,15 +71,15 @@ final class InteractiveMenu {
                     pcntl_signal_dispatch();
                 }
 
-                $raw_key = $this->read_key();
+                $raw_key = $this->readKey();
                 if ($raw_key === '') {
                     continue;
                 }
 
-                $key = $this->decode_key($raw_key);
+                $key = $this->decodeKey($raw_key);
 
                 if ($key === 'q' && !$this->search_mode) {
-                    $this->clear_menu();
+                    $this->clearMenu();
                     return null;
                 }
 
@@ -87,36 +87,36 @@ final class InteractiveMenu {
                     if ($this->search_mode) {
                         $this->search_mode = false;
                         $this->search_query = '';
-                        $this->rebuild_flat_items();
+                        $this->rebuildFlatItems();
                         $this->selected_index = 0;
                     } else {
-                        $this->clear_menu();
+                        $this->clearMenu();
                         return null;
                     }
                     $this->render();
                     continue;
                 }
 
-                $this->handle_key($key);
+                $this->handleKey($key);
 
                 if ($this->selected_command !== null) {
                     $cmd = $this->selected_command;
                     $this->selected_command = null;
-                    $this->clear_menu();
+                    $this->clearMenu();
                     return $cmd;
                 }
 
                 $this->render();
             }
         } finally {
-            $this->restore_tty();
+            $this->restoreTty();
         }
     }
 
     /**
-     * Moves cursor up over the rendered menu and erases it. #AI:clear_menu
+     * Moves cursor up over the rendered menu and erases it. #AI:clearMenu
      */
-    private function clear_menu(): void {
+    private function clearMenu(): void {
         if ($this->last_rendered_lines > 0) {
             echo "\e[" . $this->last_rendered_lines . "A";
         }
@@ -124,11 +124,11 @@ final class InteractiveMenu {
     }
 
     /**
-     * Dispatches a decoded key press to navigation or search logic. #AI:handle_key
+     * Dispatches a decoded key press to navigation or search logic. #AI:handleKey
      *
      * @param string $key Decoded key name (up, down, left, right, enter, etc.).
      */
-    private function handle_key(string $key): void {
+    private function handleKey(string $key): void {
         $item = $this->flat_items[$this->selected_index] ?? null;
 
         if ($key === 'up') {
@@ -144,7 +144,7 @@ final class InteractiveMenu {
         if ($key === 'right') {
             if ($item && $item['type'] === 'group') {
                 $this->group_expanded[$item['group_idx']] = true;
-                $this->rebuild_flat_items();
+                $this->rebuildFlatItems();
             }
             return;
         }
@@ -153,7 +153,7 @@ final class InteractiveMenu {
             if ($item) {
                 if ($item['type'] === 'group') {
                     $this->group_expanded[$item['group_idx']] = false;
-                    $this->rebuild_flat_items();
+                    $this->rebuildFlatItems();
                 } elseif ($item['type'] === 'command') {
                     foreach ($this->flat_items as $idx => $fit) {
                         if ($fit['type'] === 'group' && $fit['group_idx'] === $item['group_idx']) {
@@ -171,7 +171,7 @@ final class InteractiveMenu {
                 if ($item['type'] === 'group') {
                     $idx = $item['group_idx'];
                     $this->group_expanded[$idx] = !($this->group_expanded[$idx] ?? false);
-                    $this->rebuild_flat_items();
+                    $this->rebuildFlatItems();
                 } elseif ($item['type'] === 'command') {
                     $this->selected_command = $item['name'];
                 }
@@ -182,7 +182,7 @@ final class InteractiveMenu {
         if (!$this->search_mode && ($key === '/' || $key === ':')) {
             $this->search_mode = true;
             $this->search_query = '';
-            $this->rebuild_flat_items();
+            $this->rebuildFlatItems();
             $this->selected_index = 0;
             return;
         }
@@ -190,20 +190,20 @@ final class InteractiveMenu {
         if ($this->search_mode) {
             if ($key === 'backspace') {
                 $this->search_query = mb_substr($this->search_query, 0, -1);
-                $this->rebuild_flat_items();
+                $this->rebuildFlatItems();
                 $this->selected_index = 0;
             } elseif (strlen($key) === 1 && ord($key) >= 32 && ord($key) <= 126) {
                 $this->search_query .= $key;
-                $this->rebuild_flat_items();
+                $this->rebuildFlatItems();
                 $this->selected_index = 0;
             }
         }
     }
 
     /**
-     * Rebuilds the flat item list from groups, filtered by search query when active. #AI:rebuild_flat_items
+     * Rebuilds the flat item list from groups, filtered by search query when active. #AI:rebuildFlatItems
      */
-    private function rebuild_flat_items(): void {
+    private function rebuildFlatItems(): void {
         $this->flat_items = [];
         if ($this->search_mode) {
             foreach ($this->groups as $g_idx => $g) {
@@ -325,7 +325,7 @@ final class InteractiveMenu {
         }
 
         $cols = 80;
-        if (self::is_tty()) {
+        if (self::isTty()) {
             $cols = (int)(shell_exec('tput cols 2>/dev/null') ?: 80);
         }
         $divider = "\e[2m" . str_repeat('─', $cols) . "\e[0m";
@@ -350,9 +350,9 @@ final class InteractiveMenu {
     }
 
     /**
-     * Reads raw key bytes from STDIN with a 100ms timeout. #AI:read_key
+     * Reads raw key bytes from STDIN with a 100ms timeout. #AI:readKey
      */
-    private function read_key(): string {
+    private function readKey(): string {
         if (feof(STDIN)) {
             throw new \RuntimeException("STDIN EOF");
         }
@@ -374,11 +374,11 @@ final class InteractiveMenu {
     }
 
     /**
-     * Decodes raw terminal escape sequences into named key identifiers. #AI:decode_key
+     * Decodes raw terminal escape sequences into named key identifiers. #AI:decodeKey
      *
      * @param string $raw Raw bytes from STDIN.
      */
-    private function decode_key(string $raw): string {
+    private function decodeKey(string $raw): string {
         if ($raw === "\e[A" || $raw === "\eOA") return 'up';
         if ($raw === "\e[B" || $raw === "\eOB") return 'down';
         if ($raw === "\e[C" || $raw === "\eOC") return 'right';
@@ -390,18 +390,18 @@ final class InteractiveMenu {
     }
 
     /**
-     * Puts the terminal into raw mode for character-by-character input. #AI:setup_tty
+     * Puts the terminal into raw mode for character-by-character input. #AI:setupTty
      */
-    private function setup_tty(): void {
+    private function setupTty(): void {
         $this->original_tty_settings = shell_exec('stty -g');
         system('stty -echo -icanon min 1 time 0');
         echo "\e[?25l";
     }
 
     /**
-     * Restores original TTY settings and shows the cursor. #AI:restore_tty
+     * Restores original TTY settings and shows the cursor. #AI:restoreTty
      */
-    private function restore_tty(): void {
+    private function restoreTty(): void {
         echo "\e[?25h";
         if ($this->original_tty_settings !== null && trim($this->original_tty_settings) !== '') {
             system('stty ' . escapeshellarg(trim($this->original_tty_settings)));
@@ -411,9 +411,9 @@ final class InteractiveMenu {
     }
 
     /**
-     * Returns true when stdout is connected to an interactive terminal. #AI:is_tty
+     * Returns true when stdout is connected to an interactive terminal. #AI:isTty
      */
-    private static function is_tty(): bool {
+    private static function isTty(): bool {
         if (function_exists('stream_isatty') && @stream_isatty(STDOUT)) {
             return true;
         }
@@ -452,23 +452,23 @@ final class InteractiveMenu {
 #AI contract: Runs the interactive menu loop. Sets up raw TTY mode, renders frames, reads key input, and returns the selected command name or null on quit.
 #AI return_detail: {type: ?string | desc: Selected command name, or null if user quit.}
 
-#AI:clear_menu
+#AI:clearMenu
 #AI group: Rendering
 #AI frequency: internal
-#AI signature: private function clear_menu(): void
+#AI signature: private function clearMenu(): void
 #AI contract: Moves cursor up over the rendered menu and erases it using ANSI escape sequences.
 
-#AI:handle_key
+#AI:handleKey
 #AI group: Key Handling
 #AI frequency: internal
-#AI signature: private function handle_key(string $key): void
+#AI signature: private function handleKey(string $key): void
 #AI contract: Dispatches a decoded key press to navigation (up/down/left/right/enter) or search logic.
 #AI param_details: [{name: $key | type: string | required: true | desc: Decoded key name (up, down, left, right, enter, esc, backspace, or single character).}]
 
-#AI:rebuild_flat_items
+#AI:rebuildFlatItems
 #AI group: Rendering
 #AI frequency: internal
-#AI signature: private function rebuild_flat_items(): void
+#AI signature: private function rebuildFlatItems(): void
 #AI contract: Rebuilds the flat item list from groups. In search mode, filters by query. In browse mode, respects group expansion state.
 
 #AI:render
@@ -477,35 +477,35 @@ final class InteractiveMenu {
 #AI signature: private function render(): void
 #AI contract: Renders the full menu to stdout, overwriting the previous frame with ANSI cursor control.
 
-#AI:read_key
+#AI:readKey
 #AI group: Key Handling
 #AI frequency: internal
-#AI signature: private function read_key(): string
+#AI signature: private function readKey(): string
 #AI contract: Reads raw key bytes from STDIN with a 100ms timeout using stream_select.
 #AI return_detail: {type: string | desc: Raw bytes from STDIN, or empty string on timeout.}
 
-#AI:decode_key
+#AI:decodeKey
 #AI group: Key Handling
 #AI frequency: internal
-#AI signature: private function decode_key(string $raw): string
+#AI signature: private function decodeKey(string $raw): string
 #AI contract: Decodes raw terminal escape sequences into named key identifiers (up, down, left, right, enter, esc, backspace).
 #AI param_details: [{name: $raw | type: string | required: true | desc: Raw bytes from STDIN.}]
 #AI return_detail: {type: string | desc: Named key identifier or the raw character.}
 
-#AI:setup_tty
+#AI:setupTty
 #AI group: TTY Management
 #AI frequency: internal
-#AI signature: private function setup_tty(): void
+#AI signature: private function setupTty(): void
 #AI contract: Saves current TTY settings and puts terminal into raw mode for character-by-character input. Hides cursor.
 
-#AI:restore_tty
+#AI:restoreTty
 #AI group: TTY Management
 #AI frequency: internal
-#AI signature: private function restore_tty(): void
+#AI signature: private function restoreTty(): void
 #AI contract: Restores original TTY settings and shows the cursor. Falls back to stty echo icanon if saved settings are unavailable.
 
-#AI:is_tty
+#AI:isTty
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private static function is_tty(): bool
+#AI signature: private static function isTty(): bool
 #AI contract: Returns true when stdout is connected to an interactive terminal.

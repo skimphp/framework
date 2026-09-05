@@ -25,42 +25,42 @@ class MdxEmitter {
      * include a source-file suffix. Colliding filenames get a numeric suffix.
      *
      * @param array  $data       Decoded llm.json array.
-     * @param string $output_dir Directory to write .mdx files into.
+     * @param string $outputDir Directory to write .mdx files into.
      * @return int Number of MDX files written.
      *
      * @throws \RuntimeException On write failure.
      */
-    public function emit(array $data, string $output_dir): int {
+    public function emit(array $data, string $outputDir): int {
         $classes = $data['classes'] ?? [];
-        if (!is_dir($output_dir)) {
-            mkdir($output_dir, 0755, recursive: true);
+        if (!is_dir($outputDir)) {
+            mkdir($outputDir, 0755, recursive: true);
         }
 
-        $this->clean_output_dir($output_dir);
+        $this->cleanOutputDir($outputDir);
 
         $count = 0;
-        $duplicates = $this->duplicate_class_names($classes);
+        $duplicates = $this->duplicateClassNames($classes);
         $filenames = [];
         foreach ($classes as $class) {
-            $file = $this->unique_mdx_file_name($this->mdx_file_name($class, $duplicates), $filenames);
-            $subdir = $this->namespace_to_dir($class['namespace'] ?? '');
+            $file = $this->uniqueMdxFileName($this->mdxFileName($class, $duplicates), $filenames);
+            $subdir = $this->namespaceToDir($class['namespace'] ?? '');
             if ($subdir === '') {
                 $subdir = 'other';
             }
-            $target_dir = $output_dir . '/' . $subdir;
+            $target_dir = $outputDir . '/' . $subdir;
             if (!is_dir($target_dir)) {
                 mkdir($target_dir, 0755, recursive: true);
             }
             $path = $target_dir . '/' . $file;
-            if (file_put_contents($path, $this->render_class($class)) === false) {
+            if (file_put_contents($path, $this->renderClass($class)) === false) {
                 throw new \RuntimeException("mdx_emitter: cannot write {$path}");
             }
             $count++;
         }
 
         if ($classes !== []) {
-            $index_path = $output_dir . '/index.mdx';
-            if (file_put_contents($index_path, $this->render_index($classes)) === false) {
+            $index_path = $outputDir . '/index.mdx';
+            if (file_put_contents($index_path, $this->renderIndex($classes)) === false) {
                 throw new \RuntimeException("mdx_emitter: cannot write {$index_path}");
             }
             $count++;
@@ -69,7 +69,7 @@ class MdxEmitter {
         return $count;
     }
 
-    private function duplicate_class_names(array $classes): array {
+    private function duplicateClassNames(array $classes): array {
         $counts = [];
         foreach ($classes as $class) {
             $name = (string) ($class['title'] ?? $class['class_name'] ?? 'class');
@@ -78,7 +78,7 @@ class MdxEmitter {
         return array_filter($counts, fn(int $count): bool => $count > 1);
     }
 
-    private function mdx_file_name(array $class, array $duplicates): string {
+    private function mdxFileName(array $class, array $duplicates): string {
         $class_name = (string) ($class['title'] ?? $class['class_name'] ?? 'class');
         if (!isset($duplicates[$class_name])) {
             return $this->slug($class_name) . '.mdx';
@@ -88,7 +88,7 @@ class MdxEmitter {
         return $this->slug($class_name . '-' . $source) . '.mdx';
     }
 
-    private function unique_mdx_file_name(string $file, array &$filenames): string {
+    private function uniqueMdxFileName(string $file, array &$filenames): string {
         if (!isset($filenames[$file])) {
             $filenames[$file] = 1;
             return $file;
@@ -103,7 +103,7 @@ class MdxEmitter {
         return $slug !== '' ? $slug : 'class';
     }
 
-    private function namespace_to_dir(string $namespace): string {
+    private function namespaceToDir(string $namespace): string {
         if (!str_starts_with(strtolower($namespace), 'skim\\')) {
             return '';
         }
@@ -112,7 +112,7 @@ class MdxEmitter {
         return strtolower($parts[0] ?? '');
     }
 
-    private function clean_output_dir(string $dir): void {
+    private function cleanOutputDir(string $dir): void {
         if (!is_dir($dir)) {
             return;
         }
@@ -135,7 +135,7 @@ class MdxEmitter {
         }
     }
 
-    private function get_coverage_indicator(array $class): string {
+    private function getCoverageIndicator(array $class): string {
         $total = count($class['methods'] ?? []);
         if ($total === 0) {
             return "No methods";
@@ -171,17 +171,17 @@ class MdxEmitter {
         return "{$annotated}/{$total} ({$pct}%)";
     }
 
-    private function render_index(array $classes): string {
+    private function renderIndex(array $classes): string {
         $groups = [];
-        $duplicates = $this->duplicate_class_names($classes);
+        $duplicates = $this->duplicateClassNames($classes);
         $filenames = [];
         
         foreach ($classes as $class) {
-            $dir = $this->namespace_to_dir($class['namespace'] ?? '');
+            $dir = $this->namespaceToDir($class['namespace'] ?? '');
             if ($dir === '') {
                 $dir = 'other';
             }
-            $file = $this->unique_mdx_file_name($this->mdx_file_name($class, $duplicates), $filenames);
+            $file = $this->uniqueMdxFileName($this->mdxFileName($class, $duplicates), $filenames);
             $class['_mdx_file'] = substr($file, 0, -4);
             $groups[$dir][] = $class;
         }
@@ -211,14 +211,14 @@ class MdxEmitter {
                 $class_title = $class['title'] ?? $class['class_name'] ?? 'class';
                 $class_link = "[`{$class_title}`](./{$dir}/{$slug_class})";
                 
-                $desc = $this->one_line((string) ($class['description'] ?? $class['summary'] ?? ''));
+                $desc = $this->oneLine((string) ($class['description'] ?? $class['summary'] ?? ''));
                 if ($desc === '') {
                     $desc = 'No description available.';
                 } else {
-                    $desc = $this->escape_mdx($desc);
+                    $desc = $this->escapeMdx($desc);
                 }
                 
-                $coverage = $this->get_coverage_indicator($class);
+                $coverage = $this->getCoverageIndicator($class);
                 
                 $section_links = [];
                 foreach ($class['section_order'] ?? [] as $section) {
@@ -238,13 +238,13 @@ class MdxEmitter {
         return implode("\n", $lines) . "\n";
     }
 
-    private function render_class(array $class): string {
+    private function renderClass(array $class): string {
         $title = (string) ($class['title'] ?? $class['class_name'] ?? 'class');
-        $description = $this->one_line((string) ($class['description'] ?? $class['summary'] ?? "Class {$title}."));
+        $description = $this->oneLine((string) ($class['description'] ?? $class['summary'] ?? "Class {$title}."));
         $lines = ['---', "title: {$title}", 'description: "' . str_replace('"', '\\"', $description) . '"', '---', ''];
 
         foreach ($class['badges'] ?? [] as $badge) {
-            $lines[] = '<ApiBadge type="' . $this->escape_attr((string) $badge) . '" />';
+            $lines[] = '<ApiBadge type="' . $this->escapeAttr((string) $badge) . '" />';
         }
         if (($class['badges'] ?? []) !== []) {
             $lines[] = '';
@@ -252,21 +252,21 @@ class MdxEmitter {
 
         $intro = (string) ($class['intro'] ?? $class['summary'] ?? '');
         if ($intro !== '') {
-            $lines[] = $this->escape_mdx($intro);
+            $lines[] = $this->escapeMdx($intro);
             $lines[] = '';
         }
-        $this->append_info_block($lines, $class);
-        $this->append_class_examples($lines, $class['examples'] ?? []);
-        $this->append_warning_boxes($lines, $class['warnings'] ?? []);
-        $this->append_architecture($lines, $class);
-        $this->append_scope_boxes($lines, $class['scope_items'] ?? []);
-        $this->append_method_groups($lines, $class);
-        $this->append_ai_context($lines, $class);
+        $this->appendInfoBlock($lines, $class);
+        $this->appendClassExamples($lines, $class['examples'] ?? []);
+        $this->appendWarningBoxes($lines, $class['warnings'] ?? []);
+        $this->appendArchitecture($lines, $class);
+        $this->appendScopeBoxes($lines, $class['scope_items'] ?? []);
+        $this->appendMethodGroups($lines, $class);
+        $this->appendAiContext($lines, $class);
 
         return implode("\n", $lines) . "\n";
     }
 
-    private function append_info_block(array &$lines, array $class): void {
+    private function appendInfoBlock(array &$lines, array $class): void {
         $items = [
             'Symbol' => $class['symbol'] ?? trim(($class['namespace'] ?? '') . '\\' . ($class['class_name'] ?? ''), '\\'),
             'Source' => $class['source_path'] ?? $class['file'] ?? '',
@@ -285,7 +285,7 @@ class MdxEmitter {
         $lines[] = '';
     }
 
-    private function append_class_examples(array &$lines, array $examples): void {
+    private function appendClassExamples(array &$lines, array $examples): void {
         foreach ($examples as $ex) {
             $label = (string) ($ex['label'] ?? 'Basic usage');
             $code = (string) ($ex['code'] ?? '');
@@ -293,7 +293,7 @@ class MdxEmitter {
                 continue;
             }
             $collapsed = count(explode("\n", $code)) > 10 ? ' collapsed' : '';
-            $lines[] = '<CodeExample label="' . $this->escape_attr($label) . '" source="llm-generated"' . $collapsed . '>';
+            $lines[] = '<CodeExample label="' . $this->escapeAttr($label) . '" source="llm-generated"' . $collapsed . '>';
             $lines[] = '```php';
             $lines[] = $code;
             $lines[] = '```';
@@ -302,18 +302,18 @@ class MdxEmitter {
         }
     }
 
-    private function append_warning_boxes(array &$lines, array $warnings): void {
+    private function appendWarningBoxes(array &$lines, array $warnings): void {
         foreach ($warnings as $warning) {
             $lines[] = '<WarningBox>';
             $lines[] = '';
-            $lines[] = $this->escape_mdx((string) $warning);
+            $lines[] = $this->escapeMdx((string) $warning);
             $lines[] = '';
             $lines[] = '</WarningBox>';
             $lines[] = '';
         }
     }
 
-    private function append_architecture(array &$lines, array $class): void {
+    private function appendArchitecture(array &$lines, array $class): void {
         if (($class['lifecycle_steps'] ?? []) !== [] || ($class['architectural_notes'] ?? '') !== '') {
             $lines[] = '## Architecture';
             $lines[] = '';
@@ -331,20 +331,20 @@ class MdxEmitter {
             $lines[] = '';
         }
         if (($class['architectural_notes'] ?? '') !== '') {
-            $lines[] = $this->escape_mdx((string) $class['architectural_notes']);
+            $lines[] = $this->escapeMdx((string) $class['architectural_notes']);
             $lines[] = '';
         }
         foreach ($class['notes'] ?? [] as $note) {
             $lines[] = '<NoteBox>';
             $lines[] = '';
-            $lines[] = $this->escape_mdx((string) $note);
+            $lines[] = $this->escapeMdx((string) $note);
             $lines[] = '';
             $lines[] = '</NoteBox>';
             $lines[] = '';
         }
     }
 
-    private function append_scope_boxes(array &$lines, array $items): void {
+    private function appendScopeBoxes(array &$lines, array $items): void {
         if ($items === []) {
             return;
         }
@@ -356,41 +356,41 @@ class MdxEmitter {
                 continue;
             }
             $mutable = ($item['mutable'] ?? false) === true ? ' mutable' : '';
-            $lines[] = '  <ScopeBox name="' . $this->escape_attr((string) ($item['name'] ?? '')) . '"' . $mutable . '>';
-            $lines[] = '    ' . $this->escape_mdx((string) ($item['desc'] ?? ''));
+            $lines[] = '  <ScopeBox name="' . $this->escapeAttr((string) ($item['name'] ?? '')) . '"' . $mutable . '>';
+            $lines[] = '    ' . $this->escapeMdx((string) ($item['desc'] ?? ''));
             $lines[] = '  </ScopeBox>';
         }
         $lines[] = '</div>';
         $lines[] = '';
     }
 
-    private function append_method_groups(array &$lines, array $class): void {
-        foreach ($this->group_methods($class['methods'] ?? [], $class['section_order'] ?? []) as $group => $methods) {
+    private function appendMethodGroups(array &$lines, array $class): void {
+        foreach ($this->groupMethods($class['methods'] ?? [], $class['section_order'] ?? []) as $group => $methods) {
             if ($group === 'Architecture') {
                 continue;
             }
             $lines[] = '## ' . $group;
             $lines[] = '';
             foreach ($methods as $method) {
-                $lines = array_merge($lines, $this->render_method($method));
+                $lines = array_merge($lines, $this->renderMethod($method));
             }
         }
     }
 
-    private function render_method(array $method): array {
-        $lines = ['<ApiMethod name="' . $this->escape_attr((string) ($method['name'] ?? '')) . '">', '', '<ApiSignature>', '', '```php', (string) ($method['signature'] ?? ''), '```', '', '</ApiSignature>', ''];
+    private function renderMethod(array $method): array {
+        $lines = ['<ApiMethod name="' . $this->escapeAttr((string) ($method['name'] ?? '')) . '">', '', '<ApiSignature>', '', '```php', (string) ($method['signature'] ?? ''), '```', '', '</ApiSignature>', ''];
         if (($method['contract'] ?? '') !== '') {
-            $lines[] = $this->escape_mdx((string) $method['contract']);
+            $lines[] = $this->escapeMdx((string) $method['contract']);
             $lines[] = '';
         } elseif (($method['contracts'] ?? []) !== []) {
-            $lines[] = $this->escape_mdx((string) $method['contracts'][0]);
+            $lines[] = $this->escapeMdx((string) $method['contracts'][0]);
             $lines[] = '';
         }
         foreach ($method['param_details'] ?? [] as $param) {
             $required = ($param['required'] ?? false) === true ? ' required' : '';
-            $lines[] = '<ApiParam name="' . $this->escape_attr((string) ($param['name'] ?? '')) . '" type="' . $this->escape_attr((string) ($param['type'] ?? 'mixed')) . '"' . $required . '>';
+            $lines[] = '<ApiParam name="' . $this->escapeAttr((string) ($param['name'] ?? '')) . '" type="' . $this->escapeAttr((string) ($param['type'] ?? 'mixed')) . '"' . $required . '>';
             $lines[] = '';
-            $lines[] = $this->escape_mdx((string) ($param['desc'] ?? ''));
+            $lines[] = $this->escapeMdx((string) ($param['desc'] ?? ''));
             $lines[] = '';
             $lines[] = '</ApiParam>';
             $lines[] = '';
@@ -402,7 +402,7 @@ class MdxEmitter {
                 continue;
             }
             $collapsed = count(explode("\n", $code)) > 10 ? ' collapsed' : '';
-            $lines[] = '<CodeExample label="' . $this->escape_attr($label) . '" source="llm-generated"' . $collapsed . '>';
+            $lines[] = '<CodeExample label="' . $this->escapeAttr($label) . '" source="llm-generated"' . $collapsed . '>';
             $lines[] = '```php';
             $lines[] = $code;
             $lines[] = '```';
@@ -410,18 +410,18 @@ class MdxEmitter {
             $lines[] = '';
         }
         foreach ($method['throws_details'] ?? [] as $throw) {
-            $lines[] = '<ApiThrows type="' . $this->escape_attr((string) ($throw['type'] ?? '')) . '">';
+            $lines[] = '<ApiThrows type="' . $this->escapeAttr((string) ($throw['type'] ?? '')) . '">';
             $lines[] = '';
-            $lines[] = $this->escape_mdx((string) ($throw['desc'] ?? ''));
+            $lines[] = $this->escapeMdx((string) ($throw['desc'] ?? ''));
             $lines[] = '';
             $lines[] = '</ApiThrows>';
             $lines[] = '';
         }
-        $this->append_warning_boxes($lines, $method['warnings'] ?? []);
+        $this->appendWarningBoxes($lines, $method['warnings'] ?? []);
         foreach ($method['notes'] ?? [] as $note) {
             $lines[] = '<NoteBox>';
             $lines[] = '';
-            $lines[] = $this->escape_mdx((string) $note);
+            $lines[] = $this->escapeMdx((string) $note);
             $lines[] = '';
             $lines[] = '</NoteBox>';
             $lines[] = '';
@@ -431,7 +431,7 @@ class MdxEmitter {
         return $lines;
     }
 
-    private function append_ai_context(array &$lines, array $class): void {
+    private function appendAiContext(array &$lines, array $class): void {
         $lines[] = '<AiContext>';
         $lines[] = '```txt';
         foreach (['symbol', 'role', 'layer', 'lifecycle', 'owns', 'flow'] as $key) {
@@ -456,7 +456,7 @@ class MdxEmitter {
         $lines[] = '</AiContext>';
     }
 
-    private function group_methods(array $methods, array $order): array {
+    private function groupMethods(array $methods, array $order): array {
         $groups = [];
         foreach ($order as $group) {
             $groups[(string) $group] = [];
@@ -469,15 +469,15 @@ class MdxEmitter {
         return array_filter($groups, fn(array $items): bool => $items !== []);
     }
 
-    private function one_line(string $value): string {
+    private function oneLine(string $value): string {
         return trim(preg_replace('/\s+/', ' ', $value) ?? $value);
     }
 
-    private function escape_attr(string $value): string {
+    private function escapeAttr(string $value): string {
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
-    private function escape_mdx(string $text): string {
+    private function escapeMdx(string $text): string {
         $parts = preg_split('/(`[^`]+`)/', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
         $result = '';
         foreach ($parts as $part) {
@@ -518,9 +518,9 @@ class MdxEmitter {
 #AI:emit
 #AI group: Emit
 #AI frequency: high
-#AI signature: public function emit(array $data, string $output_dir): int
+#AI signature: public function emit(array $data, string $outputDir): int
 #AI contract: Accepts decoded llm.json array and writes one MDX file per class into namespace subdirectories under the output directory. Also writes an index.mdx landing page. Returns the count of files written. Handles duplicate class names and filename collisions. Cleans stale .mdx files before writing.
-#AI param_details: [{name: $data | type: array | required: true | desc: Decoded llm.json array with 'classes' key.}; {name: $output_dir | type: string | required: true | desc: Directory to write .mdx files into. Created if it does not exist.}]
+#AI param_details: [{name: $data | type: array | required: true | desc: Decoded llm.json array with 'classes' key.}; {name: $outputDir | type: string | required: true | desc: Directory to write .mdx files into. Created if it does not exist.}]
 #AI return_detail: {type: int | desc: Number of MDX files written (including index.mdx).}
 #AI throws_details: [{type: \RuntimeException | desc: When a file cannot be written.}]
 #AI side_effects: [writes .mdx files to disk; creates output directory; cleans stale .mdx files recursively; creates namespace subdirectories]

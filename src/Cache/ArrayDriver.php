@@ -11,12 +11,12 @@ namespace Skim\Cache;
  * because state diverges across PHP-FPM workers (same reason APCu is banned).
  *
  * Example:
- *   cache::set_driver(new array_driver());
+ *   cache::setDriver(new array_driver());
  *   cache::set('key', 'value', 60);
  *   // ... run tests ...
  *   cache::reset();
  *
- * Testing: this IS the test driver. Inject via cache::set_driver().
+ * Testing: this IS the test driver. Inject via cache::setDriver().
  *
  * #AI:class
  */
@@ -114,13 +114,13 @@ final class ArrayDriver implements \Skim\Cache\Driver {
     }
 
     /**
-     * Clears all entries unconditionally. #AI:flush_all
+     * Clears all entries unconditionally. #AI:flushAll
      *
      * WARNING: Destroys all cached data in this driver instance.
      *
      * @return bool Always true.
      */
-    public function flush_all(): bool {
+    public function flushAll(): bool {
         $this->store = [];
         return true;
     }
@@ -136,7 +136,7 @@ final class ArrayDriver implements \Skim\Cache\Driver {
 #AI badges: [driver; cache; in-memory; test-only]
 #AI intro: `Skim\Cache\ArrayDriver` stores cache entries in a PHP array. Values exist only for the current process and are never persisted. TTL is enforced via microtime expiry checked lazily on read. This is the default driver for Pest/PHPUnit tests.
 #AI lifecycle: process-scoped, resets naturally between requests
-#AI test_seam: inject via cache::set_driver(new array_driver())
+#AI test_seam: inject via cache::setDriver(new array_driver())
 #AI invariants: [all operations return true; expired keys are lazily removed on has()/get(); flush_all() clears the entire store]
 #AI warnings: [Not suitable for production — state diverges across PHP-FPM workers]
 #AI notes: Why not APCu: APCu state is per-process, inconsistent under PHP-FPM multi-worker. array_driver is the safe alternative for tests.
@@ -191,10 +191,10 @@ final class ArrayDriver implements \Skim\Cache\Driver {
 #AI throws_details: [{type: \RuntimeException | desc: When WORKER_MODE is defined and true.}]
 #AI warnings: [Use file_driver or redis_driver in worker mode instead]
 
-#AI:flush_all
+#AI:flushAll
 #AI group: Invalidation
 #AI frequency: low
-#AI signature: public function flush_all(): bool
+#AI signature: public function flushAll(): bool
 #AI contract: Clears the entire in-memory store.
 #AI return_detail: {type: bool | desc: Always true.}
 #AI warnings: [Destroys all cached data in this driver instance]

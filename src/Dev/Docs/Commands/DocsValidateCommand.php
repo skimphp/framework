@@ -48,28 +48,28 @@ class DocsValidateCommand extends \Skim\Cli\Command {
         $missing_rows     = [];
         $ref_errors       = [];
 
-        $class_index = $this->build_class_index($classes);
+        $class_index = $this->buildClassIndex($classes);
 
         foreach ($classes as $class) {
-            foreach ($this->validate_class_references($class, $class_index) as $error) {
+            foreach ($this->validateClassReferences($class, $class_index) as $error) {
                 $ref_errors[] = $error;
             }
             foreach ($class->methods as $method) {
                 $total_methods++;
                 $has_annotation = $method->contracts    !== []
                     || $method->invariants   !== []
-                    || $method->non_goals    !== []
-                    || $method->side_effects !== [];
+                    || $method->nonGoals    !== []
+                    || $method->sideEffects !== [];
                 if ($has_annotation) {
                     $annotated++;
                 } else {
                     $missing_rows[] = [
-                        'class'  => $class->class_name,
+                        'class'  => $class->className,
                         'method' => $method->name,
-                        'file'   => str_replace(base_path() . '/', '', $class->file),
+                        'file'   => str_replace(basePath() . '/', '', $class->file),
                     ];
                 }
-                foreach ($this->validate_method_references($class, $method, $class_index) as $error) {
+                foreach ($this->validateMethodReferences($class, $method, $class_index) as $error) {
                     $ref_errors[] = $error;
                 }
             }
@@ -111,10 +111,10 @@ class DocsValidateCommand extends \Skim\Cli\Command {
     /**
      * Builds a lookup index of class names, symbols, and titles. #AI:build_class_index
      */
-    private function build_class_index(array $classes): array {
+    private function buildClassIndex(array $classes): array {
         $index = [];
         foreach ($classes as $class) {
-            foreach ([$class->class_name, $class->symbol, $class->title] as $key) {
+            foreach ([$class->className, $class->symbol, $class->title] as $key) {
                 $key = strtolower((string) $key);
                 if ($key !== '') {
                     $index[$key] = $class;
@@ -129,13 +129,13 @@ class DocsValidateCommand extends \Skim\Cli\Command {
      *
      * @return array<int, array{file: string, error: string}>
      */
-    private function validate_class_references(\Skim\Dev\Docs\Value\ExtractedClass $class, array $index): array {
+    private function validateClassReferences(\Skim\Dev\Docs\Value\ExtractedClass $class, array $index): array {
         $errors = [];
-        foreach ($class->see_also as $ref) {
+        foreach ($class->seeAlso as $ref) {
             if (!isset($index[strtolower($ref)])) {
                 $errors[] = [
-                    'file'  => str_replace(base_path() . '/', '', $class->file),
-                    'error' => "dangling see_also: {$class->class_name} -> {$ref}",
+                    'file'  => str_replace(basePath() . '/', '', $class->file),
+                    'error' => "dangling see_also: {$class->className} -> {$ref}",
                 ];
             }
         }
@@ -147,26 +147,26 @@ class DocsValidateCommand extends \Skim\Cli\Command {
      *
      * @return array<int, array{file: string, error: string}>
      */
-    private function validate_method_references(\Skim\Dev\Docs\Value\ExtractedClass $class, \Skim\Dev\Docs\Value\ExtractedMethod $method, array $index): array {
+    private function validateMethodReferences(\Skim\Dev\Docs\Value\ExtractedClass $class, \Skim\Dev\Docs\Value\ExtractedMethod $method, array $index): array {
         $errors = [];
-        $file = str_replace(base_path() . '/', '', $class->file);
+        $file = str_replace(basePath() . '/', '', $class->file);
 
-        foreach ($method->see_also as $ref) {
+        foreach ($method->seeAlso as $ref) {
             if (str_contains($ref, '::')) {
                 [$target_class, $target_method] = explode('::', $ref, 2);
                 if (!isset($index[strtolower($target_class)])) {
-                    $errors[] = ['file' => $file, 'error' => "dangling see_also: {$class->class_name}::{$method->name} -> {$ref} (class not found)"];
+                    $errors[] = ['file' => $file, 'error' => "dangling see_also: {$class->className}::{$method->name} -> {$ref} (class not found)"];
                 } else {
                     $target = $index[strtolower($target_class)];
                     $method_names = array_map(fn(\Skim\Dev\Docs\Value\ExtractedMethod $m) => strtolower($m->name), $target->methods);
                     if (!in_array(strtolower($target_method), $method_names, true)) {
-                        $errors[] = ['file' => $file, 'error' => "dangling see_also: {$class->class_name}::{$method->name} -> {$ref} (method not found)"];
+                        $errors[] = ['file' => $file, 'error' => "dangling see_also: {$class->className}::{$method->name} -> {$ref} (method not found)"];
                     }
                 }
             } else {
                 $method_names = array_map(fn(\Skim\Dev\Docs\Value\ExtractedMethod $m) => strtolower($m->name), $class->methods);
                 if (!in_array(strtolower($ref), $method_names, true)) {
-                    $errors[] = ['file' => $file, 'error' => "dangling see_also: {$class->class_name}::{$method->name} -> {$ref} (method not found)"];
+                    $errors[] = ['file' => $file, 'error' => "dangling see_also: {$class->className}::{$method->name} -> {$ref} (method not found)"];
                 }
             }
         }
@@ -174,7 +174,7 @@ class DocsValidateCommand extends \Skim\Cli\Command {
         foreach ($method->aliases as $alias) {
             $method_names = array_map(fn(\Skim\Dev\Docs\Value\ExtractedMethod $m) => strtolower($m->name), $class->methods);
             if (in_array(strtolower($alias), $method_names, true)) {
-                $errors[] = ['file' => $file, 'error' => "alias collision: {$class->class_name}::{$method->name} aliases '{$alias}' collides with real method name"];
+                $errors[] = ['file' => $file, 'error' => "alias collision: {$class->className}::{$method->name} aliases '{$alias}' collides with real method name"];
             }
         }
 

@@ -7,7 +7,7 @@ describe('docs_validate_command reference validation', function(): void {
     $temp_dir = '';
 
     beforeEach(function() use (&$temp_dir): void {
-        \Skim\Cli\Cli::force_plain(true);
+        \Skim\Cli\Cli::forcePlain(true);
         $temp_dir = sys_get_temp_dir() . '/skim_docs_validate_' . uniqid();
         mkdir($temp_dir, 0777, true);
 
@@ -18,7 +18,7 @@ describe('docs_validate_command reference validation', function(): void {
         file_put_contents($temp_dir . '/target.php', "<?php\n/**\n * #AI:class\n */\nclass target_class {\n    /**\n     * #AI:bar\n     */\n    public function bar(): void {}\n}\n");
 
         // Bad class with dangling see_also and alias collision
-        file_put_contents($temp_dir . '/bad.php', "<?php\n/**\n * #AI:class\n * #AI see_also: [nonexistent_class]\n */\nclass bad_class {\n    /**\n     * #AI:do_thing\n     * #AI see_also: [nonexistent_class::missing_method]\n     * #AI aliases: [do_thing]\n     */\n    public function do_thing(): void {}\n}\n");
+        file_put_contents($temp_dir . '/bad.php', "<?php\n/**\n * #AI:class\n * #AI see_also: [nonexistent_class]\n */\nclass bad_class {\n    /**\n     * #AI:doThing\n     * #AI see_also: [nonexistent_class::missing_method]\n     * #AI aliases: [do_thing]\n     */\n    public function do_thing(): void {}\n}\n");
 
         \Skim\Core\Config::set('docs.scan_paths', [$temp_dir]);
         \Skim\Core\Config::set('docs.validate.min_coverage', 0.0);

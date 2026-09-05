@@ -105,7 +105,7 @@ class Client {
      * Example:
      *   $http = client::fake(['GET https://api.example.com/users' => ['status' => 200, 'body' => []]]);
      *   $resp = $http->get('https://api.example.com/users');
-     *   $http->assert_sent('GET', 'users');
+     *   $http->assertSent('GET', 'users');
      *
      * @param array $stubs Map of "METHOD URL" => response stub arrays or http_response objects.
      */
@@ -113,9 +113,9 @@ class Client {
         return new \Skim\Http\FakeClient($stubs);
     }
 
-    private function send(string $method, string $url, ?array $body, array $extra_headers): \Skim\Http\HttpResponse {
+    private function send(string $method, string $url, ?array $body, array $extraHeaders): \Skim\Http\HttpResponse {
         $full_url = $this->base_url !== null ? $this->base_url . '/' . ltrim($url, '/') : $url;
-        $headers  = array_merge($this->default_headers, $extra_headers);
+        $headers  = array_merge($this->default_headers, $extraHeaders);
         $content  = $body !== null ? json_encode($body) : null;
 
         $header_lines = array_map(
@@ -142,7 +142,7 @@ class Client {
         $raw  = @file_get_contents($full_url, false, $ctx);
         $meta = $http_response_header ?? [];
 
-        return \Skim\Http\HttpResponse::from_stream($raw === false ? '' : $raw, $meta);
+        return \Skim\Http\HttpResponse::fromStream($raw === false ? '' : $raw, $meta);
     }
 }
 
@@ -164,7 +164,7 @@ class Client {
 #AI config_reads: []
 #AI non_goals: [Does not support async/concurrent requests; Does not follow redirects; Does not retry on failure; No Guzzle dependency]
 #AI side_effects: [Makes outbound HTTP requests]
-#AI flow: client::method() -> send() -> stream_context_create() -> file_get_contents() -> http_response::from_stream()
+#AI flow: client::method() -> send() -> stream_context_create() -> file_get_contents() -> http_response::fromStream()
 #AI section_order: [HTTP Methods; Testing; Architecture]
 
 #AI:get

@@ -11,7 +11,7 @@ namespace Skim\Helpers;
  * Example:
  *   str::slug('Hello World!');     // 'hello-world'
  *   str::uuid();                   // '550e8400-e29b-41d4-a716-446655440000'
- *   str::to_snake('UserProfile');  // 'user_profile'
+ *   str::toSnake('UserProfile');  // 'user_profile'
  *
  * Testing: All methods are pure functions — test directly, no mocking needed.
  *
@@ -42,14 +42,14 @@ final class Str {
      * @param string $text          Input text to truncate.
      * @param int    $length        Maximum character count before truncation.
      * @param string $suffix        Appended when text is truncated.
-     * @param bool   $word_boundary Back up to last space to avoid mid-word cuts.
+     * @param bool   $wordBoundary Back up to last space to avoid mid-word cuts.
      */
-    public static function excerpt(string $text, int $length = 100, string $suffix = '...', bool $word_boundary = true): string {
+    public static function excerpt(string $text, int $length = 100, string $suffix = '...', bool $wordBoundary = true): string {
         if (mb_strlen($text) <= $length) {
             return $text;
         }
         $truncated = mb_substr($text, 0, $length);
-        if ($word_boundary) {
+        if ($wordBoundary) {
             $last_space = mb_strrpos($truncated, ' ');
             if ($last_space !== false) {
                 $truncated = mb_substr($truncated, 0, $last_space);
@@ -94,42 +94,42 @@ final class Str {
     }
 
     /**
-     * Returns true when $str starts with $prefix. #AI:starts_with
+     * Returns true when $str starts with $prefix. #AI:startsWith
      *
      * @param string $str    String to test.
      * @param string $prefix Expected prefix.
      */
-    public static function starts_with(string $str, string $prefix): bool {
+    public static function startsWith(string $str, string $prefix): bool {
         return str_starts_with($str, $prefix);
     }
 
     /**
-     * Returns true when $str ends with $suffix. #AI:ends_with
+     * Returns true when $str ends with $suffix. #AI:endsWith
      *
      * @param string $str    String to test.
      * @param string $suffix Expected suffix.
      */
-    public static function ends_with(string $str, string $suffix): bool {
+    public static function endsWith(string $str, string $suffix): bool {
         return str_ends_with($str, $suffix);
     }
 
     /**
-     * Converts CamelCase to snake_case. #AI:to_snake
+     * Converts CamelCase to snake_case. #AI:toSnake
      *
      * @param string $str CamelCase or PascalCase input.
      */
-    public static function to_snake(string $str): string {
+    public static function toSnake(string $str): string {
         $str = (string) preg_replace('/([A-Z]+)([A-Z][a-z])/', '$1_$2', $str);
         $str = (string) preg_replace('/([a-z\d])([A-Z])/', '$1_$2', $str);
         return strtolower($str);
     }
 
     /**
-     * Converts snake_case to camelCase. #AI:to_camel
+     * Converts snake_case to camelCase. #AI:toCamel
      *
      * @param string $str snake_case input.
      */
-    public static function to_camel(string $str): string {
+    public static function toCamel(string $str): string {
         return lcfirst(str_replace('_', '', ucwords($str, '_')));
     }
 }
@@ -172,9 +172,9 @@ final class Str {
 #AI:excerpt
 #AI group: Slugs & Truncation
 #AI frequency: medium
-#AI signature: public static function excerpt(string $text, int $length = 100, string $suffix = '...', bool $word_boundary = true): string
+#AI signature: public static function excerpt(string $text, int $length = 100, string $suffix = '...', bool $wordBoundary = true): string
 #AI contract: Truncates text to $length characters. When $word_boundary is true, backs up to the last space to avoid mid-word cuts. Appends $suffix only when truncation occurs.
-#AI param_details: [{name: $text | type: string | required: true | desc: Input text to truncate.}; {name: $length | type: int | required: false | desc: Maximum character count before truncation. Default 100.}; {name: $suffix | type: string | required: false | desc: Appended when text is truncated. Default '...'.}; {name: $word_boundary | type: bool | required: false | desc: When true, avoids cutting mid-word. Default true.}]
+#AI param_details: [{name: $text | type: string | required: true | desc: Input text to truncate.}; {name: $length | type: int | required: false | desc: Maximum character count before truncation. Default 100.}; {name: $suffix | type: string | required: false | desc: Appended when text is truncated. Default '...'.}; {name: $wordBoundary | type: bool | required: false | desc: When true, avoids cutting mid-word. Default true.}]
 #AI return_detail: {type: string | desc: Truncated text with suffix, or original if within limit.}
 
 #AI:random
@@ -200,34 +200,34 @@ final class Str {
 #AI param_details: [{name: $haystack | type: string | required: true | desc: String to search in.}; {name: $needle | type: string | required: true | desc: Substring to look for.}]
 #AI return_detail: {type: bool | desc: True if needle is found.}
 
-#AI:starts_with
+#AI:startsWith
 #AI group: Predicates
 #AI frequency: low
-#AI signature: public static function starts_with(string $str, string $prefix): bool
+#AI signature: public static function startsWith(string $str, string $prefix): bool
 #AI contract: Returns true when $str starts with $prefix.
 #AI param_details: [{name: $str | type: string | required: true | desc: String to test.}; {name: $prefix | type: string | required: true | desc: Expected prefix.}]
 #AI return_detail: {type: bool | desc: True if string starts with prefix.}
 
-#AI:ends_with
+#AI:endsWith
 #AI group: Predicates
 #AI frequency: low
-#AI signature: public static function ends_with(string $str, string $suffix): bool
+#AI signature: public static function endsWith(string $str, string $suffix): bool
 #AI contract: Returns true when $str ends with $suffix.
 #AI param_details: [{name: $str | type: string | required: true | desc: String to test.}; {name: $suffix | type: string | required: true | desc: Expected suffix.}]
 #AI return_detail: {type: bool | desc: True if string ends with suffix.}
 
-#AI:to_snake
+#AI:toSnake
 #AI group: Case Conversion
 #AI frequency: medium
-#AI signature: public static function to_snake(string $str): string
+#AI signature: public static function toSnake(string $str): string
 #AI contract: Converts CamelCase or PascalCase to snake_case. Handles consecutive capitals correctly (e.g. 'HTMLParser' → 'html_parser').
 #AI param_details: [{name: $str | type: string | required: true | desc: CamelCase input.}]
 #AI return_detail: {type: string | desc: snake_case output.}
 
-#AI:to_camel
+#AI:toCamel
 #AI group: Case Conversion
 #AI frequency: medium
-#AI signature: public static function to_camel(string $str): string
+#AI signature: public static function toCamel(string $str): string
 #AI contract: Converts snake_case to camelCase (first letter lowercase).
 #AI param_details: [{name: $str | type: string | required: true | desc: snake_case input.}]
 #AI return_detail: {type: string | desc: camelCase output.}

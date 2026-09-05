@@ -44,15 +44,15 @@ describe('ide_link::name()', function(): void {
 
 });
 
-describe('ide_link::is_supported()', function(): void {
+describe('ide_link::isSupported()', function(): void {
 
     test('returns true for known IDEs', function(): void {
-        expect(\Skim\Dev\IdeLink::is_supported('phpstorm'))->toBeTrue();
-        expect(\Skim\Dev\IdeLink::is_supported('vscode'))->toBeTrue();
+        expect(\Skim\Dev\IdeLink::isSupported('phpstorm'))->toBeTrue();
+        expect(\Skim\Dev\IdeLink::isSupported('vscode'))->toBeTrue();
     });
 
     test('returns false for unknown IDEs', function(): void {
-        expect(\Skim\Dev\IdeLink::is_supported('gedit'))->toBeFalse();
+        expect(\Skim\Dev\IdeLink::isSupported('gedit'))->toBeFalse();
     });
 
 });

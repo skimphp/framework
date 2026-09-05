@@ -29,7 +29,7 @@ final class LeakDetector {
         self::$mode = $mode;
     }
 
-    public static function is_active(): bool {
+    public static function isActive(): bool {
         return self::$mode !== 'off';
     }
 
@@ -46,17 +46,17 @@ final class LeakDetector {
         self::$request_n++;
 
         // --- 1. Hard invariants (immediate, deterministic) ---
-        self::check_hard_invariants($app);
+        self::checkHardInvariants($app);
 
         // --- 2. Soft growth trends (after warmup window) ---
         if (self::$request_n > self::$warmup) {
-            self::check_growth_trends($app);
+            self::checkGrowthTrends($app);
         }
     }
 
-    private static function check_hard_invariants(\Skim\Core\App $app): void {
+    private static function checkHardInvariants(\Skim\Core\App $app): void {
         // user scope must be empty after end_request
-        if (!$app->user_scope_empty()) {
+        if (!$app->userScopeEmpty()) {
             self::report('hard.user_scope', 'User scope not empty after end_request');
         }
 
@@ -66,25 +66,25 @@ final class LeakDetector {
         }
 
         // no pooled DB connection left in transaction
-        if (\Skim\Db\Db::has_open_transaction()) {
+        if (\Skim\Db\Db::hasOpenTransaction()) {
             self::report('hard.db_transaction', 'Open database transaction after end_request');
         }
 
         // request-scoped bindings must be dropped from resolved
-        foreach ($app->request_scoped_services() as $abstract) {
-            if (in_array($abstract, $app->resolved_services(), true)) {
+        foreach ($app->requestScopedServices() as $abstract) {
+            if (in_array($abstract, $app->resolvedServices(), true)) {
                 self::report('hard.request_scoped_cached', "Request-scoped binding '{$abstract}' still in resolved cache");
             }
         }
     }
 
-    private static function check_growth_trends(\Skim\Core\App $app): void {
+    private static function checkGrowthTrends(\Skim\Core\App $app): void {
         $sample = [
             'memory_real'    => memory_get_usage(true),
             'memory_used'    => memory_get_usage(false),
-            'resolved_count' => count($app->resolved_services()),
-            'listener_count' => \Skim\Events\Event::total_listener_count(),
-            'db_conn_count'  => \Skim\Db\Db::connection_count(),
+            'resolved_count' => count($app->resolvedServices()),
+            'listener_count' => \Skim\Events\Event::totalListenerCount(),
+            'db_conn_count'  => \Skim\Db\Db::connectionCount(),
         ];
 
         self::$window[] = $sample;
@@ -96,14 +96,14 @@ final class LeakDetector {
             return; // need minimum window after warmup
         }
 
-        self::check_monotonic('growth.memory_real', array_column(self::$window, 'memory_real'));
-        self::check_monotonic('growth.memory_used', array_column(self::$window, 'memory_used'));
-        self::check_monotonic('growth.resolved_count', array_column(self::$window, 'resolved_count'));
-        self::check_monotonic('growth.listener_count', array_column(self::$window, 'listener_count'));
-        self::check_monotonic('growth.db_conn_count', array_column(self::$window, 'db_conn_count'));
+        self::checkMonotonic('growth.memory_real', array_column(self::$window, 'memory_real'));
+        self::checkMonotonic('growth.memory_used', array_column(self::$window, 'memory_used'));
+        self::checkMonotonic('growth.resolved_count', array_column(self::$window, 'resolved_count'));
+        self::checkMonotonic('growth.listener_count', array_column(self::$window, 'listener_count'));
+        self::checkMonotonic('growth.db_conn_count', array_column(self::$window, 'db_conn_count'));
     }
 
-    private static function check_monotonic(string $key, array $series): void {
+    private static function checkMonotonic(string $key, array $series): void {
         if (count($series) < 5) return;
 
         // Check if the series is monotonically increasing with no plateau

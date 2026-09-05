@@ -38,10 +38,10 @@ describe('router::map() — Slim/Laravel-style alias', function(): void {
     });
 
     test('named route registered via map() is resolvable through the app container url() helper', function(): void {
-        $app = \Skim\Core\App::test_instance();
+        $app = \Skim\Core\App::testInstance();
         $app->router->map('GET', '/d', fn() => null)->name('d');
 
-        $generated = $app->router->build_url('d');
+        $generated = $app->router->buildUrl('d');
         expect($generated)->toBe('/d');
     });
 

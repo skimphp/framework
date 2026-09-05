@@ -38,26 +38,26 @@ final class RequestTrace {
     }
 
     /**
-     * Returns whether trace collection is enabled. #AI:is_enabled
+     * Returns whether trace collection is enabled. #AI:isEnabled
      */
-    public static function is_enabled(): bool { return self::$enabled; }
+    public static function isEnabled(): bool { return self::$enabled; }
 
     /**
      * Begins a new per-request trace, discarding any previous unfinished trace. #AI:start
      *
      * No-op when not enabled.
      *
-     * @param string $request_id Unique request identifier.
+     * @param string $requestId Unique request identifier.
      * @param string $method     HTTP method (GET, POST, etc.).
      * @param string $path       Request path.
      */
-    public static function start(string $request_id, string $method, string $path): void {
+    public static function start(string $requestId, string $method, string $path): void {
         if (!self::$enabled) {
             return;
         }
         self::$start_time = microtime(true);
         self::$current = [
-            'request_id'        => $request_id,
+            'request_id'        => $requestId,
             'method'            => $method,
             'path'              => $path,
             'timeline'          => [],
@@ -104,13 +104,13 @@ final class RequestTrace {
     }
 
     /**
-     * Sets the list of active extension names on the current trace. #AI:set_extensions
+     * Sets the list of active extension names on the current trace. #AI:setExtensions
      *
      * No-op when trace not started.
      *
      * @param string[] $names Extension names active for this request.
      */
-    public static function set_extensions(array $names): void {
+    public static function setExtensions(array $names): void {
         if (self::$current !== null) {
             self::$current['extensions_active'] = array_values($names);
         }
@@ -194,18 +194,18 @@ final class RequestTrace {
 #AI signature: public static function disable(): void
 #AI contract: Disables trace collection and clears the current in-progress trace.
 
-#AI:is_enabled
+#AI:isEnabled
 #AI group: Control
 #AI frequency: low
-#AI signature: public static function is_enabled(): bool
+#AI signature: public static function isEnabled(): bool
 #AI contract: Returns whether trace collection is currently enabled.
 
 #AI:start
 #AI group: Recording
 #AI frequency: high
-#AI signature: public static function start(string $request_id, string $method, string $path): void
+#AI signature: public static function start(string $requestId, string $method, string $path): void
 #AI contract: Begins a new per-request trace, discarding any previous unfinished trace. No-op when not enabled.
-#AI param_details: [{name: $request_id | type: string | required: true | desc: Unique request identifier.}; {name: $method | type: string | required: true | desc: HTTP method (GET, POST, etc.).}; {name: $path | type: string | required: true | desc: Request path.}]
+#AI param_details: [{name: $requestId | type: string | required: true | desc: Unique request identifier.}; {name: $method | type: string | required: true | desc: HTTP method (GET, POST, etc.).}; {name: $path | type: string | required: true | desc: Request path.}]
 
 #AI:event
 #AI group: Recording
@@ -221,10 +221,10 @@ final class RequestTrace {
 #AI contract: Records a Throwable into the errors list with elapsed timestamp, exception class, and message. No-op when trace not started.
 #AI param_details: [{name: $e | type: \Throwable | required: true | desc: The exception to record.}]
 
-#AI:set_extensions
+#AI:setExtensions
 #AI group: Recording
 #AI frequency: low
-#AI signature: public static function set_extensions(array $names): void
+#AI signature: public static function setExtensions(array $names): void
 #AI contract: Sets the list of active extension names on the current trace. No-op when trace not started.
 #AI param_details: [{name: $names | type: string[] | required: true | desc: Extension names active for this request.}]
 

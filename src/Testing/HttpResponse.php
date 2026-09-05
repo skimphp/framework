@@ -12,8 +12,8 @@ use Skim\Core\Response;
  *
  * Example:
  *   $client->post('/api/users', json: ['name' => 'John'])
- *       ->assert_created()
- *       ->assert_json(['name' => 'John']);
+ *       ->assertCreated()
+ *       ->assertJson(['name' => 'John']);
  *
  * Testing: This class IS the test assertion layer — use directly in test cases.
  *
@@ -23,130 +23,130 @@ class HttpResponse {
     public function __construct(private readonly \Skim\Core\Response $res) {}
 
     /**
-     * Asserts the response status code matches the expected value. #AI:assert_status
+     * Asserts the response status code matches the expected value. #AI:assertStatus
      *
      * @param int $code Expected HTTP status code.
      */
-    public function assert_status(int $code): static {
-        expect($this->res->get_status())->toBe($code);
+    public function assertStatus(int $code): static {
+        expect($this->res->getStatus())->toBe($code);
         return $this;
     }
 
     /**
-     * Asserts 200 OK. #AI:assert_ok
+     * Asserts 200 OK. #AI:assertOk
      */
-    public function assert_ok(): static           { return $this->assert_status(200); }
+    public function assertOk(): static           { return $this->assertStatus(200); }
 
     /**
-     * Asserts 201 Created. #AI:assert_created
+     * Asserts 201 Created. #AI:assertCreated
      */
-    public function assert_created(): static      { return $this->assert_status(201); }
+    public function assertCreated(): static      { return $this->assertStatus(201); }
 
     /**
-     * Asserts 204 No Content. #AI:assert_no_content
+     * Asserts 204 No Content. #AI:assertNoContent
      */
-    public function assert_no_content(): static   { return $this->assert_status(204); }
+    public function assertNoContent(): static   { return $this->assertStatus(204); }
 
     /**
-     * Asserts 404 Not Found. #AI:assert_not_found
+     * Asserts 404 Not Found. #AI:assertNotFound
      */
-    public function assert_not_found(): static    { return $this->assert_status(404); }
+    public function assertNotFound(): static    { return $this->assertStatus(404); }
 
     /**
-     * Asserts 401 Unauthorized. #AI:assert_unauthorized
+     * Asserts 401 Unauthorized. #AI:assertUnauthorized
      */
-    public function assert_unauthorized(): static { return $this->assert_status(401); }
+    public function assertUnauthorized(): static { return $this->assertStatus(401); }
 
     /**
-     * Asserts 403 Forbidden. #AI:assert_forbidden
+     * Asserts 403 Forbidden. #AI:assertForbidden
      */
-    public function assert_forbidden(): static    { return $this->assert_status(403); }
+    public function assertForbidden(): static    { return $this->assertStatus(403); }
 
     /**
-     * Asserts 422 Unprocessable Entity. #AI:assert_unprocessable
+     * Asserts 422 Unprocessable Entity. #AI:assertUnprocessable
      */
-    public function assert_unprocessable(): static { return $this->assert_status(422); }
+    public function assertUnprocessable(): static { return $this->assertStatus(422); }
 
     /**
-     * Asserts a redirect response with the expected Location header. #AI:assert_redirect
+     * Asserts a redirect response with the expected Location header. #AI:assertRedirect
      *
      * @param string $url Expected redirect target URL.
      */
-    public function assert_redirect(string $url): static {
-        expect($this->is_redirect())->toBeTrue();
-        expect($this->res->get_header('Location'))->toBe($url);
+    public function assertRedirect(string $url): static {
+        expect($this->isRedirect())->toBeTrue();
+        expect($this->res->getHeader('Location'))->toBe($url);
         return $this;
     }
 
     /**
-     * Asserts the JSON body contains the expected data (subset match). #AI:assert_json
+     * Asserts the JSON body contains the expected data (subset match). #AI:assertJson
      *
      * @param array $data Expected key-value pairs (subset, not exact match).
      */
-    public function assert_json(array $data): static {
-        expect($this->res->get_json())->toMatchArray($data);
+    public function assertJson(array $data): static {
+        expect($this->res->getJson())->toMatchArray($data);
         return $this;
     }
 
     /**
-     * Asserts a response header has the expected value. #AI:assert_header
+     * Asserts a response header has the expected value. #AI:assertHeader
      *
      * @param string $key   Header name.
      * @param string $value Expected header value.
      */
-    public function assert_header(string $key, string $value): static {
-        expect($this->res->get_header($key))->toBe($value);
+    public function assertHeader(string $key, string $value): static {
+        expect($this->res->getHeader($key))->toBe($value);
         return $this;
     }
 
     /**
-     * Asserts the response body contains the given text. #AI:assert_contains
+     * Asserts the response body contains the given text. #AI:assertContains
      *
      * @param string $text Substring expected in the response body.
      */
-    public function assert_contains(string $text): static {
-        expect($this->res->get_body())->toContain($text);
+    public function assertContains(string $text): static {
+        expect($this->res->getBody())->toContain($text);
         return $this;
     }
 
     /**
      * Returns the HTTP status code. #AI:status
      */
-    public function status(): int   { return $this->res->get_status(); }
+    public function status(): int   { return $this->res->getStatus(); }
 
     /**
      * Returns the decoded JSON body. #AI:json
      */
-    public function json(): array   { return $this->res->get_json(); }
+    public function json(): array   { return $this->res->getJson(); }
 
     /**
      * Returns the raw response body. #AI:body
      */
-    public function body(): string  { return $this->res->get_body(); }
+    public function body(): string  { return $this->res->getBody(); }
 
     /**
      * Returns a specific header value. #AI:header
      *
      * @param string $key Header name.
      */
-    public function header(string $key): ?string { return $this->res->get_header($key); }
+    public function header(string $key): ?string { return $this->res->getHeader($key); }
 
     /**
-     * Returns true for 3xx redirect status codes. #AI:is_redirect
+     * Returns true for 3xx redirect status codes. #AI:isRedirect
      */
-    public function is_redirect(): bool {
-        return in_array($this->res->get_status(), [301, 302, 303, 307, 308], true);
+    public function isRedirect(): bool {
+        return in_array($this->res->getStatus(), [301, 302, 303, 307, 308], true);
     }
 
     /**
      * Dumps the response body and returns $this for continued chaining. #AI:dump
      */
-    public function dump(): static  { dump($this->res->get_body()); return $this; }
+    public function dump(): static  { dump($this->res->getBody()); return $this; }
 
     /**
      * Dumps the response body and halts execution. #AI:dd
      */
-    public function dd(): never     { dd($this->res->get_body()); }
+    public function dd(): never     { dd($this->res->getBody()); }
 }
 
 #AI:class
@@ -170,95 +170,95 @@ class HttpResponse {
 #AI non_goals: [Does not make HTTP requests; Does not mock external services]
 #AI side_effects: [dump() and dd() produce output; assert_* methods throw on failure]
 #AI flow: http_client::get/post/etc() -> http_response -> assert_*() -> Pest expect()
-#AI lifecycle_steps: [pending_request::send() -> new http_response($res); -> test calls assert_ok()->assert_json([...])]
+#AI lifecycle_steps: [pending_request::send() -> new http_response($res); -> test calls assert_ok()->assertJson([...])]
 #AI section_order: [Status Assertions; Content Assertions; Accessors; Debug; Architecture]
 #AI architectural_notes: Thin wrapper over core response — adds test assertion ergonomics without modifying response behavior.
 
-#AI:assert_status
+#AI:assertStatus
 #AI group: Status Assertions
 #AI frequency: high
-#AI signature: public function assert_status(int $code): static
+#AI signature: public function assertStatus(int $code): static
 #AI contract: Asserts the response status code matches the expected value. Throws on mismatch.
 #AI param_details: [{name: $code | type: int | required: true | desc: Expected HTTP status code.}]
 #AI return_detail: {type: static | desc: $this for chaining.}
 
-#AI:assert_ok
+#AI:assertOk
 #AI group: Status Assertions
 #AI frequency: high
-#AI signature: public function assert_ok(): static
+#AI signature: public function assertOk(): static
 #AI contract: Asserts 200 OK status.
 #AI return_detail: {type: static | desc: $this for chaining.}
 
-#AI:assert_created
+#AI:assertCreated
 #AI group: Status Assertions
 #AI frequency: high
-#AI signature: public function assert_created(): static
+#AI signature: public function assertCreated(): static
 #AI contract: Asserts 201 Created status.
 #AI return_detail: {type: static | desc: $this for chaining.}
 
-#AI:assert_no_content
+#AI:assertNoContent
 #AI group: Status Assertions
 #AI frequency: low
-#AI signature: public function assert_no_content(): static
+#AI signature: public function assertNoContent(): static
 #AI contract: Asserts 204 No Content status.
 #AI return_detail: {type: static | desc: $this for chaining.}
 
-#AI:assert_not_found
+#AI:assertNotFound
 #AI group: Status Assertions
 #AI frequency: medium
-#AI signature: public function assert_not_found(): static
+#AI signature: public function assertNotFound(): static
 #AI contract: Asserts 404 Not Found status.
 #AI return_detail: {type: static | desc: $this for chaining.}
 
-#AI:assert_unauthorized
+#AI:assertUnauthorized
 #AI group: Status Assertions
 #AI frequency: medium
-#AI signature: public function assert_unauthorized(): static
+#AI signature: public function assertUnauthorized(): static
 #AI contract: Asserts 401 Unauthorized status.
 #AI return_detail: {type: static | desc: $this for chaining.}
 
-#AI:assert_forbidden
+#AI:assertForbidden
 #AI group: Status Assertions
 #AI frequency: low
-#AI signature: public function assert_forbidden(): static
+#AI signature: public function assertForbidden(): static
 #AI contract: Asserts 403 Forbidden status.
 #AI return_detail: {type: static | desc: $this for chaining.}
 
-#AI:assert_unprocessable
+#AI:assertUnprocessable
 #AI group: Status Assertions
 #AI frequency: medium
-#AI signature: public function assert_unprocessable(): static
+#AI signature: public function assertUnprocessable(): static
 #AI contract: Asserts 422 Unprocessable Entity status.
 #AI return_detail: {type: static | desc: $this for chaining.}
 
-#AI:assert_redirect
+#AI:assertRedirect
 #AI group: Status Assertions
 #AI frequency: medium
-#AI signature: public function assert_redirect(string $url): static
+#AI signature: public function assertRedirect(string $url): static
 #AI contract: Asserts a redirect status and matching Location header.
 #AI param_details: [{name: $url | type: string | required: true | desc: Expected redirect target URL.}]
 #AI return_detail: {type: static | desc: $this for chaining.}
 
-#AI:assert_json
+#AI:assertJson
 #AI group: Content Assertions
 #AI frequency: high
-#AI signature: public function assert_json(array $data): static
+#AI signature: public function assertJson(array $data): static
 #AI contract: Asserts the JSON body contains the expected data as a subset match.
 #AI param_details: [{name: $data | type: array | required: true | desc: Expected key-value pairs (subset match).}]
 #AI return_detail: {type: static | desc: $this for chaining.}
 
-#AI:assert_header
+#AI:assertHeader
 #AI group: Content Assertions
 #AI frequency: medium
-#AI signature: public function assert_header(string $key, string $value): static
+#AI signature: public function assertHeader(string $key, string $value): static
 #AI contract: Asserts a response header has the expected value.
 #AI param_details: [{name: $key | type: string | required: true | desc: Header name.}; {name: $value | type: string | required: true | desc: Expected header value.}]
 #AI return_detail: {type: static | desc: $this for chaining.}
 
-#AI:assert_contains
+#AI:assertContains
 #AI group: Content Assertions
 #AI frequency: medium
-#AI signature: public function assert_contains(string $text): static
+#AI signature: public function assertContains(string $text): static
 #AI contract: Asserts the response body contains the given substring.
 #AI param_details: [{name: $text | type: string | required: true | desc: Substring expected in the body.}]
 #AI return_detail: {type: static | desc: $this for chaining.}
@@ -292,10 +292,10 @@ class HttpResponse {
 #AI param_details: [{name: $key | type: string | required: true | desc: Header name.}]
 #AI return_detail: {type: ?string | desc: Header value or null if not set.}
 
-#AI:is_redirect
+#AI:isRedirect
 #AI group: Accessors
 #AI frequency: low
-#AI signature: public function is_redirect(): bool
+#AI signature: public function isRedirect(): bool
 #AI contract: Returns true for 3xx redirect status codes (301, 302, 303, 307, 308).
 #AI return_detail: {type: bool | desc: True if status is a redirect.}
 

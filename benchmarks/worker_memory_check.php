@@ -11,7 +11,7 @@ require SKIM_ROOT . '/vendor/autoload.php';
 \skim\core\config::reset();
 \skim\core\env::reset();
 
-$app = skim\core\app::test_instance([
+$app = skim\core\app::testInstance([
     'app.debug' => false,
     'app.view.default_layout' => null,
 ]);
@@ -24,18 +24,18 @@ $app->router->get('/boom', fn() => throw new \RuntimeException('handler blew up'
 skim\events\event::on('boot.ping', fn() => null);
 
 $app->boot();
-$app->boot_extensions();
+$app->bootExtensions();
 $app->freeze();
 
 // Mirror public/worker.php — REQUIRED for event-accumulation assertions.
-skim\events\event::capture_boot_snapshot();
+skim\events\event::captureBootSnapshot();
 
 $initial = memory_get_usage(true);
 $peak_delta = 0;
-$boot_listener_baseline = skim\events\event::listener_count('boot.ping');
+$boot_listener_baseline = skim\events\event::listenerCount('boot.ping');
 
 for ($i = 0; $i < 100; $i++) {
-    $app->begin_request();
+    $app->beginRequest();
 
     // Simulate request-scoped mutation.
     $app->set('user.name', 'alice-' . $i);
@@ -50,10 +50,10 @@ for ($i = 0; $i < 100; $i++) {
         $app->dispatch($req, $res);
     } catch (\Throwable $e) {
         ob_start();
-        $app->handle_exception($e);
+        $app->handleException($e);
         ob_end_clean();
     } finally {
-        $app->end_request();
+        $app->endRequest();
     }
 
     // Verify reset.
@@ -61,15 +61,15 @@ for ($i = 0; $i < 100; $i++) {
         fwrite(STDERR, "FAIL: user scope leaked at iteration {$i}\n");
         exit(1);
     }
-    if (\skim\view\view::get_shared('title') !== null) {
+    if (\skim\view\view::getShared('title') !== null) {
         fwrite(STDERR, "FAIL: view shared data leaked at iteration {$i}\n");
         exit(1);
     }
-    if (\skim\events\event::listener_count('boot.ping') !== $boot_listener_baseline) {
+    if (\skim\events\event::listenerCount('boot.ping') !== $boot_listener_baseline) {
         fwrite(STDERR, "FAIL: boot listener count changed at iteration {$i}\n");
         exit(1);
     }
-    if (\skim\events\event::listener_count('req.ping') !== 0) {
+    if (\skim\events\event::listenerCount('req.ping') !== 0) {
         fwrite(STDERR, "FAIL: request listener leaked at iteration {$i}\n");
         exit(1);
     }

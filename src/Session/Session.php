@@ -25,9 +25,9 @@ final class Session implements \Skim\Worker\Resettable {
     private static bool            $started = false;
 
     /**
-     * Closes the active session and resets driver state between requests. #AI:reset_request
+     * Closes the active session and resets driver state between requests. #AI:resetRequest
      */
-    public static function reset_request(): void {
+    public static function resetRequest(): void {
         if (self::$started) {
             session_write_close();
         }
@@ -148,19 +148,19 @@ final class Session implements \Skim\Worker\Resettable {
     }
 
     /**
-     * Injects a custom driver instance (testing only). #AI:set_driver
+     * Injects a custom driver instance (testing only). #AI:setDriver
      *
      * Use in Pest/PHPUnit to bypass config-based resolution. Call reset()
      * in tearDown() to restore normal behavior.
      *
      * Example:
-     *   session::set_driver(new session_fake());
+     *   session::setDriver(new session_fake());
      *   // ... run tests ...
      *   session::reset();
      *
      * @param \Skim\Session\SessionDriver $driver Mock or fake driver for testing.
      */
-    public static function set_driver(\Skim\Session\SessionDriver $driver): void {
+    public static function setDriver(\Skim\Session\SessionDriver $driver): void {
         self::$driver  = $driver;
         self::$started = false;
     }
@@ -178,10 +178,10 @@ final class Session implements \Skim\Worker\Resettable {
     // --- internals ---
 
     private static function driver(): \Skim\Session\SessionDriver {
-        return self::$driver ??= self::resolve_driver();
+        return self::$driver ??= self::resolveDriver();
     }
 
-    private static function resolve_driver(): \Skim\Session\SessionDriver {
+    private static function resolveDriver(): \Skim\Session\SessionDriver {
         $name = \Skim\Core\Config::get('app.session.driver', 'file');
         return match ($name) {
             'redis' => new \Skim\Session\RedisSessionDriver(
@@ -192,7 +192,7 @@ final class Session implements \Skim\Worker\Resettable {
                 lifetime: (int) \Skim\Core\Config::get('app.session.lifetime', 7200),
             ),
             default => new \Skim\Session\FileSessionDriver(
-                path: storage_path('sessions'),
+                path: storagePath('sessions'),
                 lifetime: (int) \Skim\Core\Config::get('app.session.lifetime', 7200),
             ),
         };
@@ -292,10 +292,10 @@ final class Session implements \Skim\Worker\Resettable {
 #AI contract: Returns the current session ID.
 #AI return_detail: {type: string | desc: The active session identifier.}
 
-#AI:set_driver
+#AI:setDriver
 #AI group: Testing Hooks
 #AI frequency: low
-#AI signature: public static function set_driver(session_driver $driver): void
+#AI signature: public static function setDriver(session_driver $driver): void
 #AI contract: Replaces the active driver instance. Use in tests to bypass config-based resolution.
 #AI param_details: [{name: $driver | type: session_driver | required: true | desc: Mock or fake driver for testing.}]
 #AI side_effects: [Replaces static driver; Resets started flag]
@@ -307,10 +307,10 @@ final class Session implements \Skim\Worker\Resettable {
 #AI contract: Clears the cached driver and resets to unstarted state. Forces re-resolution from config on next call.
 #AI side_effects: [Clears static driver and started flag]
 
-#AI:reset_request
+#AI:resetRequest
 #AI group: Testing Hooks
 #AI frequency: internal
-#AI signature: public static function reset_request(): void
+#AI signature: public static function resetRequest(): void
 #AI contract: Closes the active session and resets driver state between requests in worker mode.
 #AI side_effects: [Calls session_write_close() if started; clears driver and started flag]
 
@@ -320,8 +320,8 @@ final class Session implements \Skim\Worker\Resettable {
 #AI signature: private static function driver(): session_driver
 #AI contract: Returns the cached driver instance, resolving lazily if null.
 
-#AI:resolve_driver
+#AI:resolveDriver
 #AI group: Architecture
 #AI frequency: internal
-#AI signature: private static function resolve_driver(): session_driver
+#AI signature: private static function resolveDriver(): session_driver
 #AI contract: Maps config('app.session.driver') to a concrete driver instance. Defaults to file_session_driver.

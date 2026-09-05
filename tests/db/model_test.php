@@ -7,7 +7,7 @@ use Skim\Db\Exceptions\NotFoundException;
 // All DB tests use SQLite :memory: — no real MySQL required.
 // Schema created inline before each test group.
 
-function setup_test_db(): void {
+function setupTestDb(): void {
     \Skim\Db\Db::connect('default', ['driver' => 'sqlite', 'database' => ':memory:']);
     \Skim\Db\Db::query('CREATE TABLE users (
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +27,7 @@ class TestUser extends \Skim\Db\Model {
 describe('model::find()', function(): void {
 
     beforeEach(function(): void {
-        setup_test_db();
+        setupTestDb();
     });
 
     test('returns null when record does not exist', function(): void {
@@ -43,20 +43,20 @@ describe('model::find()', function(): void {
 
 });
 
-describe('model::find_or_fail()', function(): void {
+describe('model::findOrFail()', function(): void {
 
     beforeEach(function(): void {
-        setup_test_db();
+        setupTestDb();
     });
 
     test('throws not_found_exception when record missing', function(): void {
-        expect(fn() => TestUser::find_or_fail(999))
+        expect(fn() => TestUser::findOrFail(999))
             ->toThrow(\Skim\Db\Exceptions\NotFoundException::class);
     });
 
     test('returns model instance when found', function(): void {
         \Skim\Db\Db::query('INSERT INTO users %values%', ['values' => ['name' => 'Jane', 'email' => 'j@j.com', 'status' => 'active']]);
-        $user = TestUser::find_or_fail(1);
+        $user = TestUser::findOrFail(1);
         expect($user)->toBeInstanceOf(TestUser::class);
     });
 
@@ -65,7 +65,7 @@ describe('model::find_or_fail()', function(): void {
 describe('model::create() and save() INSERT', function(): void {
 
     beforeEach(function(): void {
-        setup_test_db();
+        setupTestDb();
     });
 
     test('create() inserts a row and returns hydrated model', function(): void {
@@ -85,7 +85,7 @@ describe('model::create() and save() INSERT', function(): void {
 describe('model::save() UPDATE with dirty tracking', function(): void {
 
     beforeEach(function(): void {
-        setup_test_db();
+        setupTestDb();
     });
 
     test('UPDATE executes only when attribute changes', function(): void {
@@ -109,7 +109,7 @@ describe('model::save() UPDATE with dirty tracking', function(): void {
 describe('model::delete()', function(): void {
 
     beforeEach(function(): void {
-        setup_test_db();
+        setupTestDb();
     });
 
     test('removes the record from the database', function(): void {
@@ -123,11 +123,11 @@ describe('model::delete()', function(): void {
 describe('model::schema() — schema fetch', function(): void {
 
     beforeEach(function(): void {
-        setup_test_db();
+        setupTestDb();
     });
 
     test('column_names() returns all column names from the table', function(): void {
-        $cols = TestUser::column_names();
+        $cols = TestUser::columnNames();
         expect($cols)->toContain('id')
                      ->toContain('name')
                      ->toContain('email')
@@ -148,48 +148,48 @@ describe('model::schema() — schema fetch', function(): void {
 
 });
 
-describe('model::delete_where()', function(): void {
+describe('model::deleteWhere()', function(): void {
 
     beforeEach(function(): void {
-        setup_test_db();
+        setupTestDb();
         \Skim\Db\Db::query('INSERT INTO users %values%', ['values' => ['name' => 'A', 'email' => 'a@a.com', 'status' => 'active']]);
         \Skim\Db\Db::query('INSERT INTO users %values%', ['values' => ['name' => 'B', 'email' => 'b@b.com', 'status' => 'inactive']]);
         \Skim\Db\Db::query('INSERT INTO users %values%', ['values' => ['name' => 'C', 'email' => 'c@c.com', 'status' => 'active']]);
     });
 
     test('deletes only rows matching conditions', function(): void {
-        $affected = TestUser::delete_where(['status' => 'inactive']);
+        $affected = TestUser::deleteWhere(['status' => 'inactive']);
         expect($affected)->toBe(1);
         expect(TestUser::where([])->count())->toBe(2);
     });
 
     test('does not delete unmatched rows', function(): void {
-        TestUser::delete_where(['status' => 'inactive']);
+        TestUser::deleteWhere(['status' => 'inactive']);
         $remaining = TestUser::where(['status' => 'active'])->all();
         expect(count($remaining))->toBe(2);
     });
 
 });
 
-describe('model::find_by()', function(): void {
+describe('model::findBy()', function(): void {
 
     beforeEach(function(): void {
-        setup_test_db();
+        setupTestDb();
         \Skim\Db\Db::query('INSERT INTO users %values%', ['values' => ['name' => 'Alice', 'email' => 'alice@example.com', 'status' => 'active']]);
     });
 
     test('returns model when column matches', function(): void {
-        $user = TestUser::find_by('email', 'alice@example.com');
+        $user = TestUser::findBy('email', 'alice@example.com');
         expect($user)->toBeInstanceOf(TestUser::class);
         expect($user->name)->toBe('Alice');
     });
 
     test('returns null when no match', function(): void {
-        expect(TestUser::find_by('email', 'nobody@example.com'))->toBeNull();
+        expect(TestUser::findBy('email', 'nobody@example.com'))->toBeNull();
     });
 
     test('throws on invalid column name', function(): void {
-        expect(fn() => TestUser::find_by('bad-col!', 'val'))
+        expect(fn() => TestUser::findBy('bad-col!', 'val'))
             ->toThrow(\InvalidArgumentException::class);
     });
 
@@ -198,7 +198,7 @@ describe('model::find_by()', function(): void {
 describe('model::where() query scope', function(): void {
 
     beforeEach(function(): void {
-        setup_test_db();
+        setupTestDb();
         \Skim\Db\Db::query('INSERT INTO users %values%', ['values' => ['name' => 'A', 'email' => 'a@a.com', 'status' => 'active']]);
         \Skim\Db\Db::query('INSERT INTO users %values%', ['values' => ['name' => 'B', 'email' => 'b@b.com', 'status' => 'inactive']]);
         \Skim\Db\Db::query('INSERT INTO users %values%', ['values' => ['name' => 'C', 'email' => 'c@c.com', 'status' => 'active']]);
@@ -224,7 +224,7 @@ describe('model::where() query scope', function(): void {
     });
 
     test('paginate() returns pagination object with correct totals', function(): void {
-        $page = TestUser::where([])->paginate(page: 1, per_page: 2);
+        $page = TestUser::where([])->paginate(page: 1, perPage: 2);
         expect($page->total)->toBe(3);
         expect($page->pages)->toBe(2);
         expect(count($page->items))->toBe(2);
