@@ -1,6 +1,6 @@
 # SKIM Framework
 
-A modern, fast PHP 8.5+ micro-framework. Zero magic, snake_case everywhere, Docker-ready.
+A modern, fast PHP 8.5+ micro-framework. Zero magic, PSR-style casing (PascalCase classes, camelCase methods), Docker-ready.
 
 ---
 
@@ -169,7 +169,7 @@ db::transaction(function() {
 ### Active Record
 
 ```php
-class user extends skim\db\model {
+class User extends \Skim\Db\Model {
     protected static string $table   = 'users';
     protected static array  $guarded = ['id', 'created_at'];
     protected static array  $casts   = ['age' => 'int', 'is_active' => 'bool'];
@@ -448,7 +448,7 @@ chmod +x .git/hooks/pre-push
 
 ## Key design decisions
 
-- **Snake_case everywhere** — classes, methods, files, namespaces. `HomeController`, not `HomeController`.
+- **Conventional PHP casing** — PascalCase classes, camelCase methods, UPPER_SNAKE constants. `HomeController`, not `home_controller`.
 - **No template engines** — raw PHP with opcache is ~3x faster than Twig/Blade; real stack traces.
 - **Static facades** (`db::`, `cache::`, `log::`) — each has `reset()` and `setDriver()` for test isolation.
 - **Lazy connections** — DB and Redis are not opened until the first actual query.

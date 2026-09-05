@@ -135,7 +135,7 @@ final class Event implements \Skim\Worker\Resettable {
         if (!class_exists(\Skim\Queue\Queue::class)) {
             throw new \RuntimeException('emit_async() requires skim/queue. Run: php skim module:add queue');
         }
-        \Skim\Queue\Queue::push(new \skim\queue\internal\emit_event_job($payload, $data));
+        \Skim\Queue\Queue::push(new \Skim\Queue\Internal\EmitEventJob($payload, $data));
     }
 
     /**
