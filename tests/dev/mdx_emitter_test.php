@@ -203,4 +203,33 @@ describe('MdxEmitter', function(): void {
         rmdir($dir);
     });
 
+    test('frontmatter description escapes backslashes, quotes and colons for YAML', function (): void {
+        $dir = sys_get_temp_dir() . '/skim_mdx_yaml_' . uniqid();
+        $data = [
+            'generated_at' => '2026-01-01T00:00:00+00:00',
+            'classes'      => [
+                [
+                    'class_name'  => 'ErrorPage',
+                    'namespace'   => 'Skim\\Dev',
+                    'file'        => '/src/Dev/ErrorPage.php',
+                    'summary'     => 'Renders fn(\\Throwable $e) when "debug": on',
+                    'description' => "Handles \\Throwable, Skim\\Dev\\ErrorPage refs, colons: ok, \"quotes\" kept",
+                    'lifecycle'   => '',
+                    'owner'       => '',
+                    'methods'     => [],
+                ],
+            ],
+        ];
+
+        (new \Skim\Dev\Docs\Emitter\MdxEmitter())->emit($data, $dir);
+        $content = file_get_contents($dir . '/dev/errorpage.mdx');
+
+        expect($content)->toContain('description: "Handles \\\\Throwable, Skim\\\\Dev\\\\ErrorPage refs, colons: ok, \\"quotes\\" kept"');
+
+        array_map('unlink', glob($dir . '/dev/*.mdx'));
+        unlink($dir . '/index.mdx');
+        rmdir($dir . '/dev');
+        rmdir($dir);
+    });
+
 });

@@ -241,7 +241,7 @@ class MdxEmitter {
     private function renderClass(array $class): string {
         $title = (string) ($class['title'] ?? $class['class_name'] ?? 'class');
         $description = $this->oneLine((string) ($class['description'] ?? $class['summary'] ?? "Class {$title}."));
-        $lines = ['---', "title: {$title}", 'description: "' . str_replace('"', '\\"', $description) . '"', '---', ''];
+        $lines = ['---', "title: {$title}", 'description: "' . $this->escapeYamlDouble($description) . '"', '---', ''];
 
         foreach ($class['badges'] ?? [] as $badge) {
             $lines[] = '<ApiBadge type="' . $this->escapeAttr((string) $badge) . '" />';
@@ -471,6 +471,15 @@ class MdxEmitter {
 
     private function oneLine(string $value): string {
         return trim(preg_replace('/\s+/', ' ', $value) ?? $value);
+    }
+
+    /**
+     * Escapes a value for a double-quoted YAML scalar (MDX frontmatter).
+     * Backslashes first — a lone `\T` (e.g. from `\Throwable`) is an
+     * invalid YAML escape and breaks frontmatter parsers. #AI:escapeYamlDouble
+     */
+    private function escapeYamlDouble(string $value): string {
+        return str_replace(['\\', '"'], ['\\\\', '\\"'], $value);
     }
 
     private function escapeAttr(string $value): string {
