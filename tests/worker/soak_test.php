@@ -1,23 +1,23 @@
 <?php declare(strict_types=1);
 
-use skim\core\app;
-use skim\core\request;
-use skim\core\response;
-use skim\events\event;
-use skim\view\view;
-use skim\view\component_collector;
-use skim\worker\leak_detector;
-use skim\worker\worker_reset;
+use Skim\Core\App;
+use Skim\Core\Request;
+use Skim\Core\Response;
+use Skim\Events\Event;
+use Skim\View\View;
+use Skim\View\ComponentCollector;
+use Skim\Worker\LeakDetector;
+use Skim\Worker\WorkerReset;
 
 beforeEach(function (): void {
-    event::off();
-    view::reset();
-    component_collector::reset_request();
-    leak_detector::reset();
+    \Skim\Events\Event::off();
+    \Skim\View\View::reset();
+    \Skim\View\ComponentCollector::reset_request();
+    \Skim\Worker\LeakDetector::reset();
 });
 
-function boot_soak_app(): app {
-    $app = app::test_instance([
+function boot_soak_app(): \Skim\Core\App {
+    $app = \Skim\Core\App::test_instance([
         'app.debug' => false,
         'app.view.default_layout' => null,
         'app.leak_detection' => 'strict',
@@ -26,12 +26,12 @@ function boot_soak_app(): app {
     // Realistic multi-component routes
     $app->router->get('/home', fn(): array => ['page' => 'home']);
 
-    $app->router->get('/user/@id:int', function(request $req, response $res, string $id): array {
+    $app->router->get('/user/@id:int', function(\Skim\Core\Request $req, \Skim\Core\Response $res, string $id): array {
         return ['user_id' => (int) $id];
     });
 
     $app->router->post('/contact', function(): mixed {
-        $result = \skim\validation\validate::make([
+        $result = \Skim\Validation\Validate::make([
             'email' => ['required', 'email'],
             'message' => ['required', 'string', 'min:5'],
         ])->check([
@@ -40,53 +40,53 @@ function boot_soak_app(): app {
         ]);
 
         if (!$result->ok) {
-            return (new response())->status(422)->json(['errors' => $result->errors()]);
+            return (new \Skim\Core\Response())->status(422)->json(['errors' => $result->errors()]);
         }
         return ['sent' => true];
     });
 
     $app->router->get('/event', function(): array {
-        event::on('soak.demo', fn($data) => null);
-        event::emit('soak.demo', ['time' => microtime(true)]);
+        \Skim\Events\Event::on('soak.demo', fn($data) => null);
+        \Skim\Events\Event::emit('soak.demo', ['time' => microtime(true)]);
         return ['emitted' => true];
     });
 
     $app->router->get('/view', function(): array {
-        view::share('app_name', 'SKIM');
+        \Skim\View\View::share('app_name', 'SKIM');
         return ['view_shared' => true];
     });
 
     $app->router->get('/component', function(): array {
-        $collector = new \skim\view\component_collector();
-        component_collector::push($collector);
+        $collector = new \Skim\View\ComponentCollector();
+        \Skim\View\ComponentCollector::push($collector);
         // 1% chance of throw (exercises post-error isolation)
         if (random_int(1, 100) === 1) {
-            component_collector::pop();
+            \Skim\View\ComponentCollector::pop();
             throw new \RuntimeException('render failed');
         }
-        component_collector::pop();
+        \Skim\View\ComponentCollector::pop();
         return ['component' => true];
     });
 
     $app->router->get('/boom', fn() => throw new \RuntimeException('handler blew up'));
 
-    event::on('boot.warm', fn() => null);
+    \Skim\Events\Event::on('boot.warm', fn() => null);
 
     $app->boot();
     $app->boot_extensions();
     $app->freeze();
 
-    event::capture_boot_snapshot();
-    leak_detector::configure('strict');
+    \Skim\Events\Event::capture_boot_snapshot();
+    \Skim\Worker\LeakDetector::configure('strict');
 
     return $app;
 }
 
-function soak_run_once(app $app, string $uri, string $method = 'GET', array $data = []): void {
+function soak_run_once(\Skim\Core\App $app, string $uri, string $method = 'GET', array $data = []): void {
     $app->begin_request();
     try {
-        $req = request::make($method, $uri, $data);
-        $app->dispatch($req, new response());
+        $req = \Skim\Core\Request::make($method, $uri, $data);
+        $app->dispatch($req, new \Skim\Core\Response());
     } catch (\Throwable $e) {
         ob_start();
         $app->handle_exception($e);
@@ -116,7 +116,7 @@ describe('soak test — 1000 mixed requests', function (): void {
             }
         }
 
-        $findings = leak_detector::findings();
+        $findings = \Skim\Worker\LeakDetector::findings();
         $hard = array_filter($findings, fn($f) => str_starts_with($f['key'], 'hard.'));
         $growth = array_filter($findings, fn($f) => str_starts_with($f['key'], 'growth.'));
 

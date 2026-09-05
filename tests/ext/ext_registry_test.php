@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-use skim\ext\ext_registry;
+use Skim\Ext\ExtRegistry;
 
 describe('ext_registry', function(): void {
     $root = '';
@@ -51,7 +51,7 @@ describe('ext_registry', function(): void {
             'name' => 'not-an-extension/pkg',
         ]));
 
-        $extensions = (new ext_registry($root))->installed();
+        $extensions = (new \Skim\Ext\ExtRegistry($root))->installed();
 
         expect($extensions)->toHaveCount(1);
         expect($extensions[0]['name'])->toBe('skim/auth');
@@ -63,7 +63,7 @@ describe('ext_registry', function(): void {
     });
 
     test('scan result is cached until refresh is called', function() use (&$root): void {
-        $registry = new ext_registry($root);
+        $registry = new \Skim\Ext\ExtRegistry($root);
 
         expect($registry->installed())->toBe([]);
 
@@ -88,7 +88,7 @@ describe('ext_registry', function(): void {
         $cache_path = $root . '/.skim/config_cache/extensions.php';
         expect(is_file($cache_path))->toBeFalse();
 
-        $registry = new ext_registry($root);
+        $registry = new \Skim\Ext\ExtRegistry($root);
         $registry->installed();
 
         expect(is_file($cache_path))->toBeTrue();
@@ -105,7 +105,7 @@ describe('ext_registry', function(): void {
         ]));
 
         // First scan writes cache
-        $registry = new ext_registry($root);
+        $registry = new \Skim\Ext\ExtRegistry($root);
         $first = $registry->installed();
 
         // Delete vendor to prove second call uses cache, not filesystem
@@ -120,7 +120,7 @@ describe('ext_registry', function(): void {
         $remove($root . '/vendor');
 
         // Fresh registry should still load from cache
-        $registry2 = new ext_registry($root);
+        $registry2 = new \Skim\Ext\ExtRegistry($root);
         $second = $registry2->installed();
 
         expect($second)->toHaveCount(1);
@@ -142,7 +142,7 @@ describe('ext_registry', function(): void {
         ]));
 
         $cache_path = $sub_root . '/.skim/config_cache/extensions.php';
-        $registry = new ext_registry($sub_root);
+        $registry = new \Skim\Ext\ExtRegistry($sub_root);
         $registry->installed();
 
         expect(is_file($cache_path))->toBeTrue('Cache is written for any project root');

@@ -1,36 +1,36 @@
 <?php declare(strict_types=1);
 
-use skim\core\config;
+use Skim\Core\Config;
 
 describe('config::get()', function(): void {
 
     test('returns default when key not set', function(): void {
-        expect(config::get('nonexistent.key', 'fallback'))->toBe('fallback');
+        expect(\Skim\Core\Config::get('nonexistent.key', 'fallback'))->toBe('fallback');
     });
 
     test('returns null default when not specified', function(): void {
-        expect(config::get('nonexistent'))->toBeNull();
+        expect(\Skim\Core\Config::get('nonexistent'))->toBeNull();
     });
 
     test('returns top-level key value', function(): void {
-        config::set('app.name', 'SKIM Test');
-        expect(config::get('app.name'))->toBe('SKIM Test');
+        \Skim\Core\Config::set('app.name', 'SKIM Test');
+        expect(\Skim\Core\Config::get('app.name'))->toBe('SKIM Test');
     });
 
     test('dot-notation traverses nested arrays', function(): void {
-        config::set('db.default.host', '127.0.0.1');
-        expect(config::get('db.default.host'))->toBe('127.0.0.1');
+        \Skim\Core\Config::set('db.default.host', '127.0.0.1');
+        expect(\Skim\Core\Config::get('db.default.host'))->toBe('127.0.0.1');
     });
 
     test('returns null when intermediate segment is missing', function(): void {
-        config::set('cache.driver', 'redis');
-        expect(config::get('cache.missing.deeply.nested'))->toBeNull();
+        \Skim\Core\Config::set('cache.driver', 'redis');
+        expect(\Skim\Core\Config::get('cache.missing.deeply.nested'))->toBeNull();
     });
 
     test('returns full subtree when key points to array', function(): void {
-        config::set('app.session.driver', 'redis');
-        config::set('app.session.lifetime', 3600);
-        $session = config::get('app.session');
+        \Skim\Core\Config::set('app.session.driver', 'redis');
+        \Skim\Core\Config::set('app.session.lifetime', 3600);
+        $session = \Skim\Core\Config::get('app.session');
         expect($session)->toBeArray()
             ->toHaveKey('driver')
             ->toHaveKey('lifetime');
@@ -45,10 +45,10 @@ describe('config::load()', function(): void {
         mkdir($dir);
         file_put_contents($dir . '/app.php', '<?php return ["name" => "LoadTest"];');
 
-        config::reset();
-        config::load($dir);
+        \Skim\Core\Config::reset();
+        \Skim\Core\Config::load($dir);
 
-        expect(config::get('app.name'))->toBe('LoadTest');
+        expect(\Skim\Core\Config::get('app.name'))->toBe('LoadTest');
 
         unlink($dir . '/app.php');
         rmdir($dir);
@@ -59,11 +59,11 @@ describe('config::load()', function(): void {
         mkdir($dir);
         file_put_contents($dir . '/app.php', '<?php return ["env" => "test"];');
 
-        config::reset();
-        config::load($dir);
-        config::load($dir);   // should not reload
+        \Skim\Core\Config::reset();
+        \Skim\Core\Config::load($dir);
+        \Skim\Core\Config::load($dir);   // should not reload
 
-        expect(config::get('app.env'))->toBe('test');
+        expect(\Skim\Core\Config::get('app.env'))->toBe('test');
 
         unlink($dir . '/app.php');
         rmdir($dir);

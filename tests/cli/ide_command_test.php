@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 
-use skim\db\db;
-use skim\cli\commands\ide_command;
+use Skim\Db\Db;
+use Skim\Cli\Commands\IdeCommand;
 
 describe('ide_command schema generation with SQLite', function(): void {
     $modelsDir = base_path('app/models');
@@ -13,13 +13,13 @@ describe('ide_command schema generation with SQLite', function(): void {
 
     beforeEach(function() use ($modelsDir, $modelFile, $helperFile, &$hadModelsDir, &$hadHelperFile, &$oldHelperContent): void {
         // Connect to an in-memory SQLite DB
-        db::connect('default', [
+        \Skim\Db\Db::connect('default', [
             'driver' => 'sqlite',
             'database' => ':memory:',
         ]);
 
         // Create a test table
-        db::query('CREATE TABLE posts (
+        \Skim\Db\Db::query('CREATE TABLE posts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             views INTEGER DEFAULT 0,
@@ -42,7 +42,7 @@ describe('ide_command schema generation with SQLite', function(): void {
         // Write a test model
         file_put_contents($modelFile, '<?php
 namespace app\models;
-class post extends \skim\db\model {
+class post extends \Skim\Db\Model {
     protected static string $table = "posts";
 }
 ');
@@ -70,11 +70,11 @@ class post extends \skim\db\model {
         }
 
         // Reset db connection
-        db::reset();
+        \Skim\Db\Db::reset();
     });
 
     test('generates typed property stubs for SQLite models', function() use ($helperFile): void {
-        $cmd = new ide_command();
+        $cmd = new \Skim\Cli\Commands\IdeCommand();
         $cmd->set_input(['generate'], []);
         
         ob_start();

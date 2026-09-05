@@ -1,57 +1,57 @@
 <?php declare(strict_types=1);
 
-use skim\db\db;
+use Skim\Db\Db;
 
 describe('db::rollback_all()', function (): void {
 
     test('rolls back open transactions on all pooled connections', function (): void {
-        db::reset();
-        db::connect('default', [
+        \Skim\Db\Db::reset();
+        \Skim\Db\Db::connect('default', [
             'driver'   => 'sqlite',
             'database' => ':memory:',
         ]);
 
-        db::query('CREATE TABLE test (id INTEGER PRIMARY KEY)');
+        \Skim\Db\Db::query('CREATE TABLE test (id INTEGER PRIMARY KEY)');
 
-        $pdo = db::pdo();
+        $pdo = \Skim\Db\Db::pdo();
         $pdo->beginTransaction();
-        db::query('INSERT INTO test (id) VALUES (1)');
+        \Skim\Db\Db::query('INSERT INTO test (id) VALUES (1)');
 
         expect($pdo->inTransaction())->toBeTrue();
 
-        db::rollback_all();
+        \Skim\Db\Db::rollback_all();
 
         expect($pdo->inTransaction())->toBeFalse();
     });
 
     test('is a no-op when no transactions are open', function (): void {
-        db::reset();
-        db::connect('default', [
+        \Skim\Db\Db::reset();
+        \Skim\Db\Db::connect('default', [
             'driver'   => 'sqlite',
             'database' => ':memory:',
         ]);
 
-        expect(fn() => db::rollback_all())->not->toThrow(\Throwable::class);
+        expect(fn() => \Skim\Db\Db::rollback_all())->not->toThrow(\Throwable::class);
     });
 
     test('rolls back transactions on multiple named connections', function (): void {
-        db::reset();
-        db::connect('default', [
+        \Skim\Db\Db::reset();
+        \Skim\Db\Db::connect('default', [
             'driver'   => 'sqlite',
             'database' => ':memory:',
         ]);
-        db::connect('analytics', [
+        \Skim\Db\Db::connect('analytics', [
             'driver'   => 'sqlite',
             'database' => ':memory:',
         ]);
 
-        $default = db::pdo('default');
-        $analytics = db::pdo('analytics');
+        $default = \Skim\Db\Db::pdo('default');
+        $analytics = \Skim\Db\Db::pdo('analytics');
 
         $default->beginTransaction();
         $analytics->beginTransaction();
 
-        db::rollback_all();
+        \Skim\Db\Db::rollback_all();
 
         expect($default->inTransaction())->toBeFalse();
         expect($analytics->inTransaction())->toBeFalse();

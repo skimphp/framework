@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 
-use skim\log\log;
-use skim\log\log_handler;
-use skim\log\null_handler;
+use Skim\Log\Log;
+use Skim\Log\LogHandler;
+use Skim\Log\NullHandler;
 
 // Spy handler — captures writes for assertions
-class spy_handler implements log_handler {
+class SpyHandler implements \Skim\Log\LogHandler {
     public array $records = [];
     public function write(string $level, string $message, array $context): void {
         $this->records[] = ['level' => $level, 'message' => $message, 'context' => $context];
@@ -13,52 +13,52 @@ class spy_handler implements log_handler {
 }
 
 beforeEach(function(): void {
-    log::reset();
+    \Skim\Log\Log::reset();
 });
 
 describe('log facade', function(): void {
 
     test('info() records correct level and message', function(): void {
-        $spy = new spy_handler();
-        log::set_handler($spy);
-        log::info('User logged in', ['user_id' => 5]);
+        $spy = new SpyHandler();
+        \Skim\Log\Log::set_handler($spy);
+        \Skim\Log\Log::info('User logged in', ['user_id' => 5]);
         expect($spy->records[0]['level'])->toBe('info');
         expect($spy->records[0]['message'])->toBe('User logged in');
         expect($spy->records[0]['context']['user_id'])->toBe(5);
     });
 
     test('error() records error level', function(): void {
-        $spy = new spy_handler();
-        log::set_handler($spy);
-        log::error('DB connection failed');
+        $spy = new SpyHandler();
+        \Skim\Log\Log::set_handler($spy);
+        \Skim\Log\Log::error('DB connection failed');
         expect($spy->records[0]['level'])->toBe('error');
     });
 
     test('all level methods write with correct level', function(): void {
-        $spy = new spy_handler();
-        log::set_handler($spy);
+        $spy = new SpyHandler();
+        \Skim\Log\Log::set_handler($spy);
 
-        log::debug('d');
-        log::notice('n');
-        log::warning('w');
-        log::critical('c');
-        log::alert('a');
-        log::emergency('e');
+        \Skim\Log\Log::debug('d');
+        \Skim\Log\Log::notice('n');
+        \Skim\Log\Log::warning('w');
+        \Skim\Log\Log::critical('c');
+        \Skim\Log\Log::alert('a');
+        \Skim\Log\Log::emergency('e');
 
         $levels = array_column($spy->records, 'level');
         expect($levels)->toBe(['debug', 'notice', 'warning', 'critical', 'alert', 'emergency']);
     });
 
     test('null_handler discards all writes silently', function(): void {
-        log::set_handler(new null_handler());
-        log::error('should be discarded');
+        \Skim\Log\Log::set_handler(new \Skim\Log\NullHandler());
+        \Skim\Log\Log::error('should be discarded');
         expect(true)->toBeTrue();   // no exception thrown
     });
 
     test('custom handler receives context array', function(): void {
-        $spy = new spy_handler();
-        log::set_handler($spy);
-        log::warning('Rate limit hit', ['ip' => '1.2.3.4', 'route' => '/api/v1/users']);
+        $spy = new SpyHandler();
+        \Skim\Log\Log::set_handler($spy);
+        \Skim\Log\Log::warning('Rate limit hit', ['ip' => '1.2.3.4', 'route' => '/api/v1/users']);
         expect($spy->records[0]['context'])->toBe(['ip' => '1.2.3.4', 'route' => '/api/v1/users']);
     });
 

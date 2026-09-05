@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-use skim\db\db;
-use skim\db\migrator;
-use skim\db\migration;
+use Skim\Db\Db;
+use Skim\Db\Migrator;
+use Skim\Db\Migration;
 
 // Creates temporary migration files on disk, runs them against SQLite :memory:.
 // Cleaned up after each test.
@@ -17,7 +17,7 @@ function write_migration(string $dir, string $name, string $up, string $down): s
     $file    = $dir . '/' . $name . '.php';
     $content = <<<PHP
     <?php
-    return new class extends \\skim\\db\\migration {
+    return new class extends \\Skim\\Db\\Migration {
         public function up(): string   { return "{$up}"; }
         public function down(): string { return "{$down}"; }
     };
@@ -27,7 +27,7 @@ function write_migration(string $dir, string $name, string $up, string $down): s
 }
 
 function setup_migrator_db(): void {
-    db::connect('default', ['driver' => 'sqlite', 'database' => ':memory:']);
+    \Skim\Db\Db::connect('default', ['driver' => 'sqlite', 'database' => ':memory:']);
 }
 
 describe('migrator::run()', function(): void {
@@ -40,14 +40,14 @@ describe('migrator::run()', function(): void {
             'DROP TABLE posts',
         );
 
-        $mig = new migrator($dir);
+        $mig = new \Skim\Db\Migrator($dir);
         $ran = $mig->run();
 
         expect($ran)->toHaveCount(1)
                      ->toContain('2024_01_01_000001_create_posts.php');
 
         // Table should now exist
-        $tables = db::all("SELECT name FROM sqlite_master WHERE type='table' AND name='posts'");
+        $tables = \Skim\Db\Db::all("SELECT name FROM sqlite_master WHERE type='table' AND name='posts'");
         expect($tables)->not->toBeEmpty();
 
         array_map('unlink', glob($dir . '/*.php') ?: []);
@@ -62,7 +62,7 @@ describe('migrator::run()', function(): void {
             'DROP TABLE tags',
         );
 
-        $mig = new migrator($dir);
+        $mig = new \Skim\Db\Migrator($dir);
         $mig->run();
         $ran_again = $mig->run();   // second call should return []
 
@@ -75,7 +75,7 @@ describe('migrator::run()', function(): void {
     test('returns empty array when no migration files present', function(): void {
         setup_migrator_db();
         $dir = make_migration_dir();
-        $mig = new migrator($dir);
+        $mig = new \Skim\Db\Migrator($dir);
         expect($mig->run())->toBeEmpty();
         rmdir($dir);
     });
@@ -92,14 +92,14 @@ describe('migrator::down()', function(): void {
             'DROP TABLE orders',
         );
 
-        $mig = new migrator($dir);
+        $mig = new \Skim\Db\Migrator($dir);
         $mig->run();
         $rolled = $mig->down();
 
         expect($rolled)->toContain('2024_01_01_000001_create_orders.php');
 
         // Table should be gone
-        $tables = db::all("SELECT name FROM sqlite_master WHERE type='table' AND name='orders'");
+        $tables = \Skim\Db\Db::all("SELECT name FROM sqlite_master WHERE type='table' AND name='orders'");
         expect($tables)->toBeEmpty();
 
         array_map('unlink', glob($dir . '/*.php') ?: []);
@@ -109,7 +109,7 @@ describe('migrator::down()', function(): void {
     test('returns empty array when nothing to roll back', function(): void {
         setup_migrator_db();
         $dir = make_migration_dir();
-        $mig = new migrator($dir);
+        $mig = new \Skim\Db\Migrator($dir);
         expect($mig->down())->toBeEmpty();
         rmdir($dir);
     });
@@ -130,7 +130,7 @@ describe('migrator::status()', function(): void {
             'DROP TABLE cats',
         );
 
-        $mig = new migrator($dir);
+        $mig = new \Skim\Db\Migrator($dir);
         $mig->run();   // runs both
 
         $status = $mig->status();

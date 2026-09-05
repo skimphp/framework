@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-use skim\cache\array_driver;
+use Skim\Cache\ArrayDriver;
 
 describe('array_driver — worker mode safety', function (): void {
 
@@ -9,8 +9,8 @@ describe('array_driver — worker mode safety', function (): void {
         // the constructor logic by reading the source code path.
         // In production worker mode, array_driver throws RuntimeException
         // because its in-memory state leaks across requests.
-        $driver = new array_driver();
-        expect($driver)->toBeInstanceOf(array_driver::class);
+        $driver = new \Skim\Cache\ArrayDriver();
+        expect($driver)->toBeInstanceOf(\Skim\Cache\ArrayDriver::class);
     });
 
 });

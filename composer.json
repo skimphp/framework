@@ -13,15 +13,15 @@
     },
     "autoload": {
         "psr-4": {
-            "skim\\": "src/"
+            "Skim\\": "src/"
         },
         "files": [
-            "src/core/helpers.php"
+            "src/Core/helpers.php"
         ]
     },
     "autoload-dev": {
         "psr-4": {
-            "tests\\": "tests/"
+            "Tests\\": "tests/"
         }
     },
     "bin": [

@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-use skim\dev\docs\extractor\annotation_parser;
+use Skim\Dev\Docs\Extractor\AnnotationParser;
 
 // ---------------------------------------------------------------------------
 // annotation_parser — legacy @ai- / @ai. style
@@ -9,20 +9,20 @@ use skim\dev\docs\extractor\annotation_parser;
 describe('annotation_parser::parse — legacy @ai- style', function () {
 
     it('extracts single @ai-contract tag', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $result = $parser->parse('/** @ai-contract returns cached value or default */');
         expect($result)->toHaveKey('contract')
             ->and($result['contract'][0])->toBe('returns cached value or default');
     });
 
     it('extracts single @ai. tag (dot separator)', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $result = $parser->parse('/** @ai.invariant driver reused until reset */');
         expect($result['invariant'][0])->toBe('driver reused until reset');
     });
 
     it('collects multiple occurrences of the same tag', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $doc = <<<'DOC'
         /**
          * @ai-contract first guarantee
@@ -36,7 +36,7 @@ describe('annotation_parser::parse — legacy @ai- style', function () {
     });
 
     it('appends continuation lines to current tag value', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $doc = <<<'DOC'
         /**
          * @ai-contract returns existing value
@@ -48,7 +48,7 @@ describe('annotation_parser::parse — legacy @ai- style', function () {
     });
 
     it('ignores unknown tags silently', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $result = $parser->parse('/** @param string $key @ai-contract stores value */');
         expect($result)->toHaveKey('contract')
             ->and($result)->not->toHaveKey('param');
@@ -56,7 +56,7 @@ describe('annotation_parser::parse — legacy @ai- style', function () {
 
     it('flushes current tag when a new @tag line starts (not only blank lines)', function () {
         // regression: old code lost value when next line started with @
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $doc = <<<'DOC'
         /**
          * @ai-contract first contract
@@ -69,7 +69,7 @@ describe('annotation_parser::parse — legacy @ai- style', function () {
     });
 
     it('extracts summary before first tag', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $doc = <<<'DOC'
         /**
          * Returns the active driver instance.
@@ -82,13 +82,13 @@ describe('annotation_parser::parse — legacy @ai- style', function () {
     });
 
     it('returns empty summary when no pre-tag lines exist', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $result = $parser->extract_summary('/** @ai-contract only a tag */');
         expect($result)->toBe('');
     });
 
     it('preserves multi-line summary', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $doc = <<<'DOC'
         /**
          * Static cache facade over the configured backend driver.
@@ -111,7 +111,7 @@ describe('annotation_parser::parse — legacy @ai- style', function () {
 describe('annotation_parser::parse_hash_ai — #AI semicolon style', function () {
 
     it('parses single-line #AI with multiple key:value pairs', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $source = '#AI role:static cache facade; layer:cache; lifecycle:driver resolved lazily;';
         $result = $parser->parse_hash_ai($source);
         expect($result['role'])->toBe('static cache facade')
@@ -120,7 +120,7 @@ describe('annotation_parser::parse_hash_ai — #AI semicolon style', function ()
     });
 
     it('parses bracket list values without splitting them', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $source = '#AI owns:[driver instance]; entry_points:[remember,get,set,has];';
         $result = $parser->parse_hash_ai($source);
         expect($result['owns'])->toBe(['driver instance'])
@@ -128,7 +128,7 @@ describe('annotation_parser::parse_hash_ai — #AI semicolon style', function ()
     });
 
     it('parses multi-line #AI block', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $block = <<<'BLOCK'
         #AI role:static cache facade; layer:cache;
         #AI owns:[driver instance cache]; entry_points:[remember,get,set];
@@ -141,7 +141,7 @@ describe('annotation_parser::parse_hash_ai — #AI semicolon style', function ()
     });
 
     it('ignores lines that do not start with #AI', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $source = "some prose\n#AI role:facade;\nmore prose";
         $result = $parser->parse_hash_ai($source);
         expect($result)->toHaveKey('role')
@@ -157,25 +157,25 @@ describe('annotation_parser::parse_hash_ai — #AI semicolon style', function ()
 describe('annotation_parser::parse_bracket_list', function () {
 
     it('splits [a,b,c] into trimmed array', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $result = $parser->parse_bracket_list('[remember,get,set,has]');
         expect($result)->toBe(['remember', 'get', 'set', 'has']);
     });
 
     it('trims whitespace inside brackets', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $result = $parser->parse_bracket_list('[ driver instance , active backend ]');
         expect($result)->toBe(['driver instance', 'active backend']);
     });
 
     it('returns single-item array for value without brackets', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $result = $parser->parse_bracket_list('array_driver');
         expect($result)->toBe(['array_driver']);
     });
 
     it('returns empty array for empty brackets', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $result = $parser->parse_bracket_list('[]');
         expect($result)->toBe([]);
     });
@@ -189,7 +189,7 @@ describe('annotation_parser::parse_bracket_list', function () {
 describe('annotation_parser::parse — #AI lines inside /** */ docblock', function () {
 
     it('extracts #AI contract inside docblock', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $doc = <<<'DOC'
         /**
          * Returns the cached value for a key or computes and stores it.
@@ -206,7 +206,7 @@ describe('annotation_parser::parse — #AI lines inside /** */ docblock', functi
     });
 
     it('handles mixed @ai- and #AI in same docblock', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $doc = <<<'DOC'
         /**
          * @ai-contract legacy contract line
@@ -227,7 +227,7 @@ describe('annotation_parser::parse — #AI lines inside /** */ docblock', functi
 describe('annotation_parser::parse_inline', function () {
 
     it('extracts summary from lines before @ai tags', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $source = <<<'SRC'
         // In-memory array driver — for tests only. No persistence, no Redis required.
         // Resets between requests naturally (process-scoped array).
@@ -239,21 +239,21 @@ describe('annotation_parser::parse_inline', function () {
     });
 
     it('returns empty summary when no pre-tag lines', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $source = '// @ai-contract only a tag';
         $result = $parser->parse_inline($source);
         expect($result['summary'])->toBe('');
     });
 
     it('stops collecting lines at first non-comment line', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $source = "// @ai-contract a tag\nclass foo {}";
         $result = $parser->parse_inline($source);
         expect($result['contract'][0])->toBe('a tag');
     });
 
     it('parses #AI style inside inline comments', function () {
-        $parser = new annotation_parser();
+        $parser = new \Skim\Dev\Docs\Extractor\AnnotationParser();
         $source = '// #AI role:array driver; layer:cache;';
         $result = $parser->parse_inline($source);
         expect($result)->toHaveKey('role');

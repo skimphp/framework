@@ -1,49 +1,49 @@
 <?php declare(strict_types=1);
 
-use skim\cache\cache;
-use skim\cache\array_driver;
-use skim\core\pipeline;
-use skim\db\db;
-use skim\events\event;
-use skim\i18n\i18n;
-use skim\session\session;
-use skim\testing\session_fake;
-use skim\view\component_collector;
-use skim\view\view;
-use skim\worker\resettable;
-use skim\worker\worker_reset;
+use Skim\Cache\Cache;
+use Skim\Cache\ArrayDriver;
+use Skim\Core\Pipeline;
+use Skim\Db\Db;
+use Skim\Events\Event;
+use Skim\I18n\I18n;
+use Skim\Session\Session;
+use Skim\Testing\SessionFake;
+use Skim\View\ComponentCollector;
+use Skim\View\View;
+use Skim\Worker\Resettable;
+use Skim\Worker\WorkerReset;
 
 beforeEach(function (): void {
-    cache::set_driver(new array_driver());
-    event::off();
-    i18n::reset();
-    session::reset();
-    view::reset();
-    component_collector::reset_request();
+    \Skim\Cache\Cache::set_driver(new \Skim\Cache\ArrayDriver());
+    \Skim\Events\Event::off();
+    \Skim\I18n\I18n::reset();
+    \Skim\Session\Session::reset();
+    \Skim\View\View::reset();
+    \Skim\View\ComponentCollector::reset_request();
 });
 
 describe('worker_reset::apply()', function (): void {
 
     test('clears event listeners', function (): void {
-        event::on('test', fn() => null);
-        expect(event::listener_count('test'))->toBe(1);
+        \Skim\Events\Event::on('test', fn() => null);
+        expect(\Skim\Events\Event::listener_count('test'))->toBe(1);
 
-        worker_reset::apply(ob_get_level());
+        \Skim\Worker\WorkerReset::apply(ob_get_level());
 
-        expect(event::listener_count('test'))->toBe(0);
+        expect(\Skim\Events\Event::listener_count('test'))->toBe(0);
     });
 
     test('resets i18n locale to fallback', function (): void {
-        i18n::locale('fr');
-        expect(i18n::current_locale())->toBe('fr');
+        \Skim\I18n\I18n::locale('fr');
+        expect(\Skim\I18n\I18n::current_locale())->toBe('fr');
 
-        worker_reset::apply(ob_get_level());
+        \Skim\Worker\WorkerReset::apply(ob_get_level());
 
-        expect(i18n::current_locale())->toBe('en');
+        expect(\Skim\I18n\I18n::current_locale())->toBe('en');
     });
 
     test('resets session driver and started flag', function (): void {
-        $driver = new class implements \skim\session\session_driver {
+        $driver = new class implements \Skim\Session\SessionDriver {
             private string $sid = 'test-sid';
             public function start(): void {}
             public function get(string $key, mixed $default = null): mixed { return null; }
@@ -55,29 +55,29 @@ describe('worker_reset::apply()', function (): void {
             public function id(): string { return $this->sid; }
         };
 
-        session::set_driver($driver);
-        session::start();
-        expect(session::id())->toBe('test-sid');
+        \Skim\Session\Session::set_driver($driver);
+        \Skim\Session\Session::start();
+        expect(\Skim\Session\Session::id())->toBe('test-sid');
 
-        worker_reset::apply(ob_get_level());
+        \Skim\Worker\WorkerReset::apply(ob_get_level());
 
         // After reset, session should be back to unstarted state
         expect(true)->toBeTrue(); // no throw
     });
 
     test('clears view shared data', function (): void {
-        view::share('user', 'Alice');
-        expect(view::get_shared('user'))->toBe('Alice');
+        \Skim\View\View::share('user', 'Alice');
+        expect(\Skim\View\View::get_shared('user'))->toBe('Alice');
 
-        worker_reset::apply(ob_get_level());
+        \Skim\Worker\WorkerReset::apply(ob_get_level());
 
-        expect(view::get_shared('user'))->toBeNull();
+        expect(\Skim\View\View::get_shared('user'))->toBeNull();
     });
 
     test('clears middleware instance cache', function (): void {
         // We cannot directly inspect the private cache, but we can
         // verify no error occurs and the method exists.
-        expect(fn() => worker_reset::apply(ob_get_level()))->not->toThrow(\Throwable::class);
+        expect(fn() => \Skim\Worker\WorkerReset::apply(ob_get_level()))->not->toThrow(\Throwable::class);
     });
 
     test('clears output buffers', function (): void {
@@ -85,26 +85,26 @@ describe('worker_reset::apply()', function (): void {
         ob_start();
         echo 'buffered';
 
-        worker_reset::apply($baseline);
+        \Skim\Worker\WorkerReset::apply($baseline);
 
         // After apply, only PHPUnit's buffer remains
         expect(ob_get_level())->toBe($baseline);
     });
 
     test('clears a component_collector left on the stack by a throwing component', function (): void {
-        component_collector::push(new component_collector());
-        expect(component_collector::current())->not->toBeNull();
+        \Skim\View\ComponentCollector::push(new \Skim\View\ComponentCollector());
+        expect(\Skim\View\ComponentCollector::current())->not->toBeNull();
 
-        worker_reset::apply(ob_get_level());
+        \Skim\Worker\WorkerReset::apply(ob_get_level());
 
-        expect(component_collector::current())->toBeNull();
+        expect(\Skim\View\ComponentCollector::current())->toBeNull();
     });
 
     test('discovers and resets a resettable class loaded after the first request', function (): void {
         // Simulate the lazy-autoload case: a resettable facade that is only
         // declared on a later request must still be discovered and reset, not
         // permanently missed because discovery was cached on the first request.
-        worker_reset::apply(ob_get_level());
+        \Skim\Worker\WorkerReset::apply(ob_get_level());
 
         $class = 'late_resettable_' . str_replace('.', '', uniqid('', true));
         eval("class {$class} implements \\skim\\worker\\resettable {
@@ -112,9 +112,9 @@ describe('worker_reset::apply()', function (): void {
             public static function reset_request(): void { static::\$was_reset = true; }
         }");
 
-        worker_reset::apply(ob_get_level());
+        \Skim\Worker\WorkerReset::apply(ob_get_level());
 
-        expect(worker_reset::discovered())->toContain($class);
+        expect(\Skim\Worker\WorkerReset::discovered())->toContain($class);
         expect($class::$was_reset)->toBeTrue();
     });
 
@@ -134,15 +134,15 @@ describe('resettable contract guard', function (): void {
     // model metadata) intentionally stays put and must NOT be listed.
     test('all interface-reset request-state facades implement resettable', function (): void {
         $request_state_facades = [
-            \skim\events\event::class,
-            \skim\view\view::class,
-            \skim\session\session::class,
-            \skim\i18n\i18n::class,
-            \skim\view\component_collector::class,
+            \Skim\Events\Event::class,
+            \Skim\View\View::class,
+            \Skim\Session\Session::class,
+            \Skim\I18n\I18n::class,
+            \Skim\View\ComponentCollector::class,
         ];
 
         foreach ($request_state_facades as $facade) {
-            expect(is_subclass_of($facade, resettable::class))->toBeTrue(
+            expect(is_subclass_of($facade, \Skim\Worker\Resettable::class))->toBeTrue(
                 "{$facade} holds per-request state and must implement skim\\worker\\resettable"
             );
         }

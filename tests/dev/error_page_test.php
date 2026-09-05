@@ -1,16 +1,16 @@
 <?php declare(strict_types=1);
 
-use skim\dev\error_page;
-use skim\core\config;
-use skim\core\app;
+use Skim\Dev\ErrorPage;
+use Skim\Core\Config;
+use Skim\Core\App;
 
 beforeEach(function(): void {
-    config::reset();
-    config::set('app.debug', true);
+    \Skim\Core\Config::reset();
+    \Skim\Core\Config::set('app.debug', true);
 });
 
 afterEach(function(): void {
-    config::reset();
+    \Skim\Core\Config::reset();
 });
 
 /**
@@ -22,7 +22,7 @@ afterEach(function(): void {
 function capture_error_page(\Throwable $e): string {
     ob_start();
     try {
-        error_page::render($e);
+        \Skim\Dev\ErrorPage::render($e);
     }
     catch (\Throwable) {
     }
@@ -40,9 +40,9 @@ describe('error_page::render()', function(): void {
         // Use a fixture so the test's own source code (which contains
         // the literal "string(" used in these assertions) does not appear
         // in the code-box component and cause a false positive.
-        $fixture = realpath(__DIR__ . '/fixtures/clean_path.php');
+        $fixture = realpath(__DIR__ . '/../Fixtures/Dev/CleanPathFixture.php');
         require_once $fixture;
-        $e = clean_path_fixture::throw_runtime();
+        $e = CleanPathFixture::throw_runtime();
         $html = capture_error_page($e);
         expect($html)->not->toContain("string(");
         expect($html)->not->toMatch('/string\(\d+\)/');
@@ -52,11 +52,11 @@ describe('error_page::render()', function(): void {
         // Use a fixture file so the test's own source code (which contains
         // the literal substrings used in these assertions) does not appear
         // in the code-box component and cause false positives.
-        $fixture = realpath(__DIR__ . '/fixtures/clean_path.php');
+        $fixture = realpath(__DIR__ . '/../Fixtures/Dev/CleanPathFixture.php');
         require_once $fixture;
-        $e = clean_path_fixture::throw_runtime();
+        $e = CleanPathFixture::throw_runtime();
         $html = capture_error_page($e);
-        expect($html)->not->toContain('/src/dev/views/');
+        expect($html)->not->toContain('/src/Dev/Views/');
         expect($html)->not->toContain('error_page.php');
         expect($html)->not->toContain('base.php');
         expect($html)->not->toContain('kv_grid.php');
@@ -100,7 +100,7 @@ describe('error_page::render()', function(): void {
     });
 
     test('ide deep-link respects app.debug_ide config', function(): void {
-        config::set('app.debug_ide', 'vscode');
+        \Skim\Core\Config::set('app.debug_ide', 'vscode');
         $html = capture_error_page(new \RuntimeException('test'));
         expect($html)->toContain('vscode://file/');
     });
@@ -128,12 +128,12 @@ describe('error_page::render()', function(): void {
 
     test('object arguments are expanded as obj-props rows', function(): void {
         // Use a controlled fixture object with known public properties
-        // (real \skim\core\request has only private promoted props).
+        // (real \Skim\Core\Request has only private promoted props).
         $obj = new \stdClass();
         $obj->id     = 42;
         $obj->name   = 'Alice';
         $obj->active = true;
-        $ref = new \ReflectionClass(error_page::class);
+        $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('describe_arg');
         $arg = $method->invoke(null, $obj, 0);
         expect($arg['type'])->toBe('stdClass');
@@ -154,7 +154,7 @@ describe('error_page::render()', function(): void {
             private ?string $private_c  = 'secret';
         };
 
-        $ref   = new \ReflectionClass(error_page::class);
+        $ref   = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('all_props');
         $rows   = $method->invoke(null, $obj);
 
@@ -170,7 +170,7 @@ describe('error_page::render()', function(): void {
             public int $e = 5; public int $f = 6; public int $g = 7; public int $h = 8;
             public int $i = 9; public int $j = 10;
         };
-        $ref    = new \ReflectionClass(error_page::class);
+        $ref    = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('all_props');
         $rows   = $method->invoke(null, $obj);
 
@@ -184,7 +184,7 @@ describe('error_page::render()', function(): void {
         // stdClass is an internal class — Closure::bind can't bind to its scope,
         // so the method falls back to get_object_vars() for dynamic properties.
         // A stdClass with no dynamic properties returns [].
-        $ref    = new \ReflectionClass(error_page::class);
+        $ref    = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('all_props');
         $rows   = $method->invoke(null, new \stdClass());
 
@@ -197,7 +197,7 @@ describe('error_page::render()', function(): void {
         $obj = new \stdClass();
         $obj->id   = 42;
         $obj->name = 'Alice';
-        $ref    = new \ReflectionClass(error_page::class);
+        $ref    = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('all_props');
         $rows   = $method->invoke(null, $obj);
 
@@ -207,7 +207,7 @@ describe('error_page::render()', function(): void {
     });
 
     test('primitive scalar args return a short form, not an object expansion', function(): void {
-        $ref = new \ReflectionClass(error_page::class);
+        $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('describe_arg');
         $arg = $method->invoke(null, 42, 0);
         expect($arg['type'])->toBe('int');
@@ -219,7 +219,7 @@ describe('error_page::render()', function(): void {
     });
 
     test('null args render as `null`', function(): void {
-        $ref = new \ReflectionClass(error_page::class);
+        $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('describe_arg');
         $arg = $method->invoke(null, null, 0);
         expect($arg['type'])->toBe('null');
@@ -242,11 +242,11 @@ describe('error_page::render()', function(): void {
         // Verify build_di_node() produces the `resolved` flag for services
         // that appear in app::resolved_services() — the di_node component
         // renders the green ✓ marker when this flag is true.
-        app::test_instance();
-        app::instance()->bind('svc.alpha', fn() => 'A');
-        app::instance()->make('svc.alpha');
+        \Skim\Core\App::test_instance();
+        \Skim\Core\App::instance()->bind('svc.alpha', fn() => 'A');
+        \Skim\Core\App::instance()->make('svc.alpha');
 
-        $ref = new \ReflectionMethod(\skim\dev\error_page::class, 'build_di_node');
+        $ref = new \ReflectionMethod(\Skim\Dev\ErrorPage::class, 'build_di_node');
         $node = $ref->invoke(null, 'svc.alpha', depth: 0, visited: []);
 
         expect($node['cls'])->toBe('svc.alpha');
@@ -257,10 +257,10 @@ describe('error_page::render()', function(): void {
     test('DI tree marks unresolved services without the checkmark', function(): void {
         // A service that's bound but not yet resolved should NOT be marked
         // as resolved — only services in app::resolved_services() get the ✓.
-        app::test_instance();
-        app::instance()->bind('svc.beta', fn() => 'B');
+        \Skim\Core\App::test_instance();
+        \Skim\Core\App::instance()->bind('svc.beta', fn() => 'B');
 
-        $ref = new \ReflectionMethod(\skim\dev\error_page::class, 'build_di_node');
+        $ref = new \ReflectionMethod(\Skim\Dev\ErrorPage::class, 'build_di_node');
         $node = $ref->invoke(null, 'svc.beta', depth: 0, visited: []);
 
         expect($node['resolved'])->toBeFalse();
@@ -303,9 +303,9 @@ describe('error_page::render()', function(): void {
     });
 
     test('syntax highlighting emits well-formed <span> tags', function(): void {
-        $fixture = realpath(__DIR__ . '/fixtures/clean_path.php');
+        $fixture = realpath(__DIR__ . '/../Fixtures/Dev/CleanPathFixture.php');
         require_once $fixture;
-        $e = clean_path_fixture::throw_runtime();
+        $e = CleanPathFixture::throw_runtime();
         $html = capture_error_page($e);
         file_put_contents('/tmp/highlight-dump.html', $html);
         expect($html)->not->toMatch('/<span class=<span/');
@@ -317,51 +317,51 @@ describe('error_page::render()', function(): void {
 describe('error_page noise detection', function(): void {
 
     test('marks /vendor/ file as framework noise', function(): void {
-        $ref = new \ReflectionClass(error_page::class);
+        $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('is_noise');
         expect($method->invoke(null, '/app/vendor/some/lib/file.php'))->toBeTrue();
     });
 
     test('marks /src/core/ file as framework noise', function(): void {
-        $ref = new \ReflectionClass(error_page::class);
+        $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('is_noise');
-        expect($method->invoke(null, '/app/src/core/pipeline.php'))->toBeTrue();
-        expect($method->invoke(null, '/app/src/core/app.php'))->toBeTrue();
+        expect($method->invoke(null, '/app/src/Core/Pipeline.php'))->toBeTrue();
+        expect($method->invoke(null, '/app/src/Core/App.php'))->toBeTrue();
     });
 
     test('marks closures in framework classes as noise even when called from user file', function(): void {
-        $ref = new \ReflectionClass(error_page::class);
+        $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('is_noise');
-        // The closure belongs to skim\core\app::dispatch but is invoked
+        // The closure belongs to Skim\Core\App::dispatch but is invoked
         // from a user middleware file. Trace reports the caller file.
         $is_noise = $method->invoke(
             null,
-            '/app/src/middleware/toolbar_middleware.php',
-            'skim\\core\\app',
-            '{closure:skim\\core\\app::dispatch():483}',
+            '/app/src/Middleware/ToolbarMiddleware.php',
+            'Skim\\Core\\App',
+            '{closure:Skim\\Core\\App::dispatch():483}',
         );
         expect($is_noise)->toBeTrue();
     });
 
     test('marks framework method calls (e.g. app::run) as noise from caller file', function(): void {
-        $ref = new \ReflectionClass(error_page::class);
+        $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('is_noise');
         $is_noise = $method->invoke(
             null,
             '/app/public/index.php',
-            'skim\\core\\app',
+            'Skim\\Core\\App',
             'run',
         );
         expect($is_noise)->toBeTrue();
     });
 
     test('does NOT mark user code as noise', function(): void {
-        $ref = new \ReflectionClass(error_page::class);
+        $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('is_noise');
         $is_noise = $method->invoke(
             null,
             '/app/app/controllers/home.php',
-            'app\\controllers\\home_controller',
+            'App\\Controllers\\HomeController',
             'index',
         );
         expect($is_noise)->toBeFalse();
@@ -371,9 +371,9 @@ describe('error_page noise detection', function(): void {
         // In the redesigned error page, middleware gets its own 'pipeline' section
         // in the trace — the test is_classify_frame() instead of is_noise() to
         // reflect this new three-bucket split.
-        $ref = new \ReflectionClass(error_page::class);
+        $ref = new \ReflectionClass(\Skim\Dev\ErrorPage::class);
         $method = $ref->getMethod('classify_frame');
-        $result = $method->invoke(null, '/app/src/middleware/cors.php', 'skim\\middleware\\cors', 'handle');
+        $result = $method->invoke(null, '/app/src/Middleware/Cors.php', 'Skim\\Middleware\\Cors', 'handle');
         expect($result)->toBe('pipeline');
     });
 

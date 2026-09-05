@@ -1,17 +1,17 @@
 <?php declare(strict_types=1);
 
-use skim\core\middleware;
-use skim\core\pipeline;
-use skim\core\request;
-use skim\core\response;
+use Skim\Core\Middleware;
+use Skim\Core\Pipeline;
+use Skim\Core\Request;
+use Skim\Core\Response;
 
 // Test middleware implementations — inline anonymous classes
 
-function make_recording_middleware(string $label, array &$log): middleware {
-    return new class($label, $log) implements middleware {
+function make_recording_middleware(string $label, array &$log): \Skim\Core\Middleware {
+    return new class($label, $log) implements \Skim\Core\Middleware {
         public function __construct(private string $label, private array &$log) {}
 
-        public function handle(request $req, response $res, callable $next): mixed {
+        public function handle(\Skim\Core\Request $req, \Skim\Core\Response $res, callable $next): mixed {
             $this->log[] = $this->label . ':before';
             $result = $next($req, $res);
             $this->log[] = $this->label . ':after';
@@ -20,11 +20,11 @@ function make_recording_middleware(string $label, array &$log): middleware {
     };
 }
 
-function make_short_circuit_middleware(int $status): middleware {
-    return new class($status) implements middleware {
+function make_short_circuit_middleware(int $status): \Skim\Core\Middleware {
+    return new class($status) implements \Skim\Core\Middleware {
         public function __construct(private int $status) {}
 
-        public function handle(request $req, response $res, callable $next): mixed {
+        public function handle(\Skim\Core\Request $req, \Skim\Core\Response $res, callable $next): mixed {
             return $res->status($this->status)->json(['error' => 'blocked']);
         }
     };
@@ -34,14 +34,14 @@ describe('pipeline — execution order', function(): void {
 
     test('middlewares execute in registration order (first registered = first run)', function(): void {
         $log      = [];
-        $pipeline = new pipeline();
-        $req      = request::make();
-        $res      = new response();
+        $pipeline = new \Skim\Core\Pipeline();
+        $req      = \Skim\Core\Request::make();
+        $res      = new \Skim\Core\Response();
 
         $a = make_recording_middleware('A', $log);
         $b = make_recording_middleware('B', $log);
 
-        $pipeline->run($req, $res, [$a, $b], function() use (&$log, $res): response {
+        $pipeline->run($req, $res, [$a, $b], function() use (&$log, $res): \Skim\Core\Response {
             $log[] = 'core';
             return $res->json(['ok' => true]);
         });
@@ -51,13 +51,13 @@ describe('pipeline — execution order', function(): void {
 
     test('single middleware wraps the core handler', function(): void {
         $log      = [];
-        $pipeline = new pipeline();
-        $req      = request::make();
-        $res      = new response();
+        $pipeline = new \Skim\Core\Pipeline();
+        $req      = \Skim\Core\Request::make();
+        $res      = new \Skim\Core\Response();
 
         $m = make_recording_middleware('M', $log);
 
-        $pipeline->run($req, $res, [$m], function() use (&$log, $res): response {
+        $pipeline->run($req, $res, [$m], function() use (&$log, $res): \Skim\Core\Response {
             $log[] = 'core';
             return $res->json([]);
         });
@@ -66,12 +66,12 @@ describe('pipeline — execution order', function(): void {
     });
 
     test('empty middleware list runs core directly', function(): void {
-        $pipeline = new pipeline();
-        $req      = request::make();
-        $res      = new response();
+        $pipeline = new \Skim\Core\Pipeline();
+        $req      = \Skim\Core\Request::make();
+        $res      = new \Skim\Core\Response();
         $called   = false;
 
-        $pipeline->run($req, $res, [], function() use (&$called, $res): response {
+        $pipeline->run($req, $res, [], function() use (&$called, $res): \Skim\Core\Response {
             $called = true;
             return $res;
         });
@@ -84,14 +84,14 @@ describe('pipeline — execution order', function(): void {
 describe('pipeline — short-circuit', function(): void {
 
     test('short-circuit middleware prevents core from running', function(): void {
-        $pipeline  = new pipeline();
-        $req       = request::make();
-        $res       = new response();
+        $pipeline  = new \Skim\Core\Pipeline();
+        $req       = \Skim\Core\Request::make();
+        $res       = new \Skim\Core\Response();
         $core_ran  = false;
 
         $blocker = make_short_circuit_middleware(401);
 
-        $result = $pipeline->run($req, $res, [$blocker], function() use (&$core_ran, $res): response {
+        $result = $pipeline->run($req, $res, [$blocker], function() use (&$core_ran, $res): \Skim\Core\Response {
             $core_ran = true;
             return $res;
         });
@@ -102,9 +102,9 @@ describe('pipeline — short-circuit', function(): void {
 
     test('middleware after short-circuit does not run', function(): void {
         $log      = [];
-        $pipeline = new pipeline();
-        $req      = request::make();
-        $res      = new response();
+        $pipeline = new \Skim\Core\Pipeline();
+        $req      = \Skim\Core\Request::make();
+        $res      = new \Skim\Core\Response();
 
         $blocker = make_short_circuit_middleware(403);
         $after   = make_recording_middleware('after', $log);
@@ -119,9 +119,9 @@ describe('pipeline — short-circuit', function(): void {
 describe('cors middleware', function(): void {
 
     test('adds CORS headers to every response', function(): void {
-        $cors     = new \skim\middleware\cors();
-        $req      = request::make('GET', '/');
-        $res      = new response();
+        $cors     = new \Skim\Middleware\Cors();
+        $req      = \Skim\Core\Request::make('GET', '/');
+        $res      = new \Skim\Core\Response();
 
         $cors->handle($req, $res, fn($r, $s) => $s->json([]));
 
@@ -129,12 +129,12 @@ describe('cors middleware', function(): void {
     });
 
     test('short-circuits with 204 on OPTIONS preflight', function(): void {
-        $cors = new \skim\middleware\cors();
-        $req  = request::make('OPTIONS', '/api/users');
-        $res  = new response();
+        $cors = new \Skim\Middleware\Cors();
+        $req  = \Skim\Core\Request::make('OPTIONS', '/api/users');
+        $res  = new \Skim\Core\Response();
 
         $called = false;
-        $result = $cors->handle($req, $res, function() use (&$called, $res): response {
+        $result = $cors->handle($req, $res, function() use (&$called, $res): \Skim\Core\Response {
             $called = true;
             return $res;
         });

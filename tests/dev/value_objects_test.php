@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-use skim\dev\docs\value\extracted_method;
-use skim\dev\docs\value\extracted_class;
+use Skim\Dev\Docs\Value\ExtractedMethod;
+use Skim\Dev\Docs\Value\ExtractedClass;
 
 describe('extracted_class::to_array', function () {
 
     it('includes all new fields in serialized output', function () {
-        $cls = new extracted_class(
+        $cls = new \Skim\Dev\Docs\Value\ExtractedClass(
             class_name:   'cache',
             namespace:    'skim\\cache',
             file:         '/app/src/cache/cache.php',
@@ -32,21 +32,21 @@ describe('extracted_class::to_array', function () {
     });
 
     it('annotated_method_count counts methods with at least one annotation', function () {
-        $m1 = new extracted_method('get', 'public function get(): mixed', 'ns\\cls', contracts: ['returns value']);
-        $m2 = new extracted_method('noop', 'public function noop(): void', 'ns\\cls');
-        $cls = new extracted_class('cls', 'ns', '/f.php', methods: [$m1, $m2]);
+        $m1 = new \Skim\Dev\Docs\Value\ExtractedMethod('get', 'public function get(): mixed', 'ns\\cls', contracts: ['returns value']);
+        $m2 = new \Skim\Dev\Docs\Value\ExtractedMethod('noop', 'public function noop(): void', 'ns\\cls');
+        $cls = new \Skim\Dev\Docs\Value\ExtractedClass('cls', 'ns', '/f.php', methods: [$m1, $m2]);
         expect($cls->annotated_method_count())->toBe(1);
     });
 
     it('annotated_method_count() returns 0 when no methods annotated', function(): void {
-        $m1    = new extracted_method(name: 'a', signature: '', owner: '');
-        $m2    = new extracted_method(name: 'b', signature: '', owner: '');
-        $class = new extracted_class('cls', '', '', methods: [$m1, $m2]);
+        $m1    = new \Skim\Dev\Docs\Value\ExtractedMethod(name: 'a', signature: '', owner: '');
+        $m2    = new \Skim\Dev\Docs\Value\ExtractedMethod(name: 'b', signature: '', owner: '');
+        $class = new \Skim\Dev\Docs\Value\ExtractedClass('cls', '', '', methods: [$m1, $m2]);
         expect($class->annotated_method_count())->toBe(0);
     });
 
     it('annotated_method_count() returns 0 for class with no methods', function(): void {
-        $class = new extracted_class('cls', '', '');
+        $class = new \Skim\Dev\Docs\Value\ExtractedClass('cls', '', '');
         expect($class->annotated_method_count())->toBe(0);
     });
 
@@ -55,7 +55,7 @@ describe('extracted_class::to_array', function () {
 describe('extracted_method::to_array', function () {
 
     it('includes all new fields in serialized output', function () {
-        $m = new extracted_method(
+        $m = new \Skim\Dev\Docs\Value\ExtractedMethod(
             name:         'remember',
             signature:    'public static function remember(string $key, int $ttl, callable $default): mixed',
             owner:        'skim\\cache\\cache',

@@ -1,33 +1,33 @@
 <?php declare(strict_types=1);
 
-use skim\cli\cli;
-use skim\cli\progress_bar;
-use skim\cli\command;
-use skim\cli\argv_parser;
-use skim\cli\kernel;
+use Skim\Cli\Cli;
+use Skim\Cli\ProgressBar;
+use Skim\Cli\Command;
+use Skim\Cli\ArgvParser;
+use Skim\Cli\Kernel;
 
 describe('CLI utility formatting and headers', function(): void {
     beforeEach(function(): void {
-        cli::force_plain(true);
+        \Skim\Cli\Cli::force_plain(true);
     });
 
     test('cli::line outputs clean lines', function(): void {
         ob_start();
-        cli::line("hello world");
+        \Skim\Cli\Cli::line("hello world");
         $out = ob_get_clean();
         expect($out)->toBe("hello world\n");
     });
 
     test('cli::bold outputs clean text under force_plain', function(): void {
         ob_start();
-        cli::bold("bold text");
+        \Skim\Cli\Cli::bold("bold text");
         $out = ob_get_clean();
         expect($out)->toBe("bold text\n");
     });
 
     test('cli::error_box renders bordered error message', function(): void {
         ob_start();
-        cli::error_box("Critical", "Something went wrong!");
+        \Skim\Cli\Cli::error_box("Critical", "Something went wrong!");
         $out = ob_get_clean();
         expect($out)->toContain("Critical");
         expect($out)->toContain("Something went wrong!");
@@ -37,14 +37,14 @@ describe('CLI utility formatting and headers', function(): void {
 
     test('cli::did_you_mean outputs suggestions', function(): void {
         ob_start();
-        cli::did_you_mean("migrat", ["migrate", "serve", "queue:work"]);
+        \Skim\Cli\Cli::did_you_mean("migrat", ["migrate", "serve", "queue:work"]);
         $out = ob_get_clean();
         expect($out)->toContain("Did you mean:  migrate");
     });
 
     test('cli::did_you_mean is silent if no close matches', function(): void {
         ob_start();
-        cli::did_you_mean("foobar", ["migrate", "serve", "queue:work"]);
+        \Skim\Cli\Cli::did_you_mean("foobar", ["migrate", "serve", "queue:work"]);
         $out = ob_get_clean();
         expect($out)->toBe("");
     });
@@ -52,7 +52,7 @@ describe('CLI utility formatting and headers', function(): void {
 
 describe('command base class configuration', function(): void {
     test('dynamic configuration resolves command properties based on name', function(): void {
-        $cmd = new class extends command {
+        $cmd = new class extends \Skim\Cli\Command {
             public function handle(): int {
                 return 0;
             }
@@ -69,7 +69,7 @@ describe('command base class configuration', function(): void {
 describe('kernel agent mode', function(): void {
     test('list output is compact and machine-readable', function(): void {
         ob_start();
-        $code = (new kernel())->run(argv_parser::parse(['skim', 'list', '--agent']));
+        $code = (new \Skim\Cli\Kernel())->run(\Skim\Cli\ArgvParser::parse(['skim', 'list', '--agent']));
         $out = ob_get_clean();
 
         expect($code)->toBe(0);
@@ -83,7 +83,7 @@ describe('kernel agent mode', function(): void {
 describe('progress bar functionality', function(): void {
     test('progress bar advances and finishes', function(): void {
         ob_start();
-        $bar = new progress_bar(10, 'Testing');
+        $bar = new \Skim\Cli\ProgressBar(10, 'Testing');
         $bar->advance(2);
         $bar->finish('Done');
         $out = ob_get_clean();
@@ -93,7 +93,7 @@ describe('progress bar functionality', function(): void {
 
     test('spinner mode for unknown total count', function(): void {
         ob_start();
-        $bar = new progress_bar(0, 'Working');
+        $bar = new \Skim\Cli\ProgressBar(0, 'Working');
         $bar->advance();
         $bar->finish();
         $out = ob_get_clean();

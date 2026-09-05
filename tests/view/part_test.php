@@ -1,17 +1,17 @@
 <?php declare(strict_types=1);
 
-use skim\view\view;
-use tests\fixtures\props\card_props;
+use Skim\View\View;
+use Tests\Fixtures\Props\CardProps;
 
 beforeEach(function(): void {
-    view::reset();
-    view::set_path(dirname(__DIR__) . '/fixtures/views');
+    \Skim\View\View::reset();
+    \Skim\View\View::set_path(dirname(__DIR__) . '/Fixtures/Views');
 });
 
 describe('component parts system', function(): void {
 
     test('main body is captured outside named parts', function(): void {
-        $html = component_with_parts('card', new card_props(title: 'Profile'), function($c) {
+        $html = component_with_parts('card', new \Tests\Fixtures\Props\CardProps(title: 'Profile'), function($c) {
             echo '<p>Main content here</p>';
         });
         expect($html)->toContain('Main content here')
@@ -19,7 +19,7 @@ describe('component parts system', function(): void {
     });
 
     test('named parts are captured and rendered', function(): void {
-        $html = component_with_parts('card', new card_props(title: 'Profile'), function($c) {
+        $html = component_with_parts('card', new \Tests\Fixtures\Props\CardProps(title: 'Profile'), function($c) {
             $c->part('header', function() {
                 echo '<h2>Custom Header</h2>';
             });
@@ -34,7 +34,7 @@ describe('component parts system', function(): void {
     });
 
     test('has_part returns false when part is not defined', function(): void {
-        $html = component_with_parts('card', new card_props(title: 'No Parts'), function($c) {
+        $html = component_with_parts('card', new \Tests\Fixtures\Props\CardProps(title: 'No Parts'), function($c) {
             echo '<p>Just body</p>';
         });
         // card.php shows default title when no header part, no footer div when no footer part
@@ -44,14 +44,14 @@ describe('component parts system', function(): void {
     });
 
     test('default title is used when no header part is provided', function(): void {
-        $html = component_with_parts('card', new card_props(title: 'Default Title'), function($c) {
+        $html = component_with_parts('card', new \Tests\Fixtures\Props\CardProps(title: 'Default Title'), function($c) {
             echo '<p>Body only</p>';
         });
         expect($html)->toContain('Default Title');
     });
 
     test('nested components with parts do not leak', function(): void {
-        $html = component_with_parts('card', new card_props(title: 'Outer'), function($c) {
+        $html = component_with_parts('card', new \Tests\Fixtures\Props\CardProps(title: 'Outer'), function($c) {
             $c->part('header', function() {
                 echo '<h2>Outer Header</h2>';
             });

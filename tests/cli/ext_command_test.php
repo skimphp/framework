@@ -1,15 +1,15 @@
 <?php declare(strict_types=1);
 
-use skim\cli\cli;
-use skim\cli\commands\ext_list_command;
-use skim\ext\ext_registry;
+use Skim\Cli\Cli;
+use Skim\Cli\Commands\ExtListCommand;
+use Skim\Ext\ExtRegistry;
 
 describe('extension CLI commands', function(): void {
     $root = '';
     $remove = null;
 
     beforeEach(function() use (&$root, &$remove): void {
-        cli::force_plain(true);
+        \Skim\Cli\Cli::force_plain(true);
         $root = sys_get_temp_dir() . '/skim_ext_command_' . bin2hex(random_bytes(4));
         mkdir($root . '/vendor/skim/mailer', 0777, true);
 
@@ -40,7 +40,7 @@ describe('extension CLI commands', function(): void {
             'extra' => ['skim' => ['extension' => 'skim\\mailer\\mailer_extension']],
         ]));
 
-        $command = new ext_list_command(new ext_registry($root));
+        $command = new \Skim\Cli\Commands\ExtListCommand(new \Skim\Ext\ExtRegistry($root));
 
         ob_start();
         $code = $command->handle();

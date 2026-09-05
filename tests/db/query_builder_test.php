@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 
-use skim\db\query_builder;
-use skim\db\null_marker;
+use Skim\Db\QueryBuilder;
+use Skim\Db\NullMarker;
 
 // These tests exercise query_builder directly — no PDO, no database required.
 // db::query() with debug:true delegates to query_builder::interpolate() for assertions.
@@ -9,19 +9,19 @@ use skim\db\null_marker;
 describe('query_builder — %where% removal', function(): void {
 
     test('removed entirely when where array is empty', function(): void {
-        [$sql] = query_builder::build('SELECT * FROM users %where%', ['where' => []]);
+        [$sql] = \Skim\Db\QueryBuilder::build('SELECT * FROM users %where%', ['where' => []]);
         expect($sql)->not->toContain('WHERE')
                          ->not->toContain('%where%');
     });
 
     test('removed when where key is absent from params', function(): void {
-        [$sql] = query_builder::build('SELECT * FROM users %where% %limit%', ['limit' => 10]);
+        [$sql] = \Skim\Db\QueryBuilder::build('SELECT * FROM users %where% %limit%', ['limit' => 10]);
         expect($sql)->not->toContain('WHERE');
         expect($sql)->toContain('LIMIT 10');
     });
 
     test('injected with flat condition list', function(): void {
-        [$sql, $params] = query_builder::build('SELECT * FROM users %where%', [
+        [$sql, $params] = \Skim\Db\QueryBuilder::build('SELECT * FROM users %where%', [
             'where'   => ['status = :status'],
             ':status' => 'active',
         ]);
@@ -30,7 +30,7 @@ describe('query_builder — %where% removal', function(): void {
     });
 
     test('multiple flat conditions joined with AND', function(): void {
-        [$sql] = query_builder::build('SELECT * FROM u %where%', [
+        [$sql] = \Skim\Db\QueryBuilder::build('SELECT * FROM u %where%', [
             'where' => ['a = :a', 'b = :b'],
             ':a'    => 1,
             ':b'    => 2,
@@ -39,7 +39,7 @@ describe('query_builder — %where% removal', function(): void {
     });
 
     test('or/and nesting generates grouped clauses', function(): void {
-        [$sql] = query_builder::build('SELECT * FROM products %where%', [
+        [$sql] = \Skim\Db\QueryBuilder::build('SELECT * FROM products %where%', [
             'where' => [
                 'and' => [['category = :cat']],
                 'or'  => [['name LIKE :s'], ['description LIKE :s']],
@@ -52,7 +52,7 @@ describe('query_builder — %where% removal', function(): void {
     });
 
     test('null PDO param values are excluded from returned params array', function(): void {
-        [, $params] = query_builder::build('SELECT * FROM u %where%', [
+        [, $params] = \Skim\Db\QueryBuilder::build('SELECT * FROM u %where%', [
             'where'   => ['status = :status'],
             ':status' => null,
             ':role'   => 'admin',
@@ -66,7 +66,7 @@ describe('query_builder — %where% removal', function(): void {
 describe('query_builder — %set%', function(): void {
 
     test('null values are silently skipped', function(): void {
-        [$sql, $params] = query_builder::build('UPDATE users %set% WHERE id = :id', [
+        [$sql, $params] = \Skim\Db\QueryBuilder::build('UPDATE users %set% WHERE id = :id', [
             'set' => ['name' => 'John', 'avatar' => null],
             ':id' => 1,
         ]);
@@ -76,15 +76,15 @@ describe('query_builder — %set%', function(): void {
     });
 
     test('null_marker instance generates SET col = NULL', function(): void {
-        [$sql] = query_builder::build('UPDATE users %set% WHERE id = :id', [
-            'set' => ['avatar' => null_marker::make()],
+        [$sql] = \Skim\Db\QueryBuilder::build('UPDATE users %set% WHERE id = :id', [
+            'set' => ['avatar' => \Skim\Db\NullMarker::make()],
             ':id' => 1,
         ]);
         expect($sql)->toContain('avatar = NULL');
     });
 
     test('multiple columns generate correct SET clause', function(): void {
-        [$sql, $params] = query_builder::build('UPDATE u %set% WHERE id = :id', [
+        [$sql, $params] = \Skim\Db\QueryBuilder::build('UPDATE u %set% WHERE id = :id', [
             'set' => ['name' => 'Jane', 'email' => 'j@j.com'],
             ':id' => 5,
         ]);
@@ -97,7 +97,7 @@ describe('query_builder — %set%', function(): void {
 describe('query_builder — %values%', function(): void {
 
     test('generates correct INSERT column list and placeholders', function(): void {
-        [$sql, $params] = query_builder::build('INSERT INTO users %values%', [
+        [$sql, $params] = \Skim\Db\QueryBuilder::build('INSERT INTO users %values%', [
             'values' => ['name' => 'John', 'email' => 'j@j.com'],
         ]);
         expect($sql)->toContain('(name, email) VALUES (:name, :email)');
@@ -110,12 +110,12 @@ describe('query_builder — %values%', function(): void {
 describe('query_builder — %limit% and %offset%', function(): void {
 
     test('limit is inlined as integer', function(): void {
-        [$sql] = query_builder::build('SELECT * FROM u %limit%', ['limit' => 20]);
+        [$sql] = \Skim\Db\QueryBuilder::build('SELECT * FROM u %limit%', ['limit' => 20]);
         expect($sql)->toContain('LIMIT 20');
     });
 
     test('offset is inlined as integer', function(): void {
-        [$sql] = query_builder::build('SELECT * FROM u %limit% %offset%', [
+        [$sql] = \Skim\Db\QueryBuilder::build('SELECT * FROM u %limit% %offset%', [
             'limit'  => 10,
             'offset' => 30,
         ]);
@@ -123,7 +123,7 @@ describe('query_builder — %limit% and %offset%', function(): void {
     });
 
     test('unused %placeholders% are stripped silently', function(): void {
-        [$sql] = query_builder::build('SELECT * FROM u %where% %limit% %order_by%', []);
+        [$sql] = \Skim\Db\QueryBuilder::build('SELECT * FROM u %where% %limit% %order_by%', []);
         expect($sql)->not->toContain('%')
                          ->not->toContain('WHERE')
                          ->not->toContain('LIMIT')
@@ -135,12 +135,12 @@ describe('query_builder — %limit% and %offset%', function(): void {
 describe('query_builder — %order_by% and %group_by%', function(): void {
 
     test('order_by is substituted correctly', function(): void {
-        [$sql] = query_builder::build('SELECT * FROM u %order_by%', ['order_by' => 'created_at DESC']);
+        [$sql] = \Skim\Db\QueryBuilder::build('SELECT * FROM u %order_by%', ['order_by' => 'created_at DESC']);
         expect($sql)->toContain('ORDER BY created_at DESC');
     });
 
     test('group_by is substituted correctly', function(): void {
-        [$sql] = query_builder::build('SELECT status, COUNT(*) FROM u %group_by%', ['group_by' => 'status']);
+        [$sql] = \Skim\Db\QueryBuilder::build('SELECT status, COUNT(*) FROM u %group_by%', ['group_by' => 'status']);
         expect($sql)->toContain('GROUP BY status');
     });
 
@@ -149,23 +149,23 @@ describe('query_builder — %order_by% and %group_by%', function(): void {
 describe('query_builder::interpolate()', function(): void {
 
     test('substitutes named params with quoted string values', function(): void {
-        $sql = query_builder::interpolate("SELECT * FROM u WHERE status = :status", [':status' => 'active']);
+        $sql = \Skim\Db\QueryBuilder::interpolate("SELECT * FROM u WHERE status = :status", [':status' => 'active']);
         expect($sql)->toBe("SELECT * FROM u WHERE status = 'active'");
     });
 
     test('substitutes integer values without quotes', function(): void {
-        $sql = query_builder::interpolate("SELECT * FROM u WHERE id = :id", [':id' => 42]);
+        $sql = \Skim\Db\QueryBuilder::interpolate("SELECT * FROM u WHERE id = :id", [':id' => 42]);
         expect($sql)->toBe("SELECT * FROM u WHERE id = 42");
     });
 
     test('substitutes null values as NULL keyword', function(): void {
-        $sql = query_builder::interpolate("SELECT * FROM u WHERE x = :x", [':x' => null]);
+        $sql = \Skim\Db\QueryBuilder::interpolate("SELECT * FROM u WHERE x = :x", [':x' => null]);
         expect($sql)->toBe("SELECT * FROM u WHERE x = NULL");
     });
 
     test('longer param names replaced before shorter (key-length sort)', function(): void {
         // :user_id must be replaced before :user to avoid partial replacement
-        $sql = query_builder::interpolate(
+        $sql = \Skim\Db\QueryBuilder::interpolate(
             "SELECT * FROM t WHERE user_id = :user_id AND tag = :user",
             [':user' => 'admin', ':user_id' => 5],
         );

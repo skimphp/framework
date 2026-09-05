@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 
-use skim\db\db;
-use skim\ext\ext_migrator;
+use Skim\Db\Db;
+use Skim\Ext\ExtMigrator;
 
 describe('ext_migrator', function(): void {
     $root = '';
@@ -9,7 +9,7 @@ describe('ext_migrator', function(): void {
     $remove = null;
 
     beforeEach(function() use (&$root, &$migrations, &$remove): void {
-        db::connect('default', [
+        \Skim\Db\Db::connect('default', [
             'driver' => 'sqlite',
             'database' => ':memory:',
         ]);
@@ -35,14 +35,14 @@ describe('ext_migrator', function(): void {
 
     afterEach(function() use (&$root, &$remove): void {
         $remove($root);
-        db::reset();
+        \Skim\Db\Db::reset();
     });
 
     test('runs pending migrations with namespaced filenames', function() use (&$migrations): void {
         file_put_contents($migrations . '/001_create_ext_items.php', <<<'PHP'
 <?php declare(strict_types=1);
 
-return new class extends \skim\db\migration {
+return new class extends \Skim\Db\Migration {
     public function up(): string {
         return 'CREATE TABLE ext_items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)';
     }
@@ -53,12 +53,12 @@ return new class extends \skim\db\migration {
 };
 PHP);
 
-        $migrator = new ext_migrator();
+        $migrator = new \Skim\Ext\ExtMigrator();
         $applied = $migrator->run('skim/auth', $migrations);
 
         expect($applied)->toHaveCount(1);
         expect($applied[0]['tracking_filename'])->toBe('skim/auth: 001_create_ext_items.php');
-        expect(db::val("SELECT COUNT(*) FROM _migrations WHERE filename = :filename", [
+        expect(\Skim\Db\Db::val("SELECT COUNT(*) FROM _migrations WHERE filename = :filename", [
             ':filename' => 'skim/auth: 001_create_ext_items.php',
         ]))->toBe(1);
         expect($migrator->run('skim/auth', $migrations))->toBe([]);
@@ -68,7 +68,7 @@ PHP);
         file_put_contents($migrations . '/001_create_ext_items.php', <<<'PHP'
 <?php declare(strict_types=1);
 
-return new class extends \skim\db\migration {
+return new class extends \Skim\Db\Migration {
     public function up(): string {
         return 'CREATE TABLE ext_items (id INTEGER PRIMARY KEY AUTOINCREMENT)';
     }
@@ -79,12 +79,12 @@ return new class extends \skim\db\migration {
 };
 PHP);
 
-        $migrator = new ext_migrator();
+        $migrator = new \Skim\Ext\ExtMigrator();
         $applied = $migrator->run('skim/auth', $migrations);
         $rolled_back = $migrator->rollback_session($applied);
 
         expect($rolled_back)->toBe(['skim/auth: 001_create_ext_items.php']);
-        expect(db::row("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'ext_items'"))->toBeNull();
-        expect(db::val('SELECT COUNT(*) FROM _migrations'))->toBe(0);
+        expect(\Skim\Db\Db::row("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'ext_items'"))->toBeNull();
+        expect(\Skim\Db\Db::val('SELECT COUNT(*) FROM _migrations'))->toBe(0);
     });
 });

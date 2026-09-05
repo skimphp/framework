@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 
-use skim\core\router;
+use Skim\Core\Router;
 
 describe('router — static routes', function(): void {
 
     test('matches an exact GET route', function(): void {
-        $r = new router();
+        $r = new \Skim\Core\Router();
         $r->add('GET', '/', fn() => 'home');
 
         $result = $r->dispatch('GET', '/');
@@ -16,13 +16,13 @@ describe('router — static routes', function(): void {
     });
 
     test('returns null for unregistered path (404)', function(): void {
-        $r = new router();
+        $r = new \Skim\Core\Router();
         $result = $r->dispatch('GET', '/not-found');
         expect($result)->toBeNull();
     });
 
     test('returns false when method not allowed (405)', function(): void {
-        $r = new router();
+        $r = new \Skim\Core\Router();
         $r->add('GET', '/items', fn() => []);
 
         $result = $r->dispatch('POST', '/items');
@@ -34,7 +34,7 @@ describe('router — static routes', function(): void {
 describe('router — dynamic @param tokens', function(): void {
 
     test('matches @id and extracts numeric segment', function(): void {
-        $r = new router();
+        $r = new \Skim\Core\Router();
         $r->add('GET', '/users/@id', fn() => null);
 
         $result = $r->dispatch('GET', '/users/42');
@@ -44,7 +44,7 @@ describe('router — dynamic @param tokens', function(): void {
     });
 
     test('@id:int only matches digits', function(): void {
-        $r = new router();
+        $r = new \Skim\Core\Router();
         $r->add('GET', '/users/@id:int', fn() => null);
 
         expect($r->dispatch('GET', '/users/42'))->toBeArray();
@@ -52,7 +52,7 @@ describe('router — dynamic @param tokens', function(): void {
     });
 
     test('@slug:str matches alphanumeric-dash segments', function(): void {
-        $r = new router();
+        $r = new \Skim\Core\Router();
         $r->add('GET', '/posts/@slug:str', fn() => null);
 
         expect($r->dispatch('GET', '/posts/hello-world'))->toBeArray();
@@ -64,7 +64,7 @@ describe('router — dynamic @param tokens', function(): void {
 describe('router — named routes', function(): void {
 
     test('build_url generates correct path from named route', function(): void {
-        $r = new router();
+        $r = new \Skim\Core\Router();
         $r->add('GET', '/users/@id:int', fn() => null)->name('user.show');
 
         $url = $r->build_url('user.show', ['id' => 5]);
@@ -72,12 +72,12 @@ describe('router — named routes', function(): void {
     });
 
     test('build_url throws when name not registered', function(): void {
-        $r = new router();
+        $r = new \Skim\Core\Router();
         expect(fn() => $r->build_url('nonexistent'))->toThrow(\InvalidArgumentException::class);
     });
 
     test('build_url throws when required param missing', function(): void {
-        $r = new router();
+        $r = new \Skim\Core\Router();
         $r->add('GET', '/users/@id', fn() => null)->name('user.show');
 
         expect(fn() => $r->build_url('user.show', []))->toThrow(\InvalidArgumentException::class);
@@ -88,12 +88,12 @@ describe('router — named routes', function(): void {
 describe('router::url() — static url via app container', function(): void {
 
     test('app::test_instance() registers sys.router in container', function(): void {
-        $app = \skim\core\app::test_instance();
-        expect($app->get('sys.router'))->toBeInstanceOf(router::class);
+        $app = \Skim\Core\App::test_instance();
+        expect($app->get('sys.router'))->toBeInstanceOf(\Skim\Core\Router::class);
     });
 
     test('sys.router can build named route URLs', function(): void {
-        $app = \skim\core\app::test_instance();
+        $app = \Skim\Core\App::test_instance();
         $app->router->add('GET', '/posts/@slug:str', fn() => null)->name('post.show');
 
         $router = $app->get('sys.router');
@@ -105,8 +105,8 @@ describe('router::url() — static url via app container', function(): void {
 describe('router — groups', function(): void {
 
     test('group prefix is prepended to all routes inside', function(): void {
-        $r = new router();
-        $r->group('/api', function(router $r): void {
+        $r = new \Skim\Core\Router();
+        $r->group('/api', function(\Skim\Core\Router $r): void {
             $r->add('GET', '/users', fn() => []);
         });
 
@@ -115,8 +115,8 @@ describe('router — groups', function(): void {
     });
 
     test('group middleware is attached to all routes inside', function(): void {
-        $r = new router();
-        $r->group('/admin', function(router $r): void {
+        $r = new \Skim\Core\Router();
+        $r->group('/admin', function(\Skim\Core\Router $r): void {
             $r->add('GET', '/dashboard', fn() => null);
         }, middleware: ['SomeMiddleware']);
 

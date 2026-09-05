@@ -1,15 +1,15 @@
 <?php declare(strict_types=1);
 
-use skim\dev\toolbar;
-use skim\dev\profiler;
-use skim\core\config;
-use skim\core\request;
+use Skim\Dev\Toolbar;
+use Skim\Dev\Profiler;
+use Skim\Core\Config;
+use Skim\Core\Request;
 
 beforeEach(function(): void {
-    config::reset();
-    profiler::reset();
-    profiler::disable();
-    config::set('app.debug', true);
+    \Skim\Core\Config::reset();
+    \Skim\Dev\Profiler::reset();
+    \Skim\Dev\Profiler::disable();
+    \Skim\Core\Config::set('app.debug', true);
     $_GET    = [];
     $_POST   = [];
     $_COOKIE = [];
@@ -29,13 +29,13 @@ beforeEach(function(): void {
 });
 
 afterEach(function(): void {
-    config::reset();
-    profiler::reset();
-    profiler::disable();
+    \Skim\Core\Config::reset();
+    \Skim\Dev\Profiler::reset();
+    \Skim\Dev\Profiler::disable();
 });
 
-function make_request(): request {
-    return new request(
+function make_request(): \Skim\Core\Request {
+    return new \Skim\Core\Request(
         query:    $_GET,
         post:     $_POST,
         server:   $_SERVER,
@@ -48,8 +48,8 @@ function make_request(): request {
 describe('toolbar::render() — debug off', function(): void {
 
     test('returns empty string when app.debug=false', function(): void {
-        config::set('app.debug', false);
-        $html = toolbar::render(make_request());
+        \Skim\Core\Config::set('app.debug', false);
+        $html = \Skim\Dev\Toolbar::render(make_request());
         expect($html)->toBe('');
     });
 
@@ -58,58 +58,58 @@ describe('toolbar::render() — debug off', function(): void {
 describe('toolbar::render() — debug on', function(): void {
 
     test('wraps output in #skim-tb root element', function(): void {
-        $html = toolbar::render(make_request());
+        $html = \Skim\Dev\Toolbar::render(make_request());
         expect($html)->toContain('<div id="skim-tb">');
     });
 
     test('does not contain var_dump artifacts', function(): void {
-        profiler::enable();
-        profiler::db('SELECT 1', 1.0);
-        $html = toolbar::render(make_request());
+        \Skim\Dev\Profiler::enable();
+        \Skim\Dev\Profiler::db('SELECT 1', 1.0);
+        $html = \Skim\Dev\Toolbar::render(make_request());
         expect($html)->not->toMatch('/string\(\d+\)/');
         expect($html)->not->toContain("array(");
     });
 
     test('does not leak absolute template paths', function(): void {
-        $html = toolbar::render(make_request());
+        $html = \Skim\Dev\Toolbar::render(make_request());
         expect($html)->not->toContain('/src/dev/views/');
         expect($html)->not->toContain('toolbar.php');
     });
 
     test('contains HTTP method and path from request', function(): void {
-        $html = toolbar::render(make_request());
+        $html = \Skim\Dev\Toolbar::render(make_request());
         expect($html)->toContain('GET');
         expect($html)->toContain('/test/path');
     });
 
     test('contains toolbar CSS variables (--tb-)', function(): void {
-        $html = toolbar::render(make_request());
+        $html = \Skim\Dev\Toolbar::render(make_request());
         expect($html)->toContain('--tb-bg:');
         expect($html)->toContain('--tb-accent:');
     });
 
     test('shows query tab with count from profiler', function(): void {
-        profiler::enable();
-        profiler::db('SELECT 1', 5.0);
-        profiler::db('SELECT 2', 10.0);
-        $html = toolbar::render(make_request());
+        \Skim\Dev\Profiler::enable();
+        \Skim\Dev\Profiler::db('SELECT 1', 5.0);
+        \Skim\Dev\Profiler::db('SELECT 2', 10.0);
+        $html = \Skim\Dev\Toolbar::render(make_request());
         expect($html)->toContain('skimTab(this,\'db\'');
         expect($html)->toContain('queries');
         expect($html)->toMatch('/tab-count[^>]*>2</');
     });
 
     test('shows cache hit/miss ratio from profiler', function(): void {
-        profiler::enable();
-        profiler::cache('get', 'a', hit: true,  driver: 'array');
-        profiler::cache('get', 'b', hit: false, driver: 'array');
-        profiler::cache('get', 'c', hit: true,  driver: 'array');
-        $html = toolbar::render(make_request());
+        \Skim\Dev\Profiler::enable();
+        \Skim\Dev\Profiler::cache('get', 'a', hit: true,  driver: 'array');
+        \Skim\Dev\Profiler::cache('get', 'b', hit: false, driver: 'array');
+        \Skim\Dev\Profiler::cache('get', 'c', hit: true,  driver: 'array');
+        $html = \Skim\Dev\Toolbar::render(make_request());
         expect($html)->toContain('2h/1m');
     });
 
     test('shows empty-state messages when profiler is empty', function(): void {
-        profiler::enable();
-        $html = toolbar::render(make_request());
+        \Skim\Dev\Profiler::enable();
+        $html = \Skim\Dev\Toolbar::render(make_request());
         expect($html)->toContain('No queries');
         expect($html)->toContain('No cache events');
         expect($html)->toContain('No views rendered');
@@ -117,18 +117,18 @@ describe('toolbar::render() — debug on', function(): void {
 
     test('escapes HTML in request path', function(): void {
         $_SERVER['REQUEST_URI'] = '/search?q=<script>alert(1)</script>';
-        $html = toolbar::render(make_request());
+        $html = \Skim\Dev\Toolbar::render(make_request());
         expect($html)->not->toContain('<script>alert(1)</script>');
         expect($html)->toContain('&lt;script&gt;');
     });
 
     test('contains PHP version chip in header', function(): void {
-        $html = toolbar::render(make_request());
+        $html = \Skim\Dev\Toolbar::render(make_request());
         expect($html)->toContain(PHP_VERSION);
     });
 
     test('contains icon font stylesheet', function(): void {
-        $html = toolbar::render(make_request());
+        $html = \Skim\Dev\Toolbar::render(make_request());
         expect($html)->toContain('tabler-icons');
     });
 

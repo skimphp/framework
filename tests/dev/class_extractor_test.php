@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-use skim\dev\docs\extractor\class_extractor;
+use Skim\Dev\Docs\Extractor\ClassExtractor;
 
 describe('class_extractor — basic behavior', function(): void {
 
@@ -20,7 +20,7 @@ describe('class_extractor — basic behavior', function(): void {
         }
         PHP);
 
-        $result = (new class_extractor())->extract($file);
+        $result = (new \Skim\Dev\Docs\Extractor\ClassExtractor())->extract($file);
         unlink($file);
 
         expect($result)->not->toBeNull();
@@ -40,7 +40,7 @@ describe('class_extractor — basic behavior', function(): void {
         }
         PHP);
 
-        $result = (new class_extractor())->extract($file);
+        $result = (new \Skim\Dev\Docs\Extractor\ClassExtractor())->extract($file);
         unlink($file);
 
         expect($result->methods)->toHaveCount(1);
@@ -60,7 +60,7 @@ describe('class_extractor — basic behavior', function(): void {
         }
         PHP);
 
-        $result = (new class_extractor())->extract($file);
+        $result = (new \Skim\Dev\Docs\Extractor\ClassExtractor())->extract($file);
         unlink($file);
 
         expect($result->methods)->toHaveCount(1);
@@ -78,7 +78,7 @@ describe('class_extractor — basic behavior', function(): void {
         }
         PHP);
 
-        $result = (new class_extractor())->extract($file);
+        $result = (new \Skim\Dev\Docs\Extractor\ClassExtractor())->extract($file);
         unlink($file);
 
         expect($result->methods[0]->signature)
@@ -90,7 +90,7 @@ describe('class_extractor — basic behavior', function(): void {
 
     test('returns null for file with no class', function(): void {
         $file = write_php_fixture('function helper(): void {}');
-        $result = (new class_extractor())->extract($file);
+        $result = (new \Skim\Dev\Docs\Extractor\ClassExtractor())->extract($file);
         unlink($file);
         expect($result)->toBeNull();
     });
@@ -98,7 +98,7 @@ describe('class_extractor — basic behavior', function(): void {
     test('returns null for file with parse error', function(): void {
         $path = sys_get_temp_dir() . '/skim_extractor_broken_' . uniqid() . '.php';
         file_put_contents($path, '<?php this is not valid php {{{{');
-        $result = (new class_extractor())->extract($path);
+        $result = (new \Skim\Dev\Docs\Extractor\ClassExtractor())->extract($path);
         unlink($path);
         expect($result)->toBeNull();
     });
@@ -106,7 +106,7 @@ describe('class_extractor — basic behavior', function(): void {
     test('returns null for non-existent file', function(): void {
         $path = sys_get_temp_dir() . '/skim_never_created_' . uniqid() . '.php';
         expect(file_exists($path))->toBeFalse();
-        $result = (new class_extractor())->extract($path);
+        $result = (new \Skim\Dev\Docs\Extractor\ClassExtractor())->extract($path);
         expect($result)->toBeNull();
     });
 
@@ -119,7 +119,7 @@ describe('class_extractor — basic behavior', function(): void {
         };
         PHP);
 
-        $result = (new class_extractor())->extract($file);
+        $result = (new \Skim\Dev\Docs\Extractor\ClassExtractor())->extract($file);
         unlink($file);
         expect($result)->toBeNull();
     });
@@ -142,8 +142,8 @@ function find_method(array $methods, string $name) {
 describe('class_extractor — fixture: array_driver', function () {
 
     beforeEach(function () {
-        $this->extractor = new class_extractor();
-        $this->fixture   = __DIR__ . '/../../src/cache/array_driver.php';
+        $this->extractor = new \Skim\Dev\Docs\Extractor\ClassExtractor();
+        $this->fixture   = __DIR__ . '/../../src/Cache/ArrayDriver.php';
     });
 
     it('returns null for non-existent file', function () {
@@ -160,8 +160,8 @@ describe('class_extractor — fixture: array_driver', function () {
 
     it('extracts class_name and namespace', function () {
         $result = $this->extractor->extract($this->fixture);
-        expect($result->class_name)->toBe('array_driver')
-            ->and($result->namespace)->toBe('skim\\cache');
+        expect($result->class_name)->toBe('ArrayDriver')
+            ->and($result->namespace)->toBe('Skim\\Cache');
     });
 
     it('extracts summary from inline comments before class', function () {
@@ -190,7 +190,7 @@ describe('class_extractor — fixture: array_driver', function () {
 
     it('sets method owner to fully qualified class name', function () {
         $result = $this->extractor->extract($this->fixture);
-        expect($result->methods[0]->owner)->toBe('skim\\cache\\array_driver');
+        expect($result->methods[0]->owner)->toBe('Skim\\Cache\\ArrayDriver');
     });
 
 });
@@ -198,8 +198,8 @@ describe('class_extractor — fixture: array_driver', function () {
 describe('class_extractor — fixture: cache facade (full #AI block)', function () {
 
     beforeEach(function () {
-        $this->extractor = new class_extractor();
-        $this->fixture   = __DIR__ . '/../../src/cache/cache.php';
+        $this->extractor = new \Skim\Dev\Docs\Extractor\ClassExtractor();
+        $this->fixture   = __DIR__ . '/../../src/Cache/Cache.php';
     });
 
     it('extracts class-level #AI layer field', function () {

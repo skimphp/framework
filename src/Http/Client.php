@@ -1,0 +1,217 @@
+<?php declare(strict_types=1);
+
+namespace Skim\Http;
+
+/**
+ * Zero-dependency HTTP client using PHP native streams.
+ *
+ * Use for outbound API calls when Guzzle or Symfony HttpClient are not
+ * needed. All methods return an http_response value object — never throw
+ * on non-2xx status. The caller decides whether a status code is an error.
+ *
+ * Example:
+ *   $http = new client(['base_url' => 'https://api.example.com', 'timeout' => 5]);
+ *   $resp = $http->get('/users', ['page' => 1]);
+ *   if ($resp->ok()) { $users = $resp->json(); }
+ *
+ * Testing: Use client::fake() to get a fake_client that records requests.
+ *
+ * #AI:class
+ */
+class Client {
+    private array  $default_headers = ['Content-Type' => 'application/json'];
+    private int    $timeout         = 10;
+    private bool   $verify_ssl      = true;
+    private ?string $base_url       = null;
+
+    public function __construct(array $options = []) {
+        if (isset($options['base_url'])) {
+            $this->base_url = rtrim($options['base_url'], '/');
+        }
+        if (isset($options['timeout'])) {
+            $this->timeout = (int) $options['timeout'];
+        }
+        if (isset($options['verify_ssl'])) {
+            $this->verify_ssl = (bool) $options['verify_ssl'];
+        }
+        if (isset($options['headers'])) {
+            $this->default_headers = array_merge($this->default_headers, $options['headers']);
+        }
+    }
+
+    /**
+     * Sends a GET request. #AI:get
+     *
+     * The $query array is appended as ?key=val URL params.
+     *
+     * @param string $url     Target URL or path (prepended with base_url).
+     * @param array  $query   Query params appended as URL string.
+     * @param array  $headers Additional headers merged with defaults.
+     */
+    public function get(string $url, array $query = [], array $headers = []): \Skim\Http\HttpResponse {
+        if ($query !== []) {
+            $url .= '?' . http_build_query($query);
+        }
+        return $this->send('GET', $url, null, $headers);
+    }
+
+    /**
+     * Sends a POST request with JSON body. #AI:post
+     *
+     * @param string $url     Target URL or path.
+     * @param array  $data    Request body, JSON-encoded.
+     * @param array  $headers Additional headers merged with defaults.
+     */
+    public function post(string $url, array $data = [], array $headers = []): \Skim\Http\HttpResponse {
+        return $this->send('POST', $url, $data, $headers);
+    }
+
+    /**
+     * Sends a PUT request with JSON body. #AI:put
+     *
+     * @param string $url     Target URL or path.
+     * @param array  $data    Request body, JSON-encoded.
+     * @param array  $headers Additional headers merged with defaults.
+     */
+    public function put(string $url, array $data = [], array $headers = []): \Skim\Http\HttpResponse {
+        return $this->send('PUT', $url, $data, $headers);
+    }
+
+    /**
+     * Sends a PATCH request with JSON body. #AI:patch
+     *
+     * @param string $url     Target URL or path.
+     * @param array  $data    Request body, JSON-encoded.
+     * @param array  $headers Additional headers merged with defaults.
+     */
+    public function patch(string $url, array $data = [], array $headers = []): \Skim\Http\HttpResponse {
+        return $this->send('PATCH', $url, $data, $headers);
+    }
+
+    /**
+     * Sends a DELETE request with optional JSON body. #AI:delete
+     *
+     * @param string $url     Target URL or path.
+     * @param array  $data    Optional request body, JSON-encoded when non-empty.
+     * @param array  $headers Additional headers merged with defaults.
+     */
+    public function delete(string $url, array $data = [], array $headers = []): \Skim\Http\HttpResponse {
+        return $this->send('DELETE', $url, $data ?: null, $headers);
+    }
+
+    /**
+     * Returns a fake_client for tests that records all requests. #AI:fake
+     *
+     * Example:
+     *   $http = client::fake(['GET https://api.example.com/users' => ['status' => 200, 'body' => []]]);
+     *   $resp = $http->get('https://api.example.com/users');
+     *   $http->assert_sent('GET', 'users');
+     *
+     * @param array $stubs Map of "METHOD URL" => response stub arrays or http_response objects.
+     */
+    public static function fake(array $stubs = []): \Skim\Http\FakeClient {
+        return new \Skim\Http\FakeClient($stubs);
+    }
+
+    private function send(string $method, string $url, ?array $body, array $extra_headers): \Skim\Http\HttpResponse {
+        $full_url = $this->base_url !== null ? $this->base_url . '/' . ltrim($url, '/') : $url;
+        $headers  = array_merge($this->default_headers, $extra_headers);
+        $content  = $body !== null ? json_encode($body) : null;
+
+        $header_lines = array_map(
+            fn($k, $v) => "{$k}: {$v}",
+            array_keys($headers),
+            array_values($headers),
+        );
+
+        $opts = [
+            'http' => [
+                'method'        => $method,
+                'header'        => implode("\r\n", $header_lines),
+                'content'       => $content,
+                'timeout'       => $this->timeout,
+                'ignore_errors' => true,
+            ],
+            'ssl' => [
+                'verify_peer'      => $this->verify_ssl,
+                'verify_peer_name' => $this->verify_ssl,
+            ],
+        ];
+
+        $ctx  = stream_context_create($opts);
+        $raw  = @file_get_contents($full_url, false, $ctx);
+        $meta = $http_response_header ?? [];
+
+        return \Skim\Http\HttpResponse::from_stream($raw === false ? '' : $raw, $meta);
+    }
+}
+
+#AI:class
+#AI symbol: Skim\Http\Client
+#AI source_path: src/http/client.php
+#AI title: client
+#AI description: Zero-dependency HTTP client using PHP native streams with JSON body and test faking.
+#AI role: HTTP client
+#AI layer: http
+#AI badges: [http; client; streams; zero-dep; testable]
+#AI intro: `client` wraps PHP's native `file_get_contents` + `stream_context_create` for outbound HTTP. It returns immutable `http_response` objects and never throws on non-2xx status codes.
+#AI lifecycle: instantiated per-service or per-request; no persistent connections
+#AI test_seam: client::fake() returns a fake_client that records requests and returns stubs
+#AI invariants: [Never throws on non-2xx status; All responses are http_response value objects; JSON Content-Type by default]
+#AI core_behaviors: [Sends HTTP via PHP streams; JSON-encodes request bodies; Merges default and per-request headers; Supports base_url prefixing]
+#AI owns: nothing
+#AI entry_points: [get; post; put; patch; delete; fake]
+#AI config_reads: []
+#AI non_goals: [Does not support async/concurrent requests; Does not follow redirects; Does not retry on failure; No Guzzle dependency]
+#AI side_effects: [Makes outbound HTTP requests]
+#AI flow: client::method() -> send() -> stream_context_create() -> file_get_contents() -> http_response::from_stream()
+#AI section_order: [HTTP Methods; Testing; Architecture]
+
+#AI:get
+#AI group: HTTP Methods
+#AI frequency: high
+#AI signature: public function get(string $url, array $query = [], array $headers = []): http_response
+#AI contract: Sends a GET request. The $query array is appended as URL query parameters.
+#AI param_details: [{name: $url | type: string | required: true | desc: Target URL or path (prepended with base_url if set).}; {name: $query | type: array | required: false | desc: Query params appended as ?key=val URL string.}; {name: $headers | type: array | required: false | desc: Additional headers merged with defaults.}]
+#AI return_detail: {type: http_response | desc: Immutable response value object.}
+
+#AI:post
+#AI group: HTTP Methods
+#AI frequency: high
+#AI signature: public function post(string $url, array $data = [], array $headers = []): http_response
+#AI contract: Sends a POST request with JSON-encoded body.
+#AI param_details: [{name: $url | type: string | required: true | desc: Target URL or path.}; {name: $data | type: array | required: false | desc: Request body, JSON-encoded.}; {name: $headers | type: array | required: false | desc: Additional headers merged with defaults.}]
+#AI return_detail: {type: http_response | desc: Immutable response value object.}
+
+#AI:put
+#AI group: HTTP Methods
+#AI frequency: medium
+#AI signature: public function put(string $url, array $data = [], array $headers = []): http_response
+#AI contract: Sends a PUT request with JSON-encoded body.
+#AI param_details: [{name: $url | type: string | required: true | desc: Target URL or path.}; {name: $data | type: array | required: false | desc: Request body, JSON-encoded.}; {name: $headers | type: array | required: false | desc: Additional headers merged with defaults.}]
+#AI return_detail: {type: http_response | desc: Immutable response value object.}
+
+#AI:patch
+#AI group: HTTP Methods
+#AI frequency: medium
+#AI signature: public function patch(string $url, array $data = [], array $headers = []): http_response
+#AI contract: Sends a PATCH request with JSON-encoded body.
+#AI param_details: [{name: $url | type: string | required: true | desc: Target URL or path.}; {name: $data | type: array | required: false | desc: Request body, JSON-encoded.}; {name: $headers | type: array | required: false | desc: Additional headers merged with defaults.}]
+#AI return_detail: {type: http_response | desc: Immutable response value object.}
+
+#AI:delete
+#AI group: HTTP Methods
+#AI frequency: medium
+#AI signature: public function delete(string $url, array $data = [], array $headers = []): http_response
+#AI contract: Sends a DELETE request with optional JSON body. Body is omitted when $data is empty.
+#AI param_details: [{name: $url | type: string | required: true | desc: Target URL or path.}; {name: $data | type: array | required: false | desc: Optional request body, JSON-encoded when non-empty.}; {name: $headers | type: array | required: false | desc: Additional headers merged with defaults.}]
+#AI return_detail: {type: http_response | desc: Immutable response value object.}
+
+#AI:fake
+#AI group: Testing
+#AI frequency: high
+#AI signature: public static function fake(array $stubs = []): fake_client
+#AI contract: Returns a fake_client that intercepts all HTTP requests, records them, and returns stub responses.
+#AI param_details: [{name: $stubs | type: array | required: false | desc: Map of 'METHOD URL' => response stub arrays or http_response objects.}]
+#AI return_detail: {type: fake_client | desc: Test double that records requests and returns stubs.}
+#AI examples: [{label: Basic stub | code: $http = client::fake(['GET https://api.example.com/users' => ['status' => 200, 'body' => []]]);}]

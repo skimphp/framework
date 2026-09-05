@@ -1,36 +1,36 @@
 <?php declare(strict_types=1);
 
-use skim\core\env;
+use Skim\Core\Env;
 
 describe('env::get()', function(): void {
 
     test('returns default when key is not set', function(): void {
-        expect(env::get('UNDEFINED_KEY_XYZ', 'default'))->toBe('default');
+        expect(\Skim\Core\Env::get('UNDEFINED_KEY_XYZ', 'default'))->toBe('default');
     });
 
     test('returns value after env::set()', function(): void {
-        env::set('TEST_KEY', 'hello');
-        expect(env::get('TEST_KEY'))->toBe('hello');
+        \Skim\Core\Env::set('TEST_KEY', 'hello');
+        expect(\Skim\Core\Env::get('TEST_KEY'))->toBe('hello');
     });
 
     test('casts "true" string to boolean true', function(): void {
-        env::set('BOOL_TRUE', 'true');
-        expect(env::get('BOOL_TRUE'))->toBeTrue();
+        \Skim\Core\Env::set('BOOL_TRUE', 'true');
+        expect(\Skim\Core\Env::get('BOOL_TRUE'))->toBeTrue();
     });
 
     test('casts "false" string to boolean false', function(): void {
-        env::set('BOOL_FALSE', 'false');
-        expect(env::get('BOOL_FALSE'))->toBeFalse();
+        \Skim\Core\Env::set('BOOL_FALSE', 'false');
+        expect(\Skim\Core\Env::get('BOOL_FALSE'))->toBeFalse();
     });
 
     test('casts "null" string to PHP null', function(): void {
-        env::set('NULL_VAL', 'null');
-        expect(env::get('NULL_VAL'))->toBeNull();
+        \Skim\Core\Env::set('NULL_VAL', 'null');
+        expect(\Skim\Core\Env::get('NULL_VAL'))->toBeNull();
     });
 
     test('preserves numeric strings as strings', function(): void {
-        env::set('PORT', '3306');
-        expect(env::get('PORT'))->toBe('3306');
+        \Skim\Core\Env::set('PORT', '3306');
+        expect(\Skim\Core\Env::get('PORT'))->toBe('3306');
     });
 
 });
@@ -38,19 +38,19 @@ describe('env::get()', function(): void {
 describe('env::load()', function(): void {
 
     test('silently skips missing .env file', function(): void {
-        env::load('/nonexistent/path/.env');
-        expect(env::get('ANYTHING'))->toBeNull();
+        \Skim\Core\Env::load('/nonexistent/path/.env');
+        expect(\Skim\Core\Env::get('ANYTHING'))->toBeNull();
     });
 
     test('parses key=value pairs from .env file', function(): void {
         $tmp = sys_get_temp_dir() . '/skim_env_test_' . uniqid() . '.env';
         file_put_contents($tmp, "APP_NAME=\"Test App\"\nAPP_DEBUG=true\n");
 
-        env::reset();
-        env::load($tmp);
+        \Skim\Core\Env::reset();
+        \Skim\Core\Env::load($tmp);
 
-        expect(env::get('APP_NAME'))->toBe('Test App');
-        expect(env::get('APP_DEBUG'))->toBeTrue();
+        expect(\Skim\Core\Env::get('APP_NAME'))->toBe('Test App');
+        expect(\Skim\Core\Env::get('APP_DEBUG'))->toBeTrue();
 
         unlink($tmp);
     });
@@ -59,10 +59,10 @@ describe('env::load()', function(): void {
         $tmp = sys_get_temp_dir() . '/skim_env_comment_' . uniqid() . '.env';
         file_put_contents($tmp, "# this is a comment\nVALID_KEY=yes\n");
 
-        env::reset();
-        env::load($tmp);
+        \Skim\Core\Env::reset();
+        \Skim\Core\Env::load($tmp);
 
-        expect(env::get('VALID_KEY'))->toBe('yes');
+        expect(\Skim\Core\Env::get('VALID_KEY'))->toBe('yes');
         unlink($tmp);
     });
 
@@ -70,11 +70,11 @@ describe('env::load()', function(): void {
         $tmp = sys_get_temp_dir() . '/skim_env_idempotent_' . uniqid() . '.env';
         file_put_contents($tmp, "IDEM_KEY=first\n");
 
-        env::reset();
-        env::load($tmp);
-        env::load($tmp);   // second call must not reload
+        \Skim\Core\Env::reset();
+        \Skim\Core\Env::load($tmp);
+        \Skim\Core\Env::load($tmp);   // second call must not reload
 
-        expect(env::get('IDEM_KEY'))->toBe('first');
+        expect(\Skim\Core\Env::get('IDEM_KEY'))->toBe('first');
         unlink($tmp);
     });
 

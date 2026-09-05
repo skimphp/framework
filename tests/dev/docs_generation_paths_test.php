@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-use skim\core\config;
-use skim\dev\docs\value\docs_generation_paths;
+use Skim\Core\Config;
+use Skim\Dev\Docs\Value\DocsGenerationPaths;
 
 describe('docs_generation_paths', function(): void {
 
     test('resolves source and output flags relative to base_path', function(): void {
-        $paths = docs_generation_paths::from_flags([
+        $paths = \Skim\Dev\Docs\Value\DocsGenerationPaths::from_flags([
             'source' => '.agents/skills/better-commenting/test/5',
             'output' => '.agents/skills/better-commenting/test/5/res_mdx',
         ]);
@@ -18,12 +18,12 @@ describe('docs_generation_paths', function(): void {
     });
 
     test('keeps config defaults when no flags are supplied', function(): void {
-        config::set('docs.scan_paths', [base_path('src')]);
-        config::set('docs.output.json', base_path('custom/llm.json'));
-        config::set('docs.output.llm_md', base_path('custom/llm.md'));
-        config::set('docs.output.mdx_dir', base_path('custom/mdx'));
+        \Skim\Core\Config::set('docs.scan_paths', [base_path('src')]);
+        \Skim\Core\Config::set('docs.output.json', base_path('custom/llm.json'));
+        \Skim\Core\Config::set('docs.output.llm_md', base_path('custom/llm.md'));
+        \Skim\Core\Config::set('docs.output.mdx_dir', base_path('custom/mdx'));
 
-        $paths = docs_generation_paths::from_flags([]);
+        $paths = \Skim\Dev\Docs\Value\DocsGenerationPaths::from_flags([]);
 
         expect($paths->scan_paths())->toBe([base_path('src')]);
         expect($paths->json_path())->toBe(base_path('custom/llm.json'));

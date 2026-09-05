@@ -1,35 +1,35 @@
 <?php declare(strict_types=1);
 
-use skim\core\app;
-use skim\core\request;
-use skim\core\response;
-use skim\events\event;
-use skim\view\view;
-use skim\view\component_collector;
-use skim\worker\worker_reset;
+use Skim\Core\App;
+use Skim\Core\Request;
+use Skim\Core\Response;
+use Skim\Events\Event;
+use Skim\View\View;
+use Skim\View\ComponentCollector;
+use Skim\Worker\WorkerReset;
 
 beforeEach(function (): void {
-    event::off();
-    view::reset();
-    component_collector::reset_request();
+    \Skim\Events\Event::off();
+    \Skim\View\View::reset();
+    \Skim\View\ComponentCollector::reset_request();
 });
 
-function boot_worker_app(): app {
-    $app = app::test_instance(['app.debug' => false, 'app.view.default_layout' => null]);
+function boot_worker_app(): \Skim\Core\App {
+    $app = \Skim\Core\App::test_instance(['app.debug' => false, 'app.view.default_layout' => null]);
     $app->router->get('/ping', fn(): array => ['ok' => true]);
     $app->router->get('/boom', fn() => throw new \RuntimeException('handler blew up'));
-    event::on('boot.ping', fn() => null);
+    \Skim\Events\Event::on('boot.ping', fn() => null);
     $app->boot();
     $app->boot_extensions();
     $app->freeze();
-    event::capture_boot_snapshot();
+    \Skim\Events\Event::capture_boot_snapshot();
     return $app;
 }
 
-function run_once(app $app, string $uri): void {
+function run_once(\Skim\Core\App $app, string $uri): void {
     $app->begin_request();
     try {
-        $app->dispatch(request::make('GET', $uri), new response());
+        $app->dispatch(\Skim\Core\Request::make('GET', $uri), new \Skim\Core\Response());
     } catch (\Throwable $e) {
         ob_start();
         $app->handle_exception($e);
@@ -46,29 +46,29 @@ describe('worker lifecycle — in-process gate (T2)', function (): void {
 
         run_once($app, '/ping');
         $app->set('user.name', 'alice');
-        view::share('title', 'test');
+        \Skim\View\View::share('title', 'test');
 
         expect($app->get('user.name'))->toBe('alice');
-        expect(view::get_shared('title'))->toBe('test');
+        expect(\Skim\View\View::get_shared('title'))->toBe('test');
 
         run_once($app, '/ping');
 
         expect($app->get('user.name'))->toBeNull();
-        expect(view::get_shared('title'))->toBeNull();
+        expect(\Skim\View\View::get_shared('title'))->toBeNull();
     });
 
     test('request-time event listeners do not accumulate', function (): void {
         $app = boot_worker_app();
-        $boot_baseline = event::listener_count('boot.ping');
+        $boot_baseline = \Skim\Events\Event::listener_count('boot.ping');
 
         for ($i = 0; $i < 10; $i++) {
             run_once($app, '/ping');
-            event::on('req.ping', fn() => null);
+            \Skim\Events\Event::on('req.ping', fn() => null);
             run_once($app, '/ping'); // end_request triggers reset
         }
 
-        expect(event::listener_count('boot.ping'))->toBe($boot_baseline);
-        expect(event::listener_count('req.ping'))->toBe(0);
+        expect(\Skim\Events\Event::listener_count('boot.ping'))->toBe($boot_baseline);
+        expect(\Skim\Events\Event::listener_count('req.ping'))->toBe(0);
     });
 
     test('lazy-loaded resettable is discovered and reset', function (): void {
@@ -83,7 +83,7 @@ describe('worker lifecycle — in-process gate (T2)', function (): void {
 
         run_once($app, '/ping');
 
-        expect(worker_reset::discovered())->toContain($class);
+        expect(\Skim\Worker\WorkerReset::discovered())->toContain($class);
         expect($class::$was_reset)->toBeTrue();
     });
 
@@ -96,7 +96,7 @@ describe('worker lifecycle — in-process gate (T2)', function (): void {
         run_once($app, '/ping');
 
         expect($app->get('user.name'))->toBeNull();
-        expect(component_collector::current())->toBeNull();
+        expect(\Skim\View\ComponentCollector::current())->toBeNull();
         expect(ob_get_level())->toBe($baseline_ob);
     });
 

@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-use skim\core\app;
-use skim\core\response;
-use skim\realtime\datastar;
-use skim\realtime\sse;
+use Skim\Core\App;
+use Skim\Core\Response;
+use Skim\Realtime\Datastar;
+use Skim\Realtime\Sse;
 
 function stream_subprocess(string $php_code): string {
     $proc = proc_open(
@@ -24,42 +24,42 @@ describe('response::stream() driver resolution', function(): void {
     test('passes a plain sse when no driver is configured', function(): void {
         $code = '
             require "vendor/autoload.php";
-            $res = new \skim\core\response();
+            $res = new \Skim\Core\Response();
             $received = null;
             $res->stream(function($instance) use (&$received) {
                 $received = get_class($instance);
             });
             echo $received;
         ';
-        expect(stream_subprocess($code))->toBe(sse::class);
+        expect(stream_subprocess($code))->toBe(\Skim\Realtime\Sse::class);
     });
 
     test('resolves a driver from the container when driver arg is given', function(): void {
         $code = '
             require "vendor/autoload.php";
-            \skim\core\app::instance()->bind(\skim\realtime\contract\element_patcher::class, \skim\realtime\datastar::class);
-            $res = new \skim\core\response();
+            \Skim\Core\App::instance()->bind(\Skim\Realtime\Contract\ElementPatcher::class, \Skim\Realtime\Datastar::class);
+            $res = new \Skim\Core\Response();
             $received = null;
             $res->stream(function($instance) use (&$received) {
                 $received = get_class($instance);
-            }, driver: \skim\realtime\contract\element_patcher::class);
+            }, driver: \Skim\Realtime\Contract\ElementPatcher::class);
             echo $received;
         ';
-        expect(stream_subprocess($code))->toBe(datastar::class);
+        expect(stream_subprocess($code))->toBe(\Skim\Realtime\Datastar::class);
     });
 
     test('resolves a driver from config when no driver arg is given', function(): void {
         $code = '
             require "vendor/autoload.php";
-            \skim\core\config::set("realtime.driver", \skim\realtime\datastar::class);
-            $res = new \skim\core\response();
+            \Skim\Core\Config::set("realtime.driver", \Skim\Realtime\Datastar::class);
+            $res = new \Skim\Core\Response();
             $received = null;
             $res->stream(function($instance) use (&$received) {
                 $received = get_class($instance);
             });
             echo $received;
         ';
-        expect(stream_subprocess($code))->toBe(datastar::class);
+        expect(stream_subprocess($code))->toBe(\Skim\Realtime\Datastar::class);
     });
 
 });

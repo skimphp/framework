@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-use skim\view\view;
+use Skim\View\View;
 
 beforeEach(function(): void {
-    view::reset();
-    view::set_path(dirname(__DIR__) . '/fixtures/views');
+    \Skim\View\View::reset();
+    \Skim\View\View::set_path(dirname(__DIR__) . '/Fixtures/Views');
 });
 
 describe('fragment render performance', function(): void {
@@ -13,20 +13,20 @@ describe('fragment render performance', function(): void {
         $data = ['name' => 'Alice', 'stats_value' => '42', 'users' => ['Bob', 'Charlie']];
 
         // Warmup
-        view::render('pages/dashboard', $data, 'stats_widget');
-        view::render('pages/dashboard', $data);
+        \Skim\View\View::render('pages/dashboard', $data, 'stats_widget');
+        \Skim\View\View::render('pages/dashboard', $data);
 
         $runs = 200;
 
         $t1 = microtime(true);
         for ($i = 0; $i < $runs; $i++) {
-            view::render('pages/dashboard', $data, 'stats_widget');
+            \Skim\View\View::render('pages/dashboard', $data, 'stats_widget');
         }
         $fragment_time = microtime(true) - $t1;
 
         $t2 = microtime(true);
         for ($i = 0; $i < $runs; $i++) {
-            view::render('pages/dashboard', $data);
+            \Skim\View\View::render('pages/dashboard', $data);
         }
         $full_time = microtime(true) - $t2;
 
@@ -40,7 +40,7 @@ describe('fragment render performance', function(): void {
         // When fragment is requested, layout should be bypassed.
         // We verify by checking the output does not contain layout elements.
         $data = ['name' => 'Alice', 'stats_value' => '42', 'users' => ['Bob', 'Charlie']];
-        $html = view::render('pages/dashboard', $data, 'stats_widget');
+        $html = \Skim\View\View::render('pages/dashboard', $data, 'stats_widget');
         expect($html)->not->toContain('<html>');
         expect($html)->not->toContain('<main>');
     });
