@@ -160,7 +160,7 @@ class Response {
      * Streams Server-Sent Events via a callback. #AI:stream
      *
      * Sends headers immediately, disables output buffering, and passes a driver
-     * instance to the callback. By default a plain sse is passed; when a driver
+     * instance to the callback. By default a plain Sse is passed; when a driver
      * is specified (or configured) the container resolves it over the SSE
      * transport so controllers can type-hint interfaces (element_patcher, etc.).
      *
@@ -176,7 +176,7 @@ class Response {
      *       $ds->patch('<div id="status">Active</div>', '#status');
      *   }, driver: Datastar::class);
      *
-     * @param callable  $callback Receives an sse or resolved driver instance.
+     * @param callable  $callback Receives an Sse or resolved driver instance.
      * @param ?string   $driver   Optional driver class to resolve from the container.
      */
     public function stream(callable $callback, ?string $driver = null): static {
@@ -434,8 +434,8 @@ class Response {
 #AI group: Streaming & Downloads
 #AI frequency: medium
 #AI signature: public function stream(callable $callback, ?string $driver = null): static
-#AI contract: Sends SSE headers immediately, disables output buffering, and passes an sse or resolved driver instance to the callback. Driver is resolved from the container so apps/extensions can override with one bind().
-#AI param_details: [{name: $callback | type: callable | required: true | desc: Receives an sse or driver instance to emit events.}; {name: $driver | type: ?string | required: false | desc: Optional driver class to resolve from the container. Falls back to config('realtime.driver'). Defaults to plain sse.}]
+#AI contract: Sends SSE headers immediately, disables output buffering, and passes an Sse or resolved driver instance to the callback. Driver is resolved from the container so apps/extensions can override with one bind().
+#AI param_details: [{name: $callback | type: callable | required: true | desc: Receives an Sse or driver instance to emit events.}; {name: $driver | type: ?string | required: false | desc: Optional driver class to resolve from the container. Falls back to config('realtime.driver'). Defaults to plain Sse.}]
 #AI return_detail: {type: static | desc: $this for fluent chaining.}
 #AI warnings: [Headers are sent inline — middleware response modifications after this call have no effect]
 #AI side_effects: [Sends HTTP headers immediately; Disables output buffering; Resolves driver from container when configured]

@@ -5,7 +5,7 @@ namespace Skim\Dev\Docs\Emitter;
 use Skim\Dev\Docs\Value\ExtractedClass;
 
 /**
- * Serializes extracted_class[] to llm.json — the single source of truth for all doc outputs. #AI:class
+ * Serializes ExtractedClass[] to llm.json — the single source of truth for all doc outputs. #AI:class
  *
  * Use when writing the intermediate JSON that all other emitters and the
  * MCP server consume. No framework dependencies — plain PHP only.

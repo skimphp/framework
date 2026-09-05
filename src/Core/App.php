@@ -689,7 +689,7 @@ class App {
      * Ends a request in worker mode — resets per-request state. #AI:endRequest
      *
      * Clears user scope and request-scoped DI bindings, then runs the global
-     * worker_reset orchestrator to clear static facades and output buffers.
+     * WorkerReset orchestrator to clear static facades and output buffers.
      */
     public function endRequest(): void {
         $this->user = [];

@@ -59,8 +59,8 @@ class RouteEntry {
      * replacing. The order within route middleware matches the call order.
      *
      * Example:
-     *   $route->middleware(log_middleware::class);
-     *   $route->middleware(cache_middleware::class); // log runs first, then cache
+     *   $route->middleware(LogMiddleware::class);
+     *   $route->middleware(CacheMiddleware::class); // log runs first, then cache
      *
      * @param string ...$classes Middleware class-strings to append.
      * @return $this For fluent chaining.
