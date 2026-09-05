@@ -48,7 +48,7 @@
 
 ### 1.4 Core: request
 - [x] `src/Core/Request.php` — `get/post/input/json/file/header/ip/method/path/url`
-- [x] `src/Core/Request.php` — `isHtmx/isDatastar/isJson/isAjax/isCli`
+- [x] `src/Core/Request.php` — `isHypermedia/isJson/isAjax/isCli`
 - [x] `src/Core/Request.php` — injected via container, not instantiated manually
 - [x] `tests/core/request_test.php`
 

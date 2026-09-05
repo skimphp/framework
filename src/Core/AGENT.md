@@ -26,8 +26,7 @@ request/response abstractions, middleware pipeline.
 ## request — critical behaviours
 - fromGlobals() reads superglobals — only called in App::run(), never elsewhere
 - make() is the test factory — pass explicit arrays
-- isHtmx() checks HX-Request header
-- isDatastar() checks datastar-request header
+- isHypermedia() detects hypermedia libraries via config/realtime.php headers
 - json() parses body only when Content-Type is application/json
 - route params injected by App::run() via setRouteParams()
 

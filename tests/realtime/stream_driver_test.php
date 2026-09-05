@@ -24,6 +24,7 @@ describe('Response::stream() driver resolution', function(): void {
     test('passes a plain sse when no driver is configured', function(): void {
         $code = '
             require "vendor/autoload.php";
+            \Skim\Core\Config::set("realtime.driver", null);
             $res = new \Skim\Core\Response();
             $received = null;
             $res->stream(function($instance) use (&$received) {
@@ -32,6 +33,19 @@ describe('Response::stream() driver resolution', function(): void {
             echo $received;
         ';
         expect(streamSubprocess($code))->toBe(\Skim\Realtime\Sse::class);
+    });
+
+    test('uses the configured default driver when no driver arg is given', function(): void {
+        $code = '
+            require "vendor/autoload.php";
+            $res = new \Skim\Core\Response();
+            $received = null;
+            $res->stream(function($instance) use (&$received) {
+                $received = get_class($instance);
+            });
+            echo $received;
+        ';
+        expect(streamSubprocess($code))->toBe(\Skim\Realtime\Datastar::class);
     });
 
     test('resolves a driver from the container when driver arg is given', function(): void {

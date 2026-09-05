@@ -11,7 +11,7 @@ namespace Skim\Db;
  * atomic rollback targeting.
  *
  * Example:
- *   $m = new Migrator(basePath('migrations'));
+ *   $m = new migrator(basePath('migrations'));
  *   $ran = $m->run();          // ['2024_01_01_create_users.php', ...]
  *   $m->down();                // rollback last batch
  *   $m->status();              // [['filename' => ..., 'batch' => ..., 'status' => 'applied'], ...]
@@ -24,6 +24,8 @@ final class Migrator {
     private string $table      = '_migrations';
     private string $migrationsDir;
     private string $connection;
+    private array $beforeEach = [];
+    private array $afterEach  = [];
 
     public function __construct(string $migrationsDir, string $connection = 'default') {
         $this->migrationsDir = rtrim($migrationsDir, '/');
@@ -31,55 +33,118 @@ final class Migrator {
     }
 
     /**
+     * Register a hook fired before each migration runs. #AI:before
+     */
+    public function before(callable $fn): static {
+        $this->beforeEach[] = $fn;
+        return $this;
+    }
+
+    /**
+     * Register a hook fired after each migration runs. #AI:after
+     */
+    public function after(callable $fn): static {
+        $this->afterEach[] = $fn;
+        return $this;
+    }
+
+    /**
      * Runs all pending migrations in filename-sorted order. #AI:run
      *
-     * Each migration is wrapped in a transaction — partial runs leave no residue.
-     * Returns an array of filenames that were applied.
-     *
-     * @return array List of migration filenames that were run.
+     * @param bool $pretend   Dry-run: collect SQL instead of executing.
+     * @param bool $force     Bypass checksum drift guard.
+     * @return array Normal mode: list of filenames. Pretend mode: list of ['filename', 'sql'].
      */
-    public function run(): array {
+    public function run(bool $pretend = false, bool $force = false): array {
         $this->ensureTable();
         $applied = $this->appliedFilenames();
         $pending = $this->loadPending($applied);
 
+        if (!$pretend) {
+            $this->verifyChecksums($force);
+            $this->acquireLock();
+        }
+
         if ($pending === []) {
+            if (!$pretend) {
+                $this->releaseLock();
+            }
             return [];
         }
 
-        $batch = $this->nextBatch();
-        $ran   = [];
+        try {
+            $batch = $this->nextBatch();
+            $ran   = [];
+            $executor = (new MigrationExecutor())->pretend($pretend);
 
-        foreach ($pending as $migration) {
-            \Skim\Db\Db::transaction(function() use ($migration, $batch): void {
-                $this->executeSql($migration->up());
-                \Skim\Db\Db::query(
-                    'INSERT INTO ' . $this->table . ' %values%',
-                    ['values' => ['filename' => $migration->filename, 'batch' => $batch]],
-                    connection: $this->connection,
-                );
-            }, $this->connection);
+            foreach ($pending as $migration) {
+                $conn = $migration->connection ?? $this->connection;
+                $pdo  = Db::pdo($conn);
 
-            $ran[] = $migration->filename;
+                foreach ($this->beforeEach as $hook) {
+                    $hook($migration);
+                }
+
+                $started = microtime(true);
+                $checksum = $this->checksum($migration->filename);
+
+                $runMigration = function() use ($migration, $batch, $conn, $executor, $checksum): void {
+                    $executor->run($migration->up(), $conn);
+                    Db::query(
+                        "INSERT INTO {$this->table} (filename, batch, checksum, applied_at, execution_ms) VALUES (:f, :b, :c, :a, :e)",
+                        [':f' => $migration->filename, ':b' => $batch, ':c' => $checksum, ':a' => date('Y-m-d H:i:s'), ':e' => 0],
+                        connection: $conn,
+                    );
+                };
+
+                if ($migration->transactional && !$pretend) {
+                    Db::transaction($runMigration, $conn);
+                } else {
+                    $runMigration();
+                }
+
+                $ms = (int) round((microtime(true) - $started) * 1000);
+
+                if (!$pretend) {
+                    Db::query(
+                        'UPDATE ' . $this->table . ' SET execution_ms = :ms WHERE filename = :f',
+                        [':ms' => $ms, ':f' => $migration->filename],
+                        connection: $conn,
+                    );
+                }
+
+                foreach ($this->afterEach as $hook) {
+                    $hook($migration, $ms);
+                }
+
+                $ran[] = $pretend
+                    ? ['filename' => $migration->filename, 'sql' => $executor->collected()]
+                    : $migration->filename;
+
+                $executor = (new MigrationExecutor())->pretend($pretend);
+            }
+
+            return $ran;
+        } finally {
+            if (!$pretend) {
+                $this->releaseLock();
+            }
         }
-
-        return $ran;
     }
 
     /**
      * Rolls back all migrations in the last batch. #AI:down
      *
-     * When $steps > 0, rolls back that many individual migrations instead
-     * of the entire batch.
-     *
-     * @param int $steps Override: roll back N individual migrations instead of the batch.
+     * @param int  $steps        Override: roll back N individual migrations instead of the batch.
+     * @param bool $force         Bypass checksum drift guard.
+     * @param bool $skip_missing  Skip missing migration files instead of throwing.
      * @return array List of migration filenames that were rolled back.
      */
-    public function down(int $steps = 0): array {
+    public function down(int $steps = 0, bool $force = false, bool $skip_missing = false): array {
         $this->ensureTable();
 
         if ($steps > 0) {
-            $rows = \Skim\Db\Db::all(
+            $rows = Db::all(
                 'SELECT * FROM ' . $this->table . ' ORDER BY id DESC LIMIT ' . $steps,
                 connection: $this->connection,
             );
@@ -88,33 +153,70 @@ final class Migrator {
             if ($batch === 0) {
                 return [];
             }
-            $rows = \Skim\Db\Db::all(
+            $rows = Db::all(
                 'SELECT * FROM ' . $this->table . ' WHERE batch = :b ORDER BY id DESC',
                 [':b' => $batch],
                 connection: $this->connection,
             );
         }
 
-        $rolledBack = [];
-
-        foreach ($rows as $row) {
-            $file = $this->migrationsDir . '/' . $row['filename'];
-            if (!is_file($file)) {
-                continue;
-            }
-            $migration = require $file;
-            \Skim\Db\Db::transaction(function() use ($migration, $row): void {
-                $this->executeSql($migration->down());
-                \Skim\Db\Db::query(
-                    'DELETE FROM ' . $this->table . ' WHERE filename = :f',
-                    [':f' => $row['filename']],
-                    connection: $this->connection,
-                );
-            }, $this->connection);
-            $rolledBack[] = $row['filename'];
+        if (!$rows) {
+            return [];
         }
 
-        return $rolledBack;
+        $this->verifyChecksums($force);
+        $this->acquireLock();
+
+        try {
+            $rolledBack = [];
+            $executor = new MigrationExecutor();
+
+            foreach ($rows as $row) {
+                $file = $this->migrationsDir . '/' . $row['filename'];
+                if (!is_file($file)) {
+                    if (!$skip_missing) {
+                        throw new \RuntimeException("Migration file {$row['filename']} not found, cannot rollback");
+                    }
+                    continue;
+                }
+                $migration = require $file;
+                $migration->filename = $row['filename'];
+                $conn = $migration->connection ?? $this->connection;
+
+                foreach ($this->beforeEach as $hook) {
+                    $hook($migration);
+                }
+
+                $started = microtime(true);
+
+                $runMigration = function() use ($migration, $row, $conn, $executor): void {
+                    $executor->run($migration->down(), $conn);
+                    Db::query(
+                        'DELETE FROM ' . $this->table . ' WHERE filename = :f',
+                        [':f' => $row['filename']],
+                        connection: $conn,
+                    );
+                };
+
+                if ($migration->transactional) {
+                    Db::transaction($runMigration, $conn);
+                } else {
+                    $runMigration();
+                }
+
+                $ms = (int) round((microtime(true) - $started) * 1000);
+
+                foreach ($this->afterEach as $hook) {
+                    $hook($migration, $ms);
+                }
+
+                $rolledBack[] = $row['filename'];
+            }
+
+            return $rolledBack;
+        } finally {
+            $this->releaseLock();
+        }
     }
 
     /**
@@ -122,46 +224,63 @@ final class Migrator {
      *
      * WARNING: DESTRUCTIVE — drops every table by running all down() methods
      * in reverse order, then re-applies everything. Dev environments only.
-     *
-     * Example:
-     *   $migrator->fresh(); // Nuclear option: wipe and rebuild
      */
     public function fresh(): void {
         $applied = array_reverse($this->appliedFilenames());
         foreach ($applied as $filename) {
             $file = $this->migrationsDir . '/' . $filename;
-            if (is_file($file)) {
-                $migration = require $file;
-                $this->executeSql($migration->down());
+            if (!is_file($file)) {
+                continue;
             }
+            $migration = require $file;
+            $migration->filename = $filename;
+            $conn = $migration->connection ?? $this->connection;
+            (new MigrationExecutor())->run($migration->down(), $conn);
         }
 
-        \Skim\Db\Db::query('DROP TABLE IF EXISTS ' . $this->table, connection: $this->connection);
-
+        Db::query('DROP TABLE IF EXISTS ' . $this->table, connection: $this->connection);
         $this->run();
     }
 
     /**
      * Returns the status of all known migrations. #AI:status
      *
-     * @return array Array of ['filename', 'batch', 'status'] records.
+     * @return array Array of ['filename', 'batch', 'status', 'applied_at', 'execution_ms', 'checksum_ok'] records.
      */
     public function status(): array {
         $this->ensureTable();
         $applied = array_column(
-            \Skim\Db\Db::all('SELECT * FROM ' . $this->table, connection: $this->connection),
+            Db::all('SELECT * FROM ' . $this->table, connection: $this->connection),
             null,
             'filename',
         );
 
         $all = $this->loadAll();
-        $out = [];
+        $files = array_column($all, 'filename');
+        $allFilenames = array_unique(array_merge(array_keys($applied), $files));
+        sort($allFilenames);
 
-        foreach ($all as $migration) {
+        $out = [];
+        foreach ($allFilenames as $filename) {
+            $row = $applied[$filename] ?? null;
+            $checksumOk = null;
+            if ($row !== null) {
+                if (!is_file($this->migrationsDir . '/' . $filename)) {
+                    $checksumOk = false;
+                } elseif ($row['checksum'] === '') {
+                    $checksumOk = null;
+                } else {
+                    $checksumOk = $this->checksum($filename) === $row['checksum'];
+                }
+            }
+
             $out[] = [
-                'filename' => $migration->filename,
-                'batch'    => $applied[$migration->filename]['batch'] ?? null,
-                'status'   => isset($applied[$migration->filename]) ? 'applied' : 'pending',
+                'filename'     => $filename,
+                'batch'        => $row['batch'] ?? null,
+                'status'       => $row !== null ? 'applied' : 'pending',
+                'applied_at'   => $row['applied_at'] ?? null,
+                'execution_ms' => $row['execution_ms'] ?? null,
+                'checksum_ok'  => $checksumOk,
             ];
         }
 
@@ -171,9 +290,9 @@ final class Migrator {
     // --- internals ---
 
     private function ensureTable(): void {
-        $driver = \Skim\Db\Db::pdo($this->connection)->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        $driver = Db::pdo($this->connection)->getAttribute(\PDO::ATTR_DRIVER_NAME);
 
-		$idCol = match ($driver) {
+        $idCol = match ($driver) {
             'pgsql'  => 'id SERIAL PRIMARY KEY',
             'sqlite' => 'id INTEGER PRIMARY KEY AUTOINCREMENT',
             default  => 'id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY',
@@ -184,32 +303,60 @@ final class Migrator {
             default           => 'VARCHAR(500)',
         };
 
-        $unique  = match ($driver) {
+        $datetime = match ($driver) {
+            'sqlite' => "applied_at TEXT NOT NULL DEFAULT (datetime('now'))",
+            'pgsql'  => "applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()",
+            default  => "applied_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)",
+        };
+
+        $unique = match ($driver) {
             'pgsql', 'sqlite' => "CREATE UNIQUE INDEX IF NOT EXISTS uq_{$this->table}_filename ON {$this->table} (filename)",
             default           => '',
         };
 
-        $suffix  = match ($driver) {
+        $suffix = match ($driver) {
             'mysql'  => ', UNIQUE KEY uq_filename (filename)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
             default  => ')',
         };
 
-        \Skim\Db\Db::query(
+        Db::query(
             "CREATE TABLE IF NOT EXISTS {$this->table} (
                 {$idCol},
                 filename {$text} NOT NULL,
-                batch    INT NOT NULL
+                batch    INT NOT NULL,
+                checksum CHAR(64) NOT NULL DEFAULT '',
+                {$datetime},
+                execution_ms INT UNSIGNED NOT NULL DEFAULT 0
                 {$suffix}",
             connection: $this->connection,
         );
         if ($unique !== '') {
-            \Skim\Db\Db::query($unique, connection: $this->connection);
+            Db::query($unique, connection: $this->connection);
+        }
+
+        $this->addColumnIfMissing('checksum',     "CHAR(64) NOT NULL DEFAULT ''");
+        $this->addColumnIfMissing('applied_at',   str_replace('applied_at ', '', $datetime));
+        $this->addColumnIfMissing('execution_ms', "INT UNSIGNED NOT NULL DEFAULT 0");
+    }
+
+    private function addColumnIfMissing(string $col, string $def): void {
+        try {
+            Db::query(
+                "ALTER TABLE {$this->table} ADD COLUMN {$col} {$def}",
+                connection: $this->connection,
+            );
+        } catch (\PDOException $e) {
+            $msg = strtolower($e->getMessage());
+            if (str_contains($msg, 'duplicate column') || str_contains($msg, 'already exists') || str_contains($msg, 'exists')) {
+                return;
+            }
+            throw $e;
         }
     }
 
     private function appliedFilenames(): array {
         return array_column(
-            \Skim\Db\Db::all('SELECT filename FROM ' . $this->table, connection: $this->connection),
+            Db::all('SELECT filename FROM ' . $this->table, connection: $this->connection),
             'filename',
         );
     }
@@ -229,7 +376,7 @@ final class Migrator {
     private function loadPending(array $applied): array {
         return array_filter(
             $this->loadAll(),
-            fn(\Skim\Db\Migration $m) => !in_array($m->filename, $applied, true),
+            fn(Migration $m) => !in_array($m->filename, $applied, true),
         );
     }
 
@@ -238,75 +385,43 @@ final class Migrator {
     }
 
     private function currentBatch(): int {
-        return (int) \Skim\Db\Db::val('SELECT MAX(batch) FROM ' . $this->table, connection: $this->connection);
+        return (int) Db::val('SELECT MAX(batch) FROM ' . $this->table, connection: $this->connection);
     }
 
-    private function executeSql(string $sql): void {
-        $statements = array_filter(
-            array_map('trim', explode(';', $sql)),
-            fn(string $s) => $s !== '',
-        );
-        foreach ($statements as $statement) {
-            \Skim\Db\Db::query($statement, connection: $this->connection);
+    private function checksum(string $filename): string {
+        return hash('sha256', file_get_contents($this->migrationsDir . '/' . $filename));
+    }
+
+    private function verifyChecksums(bool $force): void {
+        if ($force) return;
+
+        $rows = Db::all('SELECT filename, checksum FROM ' . $this->table, connection: $this->connection);
+        foreach ($rows as $row) {
+            $file = $this->migrationsDir . '/' . $row['filename'];
+            if ($row['checksum'] === '' || !is_file($file)) {
+                continue;
+            }
+            if ($this->checksum($row['filename']) !== $row['checksum']) {
+                throw new \RuntimeException("Migration [{$row['filename']}] changed after it was applied");
+            }
         }
     }
+
+    private function acquireLock(): void {
+        $driver = Db::pdo($this->connection)->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        match ($driver) {
+            'mysql' => Db::pdo($this->connection)->exec("SELECT GET_LOCK('skim_migrations', -1)"),
+            'pgsql' => Db::pdo($this->connection)->exec("SELECT pg_advisory_lock(hashtext('skim_migrations'))"),
+            default => null, // sqlite: single-writer, skip
+        };
+    }
+
+    private function releaseLock(): void {
+        $driver = Db::pdo($this->connection)->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        match ($driver) {
+            'mysql' => Db::pdo($this->connection)->exec("SELECT RELEASE_LOCK('skim_migrations')"),
+            'pgsql' => Db::pdo($this->connection)->exec("SELECT pg_advisory_unlock(hashtext('skim_migrations'))"),
+            default => null,
+        };
+    }
 }
-
-#AI:class
-#AI symbol: Skim\Db\Migrator
-#AI source_path: src/Db/Migrator.php
-#AI title: migrator
-#AI description: Tracks and executes SQL-first migrations with batch-based rollback and fresh rebuild.
-#AI role: migration runner
-#AI layer: db
-#AI badges: [migration; batch; rollback; sql-first]
-#AI intro: `migrator` reads migration files from a directory, tracks applied migrations in the `_migrations` table, and executes `up()`/`down()` methods. Migrations run in filename-sorted order, grouped into batches for atomic rollback.
-#AI lifecycle: instantiated per CLI command invocation, creates _migrations table on first use
-#AI fallback: none
-#AI test_seam: use test_db() SQLite :memory: — migrator creates its own tracking table
-#AI invariants: [migrations run in filename-sorted order; each run() call creates one batch; each migration runs inside a transaction; fresh() is destructive — drops all tables]
-#AI core_behaviors: [ensureTable() creates _migrations with driver-specific DDL; executeSql() splits on semicolons for multi-statement support; down() rolls back last batch by default, or N steps if specified]
-#AI warnings: [fresh() drops ALL tables and re-runs everything — dev environments only]
-#AI notes: The _migrations table is auto-created on first run/down/status call.
-#AI scope_items: []
-#AI owns: _migrations tracking table
-#AI entry_points: [run; down; fresh; status]
-#AI config_reads: []
-#AI non_goals: [Does not generate migration files; Does not validate SQL syntax; Does not support per-connection migration tracking]
-#AI side_effects: [Creates _migrations table; Executes DDL and DML; Modifies database schema]
-#AI flow: CLI command -> new Migrator(dir) -> run()/down()/fresh()/status() -> Db::transaction -> Migration::up()/down()
-#AI lifecycle_steps: [new Migrator(dir, connection); -> run()/down()/fresh()/status(); -> ensureTable(); -> loadAll() reads files; -> compare with applied; -> execute pending in transactions; -> record in _migrations]
-#AI section_order: [Migration Commands; Architecture]
-#AI architectural_notes: Batch-based rollback means all migrations run in a single `migrate` call are rolled back together by `migrate:down`. This prevents partial-schema states.
-
-#AI:run
-#AI group: Migration Commands
-#AI frequency: high
-#AI signature: public function run(): array
-#AI contract: Runs all pending migrations in filename-sorted order. Each migration is wrapped in a transaction. Returns filenames that were applied.
-#AI return_detail: {type: array | desc: List of migration filenames that were run.}
-#AI side_effects: Creates _migrations table if missing, executes DDL, inserts tracking records.
-
-#AI:down
-#AI group: Migration Commands
-#AI frequency: medium
-#AI signature: public function down(int $steps = 0): array
-#AI contract: Rolls back all migrations in the last batch. When $steps > 0, rolls back that many individual migrations instead.
-#AI param_details: [{name: $steps | type: int | required: false | desc: Override batch rollback — roll back N individual migrations. Default 0 (full batch).}]
-#AI return_detail: {type: array | desc: List of migration filenames that were rolled back.}
-#AI side_effects: Executes down() SQL, deletes tracking records.
-
-#AI:fresh
-#AI group: Migration Commands
-#AI frequency: low
-#AI signature: public function fresh(): void
-#AI contract: Drops all tables by running all down() methods in reverse, drops _migrations, then re-runs everything.
-#AI warnings: [DESTRUCTIVE — drops every table in the database. Dev environments only.]
-#AI side_effects: Drops all tables, recreates schema from scratch.
-
-#AI:status
-#AI group: Migration Commands
-#AI frequency: medium
-#AI signature: public function status(): array
-#AI contract: Returns the status of all migration files: filename, batch number, and applied/pending status.
-#AI return_detail: {type: array | desc: Array of ['filename', 'batch', 'status'] records.}

@@ -11,13 +11,13 @@ namespace Skim\Core;
  * $_FILES, and php://input — never access superglobals directly in app code.
  *
  * Example:
- *   public function store(Request $req, Response $res): mixed {
+ *   public function store(request $req, response $res): mixed {
  *       $email = $req->post('email');
  *       $data  = $req->json();
  *       return $res->json(['ip' => $req->ip()]);
  *   }
  *
- * Testing: Use Request::make() to fabricate requests without superglobals.
+ * Testing: Use request::make() to fabricate requests without superglobals.
  *
  * #AI:class
  */
@@ -37,12 +37,12 @@ class Request {
     /**
      * Creates a request from PHP superglobals. #AI:fromGlobals
      *
-     * Called once by App::run() at the start of the request. Reads superglobals
+     * Called once by app::run() at the start of the request. Reads superglobals
      * at call time; mutations to $_GET after this point are not reflected.
      *
      * Example:
-     *   // Called internally by App::run()
-     *   $req = Request::fromGlobals();
+     *   // Called internally by app::run()
+     *   $req = request::fromGlobals();
      */
     public static function fromGlobals(): static {
         return new static(
@@ -62,9 +62,9 @@ class Request {
      * Use in Pest/PHPUnit tests to simulate HTTP input.
      *
      * Example:
-     *   $req = Request::make('POST', '/users', headers: ['Content-Type' => 'application/json'], raw_body: '{"name":"John"}');
+     *   $req = request::make('POST', '/users', headers: ['Content-Type' => 'application/json'], raw_body: '{"name":"John"}');
      *
-     * @param mixed ...$args Arguments forwarded to RequestFactory::make().
+     * @param mixed ...$args Arguments forwarded to request_factory::make().
      */
     public static function make(...$args): static {
         return \Skim\Testing\RequestFactory::make(...$args);
@@ -208,17 +208,31 @@ class Request {
     }
 
     /**
-     * Returns true when HX-Request header is present. #AI:isHtmx
+     * Detects hypermedia library from request headers. #AI:isHypermedia
+     *
+     * Checks configured headers in config/realtime.php. When $library is null,
+     * returns true if ANY known hypermedia header is present. When $library is
+     * specified, returns true only for that specific library.
+     *
+     * @param string|null $library Specific library to check ('htmx', 'datastar', 'turbo').
+     *                           If null, returns true for ANY known hypermedia library.
+     * @return bool True when the library's header is present.
      */
-    public function isHtmx(): bool {
-        return $this->header('HX-Request') !== null;
-    }
+    public function isHypermedia(?string $library = null): bool {
+        $headers = Config('realtime.headers', []);
 
-    /**
-     * Returns true when datastar-request header is present. #AI:isDatastar
-     */
-    public function isDatastar(): bool {
-        return $this->header('datastar-request') !== null;
+        if ($library === null) {
+            // Check if ANY known hypermedia header is present
+            foreach ($headers as $header) {
+                if ($this->header($header) !== null) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        $header = $headers[$library] ?? null;
+        return $header !== null && $this->header($header) !== null;
     }
 
     /**
@@ -246,7 +260,7 @@ class Request {
     /**
      * Injects route parameters after dispatch (framework internal). #AI:setRouteParams
      *
-     * Called by App::run() after routing resolves. Never call from application code.
+     * Called by app::run() after routing resolves. Never call from application code.
      *
      * @param array $params Route parameter key-value pairs.
      */
@@ -302,32 +316,32 @@ class Request {
 #AI role: HTTP request value object
 #AI layer: core
 #AI badges: [request; http; value-object; superglobal-wrapper]
-#AI intro: `Skim\Core\Request` wraps PHP superglobals into a typed, testable object. It is injected by the container into controllers and middleware — never instantiated manually in application code. The same instance is shared across the entire request lifecycle.
-#AI lifecycle: created once by App::run() via fromGlobals(), shared across middleware and controller
-#AI test_seam: Request::make() fabricates requests from explicit arrays without superglobals
-#AI invariants: [fromGlobals() reads superglobals at call time; json() parses once and caches; header() is case-insensitive; ip() reads X-Forwarded-For first; method() always returns uppercase; setRouteParams() is called by framework after dispatch]
-#AI warnings: [X-Forwarded-For is trusted without proxy validation — do not use ip() as a security boundary; Mutations to $_GET after fromGlobals() are not reflected]
+#AI intro: `skim\core\request` wraps PHP superglobals into a typed, testable object. It is injected by the container into controllers and middleware — never instantiated manually in application code. The same instance is shared across the entire request lifecycle.
+#AI lifecycle: created once by app::run() via from_globals(), shared across middleware and controller
+#AI test_seam: request::make() fabricates requests from explicit arrays without superglobals
+#AI invariants: [from_globals() reads superglobals at call time; json() parses once and caches; header() is case-insensitive; ip() reads X-Forwarded-For first; method() always returns uppercase; set_route_params() is called by framework after dispatch]
+#AI warnings: [X-Forwarded-For is trusted without proxy validation — do not use ip() as a security boundary; Mutations to $_GET after from_globals() are not reflected]
 #AI notes: Wraps $_GET, $_POST, $_SERVER, $_FILES, $_COOKIE, and php://input. Never access superglobals directly in app code.
-#AI owns: routeParams, jsonBody cache
-#AI entry_points: [fromGlobals; make; get; post; input; json; file; header; ip; method; path]
+#AI owns: route_params, json_body cache
+#AI entry_points: [from_globals; make; get; post; input; json; file; header; ip; method; path]
 #AI non_goals: [Does not validate input; Does not sanitize data; Does not handle file uploads beyond $_FILES passthrough]
-#AI side_effects: [json() caches parsed body on first call; setRouteParams() mutates internal state]
-#AI flow: App::run() -> Request::fromGlobals() -> middleware pipeline -> controller(Request $req)
+#AI side_effects: [json() caches parsed body on first call; set_route_params() mutates internal state]
+#AI flow: app::run() -> request::fromGlobals() -> middleware pipeline -> controller(request $req)
 #AI section_order: [Construction; Input Access; Headers & IP; URL & Method; Detection Helpers; Route Params; Raw Access]
-#AI architectural_notes: The request is a value object created once per HTTP cycle. Route params are injected after dispatch by the framework. The make() factory delegates to RequestFactory for test fabrication.
+#AI architectural_notes: The request is a value object created once per HTTP cycle. Route params are injected after dispatch by the framework. The make() factory delegates to request_factory for test fabrication.
 
 #AI:fromGlobals
 #AI group: Construction
 #AI frequency: internal
 #AI signature: public static function fromGlobals(): static
-#AI contract: Creates a request from PHP superglobals. Called once by App::run(). Reads superglobals at call time.
+#AI contract: Creates a request from PHP superglobals. Called once by app::run(). Reads superglobals at call time.
 
 #AI:make
 #AI group: Construction
 #AI frequency: high
 #AI signature: public static function make(mixed ...$args): static
-#AI contract: Fabricates a request from explicit arrays for testing. Delegates to RequestFactory::make().
-#AI param_details: [{name: $args | type: mixed | required: false | desc: Arguments forwarded to RequestFactory::make().}]
+#AI contract: Fabricates a request from explicit arrays for testing. Delegates to request_factory::make().
+#AI param_details: [{name: $args | type: mixed | required: false | desc: Arguments forwarded to request_factory::make().}]
 #AI return_detail: {type: static | desc: A fabricated request instance.}
 #AI notes: For test use only — not for production request creation.
 
@@ -408,19 +422,14 @@ class Request {
 #AI contract: Returns the full URL including scheme and host.
 #AI return_detail: {type: string | desc: Full URL.}
 
-#AI:isHtmx
+#AI:isHypermedia
 #AI group: Detection Helpers
-#AI frequency: medium
-#AI signature: public function isHtmx(): bool
-#AI contract: Returns true when HX-Request header is present.
-#AI return_detail: {type: bool | desc: True for htmx requests.}
-
-#AI:isDatastar
-#AI group: Detection Helpers
-#AI frequency: medium
-#AI signature: public function isDatastar(): bool
-#AI contract: Returns true when datastar-request header is present.
-#AI return_detail: {type: bool | desc: True for datastar requests.}
+#AI frequency: high
+#AI signature: public function isHypermedia(?string $library = null): bool
+#AI contract: Detects hypermedia library from configured headers. Returns true for ANY known library when $library is null, or for a specific library when specified.
+#AI param_details: [{name: $library | type: string|null | required: false | desc: Specific library to check ('htmx', 'datastar', 'turbo'). If null, checks any known library.}]
+#AI return_detail: {type: bool | desc: True when the library's header is present.}
+#AI notes: Headers are configured in config/realtime.php. Users can add custom libraries via config.
 
 #AI:isJson
 #AI group: Detection Helpers
