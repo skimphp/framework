@@ -28,7 +28,7 @@ final class NullHandler implements \Skim\Log\LogHandler {
 
 #AI:class
 #AI symbol: Skim\Log\NullHandler
-#AI source_path: src/log/NullHandler.php
+#AI source_path: src/Log/NullHandler.php
 #AI title: NullHandler
 #AI description: Log handler that discards all entries — used in tests and null-channel config.
 #AI role: null log handler

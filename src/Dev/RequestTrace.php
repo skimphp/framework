@@ -159,7 +159,7 @@ final class RequestTrace {
 
 #AI:class
 #AI symbol: Skim\Dev\RequestTrace
-#AI source_path: src/dev/RequestTrace.php
+#AI source_path: src/Dev/RequestTrace.php
 #AI title: RequestTrace
 #AI description: Per-request structured trace that records middleware, queries, controller calls, and response as a timestamped timeline.
 #AI role: request timeline tracer

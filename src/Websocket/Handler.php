@@ -72,7 +72,7 @@ interface Handler {
 
 #AI:class
 #AI symbol: Skim\Websocket\Handler
-#AI source_path: src/websocket/handler.php
+#AI source_path: src/Websocket/Handler.php
 #AI title: handler
 #AI description: WebSocket handler interface for per-route WebSocket logic with open/message/close/error callbacks.
 #AI role: websocket handler interface

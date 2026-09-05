@@ -50,7 +50,7 @@ final class ExtManifest {
 
 #AI:class
 #AI symbol: Skim\Ext\ExtManifest
-#AI source_path: src/ext/ExtManifest.php
+#AI source_path: src/Ext/ExtManifest.php
 #AI title: ExtManifest
 #AI description: Generates a JSON manifest snapshot from an extension's runtime metadata.
 #AI role: manifest generator

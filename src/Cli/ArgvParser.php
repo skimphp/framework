@@ -97,7 +97,7 @@ final class ArgvParser {
 
 #AI:class
 #AI symbol: Skim\Cli\ArgvParser
-#AI source_path: src/cli/ArgvParser.php
+#AI source_path: src/Cli/ArgvParser.php
 #AI title: ArgvParser
 #AI description: Pure value object that parses $argv into command name, positional args, and flags.
 #AI role: CLI argument parser

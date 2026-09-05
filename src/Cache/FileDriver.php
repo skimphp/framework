@@ -138,7 +138,7 @@ final class FileDriver implements \Skim\Cache\Driver {
 
 #AI:class
 #AI symbol: Skim\Cache\FileDriver
-#AI source_path: src/cache/FileDriver.php
+#AI source_path: src/Cache/FileDriver.php
 #AI title: FileDriver
 #AI description: Filesystem cache driver storing each key as a serialized file with TTL-based expiry.
 #AI role: filesystem cache driver

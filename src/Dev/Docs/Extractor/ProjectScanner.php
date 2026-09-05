@@ -95,7 +95,7 @@ class ProjectScanner {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Extractor\ProjectScanner
-#AI source_path: src/dev/docs/extractor/ProjectScanner.php
+#AI source_path: src/Dev/Docs/Extractor/ProjectScanner.php
 #AI title: ProjectScanner
 #AI description: Walks configured scan paths, runs ClassExtractor on each .php file, and returns a flat ExtractedClass[] collection.
 #AI role: project-wide scanner

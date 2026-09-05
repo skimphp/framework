@@ -47,7 +47,7 @@ final class CapabilityVocabulary {
 
 #AI:class
 #AI symbol: Skim\Ext\CapabilityVocabulary
-#AI source_path: src/ext/CapabilityVocabulary.php
+#AI source_path: src/Ext/CapabilityVocabulary.php
 #AI title: CapabilityVocabulary
 #AI description: Canonical map of recognized extension capability slugs to human-readable descriptions.
 #AI role: capability vocabulary

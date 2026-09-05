@@ -49,7 +49,7 @@ class CacheCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\CacheCommand
-#AI source_path: src/cli/commands/CacheCommand.php
+#AI source_path: src/Cli/Commands/CacheCommand.php
 #AI title: CacheCommand
 #AI description: CLI command for cache invalidation by prefix or full backend flush.
 #AI role: CLI cache invalidation command

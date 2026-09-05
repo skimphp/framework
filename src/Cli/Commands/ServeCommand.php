@@ -65,7 +65,7 @@ class ServeCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\ServeCommand
-#AI source_path: src/cli/commands/ServeCommand.php
+#AI source_path: src/Cli/Commands/ServeCommand.php
 #AI title: ServeCommand
 #AI description: CLI command that starts PHP built-in dev server and optional Vite in parallel.
 #AI role: CLI dev server launcher

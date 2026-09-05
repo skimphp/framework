@@ -413,7 +413,7 @@ class ClassVisitor extends NodeVisitorAbstract {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Extractor\ClassVisitor
-#AI source_path: src/dev/docs/extractor/ClassVisitor.php
+#AI source_path: src/Dev/Docs/Extractor/ClassVisitor.php
 #AI title: ClassVisitor
 #AI description: Internal AST visitor that captures class-level and method-level @ai.* annotations from PHPDoc, inline comments, and detached #AI blocks.
 #AI role: internal AST visitor

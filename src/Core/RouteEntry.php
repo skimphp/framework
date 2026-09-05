@@ -91,7 +91,7 @@ class RouteEntry {
 
 #AI:class
 #AI symbol: Skim\Core\RouteEntry
-#AI source_path: src/core/RouteEntry.php
+#AI source_path: src/Core/RouteEntry.php
 #AI title: RouteEntry
 #AI description: Fluent route configuration object returned by router registration methods.
 #AI role: route configuration builder

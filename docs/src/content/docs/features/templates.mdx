@@ -51,12 +51,12 @@ A child template declares its layout and captures named sections. The layout ren
 
 <?php $this->section('title') ?>
     Home
-<?php $this->end_section() ?>
+<?php $this->endSection() ?>
 
 <?php $this->section('content') ?>
     <h1>Welcome</h1>
     <p>Hello, <?= e($name) ?></p>
-<?php $this->end_section() ?>
+<?php $this->endSection() ?>
 ```
 
 **Layout** (`app/views/layouts/base.php`):
@@ -75,7 +75,7 @@ A child template declares its layout and captures named sections. The layout ren
 ```
 
 <Note>
-`$this->block()` returns a default value when the section was never captured. `$this->has_section()` checks existence without defaults.
+`$this->block()` returns a default value when the section was never captured. `$this->hasSection()` checks existence without defaults.
 </Note>
 
 <Warning>
@@ -84,12 +84,12 @@ Always call `e()` on user-supplied data. Skipping it is an XSS vulnerability.
 
 ### Aliases
 
-`section()` and `end_section()` are aliases for `start()` and `end()`. Use whichever reads best in context.
+`section()` and `endSection()` are aliases for `start()` and `end()`. Use whichever reads best in context.
 
 ```php
 <?php $this->section('content') ?>
     <p>Hello</p>
-<?php $this->end_section() ?>
+<?php $this->endSection() ?>
 ```
 
 ## Components
@@ -108,7 +108,7 @@ Define a `*_props` DTO class and pass it for type safety and IDE autocomplete:
 
 ```php
 // app/view_props/alert_props.php
-readonly class alert_props {
+readonly class AlertProps {
     public function __construct(
         public string $message,
         public string $type = 'info'
@@ -117,7 +117,7 @@ readonly class alert_props {
 ```
 
 ```php
-<?= component('alert', new alert_props(message: 'Profile saved', type: 'success')) ?>
+<?= component('alert', new AlertProps(message: 'Profile saved', type: 'success')) ?>
 ```
 
 **Component template** (`app/views/components/alert.php`):
@@ -129,15 +129,15 @@ readonly class alert_props {
 ```
 
 <Note>
-Props objects must end in `_props`. Anything else throws a `view_exception`.
+Props objects must end in `_props`. Anything else throws a `ViewException`.
 </Note>
 
 ### Components with Parts
 
-When a component needs multiple named content blocks — like a card with an optional header and footer — use `component_with_parts()`:
+When a component needs multiple named content blocks — like a card with an optional header and footer — use `componentWithParts()`:
 
 ```php
-<?= component_with_parts('card', new card_props(title: 'Profile'), function($c) { ?>
+<?= componentWithParts('card', new CardProps(title: 'Profile'), function($c) { ?>
     <?php $c->part('header', function() { ?>
         <h2>Edit Profile</h2>
     <?php }) ?>
@@ -154,7 +154,7 @@ When a component needs multiple named content blocks — like a card with an opt
 
 ```php
 <div class="card">
-    <?php if (has_part('header')): ?>
+    <?php if (hasPart('header')): ?>
         <div class="card-header"><?= part('header') ?></div>
     <?php else: ?>
         <div class="card-header"><h3><?= e($title) ?></h3></div>
@@ -162,16 +162,16 @@ When a component needs multiple named content blocks — like a card with an opt
 
     <div class="card-body"><?= part() ?></div>
 
-    <?php if (has_part('footer')): ?>
+    <?php if (hasPart('footer')): ?>
         <div class="card-footer"><?= part('footer') ?></div>
     <?php endif; ?>
 </div>
 ```
 
-The main body (anything outside `part()` calls) is available via `part()` with no arguments. Named parts use `part('name')` and `has_part('name')`.
+The main body (anything outside `part()` calls) is available via `part()` with no arguments. Named parts use `part('name')` and `hasPart('name')`.
 
 <Note>
-`part()` and `has_part()` read from a static stack, so nested components with parts are fully isolated.
+`part()` and `hasPart()` read from a static stack, so nested components with parts are fully isolated.
 </Note>
 
 ## Fragments (HTMX / Datastar)
@@ -199,7 +199,7 @@ Mark a fragment in the template with HTML comments:
 </ul>
 <!-- @end -->
 
-<?php $this->end_section() ?>
+<?php $this->endSection() ?>
 ```
 
 Request a fragment from the controller:
@@ -213,23 +213,23 @@ public function stats_widget(response $response): response {
 When `$fragment` is set, the layout is **bypassed entirely**. Only the named fragment is extracted and returned. This is much faster than rendering the full page and discarding everything else.
 
 <Warning>
-Fragments must be flat — no nesting. The parser validates structure and throws `view_exception` on nested, unmatched, or unclosed markers.
+Fragments must be flat — no nesting. The parser validates structure and throws `ViewException` on nested, unmatched, or unclosed markers.
 </Warning>
 
 ### Smart View
 
-`response::smart_view()` auto-selects full page or fragment based on request headers. Use it when the same endpoint serves both full-page loads and HTMX partials:
+`response::smartView()` auto-selects full page or fragment based on request headers. Use it when the same endpoint serves both full-page loads and HTMX partials:
 
 ```php
 public function dashboard(response $response): response {
     $data = ['stats_value' => '42', 'users' => ['Alice', 'Bob']];
-    return $response->smart_view('pages/dashboard', $data);
+    return $response->smartView('pages/dashboard', $data);
 }
 ```
 
 ## Shared Data
 
-Cross-cutting values like `current_user` or `app_name` can be injected into every template:
+Cross-cutting values like `current_user` or `appName` can be injected into every template:
 
 ```php
 // In middleware or boot
@@ -256,8 +256,8 @@ Shared data is merged with per-render data; per-render keys win on conflict.
 |----------|---------|
 | `e($value)` | HTML-escape a string |
 | `component($name, $props)` | Render an isolated component |
-| `component_with_parts($name, $props, $closure)` | Render a component with named parts |
+| `componentWithParts($name, $props, $closure)` | Render a component with named parts |
 | `part($name, $default)` | Get a named part inside a component |
-| `has_part($name)` | Check if a part exists |
+| `hasPart($name)` | Check if a part exists |
 | `route($name, $params)` | Generate a URL for a named route |
 | `asset($path)` | Vite-managed asset URL |

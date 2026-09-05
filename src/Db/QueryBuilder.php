@@ -210,7 +210,7 @@ final class QueryBuilder {
 
 #AI:class
 #AI symbol: Skim\Db\QueryBuilder
-#AI source_path: src/db/QueryBuilder.php
+#AI source_path: src/Db/QueryBuilder.php
 #AI title: QueryBuilder
 #AI description: Internal SQL template processor for query_gen %placeholder% substitution.
 #AI role: SQL template processor

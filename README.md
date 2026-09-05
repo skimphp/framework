@@ -124,7 +124,7 @@ php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
 
 ```php
 // routes.php
-$app->router->get('/', [home_controller::class, 'index']);
+$app->router->get('/', [HomeController::class, 'index']);
 $app->router->post('/users', [user_controller::class, 'store']);
 
 // Route params
@@ -176,7 +176,7 @@ class user extends skim\db\model {
 }
 
 user::find(1);                            // model|null
-user::find_or_fail(1);                    // model|not_found_exception
+user::findOrFail(1);                    // model|not_found_exception
 user::where(['status' => 'active'])->limit(10)->all();
 user::create(['name' => 'John', 'email' => 'j@j.com']);
 
@@ -230,7 +230,7 @@ Pure PHP templates — no Twig, no Blade.
 // Controller
 return $res->view('users/show', ['user' => $user]);
 return $res->fragment('users/show', ['user' => $user], 'user-card');  // partial only
-return $res->smart_view('users/show', ['user' => $user], $req);        // auto full/partial
+return $res->smartView('users/show', ['user' => $user], $req);        // auto full/partial
 
 // Template: app/views/users/show.php
 <h1><?= e($user->name) ?></h1>   <!-- e() = htmlspecialchars, always use it -->
@@ -258,7 +258,7 @@ $app->use(cors::class);                           // global — every request
 $route->middleware([auth_middleware::class]);      // per-route
 ```
 
-Built-in: `cors`, `rate_limit`, `toolbar_middleware` (injects debug toolbar in HTML responses when `APP_DEBUG=true`).
+Built-in: `cors`, `RateLimit`, `ToolbarMiddleware` (injects debug toolbar in HTML responses when `APP_DEBUG=true`).
 
 ---
 
@@ -353,7 +353,7 @@ $res = new response();
 // Fake HTTP client
 $http = client::fake(['GET https://api.example.com/users' => ['status' => 200, 'body' => []]]);
 $resp = $http->get('https://api.example.com/users');
-$http->assert_sent('GET', 'users');
+$http->assertSent('GET', 'users');
 ```
 
 ---
@@ -448,9 +448,9 @@ chmod +x .git/hooks/pre-push
 
 ## Key design decisions
 
-- **Snake_case everywhere** — classes, methods, files, namespaces. `home_controller`, not `HomeController`.
+- **Snake_case everywhere** — classes, methods, files, namespaces. `HomeController`, not `HomeController`.
 - **No template engines** — raw PHP with opcache is ~3x faster than Twig/Blade; real stack traces.
-- **Static facades** (`db::`, `cache::`, `log::`) — each has `reset()` and `set_driver()` for test isolation.
+- **Static facades** (`db::`, `cache::`, `log::`) — each has `reset()` and `setDriver()` for test isolation.
 - **Lazy connections** — DB and Redis are not opened until the first actual query.
 - **Fail-open cache** — Redis failure falls back to file driver silently; app keeps running.
 - **PHP arrays for config** — no YAML/INI parser, IDE autocomplete works natively.

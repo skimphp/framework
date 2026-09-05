@@ -70,7 +70,7 @@ interface SessionDriver {
 
 #AI:class
 #AI symbol: Skim\Session\SessionDriver
-#AI source_path: src/session/SessionDriver.php
+#AI source_path: src/Session/SessionDriver.php
 #AI title: SessionDriver
 #AI description: Interface contract for session storage backends.
 #AI role: session driver interface

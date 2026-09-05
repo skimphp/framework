@@ -345,7 +345,7 @@ class Response {
 
 #AI:class
 #AI symbol: Skim\Core\Response
-#AI source_path: src/core/response.php
+#AI source_path: src/Core/Response.php
 #AI title: response
 #AI description: HTTP response builder with fluent chaining for status, headers, JSON, views, redirects, streaming, and file downloads.
 #AI role: HTTP response builder

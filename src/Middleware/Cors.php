@@ -55,7 +55,7 @@ class Cors implements \Skim\Core\Middleware {
 
 #AI:class
 #AI symbol: Skim\Middleware\Cors
-#AI source_path: src/middleware/cors.php
+#AI source_path: src/Middleware/Cors.php
 #AI title: cors
 #AI description: CORS middleware that adds cross-origin headers and handles OPTIONS preflight.
 #AI role: CORS middleware

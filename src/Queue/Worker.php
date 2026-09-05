@@ -146,7 +146,7 @@ final class Worker {
 
 #AI:class
 #AI symbol: Skim\Queue\Worker
-#AI source_path: src/queue/worker.php
+#AI source_path: src/Queue/Worker.php
 #AI title: worker
 #AI description: Long-lived queue worker that polls Redis with BRPOP, executes jobs, and handles retries with exponential back-off.
 #AI role: queue worker process

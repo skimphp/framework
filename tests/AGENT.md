@@ -37,12 +37,12 @@ tests/
 
 ## What must be tested (minimum coverage per module)
 - db: query_gen placeholder removal, %set% null skip, %where% or/and nesting,
-      find() null return, find_or_fail() exception, transaction rollback
+      find() null return, findOrFail() exception, transaction rollback
 - view: full render, fragment extraction, missing fragment exception,
         layout slot injection, e() escaping
 - cache: set/get/delete, ttl expiry, fallback driver on failure, flush('prefix:')
 - helpers: every filter type returns false on invalid input,
-           arr::map_by key collision behaviour
+           arr::mapBy key collision behaviour
 - validation: required rule, type rules, custom rule registration,
               validated() returns only declared fields
 - routing: static route match, dynamic route with type token,

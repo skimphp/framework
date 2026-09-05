@@ -230,7 +230,7 @@ class LlmMdEmitter {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Emitter\LlmMdEmitter
-#AI source_path: src/dev/docs/emitter/LlmMdEmitter.php
+#AI source_path: src/Dev/Docs/Emitter/LlmMdEmitter.php
 #AI title: LlmMdEmitter
 #AI description: Converts decoded llm.json data into compact grouped Markdown optimized for LLM context windows.
 #AI role: Markdown emitter for LLM consumption

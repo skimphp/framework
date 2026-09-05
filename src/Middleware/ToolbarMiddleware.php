@@ -66,7 +66,7 @@ class ToolbarMiddleware implements \Skim\Core\Middleware {
 
 #AI:class
 #AI symbol: Skim\Middleware\ToolbarMiddleware
-#AI source_path: src/middleware/ToolbarMiddleware.php
+#AI source_path: src/Middleware/ToolbarMiddleware.php
 #AI title: ToolbarMiddleware
 #AI description: Injects the debug toolbar HTML into text/html responses when APP_DEBUG is true.
 #AI role: debug toolbar middleware

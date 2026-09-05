@@ -184,7 +184,7 @@ final class DevView {
 
 #AI:class
 #AI symbol: Skim\Dev\DevView
-#AI source_path: src/dev/DevView.php
+#AI source_path: src/Dev/DevView.php
 #AI title: DevView
 #AI description: Standalone template renderer for dev tools — zero framework dependencies, supports layouts, slots, and partial includes.
 #AI role: standalone template renderer

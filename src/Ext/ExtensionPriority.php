@@ -24,7 +24,7 @@ final class ExtensionPriority {
 
 #AI:class
 #AI symbol: Skim\Ext\ExtensionPriority
-#AI source_path: src/ext/ExtensionPriority.php
+#AI source_path: src/Ext/ExtensionPriority.php
 #AI title: ExtensionPriority
 #AI description: Named integer bands controlling extension registration and boot order.
 #AI role: priority constants

@@ -136,7 +136,7 @@ final class Str {
 
 #AI:class
 #AI symbol: Skim\Helpers\Str
-#AI source_path: src/helpers/str.php
+#AI source_path: src/Helpers/Str.php
 #AI title: str
 #AI description: Static string utility methods for slugs, truncation, UUIDs, random strings, and case conversion.
 #AI role: string utility helper

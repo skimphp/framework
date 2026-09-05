@@ -1039,7 +1039,7 @@ class App {
 
 #AI:class
 #AI symbol: Skim\Core\App
-#AI source_path: src/core/app.php
+#AI source_path: src/Core/App.php
 #AI title: app
 #AI description: Singleton container and HTTP kernel combining a scoped key-value store, DI container with auto-wiring, and middleware pipeline.
 #AI role: application kernel and service container

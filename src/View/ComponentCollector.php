@@ -141,7 +141,7 @@ class ComponentCollector implements \Skim\Worker\Resettable {
 
 #AI:class
 #AI symbol: Skim\View\ComponentCollector
-#AI source_path: src/view/ComponentCollector.php
+#AI source_path: src/View/ComponentCollector.php
 #AI title: ComponentCollector
 #AI description: Closure-based part capture for components with stack-scoped isolation.
 #AI role: part capture engine

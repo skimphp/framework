@@ -76,7 +76,7 @@ abstract class Extension {
 
 #AI:class
 #AI symbol: Skim\Ext\Extension
-#AI source_path: src/ext/extension.php
+#AI source_path: src/Ext/Extension.php
 #AI title: extension
 #AI description: Abstract base class for SKIM extensions with metadata properties and lifecycle hooks.
 #AI role: extension base class

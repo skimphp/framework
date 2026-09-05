@@ -30,7 +30,7 @@ class NotFoundException extends \RuntimeException {
 
 #AI:class
 #AI symbol: Skim\Db\Exceptions\NotFoundException
-#AI source_path: src/db/exceptions/NotFoundException.php
+#AI source_path: src/Db/Exceptions/NotFoundException.php
 #AI title: NotFoundException
 #AI description: RuntimeException thrown by model::findOrFail() when a record is missing.
 #AI role: 404 model exception

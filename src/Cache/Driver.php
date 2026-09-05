@@ -82,7 +82,7 @@ interface Driver {
 
 #AI:class
 #AI symbol: Skim\Cache\Driver
-#AI source_path: src/cache/driver.php
+#AI source_path: src/Cache/Driver.php
 #AI title: driver
 #AI description: Cache driver contract implemented by array, file, and redis backends.
 #AI role: cache driver interface

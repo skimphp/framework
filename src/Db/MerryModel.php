@@ -287,7 +287,7 @@ abstract class MerryModel extends \Skim\Db\Model {
 
 #AI:class
 #AI symbol: Skim\Db\MerryModel
-#AI source_path: src/db/MerryModel.php
+#AI source_path: src/Db/MerryModel.php
 #AI title: MerryModel
 #AI description: ORM layer extending model with eager/lazy relation loading and many-to-many pivot operations.
 #AI role: relational ORM

@@ -168,7 +168,7 @@ final class Config {
 
 #AI:class
 #AI symbol: Skim\Core\Config
-#AI source_path: src/core/config.php
+#AI source_path: src/Core/Config.php
 #AI title: config
 #AI description: Static config registry with lazy-loading and dot-notation read access across plain PHP array files.
 #AI role: static config facade

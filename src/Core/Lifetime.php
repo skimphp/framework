@@ -22,7 +22,7 @@ enum Lifetime {
 
 #AI:enum
 #AI symbol: Skim\Core\Lifetime
-#AI source_path: src/core/lifetime.php
+#AI source_path: src/Core/Lifetime.php
 #AI title: lifetime
 #AI description: DI binding lifetime — controls whether make() caches the resolved instance.
 #AI role: enum

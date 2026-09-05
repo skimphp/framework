@@ -160,7 +160,7 @@ class InstallCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\InstallCommand
-#AI source_path: src/cli/commands/InstallCommand.php
+#AI source_path: src/Cli/Commands/InstallCommand.php
 #AI title: InstallCommand
 #AI description: Interactive CLI installer that generates .env from prompts and optionally runs migrations.
 #AI role: CLI interactive installer

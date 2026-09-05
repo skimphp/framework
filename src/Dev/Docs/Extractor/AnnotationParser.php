@@ -503,7 +503,7 @@ class AnnotationParser {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Extractor\AnnotationParser
-#AI source_path: src/dev/docs/extractor/AnnotationParser.php
+#AI source_path: src/Dev/Docs/Extractor/AnnotationParser.php
 #AI title: AnnotationParser
 #AI description: Parses PHPDoc blocks, inline comments, and #AI hash blocks to extract @ai.* tags into typed arrays.
 #AI role: annotation parser

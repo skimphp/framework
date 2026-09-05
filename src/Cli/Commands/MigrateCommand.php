@@ -114,7 +114,7 @@ class MigrateCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\MigrateCommand
-#AI source_path: src/cli/commands/MigrateCommand.php
+#AI source_path: src/Cli/Commands/MigrateCommand.php
 #AI title: MigrateCommand
 #AI description: CLI dispatcher for database migration operations — run, rollback, fresh, and status.
 #AI role: CLI migration dispatcher

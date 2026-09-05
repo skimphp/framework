@@ -172,7 +172,7 @@ final class RedisSessionDriver implements \Skim\Session\SessionDriver {
 
 #AI:class
 #AI symbol: Skim\Session\RedisSessionDriver
-#AI source_path: src/session/RedisSessionDriver.php
+#AI source_path: src/Session/RedisSessionDriver.php
 #AI title: RedisSessionDriver
 #AI description: Redis-backed session driver for multi-server and load-balanced deployments.
 #AI role: session driver (redis)

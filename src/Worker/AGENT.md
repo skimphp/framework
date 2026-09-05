@@ -2,7 +2,7 @@
 
 ## What this module does
 Worker-mode lifecycle and isolation guarantees for FrankenPHP (and any other
-long-lived SAPI). `worker_reset` discovers and resets all `resettable` facades
+long-lived SAPI). `WorkerReset` discovers and resets all `resettable` facades
 between requests so per-request static state cannot leak across the worker loop.
 
 ## Three-tier testing strategy
@@ -18,13 +18,13 @@ hard pass/fail gate. Performance (RPS, p95, p99) is a recorded artifact +
 regression-warn — shared runners are too noisy for a hard latency target.
 
 ## Critical behaviours
-- `worker_reset::apply()` runs once per request, after `end_request()`
-- `worker_reset::discover()` incrementally scans `get_declared_classes()` for
+- `WorkerReset::apply()` runs once per request, after `endRequest()`
+- `WorkerReset::discover()` incrementally scans `get_declared_classes()` for
   new `resettable` implementations — catches facades autoloaded lazily after
   the first request
-- `event::capture_boot_snapshot()` must be called once after `freeze()` so
+- `event::captureBootSnapshot()` must be called once after `freeze()` so
   boot-time listeners survive while request-time listeners are dropped
-- `component_collector` is `resettable` — its stack is cleared even when a
+- `ComponentCollector` is `resettable` — its stack is cleared even when a
   component throws and `pop()` never runs
 
 ## leak_detector (Layer 3)
@@ -37,21 +37,21 @@ that piles up, a transaction left open.
 **Modes:** `off` (default in prod), `warn` (dev worker, auto-on), `strict` (CI).
 Resolution: explicit config wins; `null` → `warn` when `WORKER_MODE && debug`.
 
-**Checks (after `worker_reset::apply()`):**
+**Checks (after `WorkerReset::apply()`):**
 - Hard invariants (immediate): user scope empty, OB level restored, no open DB
   transactions, request-scoped bindings dropped from resolved cache.
 - Soft growth trends (windowed, after warmup=10): monotonic growth in
   memory_get_usage(true), resolved singleton count, total event-listener count,
   DB connection count.
 
-**Reporting:** `log::warning` + `request_trace::event('leak.detected')` +
+**Reporting:** `log::warning` + `RequestTrace::event('leak.detected')` +
 `profiler::panel('leaks')`. Strict mode accumulates in
-`leak_detector::findings()`; the `/__leaks` route exposes them for the T3 CI job.
+`LeakDetector::findings()`; the `/__leaks` route exposes them for the T3 CI job.
 
 **Never throws mid-request** — that would corrupt the live response.
 
 ## Common mistakes
-- Skipping `event::capture_boot_snapshot()` in a custom worker entry point —
+- Skipping `event::captureBootSnapshot()` in a custom worker entry point —
   request listeners accumulate silently
 - Adding per-request state to a class without implementing `resettable` — the
   contract-guard test (`worker_reset_test.php`) will fail and block the PR

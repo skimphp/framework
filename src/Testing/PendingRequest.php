@@ -183,7 +183,7 @@ class PendingRequest {
 
 #AI:class
 #AI symbol: Skim\Testing\PendingRequest
-#AI source_path: src/testing/PendingRequest.php
+#AI source_path: src/Testing/PendingRequest.php
 #AI title: PendingRequest
 #AI description: Immutable request builder that dispatches through the app with auth, session, and header injection.
 #AI role: test request builder

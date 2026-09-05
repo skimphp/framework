@@ -7,7 +7,7 @@ response::view() and response::fragment() are the primary entry points.
 ## Critical behaviours
 - Always call e() on user-supplied data — skipping is XSS vulnerability
 - Fragment syntax: <!-- @fragment name --> ... <!-- @end --> in .php template file
-- response::smart_view() auto-selects full vs fragment by HX-Target / datastar-target header
+- response::smartView() auto-selects full vs fragment by HX-Target / datastar-target header
 - view::share() injects into ALL templates for this request — use for current_user, app_name
 - Layout order: child runs first (capturing slots), then layout renders and calls $this->slot()
 - Missing template → view_exception (never silently returns empty string)

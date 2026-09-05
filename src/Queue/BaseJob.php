@@ -57,7 +57,7 @@ abstract class BaseJob implements \Skim\Queue\Job {
 
 #AI:class
 #AI symbol: Skim\Queue\BaseJob
-#AI source_path: src/queue/BaseJob.php
+#AI source_path: src/Queue/BaseJob.php
 #AI title: BaseJob
 #AI description: Convenience base class for queue jobs with default retry count, delay, and error logging.
 #AI role: queue job base class

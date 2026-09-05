@@ -229,7 +229,7 @@ final class ExtMigrator {
 
 #AI:class
 #AI symbol: Skim\Ext\ExtMigrator
-#AI source_path: src/ext/ExtMigrator.php
+#AI source_path: src/Ext/ExtMigrator.php
 #AI title: ExtMigrator
 #AI description: Runs extension migrations against the shared _migrations table with session-scoped rollback.
 #AI role: extension migration runner

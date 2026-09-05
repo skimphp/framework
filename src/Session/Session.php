@@ -201,7 +201,7 @@ final class Session implements \Skim\Worker\Resettable {
 
 #AI:class
 #AI symbol: Skim\Session\Session
-#AI source_path: src/session/session.php
+#AI source_path: src/Session/Session.php
 #AI title: session
 #AI description: Static session facade with flash message support, lazy driver resolution, and test injection.
 #AI role: static session facade

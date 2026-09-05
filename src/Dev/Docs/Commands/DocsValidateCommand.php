@@ -184,7 +184,7 @@ class DocsValidateCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Commands\DocsValidateCommand
-#AI source_path: src/dev/docs/commands/DocsValidateCommand.php
+#AI source_path: src/Dev/Docs/Commands/DocsValidateCommand.php
 #AI title: DocsValidateCommand
 #AI description: CLI command that reports @ai.* annotation coverage and fails the build when below the configured threshold.
 #AI role: CI annotation gate

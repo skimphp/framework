@@ -153,7 +153,7 @@ class Pipeline {
 
 #AI:class
 #AI symbol: Skim\Core\Pipeline
-#AI source_path: src/core/pipeline.php
+#AI source_path: src/Core/Pipeline.php
 #AI title: pipeline
 #AI description: Middleware chain builder and executor using the onion model.
 #AI role: middleware pipeline

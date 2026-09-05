@@ -160,7 +160,7 @@ final class RedisDriver implements \Skim\Cache\Driver {
 
 #AI:class
 #AI symbol: Skim\Cache\RedisDriver
-#AI source_path: src/cache/RedisDriver.php
+#AI source_path: src/Cache/RedisDriver.php
 #AI title: RedisDriver
 #AI description: Redis cache driver using php-redis extension with lazy connection, SCAN-based flush, and tag support.
 #AI role: primary cache driver

@@ -124,7 +124,7 @@ final class FileSessionDriver implements \Skim\Session\SessionDriver {
 
 #AI:class
 #AI symbol: Skim\Session\FileSessionDriver
-#AI source_path: src/session/FileSessionDriver.php
+#AI source_path: src/Session/FileSessionDriver.php
 #AI title: FileSessionDriver
 #AI description: Native PHP file-backed session driver for single-server deployments.
 #AI role: session driver (file)

@@ -84,7 +84,7 @@ class Sse {
 
 #AI:class
 #AI symbol: Skim\Realtime\Sse
-#AI source_path: src/realtime/sse.php
+#AI source_path: src/Realtime/Sse.php
 #AI title: sse
 #AI description: Server-Sent Events helper for pushing data over long-lived HTTP connections.
 #AI role: SSE stream helper

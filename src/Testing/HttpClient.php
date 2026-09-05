@@ -107,7 +107,7 @@ class HttpClient {
 
 #AI:class
 #AI symbol: Skim\Testing\HttpClient
-#AI source_path: src/testing/HttpClient.php
+#AI source_path: src/Testing/HttpClient.php
 #AI title: HttpClient
 #AI description: In-process HTTP test client that dispatches requests through the app without a real server.
 #AI role: test HTTP client

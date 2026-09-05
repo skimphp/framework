@@ -80,7 +80,7 @@ class ComponentRenderer {
 
 #AI:class
 #AI symbol: Skim\View\ComponentRenderer
-#AI source_path: src/view/ComponentRenderer.php
+#AI source_path: src/View/ComponentRenderer.php
 #AI title: ComponentRenderer
 #AI description: Isolated component renderer enforcing strict props validation and clean template scope.
 #AI role: component renderer

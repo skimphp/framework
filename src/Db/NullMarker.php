@@ -33,7 +33,7 @@ final class NullMarker {
 
 #AI:class
 #AI symbol: Skim\Db\NullMarker
-#AI source_path: src/db/NullMarker.php
+#AI source_path: src/Db/NullMarker.php
 #AI title: NullMarker
 #AI description: Sentinel object that forces SET col = NULL in query_gen %set% placeholders.
 #AI role: SQL NULL sentinel

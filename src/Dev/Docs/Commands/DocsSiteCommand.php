@@ -55,7 +55,7 @@ class DocsSiteCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Commands\DocsSiteCommand
-#AI source_path: src/dev/docs/commands/DocsSiteCommand.php
+#AI source_path: src/Dev/Docs/Commands/DocsSiteCommand.php
 #AI title: DocsSiteCommand
 #AI description: CLI command that reads llm.json and generates one MDX file per class for the Starlight documentation site.
 #AI role: CLI MDX generator

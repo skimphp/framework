@@ -65,7 +65,7 @@ class CacheBuildCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\CacheBuildCommand
-#AI source_path: src/cli/commands/CacheBuildCommand.php
+#AI source_path: src/Cli/Commands/CacheBuildCommand.php
 #AI title: CacheBuildCommand
 #AI description: CLI command that pre-compiles env, config, and extensions into pure PHP array cache files for OPcache.
 #AI role: CLI cache build command

@@ -125,7 +125,7 @@ class Connection {
 
 #AI:class
 #AI symbol: Skim\Websocket\Connection
-#AI source_path: src/websocket/connection.php
+#AI source_path: src/Websocket/Connection.php
 #AI title: connection
 #AI description: WebSocket connection abstraction with room-based broadcasting and process-scoped room management.
 #AI role: websocket connection

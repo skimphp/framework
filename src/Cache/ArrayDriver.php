@@ -128,7 +128,7 @@ final class ArrayDriver implements \Skim\Cache\Driver {
 
 #AI:class
 #AI symbol: Skim\Cache\ArrayDriver
-#AI source_path: src/cache/ArrayDriver.php
+#AI source_path: src/Cache/ArrayDriver.php
 #AI title: ArrayDriver
 #AI description: In-memory cache driver for tests with process-scoped storage and lazy TTL expiry.
 #AI role: test cache driver

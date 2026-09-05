@@ -16,7 +16,7 @@ Supports MySQL, PostgreSQL, and SQLite. Schema cached on first connect.
 
 ## active record — critical behaviours
 - find($id) returns null if not found — never throws
-- find_or_fail($id) throws not_found_exception — use in controllers
+- findOrFail($id) throws not_found_exception — use in controllers
 - schema is fetched once via driver-specific queries (DESCRIBE / information_schema / PRAGMA table_info), stored in cache driver
 - invalidate schema cache after migrations: cache::flush('schema:')
 - $guarded columns are never mass-assigned even if present in input array
@@ -35,7 +35,7 @@ Supports MySQL, PostgreSQL, and SQLite. Schema cached on first connect.
 ## common mistakes to avoid
 - calling all() without limit on large tables → always paginate
 - forgetting to call db::transaction() when doing multi-table writes
-- using find() result without null check when not using find_or_fail()
+- using find() result without null check when not using findOrFail()
 
 ## dependencies
 - PDO (PHP built-in)

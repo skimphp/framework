@@ -48,7 +48,7 @@ final class Pagination {
 
 #AI:class
 #AI symbol: Skim\Db\Pagination
-#AI source_path: src/db/pagination.php
+#AI source_path: src/Db/Pagination.php
 #AI title: pagination
 #AI description: Immutable result object for paginated queries with computed page navigation properties.
 #AI role: pagination value object

@@ -254,7 +254,7 @@ final class Migrator {
 
 #AI:class
 #AI symbol: Skim\Db\Migrator
-#AI source_path: src/db/migrator.php
+#AI source_path: src/Db/Migrator.php
 #AI title: migrator
 #AI description: Tracks and executes SQL-first migrations with batch-based rollback and fresh rebuild.
 #AI role: migration runner

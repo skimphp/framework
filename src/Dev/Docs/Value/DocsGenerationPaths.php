@@ -125,7 +125,7 @@ final class DocsGenerationPaths {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Value\DocsGenerationPaths
-#AI source_path: src/dev/docs/value/DocsGenerationPaths.php
+#AI source_path: src/Dev/Docs/Value/DocsGenerationPaths.php
 #AI title: DocsGenerationPaths
 #AI description: Resolves CLI --source and --output flag overrides against config/docs.php defaults for docs generation paths.
 #AI role: path resolver value object

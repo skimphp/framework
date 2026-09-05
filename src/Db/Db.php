@@ -300,7 +300,7 @@ class Db {
 
 #AI:class
 #AI symbol: Skim\Db\Db
-#AI source_path: src/db/db.php
+#AI source_path: src/Db/Db.php
 #AI title: db
 #AI description: Static facade for database operations using query_gen SQL templates with lazy connections and profiler integration.
 #AI role: static database facade

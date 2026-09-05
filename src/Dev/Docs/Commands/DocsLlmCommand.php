@@ -62,7 +62,7 @@ class DocsLlmCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Commands\DocsLlmCommand
-#AI source_path: src/dev/docs/commands/DocsLlmCommand.php
+#AI source_path: src/Dev/Docs/Commands/DocsLlmCommand.php
 #AI title: DocsLlmCommand
 #AI description: CLI command that reads llm.json and writes a compact llm.md Markdown file for LLM context windows.
 #AI role: CLI markdown emitter

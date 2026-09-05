@@ -88,7 +88,7 @@ class ExtListCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\ExtListCommand
-#AI source_path: src/cli/commands/ExtListCommand.php
+#AI source_path: src/Cli/Commands/ExtListCommand.php
 #AI title: ExtListCommand
 #AI description: CLI command that lists installed SKIM extensions from local Composer metadata with capability and conflict reporting.
 #AI role: CLI extension lister

@@ -78,7 +78,7 @@ final class HttpResponse {
 
 #AI:class
 #AI symbol: Skim\Http\HttpResponse
-#AI source_path: src/http/HttpResponse.php
+#AI source_path: src/Http/HttpResponse.php
 #AI title: HttpResponse
 #AI description: Immutable value object for HTTP responses with status, body, headers, and JSON parsing.
 #AI role: HTTP response value object

@@ -44,7 +44,7 @@ class ExtManifestCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\ExtManifestCommand
-#AI source_path: src/cli/commands/ExtManifestCommand.php
+#AI source_path: src/Cli/Commands/ExtManifestCommand.php
 #AI title: ExtManifestCommand
 #AI description: CLI command that generates skim.json manifest from an extension class for distribution.
 #AI role: CLI manifest generator

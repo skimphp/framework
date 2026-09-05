@@ -386,7 +386,7 @@ final class Toolbar {
 
 #AI:class
 #AI symbol: Skim\Dev\Toolbar
-#AI source_path: src/dev/toolbar.php
+#AI source_path: src/Dev/Toolbar.php
 #AI title: toolbar
 #AI description: Debug toolbar rendered before </body> for HTML responses when APP_DEBUG=true, showing queries, cache, timeline, views, and log.
 #AI role: debug toolbar renderer

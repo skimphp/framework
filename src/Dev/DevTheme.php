@@ -412,7 +412,7 @@ CSS;
 
 #AI:class
 #AI symbol: Skim\Dev\DevTheme
-#AI source_path: src/dev/DevTheme.php
+#AI source_path: src/Dev/DevTheme.php
 #AI title: DevTheme
 #AI description: Shared CSS design system for dev tool HTML output — dark theme tokens, component classes, and toolbar styles.
 #AI role: CSS design system provider

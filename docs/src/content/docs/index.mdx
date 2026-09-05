@@ -29,7 +29,7 @@ A few things SKIM deliberately does not do:
 
 *   **No Blade or Twig**: Raw PHP with opcache is faster, and you get real stack traces.
 *   **No YAML or INI config**: PHP arrays give you IDE autocomplete and zero parse overhead.
-*   **No lazy facade magic**: Static calls like `db::` and `cache::` are testable via `set_driver()` / `reset()`.
+*   **No lazy facade magic**: Static calls like `db::` and `cache::` are testable via `setDriver()` / `reset()`.
 *   **Lazy connections**: Connections to Redis and the database are lazy — nothing opens until first use.
 *   **Graceful fallback**: Cache and Redis failures fall back gracefully instead of crashing your app.
 

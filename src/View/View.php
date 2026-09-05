@@ -172,7 +172,7 @@ final class View implements \Skim\Worker\Resettable {
 
 #AI:class
 #AI symbol: Skim\View\View
-#AI source_path: src/view/view.php
+#AI source_path: src/View/View.php
 #AI title: view
 #AI description: Static facade for rendering PHP templates with fragment extraction and profiler integration.
 #AI role: static view facade

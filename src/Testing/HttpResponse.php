@@ -151,7 +151,7 @@ class HttpResponse {
 
 #AI:class
 #AI symbol: Skim\Testing\HttpResponse
-#AI source_path: src/testing/HttpResponse.php
+#AI source_path: src/Testing/HttpResponse.php
 #AI title: HttpResponse
 #AI description: Fluent assertion wrapper for HTTP test responses with status, JSON, header, and body assertions.
 #AI role: test assertion wrapper

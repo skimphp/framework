@@ -152,7 +152,7 @@ class McpServeCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Commands\McpServeCommand
-#AI source_path: src/dev/docs/commands/McpServeCommand.php
+#AI source_path: src/Dev/Docs/Commands/McpServeCommand.php
 #AI title: McpServeCommand
 #AI description: CLI command that launches the stdio MCP server for LLM tool integration with Claude Code, Cursor, etc.
 #AI role: MCP server launcher

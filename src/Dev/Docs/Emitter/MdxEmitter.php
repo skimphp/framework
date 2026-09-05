@@ -493,7 +493,7 @@ class MdxEmitter {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Emitter\MdxEmitter
-#AI source_path: src/dev/docs/emitter/MdxEmitter.php
+#AI source_path: src/Dev/Docs/Emitter/MdxEmitter.php
 #AI title: MdxEmitter
 #AI description: Generates component-style MDX files from llm.json class records for the Starlight documentation site.
 #AI role: MDX documentation generator

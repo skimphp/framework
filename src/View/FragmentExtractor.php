@@ -121,7 +121,7 @@ class FragmentExtractor {
 
 #AI:class
 #AI symbol: Skim\View\FragmentExtractor
-#AI source_path: src/view/FragmentExtractor.php
+#AI source_path: src/View/FragmentExtractor.php
 #AI title: FragmentExtractor
 #AI description: State-machine fragment parser replacing regex extraction with tokenized validation.
 #AI role: fragment parser

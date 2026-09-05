@@ -7,12 +7,12 @@ Commands extend the base `command` class and implement `handle(): int`.
 ## Architecture
 - `bin/skim` — Slim bootstrap file that parses arguments and delegates to the kernel.
 - `\skim\cli\kernel` — Central dispatcher. Owns the command registry, group definitions, help listing, execution timing, error handling, and dispatch loop.
-- `\skim\cli\argv_parser` — Pure value object for parsing `$argv`. Resolves leading/trailing flags and colon-based sub-commands.
-- `\skim\cli\interactive_menu` — Full-screen TUI menu with keyboard navigation and search, displayed automatically when no command is provided in a TTY environment.
+- `\Skim\cli\ArgvParser` — Pure value object for parsing `$argv`. Resolves leading/trailing flags and colon-based sub-commands.
+- `\Skim\cli\InteractiveMenu` — Full-screen TUI menu with keyboard navigation and search, displayed automatically when no command is provided in a TTY environment.
 - `\skim\cli\cli` — Facade for terminal output, formatting, ASCII banners, and TTY detection.
 
 ## Critical behaviours
-- ANSI colors and TUI menus are emitted only when `cli::is_tty()` is true (checks `stream_isatty` with fallback to `posix_isatty`), making it safe for CI and piped output.
+- ANSI colors and TUI menus are emitted only when `cli::isTty()` is true (checks `stream_isatty` with fallback to `posix_isatty`), making it safe for CI and piped output.
 - `cli::error()` writes to STDERR — correct for shell scripting and CI log separation.
 - `handle()` return code: 0 = success, 1+ = error — `exit()` uses this code.
 - Flags parsed: `--flag=value` → string, `--flag` → bool true. Flags can appear before or after the command name.
@@ -28,7 +28,7 @@ namespace app\cli;
 use skim\cli\command;
 
 class my_command extends command {
-    // Optionally override default metadata (name, description, group, usage) in configure_for_name() or constructor.
+    // Optionally override default metadata (name, description, group, usage) in configureForName() or constructor.
 
     public function handle(): int {
         $name = $this->arg(0, 'world');

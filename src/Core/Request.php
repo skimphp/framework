@@ -296,7 +296,7 @@ class Request {
 
 #AI:class
 #AI symbol: Skim\Core\Request
-#AI source_path: src/core/request.php
+#AI source_path: src/Core/Request.php
 #AI title: request
 #AI description: HTTP request abstraction wrapping superglobals with typed accessors for query, POST, JSON, headers, files, and route params.
 #AI role: HTTP request value object

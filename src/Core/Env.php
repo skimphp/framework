@@ -166,7 +166,7 @@ final class Env {
 
 #AI:class
 #AI symbol: Skim\Core\Env
-#AI source_path: src/core/env.php
+#AI source_path: src/Core/Env.php
 #AI title: env
 #AI description: Static facade for lazy-loading .env files and accessing typed environment variables with OS-var priority.
 #AI role: static environment facade

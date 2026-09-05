@@ -423,7 +423,7 @@ class Router {
 
 #AI:class
 #AI symbol: Skim\Core\Router
-#AI source_path: src/core/router.php
+#AI source_path: src/Core/Router.php
 #AI title: router
 #AI description: HTTP and CLI router wrapping nikic/fast-route with compiled regex dispatch, F3-compatible @param tokens, and route groups.
 #AI role: route registrar and dispatcher

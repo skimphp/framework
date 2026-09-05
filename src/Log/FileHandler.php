@@ -86,7 +86,7 @@ final class FileHandler implements \Skim\Log\LogHandler {
 
 #AI:class
 #AI symbol: Skim\Log\FileHandler
-#AI source_path: src/log/FileHandler.php
+#AI source_path: src/Log/FileHandler.php
 #AI title: FileHandler
 #AI description: Rotating file log handler with daily suffix and automatic old-file cleanup.
 #AI role: file log handler

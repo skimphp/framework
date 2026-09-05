@@ -78,7 +78,7 @@ class RequestFactory {
 
 #AI:class
 #AI symbol: Skim\Testing\RequestFactory
-#AI source_path: src/testing/RequestFactory.php
+#AI source_path: src/Testing/RequestFactory.php
 #AI title: RequestFactory
 #AI description: Factory that builds request objects from raw parameters with proper $_SERVER header mapping.
 #AI role: test request factory

@@ -22,7 +22,7 @@ class ViewException extends \RuntimeException {}
 
 #AI:class
 #AI symbol: Skim\View\Exceptions\ViewException
-#AI source_path: src/view/exceptions/ViewException.php
+#AI source_path: src/View/Exceptions/ViewException.php
 #AI title: ViewException
 #AI description: Exception thrown when a template file is not found or a named fragment is missing.
 #AI role: view error type

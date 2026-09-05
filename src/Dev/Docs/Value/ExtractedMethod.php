@@ -100,7 +100,7 @@ readonly class ExtractedMethod {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Value\ExtractedMethod
-#AI source_path: src/dev/docs/value/ExtractedMethod.php
+#AI source_path: src/Dev/Docs/Value/ExtractedMethod.php
 #AI title: ExtractedMethod
 #AI description: Readonly value object representing a single extracted public method with all annotation metadata.
 #AI role: data carrier

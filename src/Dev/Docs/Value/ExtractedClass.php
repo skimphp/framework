@@ -162,7 +162,7 @@ readonly class ExtractedClass {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Value\ExtractedClass
-#AI source_path: src/dev/docs/value/ExtractedClass.php
+#AI source_path: src/Dev/Docs/Value/ExtractedClass.php
 #AI title: ExtractedClass
 #AI description: Readonly value object representing a single extracted class with all annotation metadata from @ai.* tags.
 #AI role: data carrier

@@ -84,7 +84,7 @@ class DocsExtractCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Commands\DocsExtractCommand
-#AI source_path: src/dev/docs/commands/DocsExtractCommand.php
+#AI source_path: src/Dev/Docs/Commands/DocsExtractCommand.php
 #AI title: DocsExtractCommand
 #AI description: CLI command that scans PHP source files, extracts @ai.* annotations via AST, and writes llm.json.
 #AI role: CLI extraction command

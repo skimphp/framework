@@ -148,7 +148,7 @@ class Client {
 
 #AI:class
 #AI symbol: Skim\Http\Client
-#AI source_path: src/http/client.php
+#AI source_path: src/Http/Client.php
 #AI title: client
 #AI description: Zero-dependency HTTP client using PHP native streams with JSON body and test faking.
 #AI role: HTTP client

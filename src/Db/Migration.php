@@ -46,7 +46,7 @@ abstract class Migration {
 
 #AI:class
 #AI symbol: Skim\Db\Migration
-#AI source_path: src/db/migration.php
+#AI source_path: src/Db/Migration.php
 #AI title: migration
 #AI description: Abstract base class for SQL-first database migrations with up/down contract.
 #AI role: migration base class

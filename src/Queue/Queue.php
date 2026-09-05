@@ -176,7 +176,7 @@ final class Queue {
 
 #AI:class
 #AI symbol: Skim\Queue\Queue
-#AI source_path: src/queue/queue.php
+#AI source_path: src/Queue/Queue.php
 #AI title: queue
 #AI description: Redis-backed job queue using LPUSH/BRPOP for O(1) operations and sorted sets for delayed jobs.
 #AI role: Redis job queue

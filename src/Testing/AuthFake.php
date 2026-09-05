@@ -43,7 +43,7 @@ class AuthFake {
 
 #AI:class
 #AI symbol: Skim\Testing\AuthFake
-#AI source_path: src/testing/AuthFake.php
+#AI source_path: src/Testing/AuthFake.php
 #AI title: AuthFake
 #AI description: In-memory auth double that always reports authenticated with a given user object.
 #AI role: test double (auth)

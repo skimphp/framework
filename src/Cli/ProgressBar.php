@@ -124,7 +124,7 @@ final class ProgressBar {
 
 #AI:class
 #AI symbol: Skim\Cli\ProgressBar
-#AI source_path: src/cli/ProgressBar.php
+#AI source_path: src/Cli/ProgressBar.php
 #AI title: ProgressBar
 #AI description: Terminal progress bar with TTY-aware rendering, percentage display, and braille spinner for unknown totals.
 #AI role: CLI progress indicator

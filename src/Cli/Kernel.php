@@ -327,7 +327,7 @@ final class Kernel {
 
 #AI:class
 #AI symbol: Skim\Cli\Kernel
-#AI source_path: src/cli/kernel.php
+#AI source_path: src/Cli/Kernel.php
 #AI title: kernel
 #AI description: CLI kernel — central dispatcher owning command registry, help rendering, dispatch, timing, and error output.
 #AI role: CLI central dispatcher

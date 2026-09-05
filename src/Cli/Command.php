@@ -196,7 +196,7 @@ abstract class Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Command
-#AI source_path: src/cli/command.php
+#AI source_path: src/Cli/Command.php
 #AI title: command
 #AI description: Abstract base class for CLI commands with arg/flag access, output helpers, and auto-configured metadata.
 #AI role: CLI command base class

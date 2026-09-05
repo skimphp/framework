@@ -34,7 +34,7 @@ interface Rule {
 
 #AI:class
 #AI symbol: Skim\Validation\Rule
-#AI source_path: src/validation/rule.php
+#AI source_path: src/Validation/Rule.php
 #AI title: rule
 #AI description: Interface for custom validation rule objects that can be placed directly in rule arrays.
 #AI role: validation rule contract

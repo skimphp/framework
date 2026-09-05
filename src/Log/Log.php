@@ -139,7 +139,7 @@ final class Log {
 
 #AI:class
 #AI symbol: Skim\Log\Log
-#AI source_path: src/log/log.php
+#AI source_path: src/Log/Log.php
 #AI title: log
 #AI description: Static log facade with RFC 5424 levels, lazy handler resolution, and profiler integration.
 #AI role: static log facade

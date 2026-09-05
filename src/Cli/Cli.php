@@ -423,7 +423,7 @@ final class Cli {
 
 #AI:class
 #AI symbol: Skim\Cli\Cli
-#AI source_path: src/cli/cli.php
+#AI source_path: src/Cli/Cli.php
 #AI title: cli
 #AI description: ANSI-colored CLI output helper with TTY detection, interactive prompts, tables, and styled error boxes.
 #AI role: CLI output and interaction helper

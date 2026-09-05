@@ -72,7 +72,7 @@ class ClassExtractor {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Extractor\ClassExtractor
-#AI source_path: src/dev/docs/extractor/ClassExtractor.php
+#AI source_path: src/Dev/Docs/Extractor/ClassExtractor.php
 #AI title: ClassExtractor
 #AI description: Extracts documentation metadata from a single PHP file via nikic/php-parser AST traversal.
 #AI role: AST-based class extractor

@@ -33,7 +33,7 @@ class DbException extends \RuntimeException {
 
 #AI:class
 #AI symbol: Skim\Db\Exceptions\DbException
-#AI source_path: src/db/exceptions/DbException.php
+#AI source_path: src/Db/Exceptions/DbException.php
 #AI title: DbException
 #AI description: RuntimeException wrapping PDO failures with the failed SQL string for debugging.
 #AI role: database error wrapper

@@ -214,7 +214,7 @@ final class ExtensionManager {
 
 #AI:class
 #AI symbol: Skim\Ext\ExtensionManager
-#AI source_path: src/ext/extensionManager.php
+#AI source_path: src/Ext/ExtensionManager.php
 #AI title: extensionManager
 #AI description: Coordinates extension discovery, dependency validation, topological sorting, and lifecycle hooks.
 #AI role: extension lifecycle coordinator

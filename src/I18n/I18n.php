@@ -159,7 +159,7 @@ final class I18n implements \Skim\Worker\Resettable {
 
 #AI:class
 #AI symbol: Skim\I18n\I18n
-#AI source_path: src/i18n/i18n.php
+#AI source_path: src/I18n/I18n.php
 #AI title: i18n
 #AI description: Minimal i18n facade with PHP array files, dot-notation keys, pluralization, and custom loader support.
 #AI role: static i18n facade

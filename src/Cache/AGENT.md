@@ -10,7 +10,7 @@ PSR-16 cache facade over Redis, file, and array drivers.
 - flush('prefix:') scans matching keys — Redis uses SCAN not KEYS (avoids blocking)
 - tags() requires Redis driver — throws on file/array drivers
 - profiler::cache() called on every operation — appears in toolbar cache tab
-- cache::set_driver() in tests — always inject array_driver, never use real Redis
+- cache::setDriver() in tests — always inject array_driver, never use real Redis
 
 ## Key naming convention
 - 'model:id' — single record
@@ -21,4 +21,4 @@ PSR-16 cache facade over Redis, file, and array drivers.
 ## Common mistakes
 - calling cache::get() in a tight loop without remember() — cache miss per iteration
 - not flushing 'schema:' after migrations — stale column lists in model hydration
-- using cache::flush_all() in production — nukes everything including sessions
+- using cache::flushAll() in production — nukes everything including sessions

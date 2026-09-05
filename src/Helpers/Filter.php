@@ -298,7 +298,7 @@ final class Filter {
 
 #AI:class
 #AI symbol: Skim\Helpers\Filter
-#AI source_path: src/helpers/filter.php
+#AI source_path: src/Helpers/Filter.php
 #AI title: filter
 #AI description: Input validation helper returning typed values or false — never null.
 #AI role: input validation helper

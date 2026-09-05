@@ -349,7 +349,7 @@ class ExtInstallCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\ExtInstallCommand
-#AI source_path: src/cli/commands/ExtInstallCommand.php
+#AI source_path: src/Cli/Commands/ExtInstallCommand.php
 #AI title: ExtInstallCommand
 #AI description: CLI command that installs a SKIM extension package with composer, config publishing, and atomic migrations.
 #AI role: CLI extension installer

@@ -58,7 +58,7 @@ interface Job {
 
 #AI:class
 #AI symbol: Skim\Queue\Job
-#AI source_path: src/queue/job.php
+#AI source_path: src/Queue/Job.php
 #AI title: job
 #AI description: Interface contract for background queue jobs — must be serializable for Redis storage.
 #AI role: queue job interface

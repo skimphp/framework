@@ -185,7 +185,7 @@ final class Event implements \Skim\Worker\Resettable {
 
 #AI:class
 #AI symbol: Skim\Events\Event
-#AI source_path: src/events/event.php
+#AI source_path: src/Events/Event.php
 #AI title: event
 #AI description: Synchronous event bus with priority ordering, one-time listeners, and async dispatch via queue.
 #AI role: static event bus

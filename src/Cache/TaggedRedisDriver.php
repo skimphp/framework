@@ -83,7 +83,7 @@ final class TaggedRedisDriver {
 
 #AI:class
 #AI symbol: Skim\Cache\TaggedRedisDriver
-#AI source_path: src/cache/TaggedRedisDriver.php
+#AI source_path: src/Cache/TaggedRedisDriver.php
 #AI title: TaggedRedisDriver
 #AI description: Tag-scoped proxy over RedisDriver for grouped cache invalidation via Redis sets.
 #AI role: tag-scoped cache proxy

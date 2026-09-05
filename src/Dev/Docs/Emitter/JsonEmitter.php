@@ -91,7 +91,7 @@ class JsonEmitter {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Emitter\JsonEmitter
-#AI source_path: src/dev/docs/emitter/JsonEmitter.php
+#AI source_path: src/Dev/Docs/Emitter/JsonEmitter.php
 #AI title: JsonEmitter
 #AI description: Serializes extracted class metadata to llm.json and loads it back — the single source of truth for all doc outputs.
 #AI role: JSON serialization layer

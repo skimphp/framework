@@ -87,7 +87,7 @@ class WorkerInstallCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\WorkerInstallCommand
-#AI source_path: src/cli/commands/WorkerInstallCommand.php
+#AI source_path: src/Cli/Commands/WorkerInstallCommand.php
 #AI title: WorkerInstallCommand
 #AI description: CLI command that generates FrankenPHP worker mode files.
 #AI role: CLI worker install command

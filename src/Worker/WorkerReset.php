@@ -86,7 +86,7 @@ final class WorkerReset {
 
 #AI:class
 #AI symbol: Skim\Worker\WorkerReset
-#AI source_path: src/worker/WorkerReset.php
+#AI source_path: src/Worker/WorkerReset.php
 #AI title: WorkerReset
 #AI description: Per-request reset orchestrator for FrankenPHP worker mode.
 #AI role: reset orchestrator

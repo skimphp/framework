@@ -22,7 +22,7 @@ interface SignalPatcher {
 
 #AI:interface
 #AI symbol: Skim\Realtime\Contract\SignalPatcher
-#AI source_path: src/realtime/contract/SignalPatcher.php
+#AI source_path: src/Realtime/Contract/SignalPatcher.php
 #AI title: SignalPatcher
 #AI description: Interface for hypermedia drivers that patch reactive signals.
 #AI role: realtime contract

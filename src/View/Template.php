@@ -190,7 +190,7 @@ class Template {
 
 #AI:class
 #AI symbol: Skim\View\Template
-#AI source_path: src/view/template.php
+#AI source_path: src/View/Template.php
 #AI title: template
 #AI description: Template context object providing include, layout, and slot system for PHP views.
 #AI role: template context and layout engine

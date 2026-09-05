@@ -130,7 +130,7 @@ final class Assets {
 
 #AI:class
 #AI symbol: Skim\Assets\Assets
-#AI source_path: src/assets/assets.php
+#AI source_path: src/Assets/Assets.php
 #AI title: assets
 #AI description: Vite asset integration — resolves hashed URLs from manifest.json and generates script/style tags with HMR support.
 #AI role: Vite asset resolver

@@ -189,7 +189,7 @@ final class Profiler {
 
 #AI:class
 #AI symbol: Skim\Dev\Profiler
-#AI source_path: src/dev/profiler.php
+#AI source_path: src/Dev/Profiler.php
 #AI title: profiler
 #AI description: Static event collector that records DB queries, cache ops, view renders, and log entries for debug toolbar display.
 #AI role: debug event collector

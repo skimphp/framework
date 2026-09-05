@@ -97,7 +97,7 @@ class DocsCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Dev\Docs\Commands\DocsCommand
-#AI source_path: src/dev/docs/commands/DocsCommand.php
+#AI source_path: src/Dev/Docs/Commands/DocsCommand.php
 #AI title: DocsCommand
 #AI description: Umbrella CLI command that runs the full docs generation pipeline (extract → llm → site) with optional watch mode.
 #AI role: CLI pipeline orchestrator

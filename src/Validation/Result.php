@@ -50,7 +50,7 @@ final class Result {
 
 #AI:class
 #AI symbol: Skim\Validation\Result
-#AI source_path: src/validation/result.php
+#AI source_path: src/Validation/Result.php
 #AI title: result
 #AI description: Immutable validation result with ok (virtual property), errors(), and validated() accessors.
 #AI role: validation result value object

@@ -57,7 +57,7 @@ class SessionFake {
 
 #AI:class
 #AI symbol: Skim\Testing\SessionFake
-#AI source_path: src/testing/SessionFake.php
+#AI source_path: src/Testing/SessionFake.php
 #AI title: SessionFake
 #AI description: In-memory session double for tests with no cookies, headers, or persistence.
 #AI role: test double (session)

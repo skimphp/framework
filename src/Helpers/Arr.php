@@ -242,7 +242,7 @@ final class Arr {
 
 #AI:class
 #AI symbol: Skim\Helpers\Arr
-#AI source_path: src/helpers/arr.php
+#AI source_path: src/Helpers/Arr.php
 #AI title: arr
 #AI description: Array utility methods for finding, indexing, plucking, and common collection patterns.
 #AI role: array utility helper

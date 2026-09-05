@@ -423,7 +423,7 @@ final class InteractiveMenu {
 
 #AI:class
 #AI symbol: Skim\Cli\InteractiveMenu
-#AI source_path: src/cli/InteractiveMenu.php
+#AI source_path: src/Cli/InteractiveMenu.php
 #AI title: InteractiveMenu
 #AI description: Full-screen interactive terminal menu for CLI command discovery with keyboard navigation and live search.
 #AI role: CLI interactive command browser

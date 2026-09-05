@@ -400,7 +400,7 @@ final class ExtRegistry {
 
 #AI:class
 #AI symbol: Skim\Ext\ExtRegistry
-#AI source_path: src/ext/ExtRegistry.php
+#AI source_path: src/Ext/ExtRegistry.php
 #AI title: ExtRegistry
 #AI description: Discovers installed SKIM extensions from Composer packages with capability mapping and conflict detection.
 #AI role: extension discovery registry

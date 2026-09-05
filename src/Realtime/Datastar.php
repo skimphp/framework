@@ -107,7 +107,7 @@ class Datastar implements \Skim\Realtime\Contract\ElementPatcher, \Skim\Realtime
 
 #AI:class
 #AI symbol: Skim\Realtime\Datastar
-#AI source_path: src/realtime/datastar.php
+#AI source_path: src/Realtime/Datastar.php
 #AI title: datastar
 #AI description: Datastar v1 SSE driver implementing ElementPatcher, SignalPatcher, and ScriptRunner.
 #AI role: Datastar v1 driver

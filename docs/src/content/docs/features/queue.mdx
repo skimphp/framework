@@ -7,12 +7,12 @@ SKIM ships with a lightweight Redis-backed queue. Jobs are serialized and pushed
 
 ## Job Class
 
-Implement the `job` interface or extend `base_job` for defaults (3 retries, no delay, error_log on failure).
+Implement the `job` interface or extend `BaseJob` for defaults (3 retries, no delay, error_log on failure).
 
 ```php
 use skim\queue\base_job;
 
-class send_email_job extends base_job {
+class send_email_job extends BaseJob {
     public function __construct(private readonly int $user_id) {}
 
     public function handle(): void {
@@ -41,7 +41,7 @@ queue::push(new send_email_job($user_id));
 queue::push(new generate_report_job($id), queue: 'reports');
 
 // batch (atomic via Redis pipeline)
-queue::push_many([$job1, $job2], 'default');
+queue::pushMany([$job1, $job2], 'default');
 ```
 
 ## Worker
@@ -71,7 +71,7 @@ php skim queue:work --max-jobs=1000
 Override `delay()` to defer execution:
 
 ```php
-class scheduled_notification_job extends base_job {
+class scheduled_notification_job extends BaseJob {
     public function delay(): int { return 3600; } // 1 hour
 
     public function handle(): void {
@@ -80,14 +80,14 @@ class scheduled_notification_job extends base_job {
 }
 ```
 
-Delayed jobs are stored in a Redis sorted set (`skim:queue:delayed`) keyed by `execute_at`. The worker promotes them on each loop iteration.
+Delayed jobs are stored in a Redis sorted set (`skim:queue:delayed`) keyed by `executeAt`. The worker promotes them on each loop iteration.
 
 ## Retries & Failure
 
 Override `tries()` and `failed()` for custom behavior:
 
 ```php
-class api_sync_job extends base_job {
+class api_sync_job extends BaseJob {
     public function tries(): int { return 5; }
 
     public function failed(\Throwable $e): void {
@@ -151,10 +151,10 @@ autorestart=true
 Inject a mock Redis instance to bypass the real connection:
 
 ```php
-queue::set_redis($mock_redis);
+queue::setRedis($mock_redis);
 queue::push(new send_email_job(1));
 // assertions...
-queue::set_redis(null); // reset
+queue::setRedis(null); // reset
 ```
 
 Use `queue::flush()` to clear queues between tests.

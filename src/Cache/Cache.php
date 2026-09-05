@@ -247,7 +247,7 @@ final class Cache {
 
 #AI:class
 #AI symbol: Skim\Cache\Cache
-#AI source_path: src/cache/cache.php
+#AI source_path: src/Cache/Cache.php
 #AI title: cache
 #AI description: Static cache facade for configured drivers, fail-soft fallback, tag support, and test driver injection.
 #AI role: static cache facade

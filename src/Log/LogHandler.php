@@ -31,7 +31,7 @@ interface LogHandler {
 
 #AI:class
 #AI symbol: Skim\Log\LogHandler
-#AI source_path: src/log/LogHandler.php
+#AI source_path: src/Log/LogHandler.php
 #AI title: LogHandler
 #AI description: Interface contract for log message writers used by the log facade.
 #AI role: log handler interface

@@ -103,7 +103,7 @@ class QueueCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\QueueCommand
-#AI source_path: src/cli/commands/QueueCommand.php
+#AI source_path: src/Cli/Commands/QueueCommand.php
 #AI title: QueueCommand
 #AI description: CLI dispatcher for queue operations — work, status, flush, and restart.
 #AI role: CLI queue manager

@@ -171,7 +171,7 @@ class QueryScope {
 
 #AI:class
 #AI symbol: Skim\Db\QueryScope
-#AI source_path: src/db/QueryScope.php
+#AI source_path: src/Db/QueryScope.php
 #AI title: QueryScope
 #AI description: Fluent query builder scoped to a model class with WHERE/ORDER/LIMIT/OFFSET collection and terminal execution.
 #AI role: fluent query builder

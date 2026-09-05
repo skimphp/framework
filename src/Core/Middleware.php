@@ -46,7 +46,7 @@ interface Middleware {
 
 #AI:interface
 #AI symbol: Skim\Core\Middleware
-#AI source_path: src/core/middleware.php
+#AI source_path: src/Core/Middleware.php
 #AI title: middleware
 #AI description: Middleware contract for the onion-model request/response pipeline.
 #AI role: middleware contract

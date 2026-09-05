@@ -160,7 +160,7 @@ final class FakeClient extends \Skim\Http\Client {
 
 #AI:class
 #AI symbol: Skim\Http\FakeClient
-#AI source_path: src/http/FakeClient.php
+#AI source_path: src/Http/FakeClient.php
 #AI title: FakeClient
 #AI description: Test double for HTTP client that records requests and returns stub responses.
 #AI role: HTTP test fake

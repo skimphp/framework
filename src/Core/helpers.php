@@ -205,7 +205,7 @@ if (!function_exists('asset')) {
 }
 
 #AI:file
-#AI source_path: src/core/helpers.php
+#AI source_path: src/Core/helpers.php
 #AI title: helpers
 #AI description: Global convenience functions wrapping framework facades for ergonomic use in templates, config files, and application code.
 #AI role: global helper functions

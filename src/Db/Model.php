@@ -427,7 +427,7 @@ abstract class Model {
 
 #AI:class
 #AI symbol: Skim\Db\Model
-#AI source_path: src/db/model.php
+#AI source_path: src/Db/Model.php
 #AI title: model
 #AI description: Active record base class with dirty tracking, schema caching, guarded mass-assignment, and type casting.
 #AI role: active record base

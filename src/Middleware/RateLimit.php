@@ -86,7 +86,7 @@ class RateLimit implements \Skim\Core\Middleware {
 
 #AI:class
 #AI symbol: Skim\Middleware\RateLimit
-#AI source_path: src/middleware/RateLimit.php
+#AI source_path: src/Middleware/RateLimit.php
 #AI title: RateLimit
 #AI description: Redis-backed sliding window rate limiter with fail-open fallback.
 #AI role: rate limiting middleware

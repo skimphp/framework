@@ -209,7 +209,7 @@ class Validate {
 
 #AI:class
 #AI symbol: Skim\Validation\Validate
-#AI source_path: src/validation/validate.php
+#AI source_path: src/Validation/Validate.php
 #AI title: validate
 #AI description: Zero-dependency validation engine with built-in rules, custom rule registration, and mass-assignment protection.
 #AI role: validation engine

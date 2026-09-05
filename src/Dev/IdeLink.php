@@ -143,7 +143,7 @@ final class IdeLink {
 
 #AI:class
 #AI symbol: Skim\Dev\IdeLink
-#AI source_path: src/dev/IdeLink.php
+#AI source_path: src/Dev/IdeLink.php
 #AI title: IdeLink
 #AI description: Builds deep-link URLs that open a file:line in the developer's editor — phpstorm (default), vscode, cursor, sublime, idea, webstorm, textmate, emacs, macvim, atom.
 #AI role: editor deep-link provider

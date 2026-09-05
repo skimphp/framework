@@ -141,7 +141,7 @@ class IdeCommand extends \Skim\Cli\Command {
 
 #AI:class
 #AI symbol: Skim\Cli\Commands\IdeCommand
-#AI source_path: src/cli/commands/IdeCommand.php
+#AI source_path: src/Cli/Commands/IdeCommand.php
 #AI title: IdeCommand
 #AI description: CLI command that generates .ide-helper.php with typed model property stubs for IDE autocomplete.
 #AI role: CLI IDE helper generator
