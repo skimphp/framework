@@ -316,16 +316,16 @@ class Request {
 #AI role: HTTP request value object
 #AI layer: core
 #AI badges: [request; http; value-object; superglobal-wrapper]
-#AI intro: `skim\core\request` wraps PHP superglobals into a typed, testable object. It is injected by the container into controllers and middleware — never instantiated manually in application code. The same instance is shared across the entire request lifecycle.
-#AI lifecycle: created once by App::run() via from_globals(), shared across middleware and controller
+#AI intro: `Skim\Core\Request` wraps PHP superglobals into a typed, testable object. It is injected by the container into controllers and middleware — never instantiated manually in application code. The same instance is shared across the entire request lifecycle.
+#AI lifecycle: created once by App::run() via fromGlobals(), shared across middleware and controller
 #AI test_seam: Request::make() fabricates requests from explicit arrays without superglobals
-#AI invariants: [from_globals() reads superglobals at call time; json() parses once and caches; header() is case-insensitive; ip() reads X-Forwarded-For first; method() always returns uppercase; set_route_params() is called by framework after dispatch]
-#AI warnings: [X-Forwarded-For is trusted without proxy validation — do not use ip() as a security boundary; Mutations to $_GET after from_globals() are not reflected]
+#AI invariants: [fromGlobals() reads superglobals at call time; json() parses once and caches; header() is case-insensitive; ip() reads X-Forwarded-For first; method() always returns uppercase; setRouteParams() is called by framework after dispatch]
+#AI warnings: [X-Forwarded-For is trusted without proxy validation — do not use ip() as a security boundary; Mutations to $_GET after fromGlobals() are not reflected]
 #AI notes: Wraps $_GET, $_POST, $_SERVER, $_FILES, $_COOKIE, and php://input. Never access superglobals directly in app code.
 #AI owns: route_params, json_body cache
-#AI entry_points: [from_globals; make; get; post; input; json; file; header; ip; method; path]
+#AI entry_points: [fromGlobals; make; get; post; input; json; file; header; ip; method; path]
 #AI non_goals: [Does not validate input; Does not sanitize data; Does not handle file uploads beyond $_FILES passthrough]
-#AI side_effects: [json() caches parsed body on first call; set_route_params() mutates internal state]
+#AI side_effects: [json() caches parsed body on first call; setRouteParams() mutates internal state]
 #AI flow: App::run() -> Request::fromGlobals() -> middleware pipeline -> controller(Request $req)
 #AI section_order: [Construction; Input Access; Headers & IP; URL & Method; Detection Helpers; Route Params; Raw Access]
 #AI architectural_notes: The request is a value object created once per HTTP cycle. Route params are injected after dispatch by the framework. The make() factory delegates to request_factory for test fabrication.
