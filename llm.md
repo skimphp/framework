@@ -1,7 +1,7 @@
 # LLM context
 
 > Auto-generated from source annotations. Do not edit manually.  
-> Generated: 2026-09-06T11:03:17+00:00
+> Generated: 2026-09-06T11:23:05+00:00
 
 ## `Skim\Assets\Assets` — assets
 
@@ -1672,13 +1672,13 @@ Emits one timeline event summarising the middleware stack for this request. :rec
 
 `request` `http` `value-object` `superglobal-wrapper`
 
-**Source:** `src/Core/Request.php` · **Layer:** `core` · **Lifecycle:** `created once by App::run() via from_globals(), shared across middleware and controller`
+**Source:** `src/Core/Request.php` · **Layer:** `core` · **Lifecycle:** `created once by App::run() via fromGlobals(), shared across middleware and controller`
 
-`skim\core\request` wraps PHP superglobals into a typed, testable object. It is injected by the container into controllers and middleware — never instantiated manually in application code. The same instance is shared across the entire request lifecycle.
+`Skim\Core\Request` wraps PHP superglobals into a typed, testable object. It is injected by the container into controllers and middleware — never instantiated manually in application code. The same instance is shared across the entire request lifecycle.
 
 ### Warnings
 - ⚠ X-Forwarded-For is trusted without proxy validation — do not use ip() as a security boundary
-- ⚠ Mutations to $_GET after from_globals() are not reflected
+- ⚠ Mutations to $_GET after fromGlobals() are not reflected
 
 ### Construction
 
@@ -3337,7 +3337,7 @@ Serializes to a plain associative array suitable for json_encode. Falls back to 
 
 > Developer-friendly error page rendered when APP_DEBUG=true. :class Use only via the exception handler registered in App::run(). Delegates HTML generation to dev_view templates with a fallback to inline HTML if the template system itself fails. Never expose in production. Example: // Registered by App::run() when APP_DEBUG=true: set_exception_handler(fn(\Throwable $e) => ErrorPage::render($e)); Testing: Call render() directly with a test Throwable; output goes to stdout.
 
-**Source:** `framework/src/Dev/ErrorPage.php`
+**Source:** `regen2/src/Dev/ErrorPage.php`
 
 Developer-friendly error page rendered when APP_DEBUG=true. :class Use only via the exception handler registered in App::run(). Delegates HTML generation to dev_view templates with a fallback to inline HTML if the template system itself fails. Never expose in production. Example: // Registered by App::run() when APP_DEBUG=true: set_exception_handler(fn(\Throwable $e) => ErrorPage::render($e)); Testing: Call render() directly with a test Throwable; output goes to stdout.
 
@@ -6027,7 +6027,7 @@ Clears the entire room map. Use in test tearDown() to prevent state leakage.
 
 > Runtime per-request leak detector for worker mode (dev/CI only). :class Snapshots boundary state at begin_request and, after worker_reset has run at end_request, flags hard invariant violations immediately and sustained growth trends over a sliding window. Off unless WORKER_MODE + debug, or explicitly configured. Reports via log/request_trace/profiler — never throws mid-request.
 
-**Source:** `framework/src/Worker/LeakDetector.php`
+**Source:** `regen2/src/Worker/LeakDetector.php`
 
 Runtime per-request leak detector for worker mode (dev/CI only). :class Snapshots boundary state at begin_request and, after worker_reset has run at end_request, flags hard invariant violations immediately and sustained growth trends over a sliding window. Off unless WORKER_MODE + debug, or explicitly configured. Reports via log/request_trace/profiler — never throws mid-request.
 
