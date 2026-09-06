@@ -11,7 +11,7 @@ namespace Skim\Db;
  * atomic rollback targeting.
  *
  * Example:
- *   $m = new migrator(basePath('migrations'));
+ *   $m = new Migrator(basePath('migrations'));
  *   $ran = $m->run();          // ['2024_01_01_create_users.php', ...]
  *   $m->down();                // rollback last batch
  *   $m->status();              // [['filename' => ..., 'batch' => ..., 'status' => 'applied'], ...]
@@ -137,10 +137,10 @@ final class Migrator {
      *
      * @param int  $steps        Override: roll back N individual migrations instead of the batch.
      * @param bool $force         Bypass checksum drift guard.
-     * @param bool $skip_missing  Skip missing migration files instead of throwing.
+     * @param bool $skipMissing  Skip missing migration files instead of throwing.
      * @return array List of migration filenames that were rolled back.
      */
-    public function down(int $steps = 0, bool $force = false, bool $skip_missing = false): array {
+    public function down(int $steps = 0, bool $force = false, bool $skipMissing = false): array {
         $this->ensureTable();
 
         if ($steps > 0) {
@@ -174,7 +174,7 @@ final class Migrator {
             foreach ($rows as $row) {
                 $file = $this->migrationsDir . '/' . $row['filename'];
                 if (!is_file($file)) {
-                    if (!$skip_missing) {
+                    if (!$skipMissing) {
                         throw new \RuntimeException("Migration file {$row['filename']} not found, cannot rollback");
                     }
                     continue;

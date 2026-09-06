@@ -32,7 +32,7 @@ function setupMigratorDb(): void {
     Db::connect('default', ['driver' => 'sqlite', 'database' => ':memory:']);
 }
 
-describe('migrator::run()', function(): void {
+describe('Migrator::run()', function(): void {
 
     test('runs pending migrations and records them in _migrations table', function(): void {
         setupMigratorDb();
@@ -210,7 +210,7 @@ describe('migrator::run()', function(): void {
 
 });
 
-describe('migrator::down()', function(): void {
+describe('Migrator::down()', function(): void {
 
     test('rolls back last batch', function(): void {
         setupMigratorDb();
@@ -257,7 +257,7 @@ describe('migrator::down()', function(): void {
         rmdir($dir);
     });
 
-    test('skips missing file when skip_missing is true', function(): void {
+    test('skips missing file when skipMissing is true', function(): void {
         setupMigratorDb();
         $dir = makeMigrationDir();
         writeMigration($dir, '2024_01_01_000001_create_skip',
@@ -269,7 +269,7 @@ describe('migrator::down()', function(): void {
         $mig->run();
         array_map('unlink', glob($dir . '/*.php') ?: []);
 
-        $rolled = $mig->down(skip_missing: true);
+        $rolled = $mig->down(skipMissing: true);
         expect($rolled)->toBeEmpty();
 
         rmdir($dir);
@@ -323,7 +323,7 @@ describe('migrator::down()', function(): void {
 
 });
 
-describe('migrator::status()', function(): void {
+describe('Migrator::status()', function(): void {
 
     test('reports pending and applied status for each migration', function(): void {
         setupMigratorDb();

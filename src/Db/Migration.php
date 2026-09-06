@@ -10,7 +10,7 @@ namespace Skim\Db;
  * Files are named YYYY_MM_DD_HHMMSS_description.php for deterministic ordering.
  *
  * Example:
- *   return new class extends migration {
+ *   return new class extends Migration {
  *       public function up(): string {
  *           return "CREATE TABLE posts (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255))";
  *       }
@@ -68,7 +68,7 @@ abstract class Migration {
 #AI layer: db
 #AI badges: [abstract; migration; sql-first]
 #AI intro: `migration` is the abstract base for all database migrations. Each migration file returns an anonymous class extending this base, implementing `up()` and `down()` with raw SQL strings. The migrator tracks applied migrations by filename in the `_migrations` table.
-#AI lifecycle: instantiated by migrator::loadAll() via require, filename assigned from basename
+#AI lifecycle: instantiated by Migrator::loadAll() via require, filename assigned from basename
 #AI fallback: none
 #AI test_seam: run via migrator against test_db() SQLite :memory: connection
 #AI invariants: [up() and down() must return valid SQL strings; filename is set by migrator, never manually; down() must exactly reverse up()]
@@ -89,16 +89,16 @@ abstract class Migration {
 #AI:up
 #AI group: Migration Contract
 #AI frequency: high
-#AI signature: abstract public function up(): string
-#AI contract: Returns raw SQL to execute when migrating forward. May contain multiple semicolon-separated statements.
-#AI return_detail: {type: string | desc: SQL string to execute.}
+#AI signature: abstract public function up(): string|array|callable
+#AI contract: Returns raw SQL, an array of SQL statements, or a callable receiving PDO to execute when migrating forward.
+#AI return_detail: {type: string|array|callable | desc: SQL string, one element per statement, or custom callable.}
 
 #AI:down
 #AI group: Migration Contract
 #AI frequency: high
-#AI signature: abstract public function down(): string
-#AI contract: Returns raw SQL to reverse up(). Used by migrate:down and migrate:fresh. Must always be implemented.
-#AI return_detail: {type: string | desc: SQL string to reverse the migration.}
+#AI signature: public function down(): string|array|callable
+#AI contract: Returns raw SQL, an array, or a callable to reverse up(). Used by migrate:down and migrate:fresh. Optional — base default throws when $reversible is false.
+#AI return_detail: {type: string|array|callable | desc: SQL string, array, or callable to reverse the migration.}
 
 #AI:filename
 #AI group: Properties

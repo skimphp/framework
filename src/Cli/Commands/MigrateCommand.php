@@ -79,8 +79,8 @@ class MigrateCommand extends Command {
     private function down(Migrator $mig): int {
         $steps        = (int) $this->flag('steps', 0);
         $force        = $this->flag('force');
-        $skip_missing = $this->flag('skip-missing');
-        $rolled = $mig->down($steps, force: (bool) $force, skip_missing: (bool) $skip_missing);
+        $skipMissing = $this->flag('skip-missing');
+        $rolled = $mig->down($steps, force: (bool) $force, skipMissing: (bool) $skipMissing);
         if ($rolled === []) {
             $this->info('Nothing to roll back.');
             return 0;
@@ -126,7 +126,7 @@ class MigrateCommand extends Command {
     }
 
     /**
-     * Creates a new migration file from stub. #AI:make
+     * Creates a new Migration file from stub. #AI:make
      */
     private function make(string $conn): int {
         $name = $this->arg(1, '');
@@ -144,7 +144,7 @@ class MigrateCommand extends Command {
         }
 
         $filename = date('Y_m_d_His') . '_' . $name . '.php';
-        $stub = file_get_contents(basePath('src/Cli/Scaffolds/Migration.php'));
+        $stub = file_get_contents(__DIR__ . '/../Scaffolds/Migration.php');
         $stub = str_replace('{{name}}', $name, $stub);
         file_put_contents($dir . '/' . $filename, $stub);
 
@@ -161,7 +161,7 @@ class MigrateCommand extends Command {
 #AI role: CLI migration dispatcher
 #AI layer: cli
 #AI badges: [cli; command; database; migration; destructive]
-#AI intro: `migrate_command` implements the `php skim migrate` family of CLI commands. It dispatches to the `migrator` class for all SQL operations and handles only CLI output and exit codes.
+#AI intro: `MigrateCommand` implements the `php skim migrate` family of CLI commands. It dispatches to the `migrator` class for all SQL operations and handles only CLI output and exit codes.
 #AI lifecycle: instantiated by kernel, handle() called once per invocation
 #AI fallback: prints informational message when nothing to migrate or roll back
 #AI test_seam: instantiate directly, call setInput() with test args, then handle()
@@ -172,9 +172,9 @@ class MigrateCommand extends Command {
 #AI entry_points: [handle]
 #AI config_reads: [APP_ENV]
 #AI non_goals: [Does not validate migration syntax]
-#AI side_effects: [migrator::run() applies pending migrations; migrator::down() rolls back batches; migrator::fresh() drops all tables]
-#AI flow: migrate_command::handle() -> arg(0) sub-command -> new migrator(migrations/) -> match sub-command -> migrator method -> print results
-#AI lifecycle_steps: [handle(); -> arg(0) sub-command; -> new migrator(basePath('migrations')); -> match: run/down/fresh/status/make; -> migrator method; -> print results]
+#AI side_effects: [Migrator::run() applies pending migrations; Migrator::down() rolls back batches; Migrator::fresh() drops all tables]
+#AI flow: MigrateCommand::handle() -> arg(0) sub-command -> new Migrator(migrations/) -> match sub-command -> migrator method -> print results
+#AI lifecycle_steps: [handle(); -> arg(0) sub-command; -> new Migrator(basePath('migrations')); -> match: run/down/fresh/status/make; -> migrator method; -> print results]
 #AI section_order: [Command Execution; Sub-commands]
 #AI architectural_notes: Thin CLI wrapper — all migration logic lives in Skim\Db\Migrator. This command handles only argument dispatch and terminal output.
 
@@ -188,29 +188,29 @@ class MigrateCommand extends Command {
 #AI:run
 #AI group: Sub-commands
 #AI frequency: low
-#AI signature: private function run(migrator $mig): int
+#AI signature: private function run(Migrator $mig): int
 #AI contract: Runs all pending migrations via the migrator and prints each applied file.
 
 #AI:down
 #AI group: Sub-commands
 #AI frequency: low
-#AI signature: private function down(migrator $mig): int
+#AI signature: private function down(Migrator $mig): int
 #AI contract: Rolls back the last batch of migrations. Use --steps=N flag to roll back multiple batches.
 
 #AI:fresh
 #AI group: Sub-commands
 #AI frequency: low
-#AI signature: private function fresh(migrator $mig): int
+#AI signature: private function fresh(Migrator $mig): int
 #AI contract: Drops all tables and re-runs all migrations from scratch.
 
 #AI:status
 #AI group: Sub-commands
 #AI frequency: low
-#AI signature: private function status(migrator $mig): int
+#AI signature: private function status(Migrator $mig): int
 #AI contract: Displays a table showing each migration's filename, batch number, and applied/pending status.
 
 #AI:make
 #AI group: Sub-commands
 #AI frequency: low
 #AI signature: private function make(string $conn): int
-#AI contract: Creates a new migration file from the stub template.
+#AI contract: Creates a new Migration file from the stub template.
