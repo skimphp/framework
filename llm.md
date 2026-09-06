@@ -1,9 +1,9 @@
 # LLM context
 
 > Auto-generated from source annotations. Do not edit manually.  
-> Generated: 2026-09-05T21:33:07+00:00
+> Generated: 2026-09-06T08:05:56+00:00
 
-## `Skim\Middleware\ToolbarMiddleware` — ToolbarMiddleware
+## `Skim\Middleware\ToolbarMiddleware` — toolbar_middleware
 
 > Injects the debug toolbar HTML into text/html responses when APP_DEBUG is true.
 
@@ -11,7 +11,7 @@
 
 **Source:** `src/Middleware/ToolbarMiddleware.php` · **Layer:** `middleware` · **Lifecycle:** `registered as global middleware`
 
-`ToolbarMiddleware` appends the SKIM debug toolbar before `</body>` in HTML responses. It only activates when debug mode is enabled and the request is a standard page load (not JSON, AJAX, or htmx).
+`ToolbarMiddleware` appends the SKIM debug toolbar before `</body>` in HTML responses. It only activates when debug mode is enabled and the request is a standard page load (not JSON, AJAX, or hypermedia).
 
 ### Core Behavior
 - Calls $next first to collect profiler data
@@ -55,7 +55,7 @@ Counts the request in a Redis sliding window per IP. Returns 429 when the limit 
 - **Side effect:** Writes to Redis sorted set
 - **Side effect:** Adds X-RateLimit-* response headers
 
-### 
+### Methods
 
 #### `__construct(limit, window, prefix)`
 
@@ -83,7 +83,7 @@ Adds CORS headers to every response. Short-circuits OPTIONS preflight with 204 w
 - **Returns** `mixed` — Response with CORS headers, or 204 for OPTIONS preflight.
 - **Side effect:** Adds Access-Control-* headers to response
 
-### 
+### Methods
 
 #### `__construct(allowOrigin, allowMethods, allowHeaders, maxAge)`
 
@@ -155,7 +155,7 @@ Sends a message to all connections in a room, optionally excluding one connectio
 Clears the entire room map. Use in test tearDown() to prevent state leakage.
 - **Side effect:** Clears the static rooms array
 
-### 
+### Methods
 
 #### `__construct(id, rawConn)`
 
@@ -434,7 +434,7 @@ Creates a fresh isolated container that skips .env and config/*.php loading. Con
 - **Returns** `static` — A fresh, unbooted container with router and pipeline ready.
 - **Note:** Safe to call multiple times per test. Each call returns an independent instance.
 
-### 
+### Methods
 
 #### `snapshotBindings(): array`
 Returns a metadata array of every currently-registered binding. :snapshot_bindings Used by ErrorPage::collectContainer() to render the "registered services" list in the Container panel. Captures [abstract, factory_kind, priority] triples; never the factory closure itself (closures don't survive var_export and would leak memory in the error page).
@@ -482,7 +482,7 @@ Returns the assigned route name or null if name() was never called.
 Returns all appended middleware class-strings in registration order.
 - **Returns** `array` — Ordered list of middleware class-strings.
 
-### 
+### Methods
 
 #### `__construct(method, pattern, handler, router)`
 
@@ -742,13 +742,13 @@ Clears all loaded config data and resets the boot flag so the next load() or get
 
 `request` `http` `value-object` `superglobal-wrapper`
 
-**Source:** `src/Core/Request.php` · **Layer:** `core` · **Lifecycle:** `created once by App::run() via fromGlobals(), shared across middleware and controller`
+**Source:** `src/Core/Request.php` · **Layer:** `core` · **Lifecycle:** `created once by App::run() via from_globals(), shared across middleware and controller`
 
-`Skim\Core\Request` wraps PHP superglobals into a typed, testable object. It is injected by the container into controllers and middleware — never instantiated manually in application code. The same instance is shared across the entire request lifecycle.
+`skim\core\request` wraps PHP superglobals into a typed, testable object. It is injected by the container into controllers and middleware — never instantiated manually in application code. The same instance is shared across the entire request lifecycle.
 
 ### Warnings
 - ⚠ X-Forwarded-For is trusted without proxy validation — do not use ip() as a security boundary
-- ⚠ Mutations to $_GET after fromGlobals() are not reflected
+- ⚠ Mutations to $_GET after from_globals() are not reflected
 
 ### Construction
 
@@ -819,13 +819,11 @@ Returns the full URL including scheme and host.
 
 ### Detection Helpers
 
-#### `isHtmx(): bool`
-Returns true when HX-Request header is present.
-- **Returns** `bool` — True for htmx requests.
-
-#### `isDatastar(): bool`
-Returns true when datastar-request header is present.
-- **Returns** `bool` — True for datastar requests.
+#### `isHypermedia(library = null): bool`
+Detects hypermedia library from configured headers. Returns true for ANY known library when $library is null, or for a specific library when specified.
+- `$library: string` (optional) — Specific library to check ('htmx', 'datastar', 'turbo'). If null, checks any known library.
+- **Returns** `bool` — True when the library's header is present.
+- **Note:** Headers are configured in config/realtime.php. Users can add custom libraries via config.
 
 #### `isJson(): bool`
 Returns true when Accept header contains application/json.
@@ -867,7 +865,7 @@ Returns a cookie value from $_COOKIE.
 Returns the raw php://input body. Useful for non-form payloads.
 - **Returns** `string` — Raw request body.
 
-### 
+### Methods
 
 #### `__construct(query, post, server, cookies, files, rawBody)`
 
@@ -904,7 +902,7 @@ Normalizes a middleware entry to a concrete middleware instance. Accepts instanc
 - `$entry: string` (required) — Entry in one of three supported formats
 - **Returns** `middleware` — Resolved middleware instance.
 
-### 
+### Methods
 
 #### `resetInstanceCache(): void`
 Clears the middleware singleton cache. Called between requests in worker mode. Middleware instances should be stateless; clearing the cache prevents request-scoped state from leaking across requests while still allowing process-lifetime caching to be rebuilt lazily.
@@ -1107,7 +1105,7 @@ Returns a tag-scoped proxy that tracks key membership in Redis sets and supports
 - `$tags: array` (required) — Tag identifiers for grouped operations.
 - **Returns** `TaggedRedisDriver` — Tag-scoped cache proxy.
 
-### 
+### Methods
 
 #### `__construct(host, port, password, database, prefix)`
 
@@ -1341,7 +1339,7 @@ Deletes every .cache file in the configured cache directory.
 - **Returns** `bool` — Always true.
 - ⚠ Deletes every .cache file in the configured path unconditionally
 
-### 
+### Methods
 
 #### `__construct(path)`
 
@@ -1387,7 +1385,7 @@ For each constructor tag, reads all member keys from the Redis set via SMEMBERS,
 - **Side effect:** Mass deletion of tagged keys in Redis
 - **Side effect:** Removes tag sets
 
-### 
+### Methods
 
 #### `__construct(driver, redis, prefix, tags)`
 
@@ -1775,7 +1773,7 @@ Restores original TTY settings and shows the cursor. Falls back to stty echo ica
 #### `isTty(): bool`
 Returns true when stdout is connected to an interactive terminal.
 
-### 
+### Methods
 
 #### `__construct(groups)`
 
@@ -2014,19 +2012,19 @@ Returns a flag value. --flag=val returns 'val', --flag returns true, absent retu
 - `$default: mixed` (optional) — Returned when the flag is absent.
 - **Returns** `mixed` — Flag value, true for boolean flags, or $default.
 
-## `Skim\Cli\Commands\MigrateCommand` — MigrateCommand
+## `Skim\Cli\Commands\MigrateCommand` — migrate_command
 
-> CLI dispatcher for database migration operations — run, rollback, fresh, and status.
+> CLI dispatcher for database migration operations — run, rollback, fresh, status, and make.
 
 `cli` `command` `database` `migration` `destructive`
 
 **Source:** `src/Cli/Commands/MigrateCommand.php` · **Layer:** `cli` · **Lifecycle:** `instantiated by kernel, handle() called once per invocation`
 
-`MigrateCommand` implements the `php skim migrate` family of CLI commands. It dispatches to the `Migrator` class for all SQL operations and handles only CLI output and exit codes. Supports run (pending), down (rollback), fresh (drop+re-run), and status sub-commands.
+`MigrateCommand` implements the `php skim migrate` family of CLI commands. It dispatches to the `migrator` class for all SQL operations and handles only CLI output and exit codes.
 
 ### Core Behavior
 - Dispatches sub-commands via match expression
-- Delegates to Migrator for all DB operations
+- Delegates to migrator for all DB operations
 - Prints success/warn/info for each migration file
 
 ### Warnings
@@ -2035,27 +2033,25 @@ Returns a flag value. --flag=val returns 'val', --flag returns true, absent retu
 ### Command Execution
 
 #### `handle(): int`
-Dispatches to the appropriate migration sub-command (run, down, fresh, status). Defaults to run when no sub-command is given.
+Dispatches to the appropriate migration sub-command (run, down, fresh, status, make). Defaults to run when no sub-command is given.
 - **Returns** `int` — 0 on success.
 
 ### Sub-commands
 
 #### `run(mig): int`
-Runs all pending migrations via Migrator and prints each applied file.
-- `$mig: Migrator` (required) — Migrator instance pointed at the migrations directory.
+Runs all pending migrations via the migrator and prints each applied file.
 
 #### `down(mig): int`
 Rolls back the last batch of migrations. Use --steps=N flag to roll back multiple batches.
-- `$mig: Migrator` (required) — Migrator instance.
 
 #### `fresh(mig): int`
 Drops all tables and re-runs all migrations from scratch.
-- `$mig: Migrator` (required) — Migrator instance.
-- ⚠ Destroys ALL data in the database — use only in development environments
 
 #### `status(mig): int`
 Displays a table showing each migration's filename, batch number, and applied/pending status.
-- `$mig: Migrator` (required) — Migrator instance.
+
+#### `make(conn): int`
+Creates a new Migration file from the stub template.
 
 ## `Skim\Cli\Commands\ExtManifestCommand` — ExtManifestCommand
 
@@ -2088,7 +2084,7 @@ Generates skim.json from the given extension class. Validates the argument is a 
 
 CLI command that generates FrankenPHP worker mode files. Creates: - public/worker.php - Caddyfile - docker/Dockerfile.frankenphp Example: php skim worker:install
 
-### 
+### Methods
 
 #### `handle(): int`
 Generates the worker entrypoint, Caddyfile, and Dockerfile. :handle
@@ -2425,7 +2421,7 @@ Launches PHP dev server and optional Vite in parallel. Blocks until both process
 
 CLI command that removes FrankenPHP worker mode files generated by worker:install. Removes: - public/worker.php - Caddyfile - docker/Dockerfile.frankenphp Example: php skim worker:uninstall
 
-### 
+### Methods
 
 #### `handle(): int`
 Removes generated worker files. :handle
@@ -2551,7 +2547,7 @@ Renders a named view fragment and patches it into the DOM in one call.
 - **Side effect:** Renders view
 - **Side effect:** Writes SSE event to output buffer via transport
 
-### 
+### Methods
 
 #### `__construct(transport)`
 
@@ -2695,7 +2691,7 @@ Dumps the response body for debugging and returns $this for continued chaining.
 Dumps the response body and halts execution.
 - ⚠ Halts PHP execution — use only during debugging
 
-### 
+### Methods
 
 #### `__construct(res)`
 
@@ -2764,7 +2760,7 @@ Sends a DELETE request.
 - `$path: string` (required) — Request URI path.
 - **Returns** `HttpResponse` — Test response with assertion methods.
 
-### 
+### Methods
 
 #### `__construct(app)`
 
@@ -2799,7 +2795,7 @@ Always returns false to simulate authenticated state.
 Returns the user's id property, or null if not set.
 - **Returns** `mixed` — The user ID or null.
 
-### 
+### Methods
 
 #### `__construct(user)`
 
@@ -2942,7 +2938,7 @@ Dispatches a DELETE request.
 - `$path: string` (required) — Request URI path.
 - **Returns** `HttpResponse` — Test response with assertion methods.
 
-### 
+### Methods
 
 #### `__construct(app)`
 
@@ -3016,7 +3012,7 @@ Throws RuntimeException when any HTTP requests were recorded.
 Returns all recorded requests for custom assertions. Each entry has method, url, and body keys.
 - **Returns** `list<array{method:string,url:string,body:mixed}>` — All recorded requests.
 
-### 
+### Methods
 
 #### `__construct(stubs)`
 
@@ -3057,7 +3053,7 @@ Returns the value of a named response header, or null if the header is not prese
 - `$name: string` (required) — Case-sensitive header name to look up.
 - **Returns** `?string` — Header value or null if absent.
 
-### 
+### Methods
 
 #### `__construct(status, body, headers)`
 
@@ -3121,7 +3117,7 @@ Returns a FakeClient that intercepts all HTTP requests, records them, and return
 - `$stubs: array` (optional) — Map of 'METHOD URL' => response stub arrays or HttpResponse objects.
 - **Returns** `FakeClient` — Test double that records requests and returns stubs.
 
-### 
+### Methods
 
 #### `__construct(options)`
 
@@ -3195,7 +3191,7 @@ Pushes a collector onto the static stack. Used by componentWithParts() to keep t
 Pops the top collector from the static stack. Must be paired with push().
 - **Side effect:** Removes top collector from static stack
 
-### 
+### Methods
 
 #### `resetRequest(): void`
 Clears the static collector stack between requests in worker mode. :resetRequest Under normal flow captureMain() pushes then pops, so the stack is empty between renders. If a component closure throws, the matching pop() never runs and a stale collector lingers in the process — this drops it so the next request starts with an empty stack.
@@ -3378,7 +3374,7 @@ Clears shared data between requests in worker mode.
 Clears shared data, views path, and default layout. Use in test tearDown().
 - **Side effect:** Clears all static state
 
-### 
+### Methods
 
 #### `getShared(key): mixed`
 Returns a shared data value, or null if not set. :get_shared
@@ -3465,7 +3461,7 @@ Renders a template file, resolves .html/.php extension, extracts data as local v
 - **Side effect:** Uses extract() to create local variables
 - **Side effect:** Uses output buffering for rendering
 
-### 
+### Methods
 
 #### `__construct(viewsPath, data, defaultLayout, fragmentMode)`
 
@@ -3584,7 +3580,7 @@ Registers SIGTERM and SIGINT handlers for graceful shutdown. No-ops when pcntl e
 #### `checkRestartSignal(): void`
 Checks the Redis restart signal timestamp. Stops the worker if the signal is newer than the process start time.
 
-### 
+### Methods
 
 #### `__construct(queue, sleep, maxJobs)`
 
@@ -3620,49 +3616,35 @@ Logs the error when all retries are exhausted. Default writes to error_log. Over
 - `$e: \Throwable` (required) — The exception that caused the final failure.
 - **Note:** Does not rethrow — the worker catches any exception from failed() anyway.
 
-## `Skim\Db\Migrator` — migrator
+## `Skim\Db\Migrator` — Migrator
 
-> Tracks and executes SQL-first migrations with batch-based rollback and fresh rebuild.
+> Tracks and executes SQL-first migrations with batch-based rollback. :class Use via CLI commands (migrate, migrate:down, migrate:fresh, migrate:status). State is stored in the `_migrations` table: filename + batch number. Each `migrate` call groups all pending migrations into one batch for atomic rollback targeting. Example: $m = new Migrator(basePath('migrations')); $ran = $m->run(); // ['2024_01_01_create_users.php', ...] $m->down(); // rollback last batch $m->status(); // [['filename' => ..., 'batch' => ..., 'status' => 'applied'], ...] Testing: Use test_db() SQLite :memory: — migrator creates its own tracking table.
 
-`migration` `batch` `rollback` `sql-first`
+**Source:** `src/Db/Migrator.php`
 
-**Source:** `src/Db/Migrator.php` · **Layer:** `db` · **Lifecycle:** `instantiated per CLI command invocation, creates _migrations table on first use`
+Tracks and executes SQL-first migrations with batch-based rollback. :class Use via CLI commands (migrate, migrate:down, migrate:fresh, migrate:status). State is stored in the `_migrations` table: filename + batch number. Each `migrate` call groups all pending migrations into one batch for atomic rollback targeting. Example: $m = new Migrator(basePath('migrations')); $ran = $m->run(); // ['2024_01_01_create_users.php', ...] $m->down(); // rollback last batch $m->status(); // [['filename' => ..., 'batch' => ..., 'status' => 'applied'], ...] Testing: Use test_db() SQLite :memory: — migrator creates its own tracking table.
 
-`migrator` reads migration files from a directory, tracks applied migrations in the `_migrations` table, and executes `up()`/`down()` methods. Migrations run in filename-sorted order, grouped into batches for atomic rollback.
-
-### Core Behavior
-- ensureTable() creates _migrations with driver-specific DDL
-- executeSql() splits on semicolons for multi-statement support
-- down() rolls back last batch by default, or N steps if specified
-
-### Warnings
-- ⚠ fresh() drops ALL tables and re-runs everything — dev environments only
-
-### Migration Commands
-
-#### `run(): array`
-Runs all pending migrations in filename-sorted order. Each migration is wrapped in a transaction. Returns filenames that were applied.
-- **Returns** `array` — List of migration filenames that were run.
-- **Side effect:** Creates _migrations table if missing, executes DDL, inserts tracking records.
-
-#### `down(steps = 0): array`
-Rolls back all migrations in the last batch. When $steps > 0, rolls back that many individual migrations instead.
-- `$steps: int` (optional) — Override batch rollback — roll back N individual migrations. Default 0 (full batch).
-- **Returns** `array` — List of migration filenames that were rolled back.
-- **Side effect:** Executes down() SQL, deletes tracking records.
-
-#### `fresh(): void`
-Drops all tables by running all down() methods in reverse, drops _migrations, then re-runs everything.
-- ⚠ DESTRUCTIVE — drops every table in the database. Dev environments only.
-- **Side effect:** Drops all tables, recreates schema from scratch.
-
-#### `status(): array`
-Returns the status of all migration files: filename, batch number, and applied/pending status.
-- **Returns** `array` — Array of ['filename', 'batch', 'status'] records.
-
-### 
+### Methods
 
 #### `__construct(migrationsDir, connection)`
+
+#### `before(fn): static`
+Register a hook fired before each migration runs. :before
+
+#### `after(fn): static`
+Register a hook fired after each migration runs. :after
+
+#### `run(pretend, force): array`
+Runs all pending migrations in filename-sorted order. :run
+
+#### `down(steps, force, skipMissing): array`
+Rolls back all migrations in the last batch. :down
+
+#### `fresh(): void`
+Drops all tables and re-runs all migrations from scratch. :fresh WARNING: DESTRUCTIVE — drops every table by running all down() methods in reverse order, then re-applies everything. Dev environments only.
+
+#### `status(): array`
+Returns the status of all known migrations. :status
 
 ## `Skim\Db\Pagination` — pagination
 
@@ -3760,7 +3742,7 @@ Executes count() and a limited all() to produce a pagination value object with i
 Exports collected conditions and params in QueryBuilder::build() format. Used by Model::deleteWhere().
 - **Returns** `array` — Params array compatible with QueryBuilder::build().
 
-### 
+### Methods
 
 #### `__construct(modelClass)`
 
@@ -3909,7 +3891,7 @@ Returns the table name for this model.
 Returns the connection name for this model.
 - **Returns** `string` — Connection name.
 
-### 
+### Methods
 
 #### `__get(name): mixed`
 
@@ -4109,7 +4091,7 @@ Returns a NullMarker sentinel for use in %set% to force SET col = NULL. Plain nu
 Clears all pooled PDO connections. Forces re-connection from config on the next query.
 - **Side effect:** Closes all pooled connections.
 
-### 
+### Methods
 
 #### `connectionCount(): int`
 Returns the number of active pooled connections. :connection_count
@@ -4119,6 +4101,22 @@ Returns true if any pooled connection has an open transaction. :has_open_transac
 
 #### `rollbackAll(): void`
 Rolls back any open transactions on all pooled connections. :rollback_all Safety net for worker mode: if a request exits with an uncommitted transaction, the next request must not inherit it. Called by WorkerReset::apply() between requests.
+
+## `Skim\Db\MigrationExecutor` — MigrationExecutor
+
+> Executes migration payloads (SQL or callables) with optional dry-run collection. Extracted from Migrator for isolated testing and pretend mode support.
+
+**Source:** `src/Db/MigrationExecutor.php`
+
+Executes migration payloads (SQL or callables) with optional dry-run collection. Extracted from Migrator for isolated testing and pretend mode support.
+
+### Methods
+
+#### `pretend(value): static`
+
+#### `collected(): array`
+
+#### `run(payload, connection): void`
 
 ## `Skim\Db\NullMarker` — NullMarker
 
@@ -4208,13 +4206,13 @@ Substitutes PDO params into SQL for debug display. NOT safe to execute — value
 
 ### Migration Contract
 
-#### `up(): string`
-Returns raw SQL to execute when migrating forward. May contain multiple semicolon-separated statements.
-- **Returns** `string` — SQL string to execute.
+#### `up(): string|array|callable`
+Returns raw SQL, an array of SQL statements, or a callable receiving PDO to execute when migrating forward.
+- **Returns** `string` — SQL string, one element per statement, or custom callable.
 
-#### `down(): string`
-Returns raw SQL to reverse up(). Used by migrate:down and migrate:fresh. Must always be implemented.
-- **Returns** `string` — SQL string to reverse the migration.
+#### `down(): string|array|callable`
+Returns raw SQL, an array, or a callable to reverse up(). Used by migrate:down and migrate:fresh. Optional — base default throws when $reversible is false.
+- **Returns** `string` — SQL string, array, or callable to reverse the migration.
 
 ## `Skim\Log\FileHandler` — FileHandler
 
@@ -4241,7 +4239,7 @@ Appends a formatted log line to the date-suffixed file when the level meets the 
 - **Side effect:** Appends to log file on disk
 - **Side effect:** May delete old log files during rotation
 
-### 
+### Methods
 
 #### `__construct(path, level, days)`
 
@@ -4580,7 +4578,7 @@ Returns captured slot content for use inside layout files. Returns empty string 
 - `$name: string` (required) — Slot identifier matching a previous start()/end() pair.
 - **Returns** `string` — Captured slot HTML or empty string.
 
-### 
+### Methods
 
 #### `shortPath(file): string`
 Strips the project root from a file path, falling back to basename. :short_path Used by dev tool templates to display readable file locations.
@@ -4806,7 +4804,7 @@ Parses a PHP file and extracts documentation metadata into an ExtractedClass val
 - `$file: string` (required) — Absolute path to the PHP file to extract.
 - **Returns** `ExtractedClass` — Extracted metadata, or null on skip/failure.
 
-### 
+### Methods
 
 #### `__construct()`
 
@@ -4884,7 +4882,7 @@ Extracts the first non-tag, non-empty lines from a docblock as the summary sente
 #### `stripLines(docblock): array`
 Strips PHPDoc delimiters (/** and */) and leading * characters from each line, returning trimmed content lines.
 
-### 
+### Methods
 
 #### `extractExamples(docblock): array`
 Extracts Example: blocks from a raw docblock. :extract_examples
@@ -4921,7 +4919,7 @@ Scans the given explicit paths instead of config scan_paths. Same null-discard b
 #### `phpFiles(dir): iterable`
 Yields absolute paths of all .php files under the given directory, recursively, using RecursiveIteratorIterator.
 
-### 
+### Methods
 
 #### `__construct()`
 
@@ -4973,7 +4971,7 @@ Returns a record value from tags, parsing pipe-delimited record strings when nee
 #### `typeToString(type): string`
 Converts a PhpParser type node (Identifier, Name, Nullable, Union, Intersection) to its PHP string representation.
 
-### 
+### Methods
 
 #### `__construct(annotations, file)`
 
@@ -5125,7 +5123,7 @@ Loads llm.json, optionally prepends framework context, and writes llm.md. Return
 
 Developer-friendly error page rendered when APP_DEBUG=true. :class Use only via the exception handler registered in App::run(). Delegates HTML generation to dev_view templates with a fallback to inline HTML if the template system itself fails. Never expose in production. Example: // Registered by App::run() when APP_DEBUG=true: set_exception_handler(fn(\Throwable $e) => ErrorPage::render($e)); Testing: Call render() directly with a test Throwable; output goes to stdout.
 
-### 
+### Methods
 
 #### `render(e): void`
 Renders a full HTML error page to stdout using dev_view templates. :render Falls back to minimal inline HTML if template rendering fails, ensuring the developer always sees the error even when the template system breaks.
@@ -5206,7 +5204,7 @@ Returns all raw events collected during the current request. Used by the toolbar
 Clears the event buffer without disabling the profiler. Call in tests between requests to isolate per-request data.
 - **Side effect:** clears static $events array
 
-### 
+### Methods
 
 #### `panel(id, label, options): void`
 Registers a custom toolbar panel for user-defined debug extensions. :panel Use in controllers, middleware, or extensions to add debug panels to the toolbar. Panels appear as additional tabs after the built-in ones. When $html is provided, it renders directly. When $template is set, the toolbar renders it via dev_view with $data. Example: Profiler::panel('htmx', 'htmx Debug', [ 'icon' => 'arrows exchange', 'data' => ['swaps' => 3, 'boosts' => 1], ]);
@@ -5222,7 +5220,7 @@ Returns all registered custom panels for toolbar rendering. :panels
 
 Runtime per-request leak detector for worker mode (dev/CI only). :class Snapshots boundary state at begin_request and, after worker_reset has run at end_request, flags hard invariant violations immediately and sustained growth trends over a sliding window. Off unless WORKER_MODE + debug, or explicitly configured. Reports via log/request_trace/profiler — never throws mid-request.
 
-### 
+### Methods
 
 #### `configure(mode): void`
 
@@ -5342,7 +5340,7 @@ Returns the number of listeners currently registered for the given event.
 - `$event: string` (required) — Event class-string or string name.
 - **Returns** `int` — Number of registered listeners.
 
-### 
+### Methods
 
 #### `captureBootSnapshot(): void`
 Captures the current listener registry as the boot-time snapshot. :capture_boot_snapshot Call once after boot/extensions are registered in worker mode. The snapshot is restored by resetRequest() on every subsequent request so boot-time listeners survive while request-time listeners are dropped.
@@ -5802,7 +5800,7 @@ Returns the field-to-messages error map. Shape matches the standard 422 JSON res
 Returns only the fields declared in validation rules. Undeclared fields are silently dropped.
 - **Returns** `array` — Associative array of validated field names to their values.
 
-### 
+### Methods
 
 #### `__construct(errors, validated)`
 
@@ -5847,7 +5845,7 @@ Registers a custom rule on this validator instance. Returns $this for fluent cha
 - `$fn: callable` (required) — Receives value, returns true on pass or false on fail.
 - `$message: string` (optional) — Default error message. Use :field as placeholder for field name.
 
-### 
+### Methods
 
 #### `__construct(rules)`
 
@@ -6019,7 +6017,7 @@ Deletes session data from Redis and expires the session cookie.
 - **Side effect:** Clears in-memory data
 - **Side effect:** Expires cookie
 
-### 
+### Methods
 
 #### `__construct(host, port, password, prefix, lifetime)`
 
@@ -6085,7 +6083,7 @@ Destroys session data and invalidates the session.
 - **Side effect:** Clears $_SESSION
 - **Side effect:** Resets internal ID
 
-### 
+### Methods
 
 #### `__construct(path, lifetime)`
 

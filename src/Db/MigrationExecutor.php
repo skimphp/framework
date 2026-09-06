@@ -5,9 +5,10 @@ namespace Skim\Db;
 /**
  * Executes migration payloads (SQL or callables) with optional dry-run collection.
  *
- * Extracted from migrator for isolated testing and pretend mode support.
+ * Extracted from Migrator for isolated testing and pretend mode support.
  *
  * #AI:class
+ * #AI source_path: src/Db/MigrationExecutor.php
  */
 final class MigrationExecutor {
     private bool $pretend = false;

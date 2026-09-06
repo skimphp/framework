@@ -19,6 +19,7 @@ namespace Skim\Db;
  * Testing: Use test_db() SQLite :memory: — migrator creates its own tracking table.
  *
  * #AI:class
+ * #AI source_path: src/Db/Migrator.php
  */
 final class Migrator {
     private string $table      = '_migrations';

@@ -98,4 +98,15 @@ describe('LlmMdEmitter', function(): void {
         unlink($path);
     });
 
+    test('groups methods without explicit group under Methods heading', function(): void {
+        $path = sys_get_temp_dir() . '/skim_llm_md_group_' . uniqid() . '.md';
+        $data = sampleLlmData();
+        $data['classes'][0]['methods'][0]['group'] = '';
+        (new \Skim\Dev\Docs\Emitter\LlmMdEmitter())->emit($data, $path);
+        $content = file_get_contents($path);
+        expect($content)->toContain('### Methods');
+        expect($content)->not->toMatch('/^### $/m');
+        unlink($path);
+    });
+
 });

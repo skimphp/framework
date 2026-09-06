@@ -176,7 +176,10 @@ class LlmMdEmitter {
             $groups[(string) $group] = [];
         }
         foreach ($methods as $method) {
-            $group = (string) ($method['group'] ?? 'Methods');
+            $group = (string) ($method['group'] ?? '');
+            if ($group === '') {
+                $group = 'Methods';
+            }
             $groups[$group] ??= [];
             $groups[$group][] = $method;
         }
