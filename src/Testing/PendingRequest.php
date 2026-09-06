@@ -2,7 +2,7 @@
 
 namespace Skim\Testing;
 
-use Skim\Auth\Auth_service;
+use Skim\Auth\AuthService;
 use Skim\Core\App;
 use Skim\Session\Session;
 
@@ -10,7 +10,7 @@ use Skim\Session\Session;
  * Immutable request builder that dispatches through the app without a real server. #AI:class
  *
  * Use as the core dispatch mechanism in HTTP tests. Each configuration method
- * (acting_as, with_headers, etc.) returns a clone, so the original is never mutated.
+ * (actingAs, withHeaders, etc.) returns a clone, so the original is never mutated.
  * Dispatches through App::dispatch() with optional middleware skipping.
  *
  * Example:
@@ -20,7 +20,7 @@ use Skim\Session\Session;
  *       ->post('/api/posts', json: ['title' => 'Test'])
  *       ->assertCreated();
  *
- * Testing: This class IS the test dispatch mechanism — use via http_client.
+ * Testing: This class IS the test dispatch mechanism — use via HttpClient.
  *
  * #AI:class
  */
@@ -37,7 +37,7 @@ class PendingRequest {
     /**
      * Returns a clone configured to authenticate as the given user. #AI:actingAs
      *
-     * @param object $user User object bound to auth_service in the container.
+     * @param object $user User object bound to AuthService in the container.
      */
     public function actingAs(object $user): static {
         $clone = clone $this;
@@ -59,7 +59,7 @@ class PendingRequest {
     /**
      * Returns a clone with pre-populated session data. #AI:withSession
      *
-     * @param array $data Key-value session pairs bound via session_fake.
+     * @param array $data Key-value session pairs bound via SessionFake.
      */
     public function withSession(array $data): static {
         $clone = clone $this;
@@ -154,8 +154,8 @@ class PendingRequest {
 
         $app = clone $this->app;
 
-        if ($this->user && class_exists(auth_service::class)) {
-            $app->bind(auth_service::class, fn(): \Skim\Testing\AuthFake => new \Skim\Testing\AuthFake($this->user));
+        if ($this->user && class_exists(AuthService::class)) {
+            $app->bind(AuthService::class, fn(): \Skim\Testing\AuthFake => new \Skim\Testing\AuthFake($this->user));
             $app->bind('auth', fn(): \Skim\Testing\AuthFake => new \Skim\Testing\AuthFake($this->user));
         }
 
@@ -211,7 +211,7 @@ class PendingRequest {
 #AI frequency: high
 #AI signature: public function actingAs(object $user): static
 #AI contract: Returns a clone configured to authenticate as the given user via AuthFake.
-#AI param_details: [{name: $user | type: object | required: true | desc: User object bound to auth_service in the cloned container.}]
+#AI param_details: [{name: $user | type: object | required: true | desc: User object bound to AuthService in the cloned container.}]
 #AI return_detail: {type: static | desc: New clone with user configured.}
 
 #AI:withHeaders

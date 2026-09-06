@@ -7,14 +7,14 @@ use Skim\Core\Request;
 /**
  * Factory that builds request objects from raw parameters for test dispatch. #AI:class
  *
- * Use when pending_request needs to construct a request with proper $_SERVER-style
+ * Use when PendingRequest needs to construct a request with proper $_SERVER-style
  * header mapping. Handles the HTTP_ prefix convention and Content-Type/Content-Length
  * special cases automatically.
  *
  * Example:
  *   $req = RequestFactory::make('POST', '/api/users', headers: ['Accept' => 'application/json']);
  *
- * Testing: This class IS the test infrastructure — used internally by pending_request.
+ * Testing: This class IS the test infrastructure — used internally by PendingRequest.
  *
  * #AI:class
  */

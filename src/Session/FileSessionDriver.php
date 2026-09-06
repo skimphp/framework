@@ -13,7 +13,7 @@ namespace Skim\Session;
  *   $driver = new FileSessionDriver(storagePath('sessions'), 7200);
  *   $driver->start();
  *
- * Testing: Use session_fake instead; this driver touches $_SESSION and headers.
+ * Testing: Use SessionFake instead; this driver touches $_SESSION and headers.
  *
  * #AI:class
  */

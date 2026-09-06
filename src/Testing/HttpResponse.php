@@ -7,7 +7,7 @@ use Skim\Core\Response;
 /**
  * Fluent assertion wrapper around a response object for HTTP tests. #AI:class
  *
- * Use as the return type of http_client/pending_request HTTP methods.
+ * Use as the return type of HttpClient/PendingRequest HTTP methods.
  * All assert_* methods return $this for chaining. Uses Pest's expect() internally.
  *
  * Example:

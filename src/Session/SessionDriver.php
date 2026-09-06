@@ -12,7 +12,7 @@ namespace Skim\Session;
  *   class DbSessionDriver implements SessionDriver { ... }
  *   Session::setDriver(new DbSessionDriver(...));
  *
- * Testing: Use session_fake which satisfies this interface in-memory.
+ * Testing: Use SessionFake which satisfies this interface in-memory.
  *
  * #AI:class
  */

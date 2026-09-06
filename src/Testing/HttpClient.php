@@ -8,7 +8,7 @@ use Skim\Core\App;
  * Test HTTP client that dispatches requests through the app without a real server. #AI:class
  *
  * Use in Pest/PHPUnit to test routes, controllers, and middleware in-process.
- * Each method creates a fresh pending_request, so configuration (acting_as,
+ * Each method creates a fresh PendingRequest, so configuration (actingAs,
  * headers, session) does not leak between calls.
  *
  * Example:

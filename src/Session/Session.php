@@ -16,7 +16,7 @@ use Skim\Worker\Resettable;
  *   Session::flash('notice', 'Profile updated');
  *   Session::regenerate(); // after login
  *
- * Testing: Use setDriver() to inject session_fake, reset() to clear state.
+ * Testing: Use setDriver() to inject SessionFake, reset() to clear state.
  *
  * #AI:class
  */

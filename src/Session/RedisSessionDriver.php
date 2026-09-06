@@ -13,7 +13,7 @@ namespace Skim\Session;
  *   $driver = new RedisSessionDriver('redis', 6379, null, 'sess_', 7200);
  *   $driver->start();
  *
- * Testing: Use session_fake instead; this driver opens a real Redis connection.
+ * Testing: Use SessionFake instead; this driver opens a real Redis connection.
  *
  * #AI:class
  */

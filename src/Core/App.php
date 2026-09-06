@@ -639,7 +639,7 @@ class App {
      *
      * Example:
      *   $app->withExtensionContext('auth', 50, function() use ($app) {
-     *       $app->bind(auth_service::class, fn() => new jwt_auth());
+      *       $app->bind(AuthService::class, fn() => new JwtAuth());
      *   });
      *
      * @param string   $name     Extension identifier for diagnostics.
@@ -1196,7 +1196,7 @@ class App {
 #AI param_details: [{name: $name | type: string | required: true | desc: Extension identifier used for diagnostics and assertMutable error messages.}; {name: $priority | type: int | required: true | desc: Priority applied to registrations (bind, decorate) inside the callback.}; {name: $callback | type: callable | required: true | desc: Executed with the extension context active. Return value is passed through.}]
 #AI return_detail: {type: mixed | desc: Whatever the callback returns.}
 #AI side_effects: [Temporarily mutates extensionContext; restored in finally block]
-#AI examples: [{label: Extension registration | code: $app->withExtensionContext('auth', 50, function() use ($app) {\n    $app->bind(auth_service::class, fn() => new jwt_auth());\n});}]
+#AI examples: [{label: Extension registration | code: $app->withExtensionContext('auth', 50, function() use ($app) {\n    $app->bind(AuthService::class, fn() => new JwtAuth());\n});}]
 
 #AI:run
 #AI group: Lifecycle

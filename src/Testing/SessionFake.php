@@ -6,8 +6,8 @@ namespace Skim\Testing;
  * In-memory session double for tests — no cookies, no headers, no persistence. #AI:class
  *
  * Use when a test needs session state without touching PHP's native session
- * or a real Redis connection. Implements the subset of session_driver that
- * pending_request binds into the container.
+ * or a real Redis connection. Implements the subset of SessionDriver that
+ * PendingRequest binds into the container.
  *
  * Example:
  *   $fake = new SessionFake();
