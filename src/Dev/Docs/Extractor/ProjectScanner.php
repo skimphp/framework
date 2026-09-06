@@ -78,6 +78,9 @@ class ProjectScanner {
     /**
      * Yields absolute paths of all .php files under a directory, recursively. #AI:phpFiles
      *
+     * Paths are sorted byte-wise so generated documentation is deterministic
+     * regardless of filesystem readdir order.
+     *
      * @param string $dir Root directory to scan.
      * @return iterable<string> Absolute file paths.
      */
@@ -85,11 +88,14 @@ class ProjectScanner {
         $iter = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
         );
+        $paths = [];
         foreach ($iter as $file) {
             if ($file->isFile() && $file->getExtension() === 'php') {
-                yield $file->getPathname();
+                $paths[] = $file->getPathname();
             }
         }
+        sort($paths, SORT_STRING);
+        yield from $paths;
     }
 }
 
