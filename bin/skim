@@ -1,0 +1,60 @@
+#!/usr/bin/env php
+<?php declare(strict_types=1);
+
+// SKIM CLI entry point.
+// Usage: php skim <command> [args...] [--flag=value] [--agent]
+//   php vendor/bin/skim migrate     (when installed via Composer)
+//   php bin/skim migrate             (when working inside framework source)
+//
+// Examples:
+//   php skim migrate
+//   php skim migrate:down --steps=1
+//   php skim queue:work default --sleep=5
+//   php skim cache:clear user:
+//   php skim serve --port=8080
+//   php skim list --agent
+
+// Locate autoload.php whether this is the root project or a dependency.
+// Composer's bin proxy sets _composer_autoload_path — use it when available
+// to resolve correctly even with symlinked packages.
+$autoload = null;
+
+if (isset($GLOBALS['_composer_autoload_path']) && is_file($GLOBALS['_composer_autoload_path'])) {
+    $autoload = realpath($GLOBALS['_composer_autoload_path']);
+}
+
+if (!$autoload) {
+    $candidates = [
+        __DIR__ . '/../vendor/autoload.php',       // framework is root (dev)
+        __DIR__ . '/../../autoload.php',           // installed as vendor/skim/framework/bin/
+        __DIR__ . '/../../../autoload.php',        // deeper nesting (monorepo, etc.)
+    ];
+    foreach ($candidates as $file) {
+        if (file_exists($file)) {
+            $autoload = realpath($file);
+            break;
+        }
+    }
+}
+
+if (!$autoload) {
+    fwrite(STDERR, "Cannot find vendor/autoload.php. Did you run composer install?\n");
+    exit(1);
+}
+
+require $autoload;
+
+// Project root is the directory that contains vendor/ (two levels up from vendor/autoload.php).
+define('SKIM_ROOT', dirname($autoload, 2));
+
+// Framework dev mode: true when running inside the framework source repo itself,
+// false when installed as a Composer dependency in a user project.
+define('SKIM_DEV', is_file(SKIM_ROOT . '/src/Cli/Kernel.php'));
+
+\Skim\Core\Env::load(SKIM_ROOT . '/.env');
+\Skim\Core\Config::load(SKIM_ROOT . '/config');
+
+$input  = \Skim\Cli\ArgvParser::parse($argv);
+$kernel = new \Skim\Cli\Kernel();
+
+exit($kernel->run($input));
