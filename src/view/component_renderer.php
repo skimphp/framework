@@ -1,0 +1,130 @@
+<?php declare(strict_types=1);
+
+namespace skim\view;
+
+use skim\dev\profiler;
+use skim\view\exceptions\view_exception;
+
+/**
+ * Isolated component renderer with strict props validation and clean scope. #AI:class
+ *
+ * Use when templates need reusable UI pieces (alerts, cards, buttons) that must
+ * not leak parent variables. Supports both legacy arrays and readonly *_props objects.
+ *
+ * Props are validated: array passes through, objects must end in '_props'.
+ * The component template receives ONLY the props data — no shared context,
+ * no layout wrapping, no parent slot contamination.
+ *
+ * Throws view_exception when props object naming is wrong or template is missing.
+ *
+ * Example:
+ *   component_renderer::render('alert', ['message' => 'Saved']);
+ *   component_renderer::render('alert', new alert_props(message: 'Saved'));
+ *
+ * Testing: Point view::set_path() to fixture directory before calling.
+ *
+ * #AI:class
+ */
+class component_renderer {
+
+    /**
+     * Renders a component with strict props isolation. #AI:render
+     *
+     * Validates *_props naming when an object is passed, converts props to an
+     * array via get_object_vars(), and renders in a clean template scope.
+     * Records timing in the profiler under the 'components/' prefix.
+     *
+     * @param string       $name  Component name (maps to views/components/{$name}.php).
+     * @param array|object $props Props array or a readonly *_props object.
+     * @throws view_exception If props object is not a *_props class or file is missing.
+     */
+    public static function render(string $name, array|object $props = []): string {
+        $t = microtime(true);
+
+        if (is_object($props)) {
+            self::validate_props_class($props::class);
+        }
+
+        // NOTE: get_object_vars() only exposes public properties.
+        $data = is_object($props) ? get_object_vars($props) : $props;
+
+        $ctx  = new template(self::components_path(), $data, null);
+        $html = $ctx->render_file($name);
+
+        profiler::view('components/' . $name, null, (microtime(true) - $t) * 1000);
+
+        return $html;
+    }
+
+    /**
+     * Ensures object props use the *_props naming convention. #AI:validate_props_class
+     *
+     * @param string $class FQCN of the props object.
+     * @throws view_exception When the class name does not end in '_props'.
+     */
+    private static function validate_props_class(string $class): void {
+        if (!str_ends_with($class, '_props')) {
+            throw new view_exception(
+                "Props object must be a *_props class, got: {$class}"
+            );
+        }
+    }
+
+    /**
+     * Resolves the components subdirectory under the active views path. #AI:components_path
+     */
+    private static function components_path(): string {
+        return view::views_path() . '/components';
+    }
+}
+
+#AI:class
+#AI symbol: skim\view\component_renderer
+#AI source_path: src/view/component_renderer.php
+#AI title: component_renderer
+#AI description: Isolated component renderer enforcing strict props validation and clean template scope.
+#AI role: component renderer
+#AI layer: view
+#AI badges: [component; props; isolation; profiler]
+#AI intro: `component_renderer` renders reusable UI components in an isolated scope. It supports both legacy array props and readonly *_props objects, validating the latter to enforce naming conventions.
+#AI lifecycle: stateless static class, invoked per component render
+#AI fallback: n/a — stateless
+#AI test_seam: use view::set_path() to redirect to test fixtures
+#AI invariants: [Props objects must end in '_props'; Component templates receive ONLY props data, no shared context; No layout wrapping is applied; Profiler records every component render]
+#AI core_behaviors: [Dual props: array (legacy) and readonly *_props object (new); Strict scope isolation via new template() with null layout; Props class naming validation; Profiler integration for component timing]
+#AI warnings: [get_object_vars() only sees public properties — declare DTO props as public readonly]
+#AI notes: Components are rendered with a fresh template instance and null layout, guaranteeing no parent template leakage.
+#AI owns: nothing
+#AI entry_points: [render]
+#AI config_reads: []
+#AI non_goals: [Does not support layout wrapping; Does not cache rendered components; Does not validate prop keys against component expectations]
+#AI side_effects: [Records component render timing in profiler::view()]
+#AI flow: render() -> validate_props_class() -> get_object_vars() -> new template() -> render_file() -> profiler::view() -> return HTML
+#AI lifecycle_steps: [render($name, $props); -> is_object($props)? validate_props_class(); -> $data = is_object? get_object_vars() : $props; -> new template(components_path(), $data, null); -> render_file($name); -> profiler::view(); -> return HTML]
+#AI section_order: [Rendering API; Validation; Path Resolution]
+#AI architectural_notes: Components are intentionally isolated from the layout and shared data systems. This prevents accidental variable leakage and makes components predictable and testable.
+
+#AI:render
+#AI group: Rendering API
+#AI frequency: high
+#AI signature: public static function render(string $name, array|object $props = []): string
+#AI contract: Renders a component template in an isolated scope with validated props. Records timing in profiler.
+#AI param_details: [{name: $name | type: string | required: true | desc: Component name (maps to views/components/{$name}.php).}; {name: $props | type: array|object | required: false | desc: Props array or *_props readonly object.}]
+#AI return_detail: {type: string | desc: Rendered component HTML.}
+#AI throws_details: [{type: view_exception | desc: If props object is not a *_props class or component file is not found.}]
+#AI side_effects: [Records render timing in profiler::view()]
+
+#AI:validate_props_class
+#AI group: Validation
+#AI frequency: internal
+#AI signature: private static function validate_props_class(string $class): void
+#AI contract: Throws when the class name does not end with '_props'. Enforces the props naming convention.
+#AI param_details: [{name: $class | type: string | required: true | desc: FQCN of the props object.}]
+#AI throws_details: [{type: view_exception | desc: When the class name does not end in '_props'.}]
+
+#AI:components_path
+#AI group: Path Resolution
+#AI frequency: internal
+#AI signature: private static function components_path(): string
+#AI contract: Resolves the components subdirectory under the active views path by delegating to view::views_path().
+#AI return_detail: {type: string | desc: Absolute path to the views/components directory.}
