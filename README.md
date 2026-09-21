@@ -448,7 +448,7 @@ chmod +x .git/hooks/pre-push
 
 ## Key design decisions
 
-- **Conventional PHP casing** — PascalCase classes, camelCase methods, UPPER_SNAKE constants. `HomeController`, not `HomeController`.
+- **Conventional PHP casing** — PascalCase classes, camelCase methods, UPPER_SNAKE constants. `HomeController`, not `home_controller`.
 - **No template engines** — raw PHP with opcache is ~3x faster than Twig/Blade; real stack traces.
 - **Static facades** (`Db::`, `Cache::`, `Log::`) — each has `reset()` and `setDriver()` for test isolation.
 - **Lazy connections** — DB and Redis are not opened until the first actual query.

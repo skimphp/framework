@@ -5,8 +5,9 @@ use Skim\Core\Config;
 
 /** @var CoreApp $app */
 
-// Real application routes (controller-based — route-cache friendly).
-$app->router->get('/', [\App\Controllers\HomeController::class, 'index']);
+// Dev-app route — this file only exists for the local dev server and
+// worker-mode CI; real apps ship their own routes.php via the skeleton.
+$app->router->get('/', fn(): string => '<h1>Hello from SKIM Framework!</h1>');
 
 // --- demo / benchmark routes ---
 // Closures disable production route-cache compilation, so they are gated behind
