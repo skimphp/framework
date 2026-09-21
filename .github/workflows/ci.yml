@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        php: ["8.4", "8.5"]
+        php: ["8.5"]
 
     services:
       redis:
@@ -44,8 +44,8 @@ jobs:
       - name: Check llm.md is up to date
         run: |
           HASH_COMMITTED=$(sha256sum llm.md 2>/dev/null | cut -d' ' -f1 || echo "missing")
-          php skim docs:extract
-          php skim docs:llm
+          php bin/skim docs:extract
+          php bin/skim docs:llm
           HASH_GENERATED=$(sha256sum llm.md | cut -d' ' -f1)
           if [ "$HASH_COMMITTED" != "$HASH_GENERATED" ]; then
             echo "llm.md is stale — run 'php skim docs' locally and commit the result."
