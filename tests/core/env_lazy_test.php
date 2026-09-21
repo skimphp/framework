@@ -6,8 +6,12 @@ describe('env lazy loading', function (): void {
 
     test('Env::get() triggers lazy load on first call', function (): void {
         \Skim\Core\Env::reset();
-        $value = \Skim\Core\Env::get('APP_NAME', 'fallback_value');
-        expect($value)->not->toBe('fallback_value');
+        $_ENV['SKIM_LAZY_TEST_KEY'] = 'lazy_value';
+
+        $value = \Skim\Core\Env::get('SKIM_LAZY_TEST_KEY', 'fallback_value');
+        expect($value)->toBe('lazy_value');
+
+        unset($_ENV['SKIM_LAZY_TEST_KEY']);
     });
 
     test('Env::get() second call is faster than first', function (): void {

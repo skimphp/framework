@@ -39,6 +39,9 @@ class IdeCommand extends \Skim\Cli\Command {
         $output  = $this->buildOutput($models);
         $path    = storagePath('ide-helper.php');
 
+        if (!is_dir(dirname($path))) {
+            mkdir(dirname($path), 0755, true);
+        }
         file_put_contents($path, $output);
         $this->success("Written to {$path} (" . count($models) . " models)");
         return 0;
