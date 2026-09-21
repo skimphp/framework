@@ -31,9 +31,9 @@ class LlmMdEmitter {
      */
     public function emit(array $data, string $outputPath, ?string $frameworkLlmMd = null): void {
         $classes = $data['classes'] ?? [];
-        $generated = $data['generated_at'] ?? date('c');
 
-        $lines = ['# LLM context', '', '> Auto-generated from source annotations. Do not edit manually.  ', "> Generated: {$generated}", ''];
+        // No timestamp — output must be deterministic so CI can verify freshness by hash.
+        $lines = ['# LLM context', '', '> Auto-generated from source annotations. Do not edit manually.', ''];
 
         if ($frameworkLlmMd !== null && file_exists($frameworkLlmMd)) {
             $frameworkContent = file_get_contents($frameworkLlmMd);

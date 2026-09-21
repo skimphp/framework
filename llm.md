@@ -1,7 +1,6 @@
 # LLM context
 
-> Auto-generated from source annotations. Do not edit manually.  
-> Generated: 2026-09-06T11:23:05+00:00
+> Auto-generated from source annotations. Do not edit manually.
 
 ## `Skim\Assets\Assets` — assets
 
@@ -3337,7 +3336,7 @@ Serializes to a plain associative array suitable for json_encode. Falls back to 
 
 > Developer-friendly error page rendered when APP_DEBUG=true. :class Use only via the exception handler registered in App::run(). Delegates HTML generation to dev_view templates with a fallback to inline HTML if the template system itself fails. Never expose in production. Example: // Registered by App::run() when APP_DEBUG=true: set_exception_handler(fn(\Throwable $e) => ErrorPage::render($e)); Testing: Call render() directly with a test Throwable; output goes to stdout.
 
-**Source:** `regen2/src/Dev/ErrorPage.php`
+**Source:** `src/Dev/ErrorPage.php`
 
 Developer-friendly error page rendered when APP_DEBUG=true. :class Use only via the exception handler registered in App::run(). Delegates HTML generation to dev_view templates with a fallback to inline HTML if the template system itself fails. Never expose in production. Example: // Registered by App::run() when APP_DEBUG=true: set_exception_handler(fn(\Throwable $e) => ErrorPage::render($e)); Testing: Call render() directly with a test Throwable; output goes to stdout.
 
@@ -6027,7 +6026,7 @@ Clears the entire room map. Use in test tearDown() to prevent state leakage.
 
 > Runtime per-request leak detector for worker mode (dev/CI only). :class Snapshots boundary state at begin_request and, after worker_reset has run at end_request, flags hard invariant violations immediately and sustained growth trends over a sliding window. Off unless WORKER_MODE + debug, or explicitly configured. Reports via log/request_trace/profiler — never throws mid-request.
 
-**Source:** `regen2/src/Worker/LeakDetector.php`
+**Source:** `src/Worker/LeakDetector.php`
 
 Runtime per-request leak detector for worker mode (dev/CI only). :class Snapshots boundary state at begin_request and, after worker_reset has run at end_request, flags hard invariant violations immediately and sustained growth trends over a sliding window. Off unless WORKER_MODE + debug, or explicitly configured. Reports via log/request_trace/profiler — never throws mid-request.
 

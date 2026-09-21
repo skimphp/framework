@@ -121,7 +121,7 @@ readonly class ExtractedClass {
     }
 
     private function sourcePathFromFile(): string {
-        $root = dirname(__DIR__, 5) . DIRECTORY_SEPARATOR;
+        $root = dirname(__DIR__, 4) . DIRECTORY_SEPARATOR;
         if (str_starts_with($this->file, $root)) {
             return str_replace('\\', '/', substr($this->file, strlen($root)));
         }
