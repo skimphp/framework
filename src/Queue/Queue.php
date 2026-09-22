@@ -60,7 +60,7 @@ final class Queue {
             $payload = self::serializeJob($job, $queue);
             $pipe->lpush('skim:queue:' . $queue, $payload);
         }
-        $pipe->execute();
+        $pipe->exec();
     }
 
     /**

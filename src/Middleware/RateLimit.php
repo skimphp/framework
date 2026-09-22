@@ -50,7 +50,7 @@ class RateLimit implements \Skim\Core\Middleware {
             $pipe->zadd($key, $now, (string) $now);
             $pipe->zcard($key);
             $pipe->expire($key, $this->window);
-            $results = $pipe->execute();
+            $results = $pipe->exec();
 
             $count     = (int) ($results[2] ?? 0);
             $remaining = max(0, $this->limit - $count);
