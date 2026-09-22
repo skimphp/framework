@@ -39,7 +39,7 @@ return [
             'docs:llm'      => \Skim\Dev\Docs\Commands\DocsLlmCommand::class,
             'docs:site'     => \Skim\Dev\Docs\Commands\DocsSiteCommand::class,
             'docs:validate' => \Skim\Dev\Docs\Commands\DocsValidateCommand::class,
-            'mcp:install'   => \Skim\Cli\Commands\McpInstallCommand::class,
+            'mcp:install'   => \Skim\Dev\Docs\Commands\McpInstallCommand::class,
             'mcp:serve'     => \Skim\Dev\Docs\Commands\McpServeCommand::class,
         ] : []),
     ],

@@ -50,6 +50,7 @@ final class Kernel {
         'docs:site'      => \Skim\Dev\Docs\Commands\DocsSiteCommand::class,
         'docs:validate'  => \Skim\Dev\Docs\Commands\DocsValidateCommand::class,
         'mcp:serve'      => \Skim\Dev\Docs\Commands\McpServeCommand::class,
+        'mcp:install'    => \Skim\Dev\Docs\Commands\McpInstallCommand::class,
     ];
 
     private const GROUP_ORDER = [
