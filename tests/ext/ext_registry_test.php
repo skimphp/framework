@@ -147,4 +147,83 @@ describe('ExtRegistry', function(): void {
 
         expect(is_file($cachePath))->toBeTrue('Cache is written for any project root');
     });
+
+    test('capability map resolves providers and answers dynamic lookups', function() use (&$root): void {
+        file_put_contents($root . '/vendor/skim/auth/composer.json', json_encode([
+            'name' => 'skim/auth',
+            'extra' => ['skim' => [
+                'extension'    => 'Acme\\Auth',
+                'provides'     => ['auth'],
+                'capabilities' => ['session'],
+            ]],
+        ]));
+
+        $registry = new \Skim\Ext\ExtRegistry($root);
+
+        expect($registry->capabilityMap())->toBe(['auth' => 'skim/auth', 'session' => 'skim/auth']);
+        expect($registry->has_capability('auth'))->toBeTrue();
+        expect($registry->has_capability('nope'))->toBeFalse();
+        expect($registry->who_provides('auth'))->toBe('skim/auth');
+        expect($registry->who_provides('nope'))->toBeNull();
+        expect($registry->conflicts())->toBe([]);
+    });
+
+    test('duplicate capability provider is recorded as conflict', function() use (&$root): void {
+        mkdir($root . '/vendor/skim/auth2', 0777, true);
+        foreach (['skim/auth', 'skim/auth2'] as $pkg) {
+            file_put_contents($root . '/vendor/' . $pkg . '/composer.json', json_encode([
+                'name' => $pkg,
+                'extra' => ['skim' => [
+                    'extension' => 'Acme\\' . basename($pkg),
+                    'provides'  => ['auth'],
+                ]],
+            ]));
+        }
+
+        $registry = new \Skim\Ext\ExtRegistry($root);
+        $conflicts = $registry->conflicts();
+
+        expect($conflicts)->toHaveCount(1);
+        expect($conflicts[0]['capabilities'])->toBe(['auth']);
+        expect($conflicts[0]['extensions'])->toBe(['skim/auth', 'skim/auth2']);
+    });
+
+    test('declared conflict against installed provider is recorded', function() use (&$root): void {
+        mkdir($root . '/vendor/acme/replacer', 0777, true);
+        file_put_contents($root . '/vendor/skim/auth/composer.json', json_encode([
+            'name' => 'skim/auth',
+            'extra' => ['skim' => [
+                'extension' => 'Acme\\Auth',
+                'provides'  => ['auth'],
+            ]],
+        ]));
+        file_put_contents($root . '/vendor/acme/replacer/composer.json', json_encode([
+            'name' => 'acme/replacer',
+            'extra' => ['skim' => [
+                'extension' => 'Acme\\Replacer',
+                'conflicts' => ['auth'],
+            ]],
+        ]));
+
+        $conflicts = (new \Skim\Ext\ExtRegistry($root))->conflicts();
+
+        expect($conflicts)->toHaveCount(1);
+        expect($conflicts[0]['message'])->toContain('acme/replacer conflicts with skim/auth');
+    });
+
+    test('find returns metadata for installed package and null otherwise', function() use (&$root): void {
+        file_put_contents($root . '/vendor/skim/auth/composer.json', json_encode([
+            'name' => 'skim/auth',
+            'extra' => ['skim' => ['extension' => 'Acme\\Auth']],
+        ]));
+
+        $registry = new \Skim\Ext\ExtRegistry($root);
+
+        expect($registry->find('skim/auth')['name'])->toBe('skim/auth');
+        expect($registry->find('acme/none'))->toBeNull();
+    });
+
+    test('unknown dynamic method throws bad method call', function() use (&$root): void {
+        (new \Skim\Ext\ExtRegistry($root))->nonsense();
+    })->throws(\BadMethodCallException::class);
 });
