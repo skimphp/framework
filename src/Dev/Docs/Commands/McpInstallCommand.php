@@ -19,7 +19,7 @@ namespace Skim\Dev\Docs\Commands;
 class McpInstallCommand extends \Skim\Cli\Command {
     protected string $description = 'download the native skim-mcp binary for your platform';
     private const VERSION = 'mcp-v0.1.0';
-    private const BASE_URL = 'https://github.com/skimphp/skim_mcp/releases/download';
+    private const BASE_URL = 'https://github.com/skimphp/mcp/releases/download';
 
     /**
      * Detects platform, downloads binary, writes to .skim/bin/skim-mcp. #AI:handle
