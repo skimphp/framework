@@ -3,7 +3,7 @@
 // Simulates a worker loop in-process to verify cross-request isolation
 // and memory stability without FrankenPHP.
 
-define('SKIM_ROOT', dirname(__DIR__));
+define('SKIM_ROOT', dirname(__DIR__, 2));
 
 require SKIM_ROOT . '/vendor/autoload.php';
 
@@ -73,7 +73,7 @@ for ($i = 0; $i < 100; $i++) {
         fwrite(STDERR, "FAIL: request listener leaked at iteration {$i}\n");
         exit(1);
     }
-    if (\Skim\View\Component_collector::current() !== null) {
+    if (\Skim\View\ComponentCollector::current() !== null) {
         fwrite(STDERR, "FAIL: component_collector stack leaked at iteration {$i}\n");
         exit(1);
     }

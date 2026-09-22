@@ -20,7 +20,6 @@
 node_modules/
 
 # build artifacts
-/benchmarks/results/
 
 # local IDE / agent tooling
 /.idea/

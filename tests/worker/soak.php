@@ -4,7 +4,7 @@
 // loop and asserts the leak detector stays clean. This is the T2 complement to
 // the correctness gate — it exercises view, validation, events, and routes.
 
-define('SKIM_ROOT', dirname(__DIR__));
+define('SKIM_ROOT', dirname(__DIR__, 2));
 require SKIM_ROOT . '/vendor/autoload.php';
 
 // Isolate from any previously-loaded state.
@@ -16,11 +16,11 @@ use Skim\Core\Request;
 use Skim\Core\Response;
 use Skim\Events\Event;
 use Skim\View\View;
-use Skim\View\Component_collector;
-use Skim\Worker\Leak_detector;
-use Skim\Worker\Worker_reset;
+use Skim\View\ComponentCollector;
+use Skim\Worker\LeakDetector;
+use Skim\Worker\WorkerReset;
 
-$app = app::testInstance([
+$app = App::testInstance([
     'app.debug' => false,
     'app.view.default_layout' => null,
     'app.leak_detection' => 'strict',
@@ -43,45 +43,45 @@ $app->router->post('/contact', function(): mixed {
     ]);
 
     if (!$result->ok) {
-        return (new response())->status(422)->json(['errors' => $result->errors()]);
+        return (new Response())->status(422)->json(['errors' => $result->errors()]);
     }
     return ['sent' => true];
 });
 
 $app->router->get('/event', function(): array {
-    event::on('soak.demo', fn($data) => null);
+    Event::on('soak.demo', fn($data) => null);
     Event::emit('soak.demo', ['time' => microtime(true)]);
     return ['emitted' => true];
 });
 
 $app->router->get('/view', function(): array {
-    view::share('app_name', 'SKIM');
+    View::share('app_name', 'SKIM');
     return ['view_shared' => true];
 });
 
 $app->router->get('/component', function(): array {
-    $collector = new \Skim\View\Component_collector();
-    component_collector::push($collector);
+    $collector = new \Skim\View\ComponentCollector();
+    ComponentCollector::push($collector);
     // simulate a component render that throws occasionally
     if (random_int(1, 100) === 1) {
-        component_collector::pop(); // balanced on happy path
+        ComponentCollector::pop(); // balanced on happy path
         throw new \RuntimeException('render failed');
     }
-    component_collector::pop();
+    ComponentCollector::pop();
     return ['component' => true];
 });
 
 $app->router->get('/boom', fn() => throw new \RuntimeException('handler blew up'));
 
 // Boot-time listener (must survive)
-event::on('boot.warm', fn() => null);
+Event::on('boot.warm', fn() => null);
 
 $app->boot();
 $app->bootExtensions();
 $app->freeze();
 
-event::captureBootSnapshot();
-leak_detector::configure('strict');
+Event::captureBootSnapshot();
+LeakDetector::configure('strict');
 
 $routes = ['/home', '/user/42', '/event', '/view', '/component'];
 $post_routes = ['/contact'];
@@ -98,15 +98,15 @@ for ($i = 0; $i < 1000; $i++) {
 
         if ($i % 20 === 0) {
             // occasional POST with validation
-            $req = request::make('POST', '/contact', ['email' => 'test@example.com', 'message' => 'hello world']);
+            $req = Request::make('POST', '/contact', ['email' => 'test@example.com', 'message' => 'hello world']);
         } elseif ($i % 50 === 0) {
             // occasional error
-            $req = request::make('GET', '/boom');
+            $req = Request::make('GET', '/boom');
         } else {
-            $req = request::make('GET', $uri . '?req=' . $i);
+            $req = Request::make('GET', $uri . '?req=' . $i);
         }
 
-        $app->dispatch($req, new response());
+        $app->dispatch($req, new Response());
     } catch (\Throwable $e) {
         ob_start();
         $app->handleException($e);
@@ -120,7 +120,7 @@ for ($i = 0; $i < 1000; $i++) {
 }
 
 $elapsed = microtime(true) - $start;
-$findings = leak_detector::findings();
+$findings = LeakDetector::findings();
 
 $hard = array_filter($findings, fn($f) => str_starts_with($f['key'], 'hard.'));
 $growth = array_filter($findings, fn($f) => str_starts_with($f['key'], 'growth.'));

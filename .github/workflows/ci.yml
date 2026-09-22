@@ -71,7 +71,7 @@ jobs:
             curl -sf http://localhost:8081/bench?id=warmup && break || sleep 1
           done
       - name: Cross-request isolation
-        run: php benchmarks/test_worker_isolation.php 8081
+        run: php tests/worker/isolation.php 8081
       - name: Post-error isolation
         run: |
           curl -s http://localhost:8081/boom || true

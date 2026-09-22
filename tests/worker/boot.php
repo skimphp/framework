@@ -3,7 +3,7 @@
 // Measures App::instance() boot time in isolation.
 // Target: < 1ms
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../../vendor/autoload.php';
 
 $start = hrtime(true);
 $app = Skim\Core\App::instance();
