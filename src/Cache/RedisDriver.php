@@ -97,13 +97,12 @@ final class RedisDriver implements \Skim\Cache\Driver {
      */
     public function flush(string $prefix): bool {
         $fullPrefix = $this->prefix . $prefix;
-        $cursor      = null;
+        $cursor     = null;
         do {
-            $result = $this->redis()->scan($cursor, $fullPrefix . '*', 100);
-            if ($result === false) {
+            $keys = $this->redis()->scan($cursor, $fullPrefix . '*', 100);
+            if ($keys === false) {
                 break;
             }
-            [$cursor, $keys] = $result;
             if ($keys !== []) {
                 $this->redis()->del(...$keys);
             }
