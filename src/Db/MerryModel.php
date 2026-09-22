@@ -61,7 +61,7 @@ abstract class MerryModel extends \Skim\Db\Model {
                     }
                 }
                 if ($relatedAll !== []) {
-                    static::with($relatedAll, $nested);
+                    $relatedAll[0]::with($relatedAll, $nested);
                 }
             }
         }
@@ -96,12 +96,22 @@ abstract class MerryModel extends \Skim\Db\Model {
         $def = static::$manyToMany[$relation]
             ?? throw new \InvalidArgumentException("Relation '{$relation}' is not a many_to_many.");
 
+        $driver = \Skim\Db\Db::pdo(static::$connection)->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        $verb = match ($driver) {
+            'mysql'  => 'INSERT IGNORE INTO ',
+            'pgsql'  => 'INSERT INTO ',
+            default  => 'INSERT OR IGNORE INTO ',
+        };
         foreach ($ids as $id) {
-            \Skim\Db\Db::query(
-                'INSERT IGNORE INTO ' . $def['pivot'] . ' %values%',
-                ['values' => [$def['fk'] => $this->id, $def['rfk'] => $id]],
-                connection: static::$connection,
-            );
+            try {
+                \Skim\Db\Db::query(
+                    $verb . $def['pivot'] . ' %values%',
+                    ['values' => [$def['fk'] => $this->id, $def['rfk'] => $id]],
+                    connection: static::$connection,
+                );
+            } catch (\Skim\Db\Exceptions\DbException) {
+                // duplicate pivot row — attach is idempotent
+            }
         }
     }
 
@@ -127,10 +137,10 @@ abstract class MerryModel extends \Skim\Db\Model {
                 connection: static::$connection,
             );
         } else {
-            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            [$in, $inParams] = self::namedIn($ids);
             \Skim\Db\Db::query(
-                'DELETE FROM ' . $def['pivot'] . ' WHERE ' . $def['fk'] . ' = ? AND ' . $def['rfk'] . ' IN (' . $placeholders . ')',
-                array_merge([$this->id], $ids),
+                'DELETE FROM ' . $def['pivot'] . ' WHERE ' . $def['fk'] . ' = :_fk AND ' . $def['rfk'] . ' IN (' . $in . ')',
+                array_merge([':_fk' => $this->id], $inParams),
                 connection: static::$connection,
             );
         }
@@ -179,8 +189,8 @@ abstract class MerryModel extends \Skim\Db\Model {
         $class   = $def['class'];
         $fk      = $def['fk'];
         $pks     = array_unique(array_column(array_map(fn($m) => $m->toArray(), $models), static::$primary));
-        $in      = implode(',', array_fill(0, count($pks), '?'));
-        $related = $class::raw("SELECT * FROM {$class::getTable()} WHERE {$fk} IN ({$in})", $pks);
+        [$in, $inParams] = self::namedIn($pks);
+        $related = $class::raw("SELECT * FROM {$class::getTable()} WHERE {$fk} IN ({$in})", $inParams);
 
         $map = [];
         foreach ($related as $r) {
@@ -197,8 +207,8 @@ abstract class MerryModel extends \Skim\Db\Model {
         $class   = $def['class'];
         $fk      = $def['fk'];
         $pks     = array_unique(array_column(array_map(fn($m) => $m->toArray(), $models), static::$primary));
-        $in      = implode(',', array_fill(0, count($pks), '?'));
-        $related = $class::raw("SELECT * FROM {$class::getTable()} WHERE {$fk} IN ({$in})", $pks);
+        [$in, $inParams] = self::namedIn($pks);
+        $related = $class::raw("SELECT * FROM {$class::getTable()} WHERE {$fk} IN ({$in})", $inParams);
 
         $map = [];
         foreach ($related as $r) {
@@ -216,8 +226,8 @@ abstract class MerryModel extends \Skim\Db\Model {
         $fk      = $def['fk'];
         $pk      = $def['pk'] ?? 'id';
         $fkVals = array_unique(array_filter(array_column(array_map(fn($m) => $m->toArray(), $models), $fk)));
-        $in      = implode(',', array_fill(0, count($fkVals), '?'));
-        $related = $class::raw("SELECT * FROM {$class::getTable()} WHERE {$pk} IN ({$in})", $fkVals);
+        [$in, $inParams] = self::namedIn($fkVals);
+        $related = $class::raw("SELECT * FROM {$class::getTable()} WHERE {$pk} IN ({$in})", $inParams);
 
         $map = [];
         foreach ($related as $r) {
@@ -235,10 +245,10 @@ abstract class MerryModel extends \Skim\Db\Model {
         $fk      = $def['fk'];
         $rfk     = $def['rfk'];
         $pks     = array_unique(array_column(array_map(fn($m) => $m->toArray(), $models), static::$primary));
-        $in      = implode(',', array_fill(0, count($pks), '?'));
+        [$in, $inParams] = self::namedIn($pks);
         $rows    = \Skim\Db\Db::all(
             "SELECT p.{$fk}, r.* FROM {$pivot} p JOIN {$class::getTable()} r ON p.{$rfk} = r.id WHERE p.{$fk} IN ({$in})",
-            $pks, connection: static::$connection,
+            $inParams, connection: static::$connection,
         );
 
         $map = [];
@@ -270,6 +280,16 @@ abstract class MerryModel extends \Skim\Db\Model {
             return $this->loadPivot($name, static::$manyToMany[$name]);
         }
         throw new \InvalidArgumentException("Relation '{$name}' not defined on " . static::class);
+    }
+
+    private static function namedIn(array $values): array {
+        $placeholders = [];
+        $params       = [];
+        foreach (array_values($values) as $i => $v) {
+            $placeholders[]       = ':_in' . $i;
+            $params[':_in' . $i] = $v;
+        }
+        return [implode(',', $placeholders), $params];
     }
 
     private function loadPivot(string $name, array $def): array {
