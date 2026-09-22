@@ -1,0 +1,99 @@
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - vendor:/app/vendor
+      - node_modules:/app/node_modules
+    environment:
+      APP_DEBUG: "true"
+      APP_ENV: "local"
+      DB_HOST: "mysql"
+      DB_PORT: "3306"
+      DB_NAME: "skim_dev"
+      DB_USER: "skim"
+      DB_PASS: "secret"
+      ALT_DB_HOST: "pgsql"
+      ALT_DB_PORT: "5432"
+      ALT_DB_NAME: "skim_alt"
+      ALT_DB_USER: "skim"
+      ALT_DB_PASS: "secret"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      # Dev server: buffer output so route `echo`/`header()` works cleanly with
+      # the framework's response::send(); log warnings to stderr instead of
+      # emitting them into the response body. Workers enable parallel request
+      # handling on `php -S` (single-threaded by default).
+      PHP_INI_FLAGS: "-d output_buffering=4096 -d display_errors=stderr -d implicit_flush=Off -d opcache.revalidate_freq=60 -d opcache.preload_user=www-data"
+      PHP_CLI_SERVER_WORKERS: "8"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      pgsql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    tty: true
+    stdin_open: true
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: skim_dev
+      MYSQL_USER: skim
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  pgsql:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: skim_alt
+      POSTGRES_USER: skim
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgsql_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skim -d skim_alt"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    # No host port — only reachable within the Docker network
+    # Add "6379:6379" back if you need RedisInsight/TablePlus access from host
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  mysql_data:
+  pgsql_data:
+  redis_data:
+  vendor:
+  node_modules:

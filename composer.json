@@ -1,0 +1,40 @@
+{
+    "name": "skim/framework",
+    "description": "SKIM — modern PHP 8.5+ micro-framework",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.5",
+        "nikic/fast-route": "^1.3"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.0",
+        "nikic/php-parser": "^5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Skim\\": "src/"
+        },
+        "files": [
+            "src/Core/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/skim"
+    ],
+    "scripts": {
+        "test": "pest",
+        "docker-test": "docker compose exec -T app composer test"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable"
+}

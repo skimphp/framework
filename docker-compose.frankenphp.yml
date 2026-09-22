@@ -1,0 +1,28 @@
+services:
+  frankenphp:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frankenphp
+    ports:
+      - "8081:80"
+    environment:
+      APP_DEBUG: "true"
+      APP_ENV: "local"
+      DB_HOST: "mysql"
+      DB_PORT: "3306"
+      DB_NAME: "skim_dev"
+      DB_USER: "skim"
+      DB_PASS: "secret"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - skim_framework_default
+
+networks:
+  skim_framework_default:
+    external: true

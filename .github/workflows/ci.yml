@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php: ["8.5"]
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo, pdo_sqlite, pdo_mysql, redis, mbstring, pcntl, intl
+          coverage: pcov
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run tests with coverage
+        run: ./vendor/bin/pest --coverage --min=70
+        env:
+          APP_DEBUG: "true"
+          CACHE_DRIVER: array
+          DB_DRIVER: sqlite
+
+      - name: Check llm.md is up to date
+        run: |
+          HASH_COMMITTED=$(sha256sum llm.md 2>/dev/null | cut -d' ' -f1 || echo "missing")
+          php bin/skim docs:extract --agent
+          php bin/skim docs:llm --agent
+          HASH_GENERATED=$(sha256sum llm.md | cut -d' ' -f1)
+          if [ "$HASH_COMMITTED" != "$HASH_GENERATED" ]; then
+            echo "llm.md is stale — run 'php skim docs' locally and commit the result."
+            exit 1
+          fi
+        env:
+          APP_ENV: development
+
+  worker-isolation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build worker image
+        run: docker build -f docker/Dockerfile.frankenphp -t skim-worker .
+      - name: Run worker (hermetic, sqlite + array cache, leak strict)
+        run: |
+          docker run -d --name skim-worker -p 8081:80 \
+            -e APP_DEBUG=true -e APP_ENV=local \
+            -e DB_DRIVER=sqlite -e CACHE_DRIVER=array \
+            -e APP_LEAK_DETECTION=strict \
+            skim-worker
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8081/bench?id=warmup && break || sleep 1
+          done
+      - name: Cross-request isolation
+        run: php tests/worker/isolation.php 8081
+      - name: Post-error isolation
+        run: |
+          curl -s http://localhost:8081/boom || true
+          OUT=$(curl -s "http://localhost:8081/bench?id=42")
+          echo "$OUT" | grep -q '"id":"42"' || (echo "post-error leak: $OUT" && exit 1)
+      - name: Leak detection gate
+        run: |
+          sleep 1
+          LEAKS=$(curl -s http://localhost:8081/__leaks)
+          echo "$LEAKS"
+          echo "$LEAKS" | grep -q '"count":0' || (echo "Leak detector found issues" && exit 1)
+      - name: Dump worker logs on failure
+        if: failure()
+        run: docker logs skim-worker
