@@ -19,11 +19,11 @@ services:
       DB_NAME: "skim_dev"
       DB_USER: "skim"
       DB_PASS: "secret"
-      ANALYTICS_DB_HOST: "pgsql"
-      ANALYTICS_DB_PORT: "5432"
-      ANALYTICS_DB_NAME: "skim_analytics"
-      ANALYTICS_DB_USER: "skim"
-      ANALYTICS_DB_PASS: "secret"
+      ALT_DB_HOST: "pgsql"
+      ALT_DB_PORT: "5432"
+      ALT_DB_NAME: "skim_alt"
+      ALT_DB_USER: "skim"
+      ALT_DB_PASS: "secret"
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
       # Dev server: buffer output so route `echo`/`header()` works cleanly with
@@ -63,7 +63,7 @@ services:
   pgsql:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: skim_analytics
+      POSTGRES_DB: skim_alt
       POSTGRES_USER: skim
       POSTGRES_PASSWORD: secret
     ports:
@@ -71,7 +71,7 @@ services:
     volumes:
       - pgsql_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U skim -d skim_analytics"]
+      test: ["CMD-SHELL", "pg_isready -U skim -d skim_alt"]
       interval: 5s
       timeout: 3s
       retries: 12

@@ -190,18 +190,18 @@ $user->delete();
 
 ```php
 // config/db.php — add as many named connections as needed
-'analytics' => [
+'alt' => [
     'driver'   => 'pgsql',
-    'host'     => env('ANALYTICS_DB_HOST', 'pgsql'),
+    'host'     => env('ALT_DB_HOST', 'pgsql'),
     // ...
 ];
 
 // Use the connection name on any query
-Db::all('SELECT * FROM reports', [], connection: 'analytics');
+Db::all('SELECT * FROM reports', [], connection: 'alt');
 ```
 
-The `analytics` connection ships as an example of a read-heavy reporting database
-kept separate from the primary transactional DB — so slow analytical queries cannot
+The `alt` connection ships as an example of a secondary database
+kept separate from the primary transactional DB — so slow queries cannot
 block the main application.
 
 ---
@@ -364,7 +364,7 @@ $http->assertSent('GET', 'users');
 |---------|-------|------|---------|
 | `app` | PHP 8.5 Alpine | 8080, 5173 | Application + Vite dev server |
 | `mysql` | MySQL 8.0 | 3306 | Primary database (`skim_dev`) |
-| `pgsql` | PostgreSQL 16 | 5432 | Analytics database (`skim_analytics`) |
+| `pgsql` | PostgreSQL 16 | 5432 | Alternative database (`skim_alt`) |
 | `redis` | Redis 7 | — | Cache + Queue + Sessions |
 
 ```bash

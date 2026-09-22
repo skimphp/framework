@@ -40,21 +40,21 @@ describe('Db::rollbackAll()', function (): void {
             'driver'   => 'sqlite',
             'database' => ':memory:',
         ]);
-        \Skim\Db\Db::connect('analytics', [
+        \Skim\Db\Db::connect('alt', [
             'driver'   => 'sqlite',
             'database' => ':memory:',
         ]);
 
         $default = \Skim\Db\Db::pdo('default');
-        $analytics = \Skim\Db\Db::pdo('analytics');
+        $alt = \Skim\Db\Db::pdo('alt');
 
         $default->beginTransaction();
-        $analytics->beginTransaction();
+        $alt->beginTransaction();
 
         \Skim\Db\Db::rollbackAll();
 
         expect($default->inTransaction())->toBeFalse();
-        expect($analytics->inTransaction())->toBeFalse();
+        expect($alt->inTransaction())->toBeFalse();
     });
 
 });

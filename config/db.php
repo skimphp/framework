@@ -11,13 +11,13 @@ return [
         'charset'  => 'utf8mb4',
     ],
 
-    // Uncomment and configure for a secondary analytics connection:
-    // 'analytics' => [
+    // Uncomment and configure for a secondary alt connection:
+    // 'alt' => [
     //     'driver'   => 'pgsql',
-    //     'host'     => env('ANALYTICS_DB_HOST', 'localhost'),
-    //     'port'     => (int) env('ANALYTICS_DB_PORT', 5432),
-    //     'database' => env('ANALYTICS_DB_NAME', 'analytics'),
-    //     'user'     => env('ANALYTICS_DB_USER', 'analyst'),
-    //     'password' => env('ANALYTICS_DB_PASS', ''),
+    //     'host'     => env('ALT_DB_HOST', 'localhost'),
+    //     'port'     => (int) env('ALT_DB_PORT', 5432),
+    //     'database' => env('ALT_DB_NAME', 'alt'),
+    //     'user'     => env('ALT_DB_USER', 'analyst'),
+    //     'password' => env('ALT_DB_PASS', ''),
     // ],
 ];

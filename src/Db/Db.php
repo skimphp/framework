@@ -32,7 +32,7 @@ class Db {
     /**
      * Registers and opens a named database connection. #AI:connect
      *
-     * @param string $name   Connection name (e.g. 'default', 'analytics').
+     * @param string $name   Connection name (e.g. 'default', 'alt').
      * @param array  $config Driver config array from config/db.php.
      */
     public static function connect(string $name, array $config): void {
