@@ -25,7 +25,7 @@ Property hooks and asymmetric visibility are used throughout — read PHP 8.4/8.
 | FrankenPHP worker mode, leak detection  | src/Worker/AGENT.md     |
 | writing or running tests                | tests/AGENT.md          |
 
-## Naming rules (post-migration, see _lab camel_case_migration.md)
+## Naming rules (post-migration)
 | Symbol      | Convention       |
 |-------------|------------------|
 | Namespace   | PascalCase       |
