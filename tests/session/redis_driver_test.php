@@ -6,8 +6,8 @@ describe('RedisSessionDriver', function(): void {
 
     beforeEach(function(): void {
         $this->redis = new Redis();
-        $this->redis->connect('redis', 6379);
-        $this->driver = new RedisSessionDriver('redis', 6379, null, 'testsess_', 7200);
+        $this->redis->connect(testRedisHost(), 6379);
+        $this->driver = new RedisSessionDriver(testRedisHost(), 6379, null, 'testsess_', 7200);
     });
 
     afterEach(function(): void {
@@ -74,8 +74,8 @@ describe('TaggedRedisDriver', function(): void {
 
     beforeEach(function(): void {
         $this->redis = new Redis();
-        $this->redis->connect('redis', 6379);
-        $this->base = new \Skim\Cache\RedisDriver('redis', 6379, null, 0, 'tagt_');
+        $this->redis->connect(testRedisHost(), 6379);
+        $this->base = new \Skim\Cache\RedisDriver(testRedisHost(), 6379, null, 0, 'tagt_');
         $this->tagged = new \Skim\Cache\TaggedRedisDriver($this->base, $this->redis, 'tagt_', ['users']);
     });
 

@@ -6,7 +6,7 @@ describe('RedisDriver', function(): void {
 
     beforeEach(function(): void {
         // dedicated test database — flushDB is exercised here safely
-        $this->driver = new RedisDriver('redis', 6379, null, 15, 'rt_');
+        $this->driver = new RedisDriver(testRedisHost(), 6379, null, 15, 'rt_');
     });
 
     afterEach(function(): void {

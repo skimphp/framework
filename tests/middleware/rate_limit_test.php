@@ -9,7 +9,7 @@ describe('RateLimit', function(): void {
 
     afterEach(function(): void {
         $r = new Redis();
-        $r->connect('redis', 6379);
+        $r->connect(testRedisHost(), 6379);
         foreach ($r->keys('rl:test:*') as $k) {
             $r->del($k);
         }
@@ -32,7 +32,7 @@ describe('RateLimit', function(): void {
     });
 
     test('returns 429 when limit exceeded and sets rate limit headers', function(): void {
-        Config::set('cache.redis', ['host' => 'redis', 'port' => 6379]);
+        Config::set('cache.redis', ['host' => testRedisHost(), 'port' => 6379]);
 
         $req = Request::make('GET', '/api');
         $next = fn($r, $s) => $s;
