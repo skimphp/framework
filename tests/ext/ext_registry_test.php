@@ -226,4 +226,58 @@ describe('ExtRegistry', function(): void {
     test('unknown dynamic method throws bad method call', function() use (&$root): void {
         (new \Skim\Ext\ExtRegistry($root))->nonsense();
     })->throws(\BadMethodCallException::class);
+
+    test('static dispatch answers lookups against the given root', function() use (&$root): void {
+        file_put_contents($root . '/vendor/skim/auth/composer.json', json_encode([
+            'name' => 'skim/auth',
+            'extra' => ['skim' => [
+                'extension' => 'Acme\\Auth',
+                'provides'  => ['auth'],
+            ]],
+        ]));
+
+        expect(\Skim\Ext\ExtRegistry::has_capability('auth', $root))->toBeTrue();
+        expect(\Skim\Ext\ExtRegistry::who_provides('auth', $root))->toBe('skim/auth');
+        expect(\Skim\Ext\ExtRegistry::conflicts(null, $root))->toBe([]);
+    });
+
+    test('skim.json manifest takes precedence over composer extra', function() use (&$root): void {
+        file_put_contents($root . '/vendor/skim/auth/composer.json', json_encode([
+            'name' => 'skim/auth',
+            'extra' => ['skim' => [
+                'extension' => 'Acme\\Auth',
+                'provides'  => ['from-extra'],
+            ]],
+        ]));
+        file_put_contents($root . '/vendor/skim/auth/skim.json', json_encode([
+            'name'     => 'skim/auth',
+            'requires' => ['dep-one'],
+            'provides' => ['from-manifest'],
+        ]));
+
+        $meta = (new \Skim\Ext\ExtRegistry($root))->installed()[0];
+
+        expect($meta['provides'])->toBe(['from-manifest']);
+        expect($meta['requires'])->toBe(['dep-one']);
+    });
+
+    test('autoloadable extension class provides manifest from instance', function() use (&$root): void {
+        file_put_contents($root . '/vendor/skim/auth/composer.json', json_encode([
+            'name' => 'skim/auth',
+            'extra' => ['skim' => ['extension' => RegistryFixtureExtension::class]],
+        ]));
+
+        $meta = (new \Skim\Ext\ExtRegistry($root))->installed()[0];
+
+        expect($meta['provides'])->toBe(['fixture-cap']);
+        expect($meta['version'])->toBe('9.9.9');
+    });
 });
+
+class RegistryFixtureExtension extends \Skim\Ext\Extension {
+    public string $version = '9.9.9';
+    public array $provides = ['fixture-cap'];
+
+    public function register(\Skim\Core\App $app): void {}
+    public function boot(\Skim\Core\App $app): void {}
+}

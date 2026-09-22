@@ -87,4 +87,19 @@ PHP);
         expect(\Skim\Db\Db::row("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'ext_items'"))->toBeNull();
         expect(\Skim\Db\Db::val('SELECT COUNT(*) FROM _migrations'))->toBe(0);
     });
+
+    test('rejects extension names containing a colon', function() use (&$migrations): void {
+        (new \Skim\Ext\ExtMigrator())->run('bad:name', $migrations);
+    })->throws(\InvalidArgumentException::class, '":"');
+
+    test('rejects empty extension name', function() use (&$migrations): void {
+        (new \Skim\Ext\ExtMigrator())->run('   ', $migrations);
+    })->throws(\InvalidArgumentException::class);
+
+    test('returns empty list and empty session when migrations dir missing', function(): void {
+        $migrator = new \Skim\Ext\ExtMigrator();
+
+        expect($migrator->run('skim/auth', '/nonexistent/path'))->toBe([]);
+        expect($migrator->appliedThisSession())->toBe([]);
+    });
 });
