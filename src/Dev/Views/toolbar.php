@@ -181,28 +181,39 @@ $e = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
         document.querySelectorAll('#skim-tb .panel').forEach(function(p){p.classList.remove('open')});
         el.classList.add('active');
         var p=document.getElementById('skim-panel-'+id);
-        if(p) p.classList.add('open');
+        if(p){
+            p.classList.add('open');
+            _open=true;
+            localStorage.setItem(STORAGE_KEY,'1');
+        }
     }
     var _saved = localStorage.getItem(STORAGE_KEY);
-    var _open = _saved === null ? true : _saved === '1';
+    var _open = _saved !== '0';
     function skimClose(){
         var ch=document.querySelector('#skim-tb .tb-close .ti');
-        var panels=document.querySelectorAll('#skim-tb .panel');
-        if(_open){
-            panels.forEach(function(p){if(p.classList.contains('open'))p.setAttribute('data-was-open','1');p.classList.remove('open');});
+        var openPanels=document.querySelectorAll('#skim-tb .panel.open');
+        if(openPanels.length){
+            openPanels.forEach(function(p){p.setAttribute('data-was-open','1');p.classList.remove('open');});
             if(ch){ch.className='ti ti-chevron-up';}
             _open=false;
             localStorage.setItem(STORAGE_KEY,'0');
         } else {
-            document.querySelectorAll('#skim-tb [data-was-open]').forEach(function(p){p.classList.add('open');p.removeAttribute('data-was-open');});
+            var remembered=document.querySelectorAll('#skim-tb .panel[data-was-open]');
+            if(remembered.length){
+                remembered.forEach(function(p){p.classList.add('open');p.removeAttribute('data-was-open');});
+            } else {
+                var req=document.getElementById('skim-panel-request');
+                if(req){req.classList.add('open');}
+            }
             if(ch){ch.className='ti ti-chevron-down';}
             _open=true;
             localStorage.setItem(STORAGE_KEY,'1');
         }
     }
-    // Apply persisted state on load
+    // Apply persisted state on load — помечаем открытую панель,
+    // иначе data-was-open пуст и toggle не может её вернуть
     if(!_open){
-        document.querySelectorAll('#skim-tb .panel').forEach(function(p){p.classList.remove('open');});
+        document.querySelectorAll('#skim-tb .panel.open').forEach(function(p){p.setAttribute('data-was-open','1');p.classList.remove('open');});
         var ch=document.querySelector('#skim-tb .tb-close .ti');
         if(ch){ch.className='ti ti-chevron-up';}
     }
