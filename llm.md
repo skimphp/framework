@@ -2921,6 +2921,27 @@ Scans all source files, reports unannotated public methods in a table, and exits
 - **Returns** `int` — 0 if coverage meets or exceeds threshold, 1 if below threshold or scan fails.
 - **Side effect:** prints coverage report and missing-methods table to stdout
 
+## `Skim\Dev\Docs\Commands\McpInstallCommand` — McpInstallCommand
+
+> CLI command that downloads the platform-native skim-mcp binary from GitHub Releases into .skim/bin/.
+
+`cli` `mcp` `installer` `github-releases`
+
+**Source:** `src/Dev/Docs/Commands/McpInstallCommand.php` · **Layer:** `dev` · **Lifecycle:** `instantiated by CLI router per invocation`
+
+`McpInstallCommand` detects the host OS/architecture, downloads the matching `skim-mcp` release asset from the skim_mcp repository, and installs it to `.skim/bin/skim-mcp` with executable permissions.
+
+### Core Behavior
+- Skips download when binary exists
+- Maps PHP_OS_FAMILY+uname to release asset name
+- Streams download via curl
+- chmod 0755 after install
+
+### Methods
+
+#### `handle(): int`
+Detects platform, downloads binary, writes to .skim/bin/skim-mcp. :handle Skips download if binary already exists unless --force is passed. Returns 1 on network or write failure.
+
 ## `Skim\Dev\Docs\Commands\McpServeCommand` — McpServeCommand
 
 > CLI command that launches the stdio MCP server for LLM tool integration with Claude Code, Cursor, etc.
