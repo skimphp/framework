@@ -2120,6 +2120,7 @@ Dispatches a CLI command by name. Returns handler info or null if not registered
 ### Warnings
 - ⚠ Always use transaction() for multi-table writes
 - ⚠ Always use limit on large tables with all()
+- ⚠ read insert ids via lastInsertId() — pdo() may ping and reset mysql_insert_id
 
 ### Connection Management
 
@@ -2181,6 +2182,12 @@ Wraps $fn in BEGIN/COMMIT. Auto-ROLLBACK on any Throwable. The original exceptio
 - **Side effect:** Manages transaction state on the PDO connection.
 
 ### Utilities
+
+#### `lastInsertId(connection = 'default'): string`
+Returns PDO::lastInsertId() of the pooled connection without running the liveness ping — any statement on the connection would reset mysql_insert_id. Returns '0' when no pooled connection exists.
+- `$connection: string` (optional) — Named connection. Default 'default'.
+- **Returns** `string` — Last insert id or '0'.
+- **Note:** Used by Model::doInsert() — never route this through pdo().
 
 #### `null(): NullMarker`
 Returns a NullMarker sentinel for use in %set% to force SET col = NULL. Plain null skips the column.
