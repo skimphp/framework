@@ -16,7 +16,7 @@ use Skim\Dev\Docs\Value\DocsGenerationPaths;
  *
  * Example:
  *   php skim docs:llm
- *   php skim docs:llm --output=build/docs
+ *   php skim docs:llm --input=llm.json --output=build/docs
  *
  * Testing: Instantiate directly; no static state.
  *
@@ -33,7 +33,7 @@ class DocsLlmCommand extends \Skim\Cli\Command {
      */
     public function handle(): int {
         $paths     = \Skim\Dev\Docs\Value\DocsGenerationPaths::fromFlags($this->flags);
-        $jsonPath = $paths->jsonPath();
+        $jsonPath = $paths->jsonInputPath();
         $mdPath   = $paths->llmMdPath();
 
         try {

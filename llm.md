@@ -3266,10 +3266,11 @@ Yields absolute paths of all .php files under the given directory, recursively, 
 
 ### Construction
 
-#### `__construct(sourceDir = null, outputDir = null)`
-Stores optional CLI source/output overrides. Null values preserve config/docs.php defaults.
+#### `__construct(sourceDir = null, outputDir = null, inputPath = null)`
+Stores optional CLI source/input/output overrides. Null values preserve config/docs.php defaults.
 - `$sourceDir: ?string` (optional) — Override for docs.scan_paths; null preserves config default.
 - `$outputDir: ?string` (optional) — Override for all output paths; null preserves config defaults.
+- `$inputPath: ?string` (optional) — llm.json read path (file or dir) for consuming commands; null falls back to output/config.
 
 #### `fromFlags(flags): self`
 Builds a DocsGenerationPaths from CLI flags, reading 'source' and 'output' keys. Empty strings are treated as null.
@@ -3284,6 +3285,10 @@ Returns the explicit source override as a single-element array, or falls back to
 #### `hasSourceOverride(): bool`
 Returns true when --source was supplied, indicating the caller should use scanPaths() instead of the default config scan.
 - **Returns** `bool` — True if --source flag was provided.
+
+#### `jsonInputPath(): string`
+Returns the llm.json read path for consuming commands (docs:llm, docs:site). --input accepts a file or a directory
+- **Returns** `string` — Absolute or relative path to llm.json to read.
 
 #### `jsonPath(): string`
 Returns the llm.json output path. When --output is set, returns DIR/llm.json

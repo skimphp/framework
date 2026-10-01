@@ -15,7 +15,7 @@ use Skim\Dev\Docs\Value\DocsGenerationPaths;
  *
  * Example:
  *   php skim docs:site
- *   php skim docs:site --output=build/docs
+ *   php skim docs:site --input=llm.json --output=../docs/src/content/docs/api
  *
  * Testing: Instantiate directly; no static state.
  *
@@ -31,7 +31,7 @@ class DocsSiteCommand extends \Skim\Cli\Command {
      */
     public function handle(): int {
         $paths     = \Skim\Dev\Docs\Value\DocsGenerationPaths::fromFlags($this->flags);
-        $jsonPath = $paths->jsonPath();
+        $jsonPath = $paths->jsonInputPath();
         $mdxDir   = $paths->mdxDir();
 
         try {

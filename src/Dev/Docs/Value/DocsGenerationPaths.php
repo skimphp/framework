@@ -27,17 +27,19 @@ final class DocsGenerationPaths {
     public function __construct(
         private readonly ?string $sourceDir = null,
         private readonly ?string $outputDir = null,
+        private readonly ?string $inputPath = null,
     ) {}
 
     /**
      * Builds docs generation paths from CLI flags. #AI:fromFlags
      *
-     * @param array $flags CLI flags array; reads 'source' and 'output' keys.
+     * @param array $flags CLI flags array; reads 'source', 'input' and 'output' keys.
      */
     public static function fromFlags(array $flags): self {
         return new self(
             sourceDir: self::flagString($flags, 'source'),
             outputDir: self::flagString($flags, 'output'),
+            inputPath: self::flagString($flags, 'input'),
         );
     }
 
@@ -61,6 +63,24 @@ final class DocsGenerationPaths {
      */
     public function hasSourceOverride(): bool {
         return $this->sourceDir !== null;
+    }
+
+    /**
+     * Returns llm.json read path for consuming commands. #AI:jsonInputPath
+     *
+     * --input accepts a file path or a directory (llm.json appended).
+     * Without --input falls back to jsonPath() — preserves --output behaviour.
+     *
+     * @return string Absolute or relative path to llm.json to read.
+     */
+    public function jsonInputPath(): string {
+        if ($this->inputPath === null) {
+            return $this->jsonPath();
+        }
+
+        $path = $this->resolvePath($this->inputPath);
+
+        return str_ends_with($path, '.json') ? $path : $path . '/llm.json';
     }
 
     /**
@@ -137,22 +157,22 @@ final class DocsGenerationPaths {
 #AI test_seam: instantiate directly with constructor args
 #AI invariants: [null flags preserve config defaults; relative paths resolve from basePath(); empty string flags treated as null]
 #AI core_behaviors: [Resolves scanPaths from --source or config; Resolves json_path, llmMdPath, mdx_dir from --output or config; Detects absolute vs relative paths]
-#AI owns: source_dir, outputDir overrides
-#AI entry_points: [fromFlags; scanPaths; hasSourceOverride; json_path; llmMdPath; mdx_dir]
+#AI owns: source_dir, outputDir, inputPath overrides
+#AI entry_points: [fromFlags; scanPaths; hasSourceOverride; jsonInputPath; json_path; llmMdPath; mdx_dir]
 #AI config_reads: [docs.scan_paths; docs.output.json; docs.output.llm_md; docs.output.mdx_dir]
 #AI non_goals: [Does not create directories; Does not validate that paths exist on disk]
 #AI side_effects: []
-#AI flow: fromFlags(flags) -> new self(source, output) -> scanPaths/json_path/llmMdPath/mdx_dir -> config fallback
-#AI lifecycle_steps: [fromFlags(); -> extract source/output from flags; -> construct; -> resolve paths on demand with config fallback]
+#AI flow: fromFlags(flags) -> new self(source, output, input) -> scanPaths/jsonInputPath/json_path/llmMdPath/mdx_dir -> config fallback
+#AI lifecycle_steps: [fromFlags(); -> extract source/output/input from flags; -> construct; -> resolve paths on demand with config fallback]
 #AI section_order: [Construction; Path Resolution; Architecture]
 #AI architectural_notes: Immutable value object — all resolution happens on access, not at construction time.
 
 #AI:__construct
 #AI group: Construction
 #AI frequency: high
-#AI signature: public function __construct(?string $sourceDir = null, ?string $outputDir = null)
-#AI contract: Stores optional CLI source/output overrides. Null values preserve config/docs.php defaults.
-#AI param_details: [{name: $sourceDir | type: ?string | required: false | desc: Override for docs.scan_paths; null preserves config default.}; {name: $outputDir | type: ?string | required: false | desc: Override for all output paths; null preserves config defaults.}]
+#AI signature: public function __construct(?string $sourceDir = null, ?string $outputDir = null, ?string $inputPath = null)
+#AI contract: Stores optional CLI source/input/output overrides. Null values preserve config/docs.php defaults.
+#AI param_details: [{name: $sourceDir | type: ?string | required: false | desc: Override for docs.scan_paths; null preserves config default.}; {name: $outputDir | type: ?string | required: false | desc: Override for all output paths; null preserves config defaults.}; {name: $inputPath | type: ?string | required: false | desc: llm.json read path (file or dir) for consuming commands; null falls back to output/config.}]
 
 #AI:fromFlags
 #AI group: Construction
@@ -174,6 +194,13 @@ final class DocsGenerationPaths {
 #AI signature: public function hasSourceOverride(): bool
 #AI contract: Returns true when --source was supplied, indicating the caller should use scanPaths() instead of the default config scan.
 #AI return_detail: {type: bool | desc: True if --source flag was provided.}
+
+#AI:jsonInputPath
+#AI group: Path Resolution
+#AI frequency: medium
+#AI signature: public function jsonInputPath(): string
+#AI contract: Returns the llm.json read path for consuming commands (docs:llm, docs:site). --input accepts a file or a directory; without it falls back to jsonPath() so --output keeps working.
+#AI return_detail: {type: string | desc: Absolute or relative path to llm.json to read.}
 
 #AI:jsonPath
 #AI group: Path Resolution
