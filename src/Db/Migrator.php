@@ -410,9 +410,11 @@ final class Migrator {
 
     private function acquireLock(): void {
         $driver = Db::pdo($this->connection)->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        // Db::val — а не pdo()->exec(): exec() на SELECT оставляет невычитанный
+        // result set и следующий запрос падает с «unbuffered queries are active»
         match ($driver) {
-            'mysql' => Db::pdo($this->connection)->exec("SELECT GET_LOCK('skim_migrations', -1)"),
-            'pgsql' => Db::pdo($this->connection)->exec("SELECT pg_advisory_lock(hashtext('skim_migrations'))"),
+            'mysql' => Db::val("SELECT GET_LOCK('skim_migrations', -1)", connection: $this->connection),
+            'pgsql' => Db::val("SELECT pg_advisory_lock(hashtext('skim_migrations'))", connection: $this->connection),
             default => null, // sqlite: single-writer, skip
         };
     }
@@ -420,8 +422,8 @@ final class Migrator {
     private function releaseLock(): void {
         $driver = Db::pdo($this->connection)->getAttribute(\PDO::ATTR_DRIVER_NAME);
         match ($driver) {
-            'mysql' => Db::pdo($this->connection)->exec("SELECT RELEASE_LOCK('skim_migrations')"),
-            'pgsql' => Db::pdo($this->connection)->exec("SELECT pg_advisory_unlock(hashtext('skim_migrations'))"),
+            'mysql' => Db::val("SELECT RELEASE_LOCK('skim_migrations')", connection: $this->connection),
+            'pgsql' => Db::val("SELECT pg_advisory_unlock(hashtext('skim_migrations'))", connection: $this->connection),
             default => null,
         };
     }

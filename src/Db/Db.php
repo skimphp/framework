@@ -27,6 +27,18 @@ class Db {
     /** @var array<string, \PDO> */
     private static array $pool = [];
 
+    /** @var array<string, float> момент последнего использования соединения */
+    private static array $lastUsed = [];
+
+    /**
+     * Через сколько секунд простоя проверять живость соединения.
+     *
+     * Важно: SELECT 1 — это statement, а mysql_insert_id() (то, что читает
+     * PDO::lastInsertId) обнуляется любым statement-ом после INSERT. На
+     * горячем пути пинг ещё и удваивал round-trip на каждый запрос.
+     */
+    private const PING_AFTER_IDLE = 5.0;
+
     // --- connection management ---
 
     /**
@@ -78,7 +90,8 @@ class Db {
      * Call in tearDown() after test_db() or when DB config changes at runtime.
      */
     public static function reset(): void {
-        self::$pool = [];
+        self::$pool     = [];
+        self::$lastUsed = [];
     }
 
     /**
@@ -128,12 +141,16 @@ class Db {
     public static function pdo(string $connection = 'default'): \PDO {
         if (isset(self::$pool[$connection])) {
             $conn = self::$pool[$connection];
-            try {
-                $conn->query('SELECT 1');
-                return $conn;
-            } catch (\PDOException $e) {
-                if (in_array($e->getCode(), ['2006', '2013', 'HY000'], true)) {
-                    unset(self::$pool[$connection]);
+
+            // Живость проверяем только после простоя — этого хватает долгоживущим
+            // воркерам, а обычный запрос не платит лишний round-trip.
+            if (microtime(true) - (self::$lastUsed[$connection] ?? 0.0) > self::PING_AFTER_IDLE) {
+                try {
+                    $conn->query('SELECT 1');
+                } catch (\PDOException $e) {
+                    if (in_array($e->getCode(), ['2006', '2013', 'HY000'], true)) {
+                        unset(self::$pool[$connection]);
+                    }
                 }
             }
         }
@@ -144,7 +161,34 @@ class Db {
             self::connect($connection, $cfg);
         }
 
+        self::$lastUsed[$connection] = microtime(true);
+
         return self::$pool[$connection];
+    }
+
+    /**
+     * Executes a prepared statement; reconnects and retries once when the
+     * pooled socket is dead (MySQL 2006 / 2002). #AI:exec
+     *
+     * 2013 (lost connection mid-query) is NOT retried — the write may have
+     * committed server-side. Nothing is retried inside an open transaction.
+     */
+    private static function exec(string $builtSql, array $pdoParams, string $connection): \PDOStatement {
+        for ($attempt = 0; ; $attempt++) {
+            $pdo = self::pdo($connection);
+            try {
+                $stmt = $pdo->prepare($builtSql);
+                $stmt->execute($pdoParams);
+                return $stmt;
+            } catch (\PDOException $e) {
+                $driverErr = $e->errorInfo[1] ?? (int) $e->getCode();
+                $gone      = in_array($driverErr, [2002, 2006], true);
+                if ($attempt > 0 || !$gone || $pdo->inTransaction()) {
+                    throw $e;
+                }
+                unset(self::$pool[$connection], self::$lastUsed[$connection]);
+            }
+        }
     }
 
     /**
@@ -172,8 +216,7 @@ class Db {
         }
 
         $t    = microtime(true);
-        $stmt = self::pdo($connection)->prepare($builtSql);
-        $stmt->execute($pdoParams);
+        $stmt = self::exec($builtSql, $pdoParams, $connection);
         $rows = $stmt->fetchAll();
 
         \Skim\Dev\Profiler::db(\Skim\Db\QueryBuilder::interpolate($builtSql, $pdoParams), (microtime(true) - $t) * 1000, $connection, count($rows));
@@ -197,8 +240,7 @@ class Db {
     ): mixed {
         [$builtSql, $pdoParams] = \Skim\Db\QueryBuilder::build($sql, $params);
         $t    = microtime(true);
-        $stmt = self::pdo($connection)->prepare($builtSql);
-        $stmt->execute($pdoParams);
+        $stmt = self::exec($builtSql, $pdoParams, $connection);
         $row  = $stmt->fetch(\PDO::FETCH_NUM);
         \Skim\Dev\Profiler::db(\Skim\Db\QueryBuilder::interpolate($builtSql, $pdoParams), (microtime(true) - $t) * 1000, $connection, $row ? 1 : 0);
         return $row ? $row[0] : null;
@@ -220,8 +262,7 @@ class Db {
     ): ?array {
         [$builtSql, $pdoParams] = \Skim\Db\QueryBuilder::build($sql, $params);
         $t    = microtime(true);
-        $stmt = self::pdo($connection)->prepare($builtSql);
-        $stmt->execute($pdoParams);
+        $stmt = self::exec($builtSql, $pdoParams, $connection);
         $row  = $stmt->fetch() ?: null;
         \Skim\Dev\Profiler::db(\Skim\Db\QueryBuilder::interpolate($builtSql, $pdoParams), (microtime(true) - $t) * 1000, $connection, $row ? 1 : 0);
         return $row;
@@ -243,8 +284,7 @@ class Db {
     ): array {
         [$builtSql, $pdoParams] = \Skim\Db\QueryBuilder::build($sql, $params);
         $t    = microtime(true);
-        $stmt = self::pdo($connection)->prepare($builtSql);
-        $stmt->execute($pdoParams);
+        $stmt = self::exec($builtSql, $pdoParams, $connection);
         $rows = $stmt->fetchAll();
         \Skim\Dev\Profiler::db(\Skim\Db\QueryBuilder::interpolate($builtSql, $pdoParams), (microtime(true) - $t) * 1000, $connection, count($rows));
         return $rows;
@@ -284,6 +324,19 @@ class Db {
     }
 
     /**
+     * Returns lastInsertId of the pooled connection without a liveness ping. #AI:lastInsertId
+     *
+     * Any statement on the connection (even SELECT 1) resets mysql_insert_id,
+     * so this must NOT go through pdo() — a ping between INSERT and this call
+     * would return 0. Returns '0' when the connection isn't open.
+     *
+     * @param string $connection Named DB connection to use.
+     */
+    public static function lastInsertId(string $connection = 'default'): string {
+        return isset(self::$pool[$connection]) ? self::$pool[$connection]->lastInsertId() : '0';
+    }
+
+    /**
      * Returns a null_marker sentinel for forcing SET col = NULL in %set%. #AI:null
      *
      * Plain null in %set% skips the column; Db::null() sets it to NULL.
@@ -312,11 +365,11 @@ class Db {
 #AI test_seam: test_db() for SQLite :memory:, reset() to clear connection pool
 #AI invariants: [connections are lazy — PDO created on first query; query() returns rows for SELECT, rowCount for DML; val() returns null on no match; row() returns null on no match; all() returns empty array on no match; transaction() auto-rolls back on any Throwable]
 #AI core_behaviors: [query_gen %placeholders% are substituted by QueryBuilder; unused placeholders stripped silently; debug:true returns interpolated SQL without executing; profiler records every query with timing]
-#AI warnings: [Always use transaction() for multi-table writes; Always use limit on large tables with all()]
+#AI warnings: [Always use transaction() for multi-table writes; Always use limit on large tables with all(); read insert ids via lastInsertId() — pdo() may ping and reset mysql_insert_id]
 #AI notes: The connection pool is process-local. Call reset() in test tearDown() to clear connections.
 #AI scope_items: []
 #AI owns: PDO connection pool
-#AI entry_points: [query; val; row; all; transaction; null; pdo; connect; reset]
+#AI entry_points: [query; val; row; all; transaction; null; pdo; connect; reset; lastInsertId]
 #AI config_reads: [db.default; db.*.driver; db.*.host; db.*.port; db.*.database; db.*.charset; db.*.user; db.*.password]
 #AI non_goals: [Does not provide an ORM — use model for active record; Does not handle migrations — use migrator; QueryBuilder is internal, not public API]
 #AI side_effects: [Profiler::db records every query; connect() opens PDO connections; reset() closes all pooled connections]
@@ -394,6 +447,15 @@ class Db {
 #AI return_detail: {type: mixed | desc: Return value of $fn.}
 #AI warnings: [Always use for multi-table writes — partial writes corrupt data]
 #AI side_effects: Manages transaction state on the PDO connection.
+
+#AI:lastInsertId
+#AI group: Utilities
+#AI frequency: internal
+#AI signature: public static function lastInsertId(string $connection = 'default'): string
+#AI contract: Returns PDO::lastInsertId() of the pooled connection without running the liveness ping — any statement on the connection would reset mysql_insert_id. Returns '0' when no pooled connection exists.
+#AI param_details: [{name: $connection | type: string | required: false | desc: Named connection. Default 'default'.}]
+#AI return_detail: {type: string | desc: Last insert id or '0'.}
+#AI notes: Used by Model::doInsert() — never route this through pdo().
 
 #AI:null
 #AI group: Utilities

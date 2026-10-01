@@ -383,14 +383,13 @@ abstract class Model {
             throw new \LogicException('Cannot INSERT model with no non-guarded attributes.');
         }
 
-        $result = \Skim\Db\Db::query(
+        \Skim\Db\Db::query(
             'INSERT INTO ' . static::$table . ' %values%',
             ['values' => $data],
             connection: static::$connection,
         );
 
-        $pdo = \Skim\Db\Db::pdo(static::$connection);
-        $this->setRaw(static::$primary, (int) $pdo->lastInsertId());
+        $this->setRaw(static::$primary, (int) \Skim\Db\Db::lastInsertId(static::$connection));
         $this->dirtyCols = [];
     }
 
